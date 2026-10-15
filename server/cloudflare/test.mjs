@@ -111,6 +111,41 @@ assert.strictEqual((await call('POST', '/v1/session/finish', { uuid: 'd'.repeat(
 // without verification nobody is unlimited
 const fake = await login(V, 'Virtualchickenfr');
 assert.strictEqual((await call('POST', '/v1/wallet', { token: fake }))[1].unlimited, false);
+// player certificate proof (what Cloudflare uses, since Mojang blocks Workers)
+{
+  const { generateKeyPairSync, sign } = await import('node:crypto');
+  const mojang = generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const player = generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const cenv = { ...venv, TEST_CERT_KEYS: mojang.publicKey.export({ type: 'spki', format: 'der' }).toString('base64') };
+  const pub = player.publicKey.export({ type: 'spki', format: 'der' });
+  const certFor = (uuid, expiresAt) => {
+    const data = Buffer.alloc(24 + pub.length);
+    Buffer.from(uuid, 'hex').copy(data, 0);
+    data.writeBigInt64BE(BigInt(expiresAt), 16);
+    pub.copy(data, 24);
+    return { publicKey: pub.toString('base64'), expiresAt, signature: sign('sha1', data, mojang.privateKey).toString('base64') };
+  };
+  globalThis.fetch = async (url) => (String(url).includes('playerdb.co') && String(url).includes(V)
+    ? new Response(JSON.stringify({ code: 'player.found', data: { player: { username: 'Virtualchickenfr', raw_id: V } } }), { status: 200 })
+    : new Response('', { status: 403 }));
+  const begin = async () => (await call('POST', '/v1/session/start', { uuid: V, name: 'Virtualchickenfr' }, cenv))[1].serverId;
+  const proofFor = (sid, uuid = V) => sign('sha256', Buffer.from(`onix-session:${sid}:${uuid}`), player.privateKey).toString('base64');
+  let sid = await begin();
+  const [okStatus, okBody] = await call('POST', '/v1/session/finish', { uuid: V, serverId: sid, cert: certFor(V, Date.now() + 3600e3), proof: proofFor(sid) }, cenv);
+  assert.strictEqual(okStatus, 200, 'certificate proof accepted');
+  assert.ok(okBody.token);
+  const [ws, w] = await call('POST', '/v1/wallet', { token: okBody.token }, cenv);
+  assert.strictEqual(ws, 200);
+  assert.strictEqual(w.unlimited, true, 'name from playerdb counts for unlimited');
+  sid = await begin();
+  assert.strictEqual((await call('POST', '/v1/session/finish', { uuid: V, serverId: sid, cert: certFor(V, Date.now() - 1), proof: proofFor(sid) }, cenv))[0], 403, 'expired certificate');
+  sid = await begin();
+  assert.strictEqual((await call('POST', '/v1/session/finish', { uuid: V, serverId: sid, cert: certFor('e'.repeat(32), Date.now() + 3600e3), proof: proofFor(sid) }, cenv))[0], 403, 'certificate of another account');
+  sid = await begin();
+  assert.strictEqual((await call('POST', '/v1/session/finish', { uuid: V, serverId: sid, cert: certFor(V, Date.now() + 3600e3), proof: proofFor('0'.repeat(32)) }, cenv))[0], 403, 'proof for another challenge');
+  sid = await begin();
+  assert.strictEqual((await call('POST', '/v1/session/finish', { uuid: V, serverId: sid, cert: certFor(V, Date.now() + 3600e3), proof: proofFor(sid) }, venv))[0], 403, 'not signed by Mojang');
+}
 globalThis.fetch = realFetch;
 
 assert.strictEqual((await call('GET', '/nope'))[0], 404);

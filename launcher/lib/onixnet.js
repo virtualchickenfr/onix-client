@@ -1,5 +1,7 @@
 'use strict';
 
+const crypto = require('crypto');
+
 /**
  * Talks to the Onix server (see /server) for coins, the cosmetics shop and gifts.
  * The launcher proves the account the same way the game does: it asks the server for a
@@ -47,20 +49,51 @@ function fail(r) {
   return Object.assign(new Error(message), { status: r.status, details: r.json });
 }
 
+const pemBody = (pem) => String(pem || '').replace(/-----[^-]+-----/g, '').replace(/\s+/g, '');
+
+/**
+ * The account's player certificate (the chat signing key Mojang hands out) and a signature of the challenge
+ * made with it: { cert: { publicKey, expiresAt, signature }, proof }.
+ */
+async function certificateProof(accessToken, serverId, uuid) {
+  const res = await fetch('https://api.minecraftservices.com/player/certificates', {
+    method: 'POST',
+    headers: { authorization: `Bearer ${accessToken}`, 'content-type': 'application/json' },
+    body: '{}',
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (res.status !== 200) return null;
+  const j = await res.json();
+  if (!j || !j.keyPair || !j.publicKeySignatureV2) return null;
+  // Java's Instant keeps microseconds, toEpochMilli() cuts them off
+  const expiresAt = Date.parse(String(j.expiresAt).replace(/(\.\d{3})\d+/, '$1'));
+  if (!Number.isFinite(expiresAt)) return null;
+  const privateKey = crypto.createPrivateKey({ key: Buffer.from(pemBody(j.keyPair.privateKey), 'base64'), format: 'der', type: 'pkcs8' });
+  const proof = crypto.sign('sha256', Buffer.from(`onix-session:${serverId}:${uuid}`), privateKey).toString('base64');
+  return { cert: { publicKey: pemBody(j.keyPair.publicKey), expiresAt, signature: j.publicKeySignatureV2 }, proof };
+}
+
 /** creds = { uuid, name, access_token } of the signed-in Minecraft account. */
 async function signIn(server, creds) {
   const uuid = String(creds.uuid || '').replace(/-/g, '');
   const start = await request(`${server}/v1/session/start`, { uuid, name: creds.name });
   if (start.status !== 200 || !start.json) throw fail(start);
   if (start.json.token) return start.json.token;
-  const join = await fetch(MOJANG_JOIN, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ accessToken: creds.access_token, selectedProfile: uuid, serverId: start.json.serverId }),
-    signal: AbortSignal.timeout(10_000),
-  }).catch(() => null);
-  if (!join || (join.status !== 204 && join.status !== 200)) throw new Error('Mojang did not confirm your account. Sign in again and retry.');
-  const finish = await request(`${server}/v1/session/finish`, { uuid, serverId: start.json.serverId }, 15_000);
+  const serverId = start.json.serverId;
+  // Servers that ask Mojang (hasJoined) need the join; the hosted server checks the player certificate instead,
+  // because Mojang refuses requests from Cloudflare. Doing both works with either.
+  const [join, cert] = await Promise.all([
+    fetch(MOJANG_JOIN, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ accessToken: creds.access_token, selectedProfile: uuid, serverId }),
+      signal: AbortSignal.timeout(10_000),
+    }).catch(() => null),
+    certificateProof(creds.access_token, serverId, uuid).catch(() => null),
+  ]);
+  const joined = join && (join.status === 204 || join.status === 200);
+  if (!joined && !cert) throw new Error('Mojang did not confirm your account. Sign in again and retry.');
+  const finish = await request(`${server}/v1/session/finish`, { uuid, serverId, ...(cert || {}) }, 15_000);
   if (finish.status !== 200 || !finish.json || !finish.json.token) throw fail(finish);
   return finish.json.token;
 }

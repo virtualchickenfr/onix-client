@@ -204,6 +204,56 @@ async function seen(env, db, s, ids) {
   return [200, await view(env, db, a)];
 }
 
+// ---------------------------------------------------------------- account proof
+
+/*
+ * Mojang's session server refuses requests from Cloudflare Workers, so hasJoined cannot be used here.
+ * Instead the client proves its account with its Minecraft player certificate (the chat signing key):
+ * Mojang signs (uuid, expiry, public key) with these keys (api.minecraftservices.com/publickeys →
+ * playerCertificateKeys), and the client signs our challenge with the matching private key.
+ */
+const MOJANG_CERT_KEYS = [
+  'MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAylB4B6m5lz7jwrcFz6Fd/fnfUhcvlxsTSn5kIK/2aGG1C3kMy4VjhwlxF6BFUSnfxhNswPjh3ZitkBxEAFY25uzkJFRwHwVA9mdwjashXILtR6OqdLXXFVyUPIURLOSWqGNBtb08EN5fMnG8iFLgEJIBMxs9BvF3s3/FhuHyPKiVTZmXY0WY4ZyYqvoKR+XjaTRPPvBsDa4WI2u1zxXMeHlodT3lnCzVvyOYBLXL6CJgByuOxccJ8hnXfF9yY4F0aeL080Jz/3+EBNG8RO4ByhtBf4Ny8NQ6stWsjfeUIvH7bU/4zCYcYOq4WrInXHqS8qruDmIl7P5XXGcabuzQstPf/h2CRAUpP/PlHXcMlvewjmGU6MfDK+lifScNYwjPxRo4nKTGFZf/0aqHCh/EAsQyLKrOIYRE0lDG3bzBh8ogIMLAugsAfBb6M3mqCqKaTMAf/VAjh5FFJnjS+7bE+bZEV0qwax1CEoPPJL1fIQjOS8zj086gjpGRCtSy9+bTPTfTR/SJ+VUB5G2IeCItkNHpJX2ygojFZ9n5Fnj7R9ZnOM+L8nyIjPu3aePvtcrXlyLhH/hvOfIOjPxOlqW+O5QwSFP4OEcyLAUgDdUgyW36Z5mB285uKW/ighzZsOTevVUG2QwDItObIV6i8RCxFbN2oDHyPaO5j1tTaBNyVt8CAwEAAQ==',
+  'MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAt4t9NPuu7cktclnaH7eZj0omkLcJHeLz5MKsyJEntHZ0INtuBjSSul3Pp3pBeJN8k3ADdcdBLUN90bcAi7WsQqTx3Ft363q3W7TbM8j2iTEdp/0uVspoRt/DP1tkaWFs/w2WwUv9jbVoBUzfUc4pSTIxRwdjmqjZQfvjwKNDbOx3IhP2H0WXodbISejPi1wBZqNW4m1rnZAXp/EpUguxA8mobCa4vUCBkyFDyXdl69/wUSJHyCPmgcMJ364OlAhIqtwVPShBZObvrK/f0BYk6ShJD3N7TFDatSYsIIdcTKRknaIm91s+EsMrdB9U4Yw+ZJ/pyCB4S3vk8zfDCnb0DWIxYH3/EMzaxl77djmTmMzi/JDITup5z3jfWtRZmrAhU2/+W5IO5hEpo3/bCS9PXIY5xb41Lmp2ZO8dXKtyD66Chchy0W129n8vPl2GIruOdrxsjZAHnneyAb9jm0uaGaphwnEnuecX/qgHY6ZMtayvLLsPst8PO6R1vufMy8WqjK+j7LnC1krL7CPDg0NEhyQTmw5l+NCNjSlvB1juM9V4PARg0bYCOkGXm7ydRCjSSH8CJXZpwnd5cBB5WKAX3KPzutRgMi/LFwNSMZzFuUyXaYOZPpD259yqph1LmGqegEdDriACVU+dVEONFMm8eIuBofe7ljmsAFKW9BINwK0CAwEAAQ==',
+];
+const unb64 = (s) => Uint8Array.from(atob(String(s)), (c) => c.charCodeAt(0));
+const proofMessage = (serverId, uuid) => new TextEncoder().encode(`onix-session:${serverId}:${uuid}`);
+
+async function verifyCertificate(uuid, serverId, cert, proof, extraKeys = []) {
+  try {
+    const expires = Number(cert.expiresAt);
+    if (!Number.isFinite(expires) || expires < Date.now()) return false;
+    const key = unb64(cert.publicKey);
+    const signed = new Uint8Array(24 + key.length);
+    for (let i = 0; i < 16; i++) signed[i] = parseInt(uuid.slice(i * 2, i * 2 + 2), 16);
+    new DataView(signed.buffer).setBigInt64(16, BigInt(Math.trunc(expires)));
+    signed.set(key, 24);
+    const signature = unb64(cert.signature);
+    let byMojang = false;
+    for (const k of [...MOJANG_CERT_KEYS, ...extraKeys]) {
+      const mojang = await crypto.subtle.importKey('spki', unb64(k), { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-1' }, false, ['verify']);
+      if (await crypto.subtle.verify('RSASSA-PKCS1-v1_5', mojang, signature, signed)) { byMojang = true; break; }
+    }
+    if (!byMojang) return false;
+    const player = await crypto.subtle.importKey('spki', key, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['verify']);
+    return crypto.subtle.verify('RSASSA-PKCS1-v1_5', player, unb64(proof), proofMessage(serverId, uuid));
+  } catch {
+    return false;
+  }
+}
+
+/** Current name of an account (the certificate proves the UUID only). playerdb.co answers Workers, Mojang does not. */
+async function nameOf(uuid) {
+  const res = await fetch(`https://playerdb.co/api/player/minecraft/${uuid}`, {
+    headers: { 'user-agent': 'OnixServer/1.0 (+https://github.com/virtualchickenfr/onix-client)' },
+    signal: AbortSignal.timeout(8000),
+  });
+  if (res.status !== 200) return null;
+  const j = await res.json();
+  const p = j && j.data && j.data.player;
+  return p && normUuid(p.raw_id || p.id) === uuid && typeof p.username === 'string' ? p.username : null;
+}
+
 // ---------------------------------------------------------------- routes
 
 async function mojangHasJoined(name, serverId) {
@@ -221,25 +271,6 @@ async function withAccount(env, db, body, action) {
 
 const routes = {
   'GET /': async (env, db) => [200, { name: 'onix-presence', online: (await db.prepare('SELECT COUNT(*) AS n FROM online WHERE seen > ?').bind(Date.now() - ONLINE_TTL_MS).first()).n }],
-  // how the Mojang session server answers this Worker (a random serverId must give 204)
-  'GET /v1/diag/mojang': async () => {
-    try {
-      const out = {};
-      for (const [k, headers] of Object.entries({ plain: {}, ua: { 'user-agent': 'OnixServer/1.0 (+https://github.com/virtualchickenfr/onix-client)', accept: 'application/json' } })) {
-        const res = await fetch(`https://sessionserver.mojang.com/session/minecraft/hasJoined?username=Notch&serverId=${randomHex(16)}`, { headers, signal: AbortSignal.timeout(8000) });
-        out[k] = res.status;
-      }
-      for (const [k, u] of Object.entries({ playerdb: 'https://playerdb.co/api/player/minecraft/069a79f444e94726a5befca90e38aaf5', ashcon: 'https://api.ashcon.app/mojang/v2/user/069a79f444e94726a5befca90e38aaf5', mcheads: 'https://mc-heads.net/minecraft/profile/069a79f444e94726a5befca90e38aaf5' })) {
-        try {
-          const r = await fetch(u, { headers: { 'user-agent': 'OnixServer/1.0 (+https://github.com/virtualchickenfr/onix-client)' }, signal: AbortSignal.timeout(8000) });
-          out[k] = `${r.status} ${(await r.text()).slice(0, 120)}`;
-        } catch (e) { out[k] = String(e); }
-      }
-      return [200, out];
-    } catch (e) {
-      return [200, { error: String(e) }];
-    }
-  },
   'GET /v1/hello': async (env) => [200, { name: 'onix-presence', version: 2, verify: verifyOn(env), economy: true, host: 'cloudflare' }],
 
   'POST /v1/session/start': async (env, db, body) => {
@@ -257,13 +288,26 @@ const routes = {
     const c = uuid && (await db.prepare('SELECT * FROM challenges WHERE uuid = ?').bind(uuid).first());
     if (!c || c.expires < Date.now() || c.server_id !== body.serverId) return [400, { error: 'no open challenge' }];
     await db.prepare('DELETE FROM challenges WHERE uuid = ?').bind(uuid).run();
+    if (body.cert && typeof body.cert === 'object') {
+      // TEST_CERT_KEYS: only for the tests (test.mjs)
+      const extra = String(env.TEST_CERT_KEYS || '').split(',').filter(Boolean);
+      if (!(await verifyCertificate(uuid, c.server_id, body.cert, body.proof, extra))) return [403, { error: 'verification failed' }];
+      let name;
+      try {
+        name = await nameOf(uuid);
+      } catch {
+        name = null;
+      }
+      if (!name) return [502, { error: 'Could not look up your Minecraft name – try again in a minute' }];
+      return [200, { token: await newToken(db, uuid, name) }];
+    }
     let verified;
     try {
       verified = await mojangHasJoined(c.name, c.server_id);
     } catch {
       return [502, { error: 'Mojang session server unreachable' }];
     }
-    if (verified !== uuid) return [403, { error: 'verification failed' }];
+    if (verified !== uuid) return [403, { error: 'verification failed – update Onix Client' }];
     return [200, { token: await newToken(db, uuid, c.name) }];
   },
 

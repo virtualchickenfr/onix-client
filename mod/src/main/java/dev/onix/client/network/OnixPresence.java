@@ -8,8 +8,15 @@ import dev.onix.client.OnixClient;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.session.Session;
+import net.minecraft.network.encryption.PlayerKeyPair;
+import net.minecraft.network.encryption.PlayerPublicKey;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.security.Signature;
+import java.util.Base64;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -248,22 +255,56 @@ public final class OnixPresence {
         }
         if (r.json.has("token")) return r.json.get("token").getAsString();
         String serverId = r.json.get("serverId").getAsString();
+        // Servers that ask Mojang (hasJoined) need the join; the hosted server checks the player certificate,
+        // because Mojang refuses requests from Cloudflare. Doing both works with either.
+        boolean joined;
         try {
             MinecraftClient.getInstance().getSessionService().joinServer(self, accessToken, serverId);
+            joined = true;
         } catch (Exception e) {
-            status = "Could not verify account";
-            nextHeartbeat = System.currentTimeMillis() + 5 * 60_000;
-            return null;
+            joined = false;
         }
         JsonObject finish = new JsonObject();
         finish.addProperty("uuid", self.toString());
         finish.addProperty("serverId", serverId);
+        boolean proved = addCertificateProof(finish, self, serverId);
+        if (!joined && !proved) {
+            status = "Could not verify account";
+            nextHeartbeat = System.currentTimeMillis() + 5 * 60_000;
+            return null;
+        }
         Response f = post(url + "/v1/session/finish", finish, 12);
         if (f.status != 200 || f.json == null || !f.json.has("token")) {
             status = "Verification failed";
             return null;
         }
         return f.json.get("token").getAsString();
+    }
+
+    /**
+     * Adds the account's player certificate (the chat signing key Mojang hands out) and a signature of the
+     * challenge made with it. False when the game has no key (offline account, or Mojang did not answer).
+     */
+    private static boolean addCertificateProof(JsonObject finish, UUID self, String serverId) {
+        try {
+            Optional<PlayerKeyPair> keys = MinecraftClient.getInstance().getProfileKeys().fetchKeyPair().get(15, TimeUnit.SECONDS);
+            if (keys.isEmpty()) return false;
+            PlayerKeyPair pair = keys.get();
+            PlayerPublicKey.PublicKeyData data = pair.publicKey().data();
+            Signature signer = Signature.getInstance("SHA256withRSA");
+            signer.initSign(pair.privateKey());
+            String plainUuid = self.toString().replace("-", "");
+            signer.update(("onix-session:" + serverId + ":" + plainUuid).getBytes(StandardCharsets.UTF_8));
+            JsonObject cert = new JsonObject();
+            cert.addProperty("publicKey", Base64.getEncoder().encodeToString(data.key().getEncoded()));
+            cert.addProperty("expiresAt", data.expiresAt().toEpochMilli());
+            cert.addProperty("signature", Base64.getEncoder().encodeToString(data.keySignature()));
+            finish.add("cert", cert);
+            finish.addProperty("proof", Base64.getEncoder().encodeToString(signer.sign()));
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private static void lookup(String url, List<String> uuids) {
