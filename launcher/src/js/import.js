@@ -78,7 +78,7 @@ function openImport(s) {
   const options = [
     ['options', 'Settings & key binds', s.options ? 'Video, sound, controls' : 'Not found', s.options],
     ['servers', 'Server list', s.servers ? 'Every saved server' : 'Not found', s.servers],
-    ['worlds', 'Worlds', s.worlds ? plural(s.worlds, 'world', 'worlds') : 'None', s.worlds > 0],
+    ['worlds', 'Worlds', s.worlds ? plural(s.worlds, 'world', 'worlds') + (s.newerWorlds ? ` · made in ${s.mcVersion}, may not open in 1.21.1` : '') : 'None', s.worlds > 0],
     ['resourcepacks', 'Resource packs', s.resourcepacks ? String(s.resourcepacks) : 'None', s.resourcepacks > 0],
     ['shaderpacks', 'Shader packs', s.shaderpacks ? String(s.shaderpacks) : 'None', s.shaderpacks > 0],
     ['screenshots', 'Screenshots', s.screenshots ? String(s.screenshots) : 'None', s.screenshots > 0],
@@ -88,13 +88,13 @@ function openImport(s) {
   ];
   $('#im-what').replaceChildren(...options.map(([key, label, sub, available]) => {
     const input = el('input', { type: 'checkbox', 'data-key': key });
-    input.checked = available && key !== 'screenshots';
+    input.checked = available && key !== 'screenshots' && !(key === 'worlds' && s.newerWorlds);
     input.disabled = !available;
     return el('label', { class: `check${available ? '' : ' disabled'}`, title: key === 'mods' && s.modsSkipped.length ? s.modsSkipped.join('\n') : null }, [
       input, el('div', { class: 't' }, [el('b', { text: label }), el('span', { text: sub })]),
     ]);
   }));
-  $('#im-new-name').value = `${s.name}`.slice(0, 24);
+  $('#im-new-name').value = `${s.profileName || s.name}`.slice(0, 24);
   $('#im-existing').replaceChildren(...profileState.profiles.map((p) => el('option', { value: p.id, text: p.name, selected: p.id === profileState.active })));
   document.querySelector('input[name=im-target][value=new]').checked = true;
   $('#im-form').hidden = false;

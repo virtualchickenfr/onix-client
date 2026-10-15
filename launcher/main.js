@@ -559,7 +559,9 @@ app.whenReady().then(() => {
     mods: src.modsCompatible.map((m) => m.name),
     dawnpacks: src.dawnpacks || 0,
     modsSkipped: src.modsIncompatible.map((m) => `${m.name || m.file}: ${m.reason}`),
-    modConfigs: !!src.gameDir,
+    modConfigs: src.modConfigs != null ? src.modConfigs : !!src.gameDir,
+    mcVersion: src.mcVersion || null,
+    newerWorlds: !!(src.mcVersion && importer.isNewerThanGame(src.mcVersion)),
     modules: src.modules,
   });
   ipcMain.handle('import:detect', safe(async () => {

@@ -36,7 +36,8 @@ function knownSources() {
   return [
     { id: 'lunar', name: 'Lunar Client', gameDirs: [minecraft], config: [path.join(home, '.lunarclient', 'settings')] },
     { id: 'feather', name: 'Feather Client', gameDirs: [path.join(appData, '.feather'), minecraft], config: [path.join(appData, '.feather')] },
-    { id: 'dawn', name: 'Dawn', gameDirs: [path.join(appData, '.dawn'), path.join(appData, 'Dawn'), path.join(appData, '.dawnclient')],
+    // Dawn keeps one folder per profile in .dawn/profiles (see dawnProfiles); this entry only carries its client settings
+    { id: 'dawn', name: 'Dawn', gameDirs: [path.join(appData, 'Dawn'), path.join(appData, '.dawnclient')],
       config: [path.join(appData, '.dawn'), path.join(appData, 'Dawn'), path.join(appData, '.dawnclient')] },
     { id: 'badlion', name: 'Badlion Client', gameDirs: [minecraft], config: [path.join(appData, 'Badlion Client'), path.join(minecraft, 'Badlion Client')] },
     { id: 'labymod', name: 'LabyMod', gameDirs: [minecraft, path.join(minecraft, 'labymod-neo')], config: [path.join(minecraft, 'labymod-neo', 'configs')] },
@@ -214,26 +215,27 @@ async function analyzeDawnpacks(dirs) {
   return { packs: packs.length, compatible, incompatible };
 }
 
-async function analyzeMods(gameDir) {
+async function analyzeMods(gameDir, skipFiles = new Set()) {
   const modsDir = path.join(gameDir, 'mods');
   const jars = list(modsDir).filter((e) => e.isFile() && e.name.endsWith('.jar'));
   const compatible = [];
   const incompatible = [];
   for (const jar of jars) {
     const file = path.join(modsDir, jar.name);
+    if (skipFiles.has(jar.name)) continue;
     const meta = await readFabricModJson(file);
     if (!meta) {
       incompatible.push({ file: jar.name, reason: 'Not a Fabric mod (e.g. Forge)' });
       continue;
     }
-    if (SKIP_MOD_IDS.has(meta.id) || /^onix-client-/.test(jar.name)) continue;
+    if (SKIP_MOD_IDS.has(meta.id) || /^onix-client-/.test(jar.name) || /^(dawn|feather)/i.test(meta.id)) continue;
     if (meta.environment === 'server') continue;
     const mc = meta.depends && meta.depends.minecraft;
     if (!matchesVersion(mc, MC_VERSION)) {
       incompatible.push({ file: jar.name, name: meta.name || meta.id, reason: `For Minecraft ${[].concat(mc).join(', ')}` });
       continue;
     }
-    compatible.push({ file: jar.name, id: meta.id, name: meta.name || meta.id, version: meta.version });
+    compatible.push({ file: jar.name, id: meta.id, name: meta.name || meta.id, version: meta.version, srcPath: file });
   }
   return { compatible, incompatible };
 }
@@ -427,21 +429,42 @@ function scanClientModules(configDirs) {
 
 // ------------------------------------------------------------------ finding sources
 
-async function analyzeGameDir(gameDir, configDirs = []) {
-  const mods = await analyzeMods(gameDir);
+/**
+ * The folder a part of the game lives in. Most clients keep everything in one game folder; Dawn splits a
+ * profile into layers (its own mods/options, plus worlds and servers shared by a sync group).
+ */
+function layerWith(layers, name) {
+  return layers.find((d) => exists(path.join(d, name))) || null;
+}
+const inLayer = (layers, name) => {
+  const d = layerWith(layers, name);
+  return d ? path.join(d, name) : null;
+};
+
+async function analyzeGameDir(gameDir, configDirs = [], opts = {}) {
+  const layers = opts.layers || [gameDir];
+  const modsDir = layerWith(layers, 'mods');
+  const mods = modsDir ? await analyzeMods(modsDir, opts.skipFiles) : { compatible: [], incompatible: [] };
   const packs = await analyzeDawnpacks([gameDir, ...configDirs]);
   const ids = new Set(mods.compatible.map((m) => m.id));
   for (const m of packs.compatible) if (!ids.has(m.id)) { mods.compatible.push(m); ids.add(m.id); }
   mods.incompatible.push(...packs.incompatible);
   const modules = scanClientModules(configDirs);
+  const count = (name, filter) => {
+    const d = inLayer(layers, name);
+    return d ? countEntries(d, filter) : 0;
+  };
   return {
     gameDir,
-    options: exists(path.join(gameDir, 'options.txt')),
-    servers: exists(path.join(gameDir, 'servers.dat')),
-    worlds: countEntries(path.join(gameDir, 'saves'), (e) => e.isDirectory()),
-    resourcepacks: countEntries(path.join(gameDir, 'resourcepacks'), (e) => !e.name.startsWith('.')),
-    shaderpacks: countEntries(path.join(gameDir, 'shaderpacks'), (e) => !e.name.startsWith('.') && e.name !== 'shaders.properties'),
-    screenshots: countEntries(path.join(gameDir, 'screenshots'), (e) => e.isFile() && /\.png$/i.test(e.name)),
+    layers,
+    mcVersion: opts.mcVersion || null,
+    options: !!inLayer(layers, 'options.txt'),
+    servers: !!inLayer(layers, 'servers.dat'),
+    modConfigs: !!inLayer(layers, 'config'),
+    worlds: count('saves', (e) => e.isDirectory()),
+    resourcepacks: count('resourcepacks', (e) => !e.name.startsWith('.')),
+    shaderpacks: count('shaderpacks', (e) => !e.name.startsWith('.') && e.name !== 'shaders.properties'),
+    screenshots: count('screenshots', (e) => e.isFile() && /\.png$/i.test(e.name)),
     modsCompatible: mods.compatible,
     modsIncompatible: mods.incompatible,
     dawnpacks: packs.packs,
@@ -455,9 +478,56 @@ function hasContent(a) {
     || a.modsCompatible.length || Object.keys(a.modules).length;
 }
 
+// ------------------------------------------------------------------ Dawn profiles
+
+const readJson = (file) => {
+  try {
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Dawn (%APPDATA%/.dawn/profiles/<id>): profile.json names the profile and its Minecraft version.
+ * A profile in a sync group keeps its mods, packs and options in private-game-content and shares worlds,
+ * servers and configs through auto-sync/groups/<group>; other profiles use their own .minecraft folder.
+ */
+async function dawnProfiles(dawnDir) {
+  const root = path.join(dawnDir, 'profiles');
+  const out = [];
+  for (const e of list(root)) {
+    if (!e.isDirectory()) continue;
+    const dir = path.join(root, e.name);
+    const json = readJson(path.join(dir, 'profile.json'));
+    const profile = json && json.profile;
+    if (!profile) continue;
+    const layers = [];
+    const sync = profile.settings && profile.settings.autoSyncMembership;
+    for (const sub of ['private-game-content', '.minecraft', 'minecraft']) if (isDir(path.join(dir, sub))) layers.push(path.join(dir, sub));
+    if (sync && sync.kind === 'Member' && sync.groupId) {
+      const shared = path.join(dawnDir, 'auto-sync', 'groups', sync.groupId);
+      if (isDir(shared)) layers.push(shared);
+    }
+    if (!layers.length) continue;
+    // Dawn's own client jar is not a mod to carry over
+    const managed = readJson(path.join(dir, 'dawn-managed-client-mods.json'));
+    const skipFiles = new Set(['dawn-client.jar', ...((managed && managed.mods) || []).map((m) => m.fileName).filter(Boolean)]);
+    const mcVersion = profile.minecraftVersion || null;
+    const configDirs = layers.flatMap((l) => ['config', 'dawn', 'feather'].map((n) => path.join(l, n)));
+    const a = await analyzeGameDir(layers[0], configDirs, { layers, skipFiles, mcVersion });
+    if (!hasContent(a)) continue;
+    const name = profile.name || e.name;
+    out.push({ id: `dawn:${e.name}`, client: 'dawn', name: `Dawn · ${name}`, profileName: name,
+      label: `Minecraft ${mcVersion || '?'}${profile.loader && profile.loader.kind ? ` · ${profile.loader.kind}` : ''}`, ...a });
+  }
+  return out;
+}
+
 /** Finds every known source on this computer. */
 async function detect() {
   const results = [];
+  results.push(...await dawnProfiles(path.join(dirs().appData, '.dawn')));
   for (const src of knownSources()) {
     if (src.instances) {
       for (const root of src.instances) {
@@ -487,6 +557,13 @@ async function detect() {
 
 /** A folder picked by the user (also searched for instances). */
 async function analyzeFolder(folder) {
+  // a Dawn folder (.dawn or .dawn/profiles) or one Dawn profile
+  for (const dawnDir of [folder, path.dirname(folder), path.dirname(path.dirname(folder))]) {
+    if (!isDir(path.join(dawnDir, 'profiles')) || !exists(path.join(dawnDir, 'launcher-settings.json'))) continue;
+    let found = await dawnProfiles(dawnDir);
+    if (path.basename(path.dirname(folder)) === 'profiles') found = found.filter((s) => s.id === `dawn:${path.basename(folder)}`);
+    if (found.length) return found;
+  }
   const out = [];
   const direct = gameDirOfInstance(folder);
   if (direct) {
@@ -548,6 +625,8 @@ function copyDirContents(src, dst, { rename = false } = {}) {
  */
 async function runImport(source, profileDir, what, report) {
   const g = source.gameDir;
+  const layers = source.layers || (g ? [g] : []);
+  const at = (name) => inLayer(layers, name);
   const done = [];
   const steps = Object.entries(what).filter(([, on]) => on).map(([k]) => k);
   let step = 0;
@@ -555,41 +634,41 @@ async function runImport(source, profileDir, what, report) {
 
   fs.mkdirSync(profileDir, { recursive: true });
 
-  if (what.options && g && exists(path.join(g, 'options.txt'))) {
+  if (what.options && at('options.txt')) {
     progress('Settings and key binds');
     const target = path.join(profileDir, 'options.txt');
     backup(target);
-    fs.copyFileSync(path.join(g, 'options.txt'), target);
+    fs.copyFileSync(at('options.txt'), target);
     for (const extra of ['optionsof.txt', 'optionsshaders.txt']) {
-      if (exists(path.join(g, extra))) fs.copyFileSync(path.join(g, extra), path.join(profileDir, extra));
+      if (at(extra)) fs.copyFileSync(at(extra), path.join(profileDir, extra));
     }
     done.push('Settings & key binds');
   }
-  if (what.servers && g && exists(path.join(g, 'servers.dat'))) {
+  if (what.servers && at('servers.dat')) {
     progress('Server list');
     const target = path.join(profileDir, 'servers.dat');
     backup(target);
-    fs.copyFileSync(path.join(g, 'servers.dat'), target);
+    fs.copyFileSync(at('servers.dat'), target);
     done.push('Server list');
   }
-  if (what.worlds && g) {
+  if (what.worlds && layers.length) {
     progress('Worlds');
-    const n = copyDirContents(path.join(g, 'saves'), path.join(profileDir, 'saves'), { rename: true });
+    const n = copyDirContents(at('saves'), path.join(profileDir, 'saves'), { rename: true });
     done.push(`${n} world${n === 1 ? '' : 's'}`);
   }
-  if (what.resourcepacks && g) {
+  if (what.resourcepacks && layers.length) {
     progress('Resource packs');
-    const n = copyDirContents(path.join(g, 'resourcepacks'), path.join(profileDir, 'resourcepacks'));
+    const n = copyDirContents(at('resourcepacks'), path.join(profileDir, 'resourcepacks'));
     done.push(`${n} resource pack${n === 1 ? '' : 's'}`);
   }
-  if (what.shaderpacks && g) {
+  if (what.shaderpacks && layers.length) {
     progress('Shader packs');
-    const n = copyDirContents(path.join(g, 'shaderpacks'), path.join(profileDir, 'shaderpacks'));
+    const n = copyDirContents(at('shaderpacks'), path.join(profileDir, 'shaderpacks'));
     done.push(`${n} shader pack${n === 1 ? '' : 's'}`);
   }
-  if (what.screenshots && g) {
+  if (what.screenshots && layers.length) {
     progress('Screenshots');
-    const n = copyDirContents(path.join(g, 'screenshots'), path.join(profileDir, 'screenshots'));
+    const n = copyDirContents(at('screenshots'), path.join(profileDir, 'screenshots'));
     done.push(`${n} screenshot${n === 1 ? '' : 's'}`);
   }
   if (what.mods && source.modsCompatible.length) {
@@ -606,9 +685,9 @@ async function runImport(source, profileDir, what, report) {
     }
     done.push(`${n} mod${n === 1 ? '' : 's'}`);
   }
-  if (what.modConfigs && g && isDir(path.join(g, 'config'))) {
+  if (what.modConfigs && at('config')) {
     progress('Mod settings');
-    const src = path.join(g, 'config');
+    const src = at('config');
     const dst = path.join(profileDir, 'config');
     let n = 0;
     for (const e of list(src)) {
@@ -657,4 +736,12 @@ function writeModules(profileDir, modules) {
   return Object.keys(modules).length;
 }
 
-module.exports = { detect, analyzeFolder, runImport, matchesVersion, readFabricModJson, MODULE_ALIASES, knownSources, dirs, gameDirOfInstance };
+/** True for a Minecraft version newer than the one Onix plays (worlds from it may not open). */
+function isNewerThanGame(version) {
+  const a = String(version).split('.').map((x) => parseInt(x, 10) || 0);
+  const b = MC_VERSION.split('.').map(Number);
+  for (let i = 0; i < 3; i++) if ((a[i] || 0) !== (b[i] || 0)) return (a[i] || 0) > (b[i] || 0);
+  return false;
+}
+
+module.exports = { isNewerThanGame, detect, analyzeFolder, runImport, matchesVersion, readFabricModJson, MODULE_ALIASES, knownSources, dirs, gameDirOfInstance };
