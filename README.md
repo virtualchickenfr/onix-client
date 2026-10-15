@@ -452,15 +452,10 @@ The launcher looks for a new version **every time it starts** (and every 6 hours
 - The Onix mod is inside the launcher, so every launcher update also updates the mod in all profiles on the next
   start. Profiles, settings, worlds, cosmetics and coins stay.
 
-To publish a version, push a tag – the workflow builds everything, collects it in a draft release, adds the mod jar
-and then publishes the release (only then do launchers see it):
-
-```bash
-git tag v1.1.0
-git push origin v1.1.0
-```
-
-The version comes from the tag (launcher and mod). The workflow needs *Settings → Actions → General → Workflow
+To publish a version: on GitHub open **Actions → Build Onix Client → Run workflow**, enter the version (for example
+`1.1.0`, always higher than the last one) and click **Run workflow**. Pushing a tag (`git tag v1.1.0 && git push origin
+v1.1.0`) does the same. The workflow builds everything, collects it in a draft release, adds the mod jar and then
+publishes the release – only then do launchers see it. Launcher and mod get the version you entered. The workflow needs *Settings → Actions → General → Workflow
 permissions → Read and write*; it sets the repository in `package.json` so the launcher knows where to look.
 Launchers built before this feature still need to be updated by hand once.
 

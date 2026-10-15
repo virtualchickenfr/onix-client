@@ -1,20 +1,28 @@
 name: Build Onix Client
 
 # Every push builds the mod and the installers (Actions → Artifacts).
-# Pushing a version tag (git tag v1.1.0 && git push origin v1.1.0) also publishes a GitHub Release.
-# Installed launchers look for it on every start and update themselves (launcher/lib/updater.js).
+# A release – which installed launchers find on their next start and install (launcher/lib/updater.js) – is made by
+#   - Actions → Build Onix Client → Run workflow → enter a version such as 1.1.0, or
+#   - pushing a version tag (git tag v1.1.0 && git push origin v1.1.0).
 
 on:
   push:
     branches: ['**']
     tags: ['v*']
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Publish this version as a release (for example 1.1.0). Leave empty for a test build.'
+        required: false
+        default: ''
 
 permissions:
   contents: write
 
 env:
-  RELEASE: ${{ startsWith(github.ref, 'refs/tags/v') }}
+  # empty for a normal build; the version (or "true" for a tag push) when this run publishes a release
+  RELEASE: ${{ startsWith(github.ref, 'refs/tags/v') || github.event.inputs.version }}
+  TAG: ${{ github.event.inputs.version && format('v{0}', github.event.inputs.version) || github.ref_name }}
 
 jobs:
   mod:
@@ -30,8 +38,8 @@ jobs:
         shell: bash
         run: |
           chmod +x gradlew
-          if [ "$RELEASE" = "true" ]; then
-            ./gradlew build --no-daemon -Pmod_version="${GITHUB_REF_NAME#v}"
+          if [ -n "$RELEASE" ] && [ "$RELEASE" != "false" ]; then
+            ./gradlew build --no-daemon -Pmod_version="${TAG#v}"
           else
             ./gradlew build --no-daemon
           fi
@@ -43,15 +51,21 @@ jobs:
   # one draft release that the three installer builds upload into; it is published at the end,
   # so launchers never see a release with files missing
   prepare-release:
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: ${{ startsWith(github.ref, 'refs/tags/v') || github.event.inputs.version }}
     runs-on: ubuntu-latest
     steps:
       - name: Create draft release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
-            gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft --title "Onix Client $GITHUB_REF_NAME" --generate-notes
+          if ! echo "${TAG#v}" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::The version must look like 1.2.3 (got '${TAG#v}')"; exit 1
+          fi
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft -q .isDraft 2>/dev/null | grep -q false; then
+            echo "::error::Release $TAG already exists – use a higher version"; exit 1
+          fi
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --draft --target "$GITHUB_SHA" --title "Onix Client $TAG" --generate-notes
 
   launcher:
     needs: [mod, prepare-release]
@@ -80,8 +94,8 @@ jobs:
           # the updater finds new versions in this repository's releases
           npm pkg set repository.type=git "repository.url=https://github.com/${GITHUB_REPOSITORY}.git"
           npm install
-          if [ "$RELEASE" = "true" ]; then
-            npm pkg set version="${GITHUB_REF_NAME#v}"
+          if [ -n "$RELEASE" ] && [ "$RELEASE" != "false" ]; then
+            npm pkg set version="${TAG#v}"
             npm run release
           else
             npm run dist
@@ -96,7 +110,7 @@ jobs:
 
   publish-release:
     needs: [mod, launcher]
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: ${{ startsWith(github.ref, 'refs/tags/v') || github.event.inputs.version }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
@@ -107,5 +121,5 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "$GITHUB_REF_NAME" $(ls mod/onix-client-*.jar | grep -v -- -sources) --repo "$GITHUB_REPOSITORY" --clobber
-          gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft=false --latest
+          gh release upload "$TAG" $(ls mod/onix-client-*.jar | grep -v -- -sources) --repo "$GITHUB_REPOSITORY" --clobber
+          gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false --latest
