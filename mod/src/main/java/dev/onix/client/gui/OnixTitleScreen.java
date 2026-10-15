@@ -88,7 +88,7 @@ public class OnixTitleScreen extends Screen {
     }
 
     private void click() {
-        client.getSoundManager().play(PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0f, 0.4f));
+        client.getSoundManager().play(PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK.value(), 1.0f, 0.4f));
     }
 
     // ================================================================== background

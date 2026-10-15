@@ -25,7 +25,7 @@ public class CooldownIndicatorModule extends HudModule {
         super("cooldown", "Cooldown Indicator", "Shows your attack cooldown under the crosshair.", Category.COMBAT, false, Anchor.CENTER, 0, 12);
         tags("attack indicator", "1.9 pvp", "charge");
         background.withDefault(false);
-        padding.withDefault(0);
+        padding.withDefault(0.0);
     }
 
     private float progress() {

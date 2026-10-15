@@ -321,7 +321,7 @@ public class OnixMenuScreen extends Screen {
 
     private void click() {
         if (client != null && (OnixClient.CONFIG == null || OnixClient.CONFIG.clickSounds.isOn())) {
-            client.getSoundManager().play(PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.8f, 0.18f));
+            client.getSoundManager().play(PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK.value(), 1.8f, 0.18f));
         }
     }
 
@@ -833,10 +833,9 @@ public class OnixMenuScreen extends Screen {
         Theme.card(ctx, x, y, x + w, y + h, Theme.corner(8), Theme.lerpColor(Theme.SURFACE_2, Theme.SURFACE_3, Math.max(ht, focused ? 0.6f : 0f)), border);
 
         drawIcon(ctx, m.getCategory().getIcon(), x + 11, y + 11, 9, Theme.lerpColor(Theme.TEXT_3, Theme.accent(), on));
-        Theme.textBold(ctx, Theme.ellipsize(m.getName(), w - (note ? 62 : 46)), x + 26, y + 11, Theme.TEXT);
-
         // server-rule note and favorite star, top right
         boolean note = m.isRestricted() && OnixClient.CONFIG.ruleNotes.isOn();
+        Theme.textBold(ctx, Theme.ellipsize(m.getName(), w - (note ? 62 : 46)), x + 26, y + 11, Theme.TEXT);
         int starX = note ? x + w - 34 : x + w - 19;
         boolean noteHov = note && hovered(mx, my, x + w - 22, y + 6, x + w - 6, y + 22);
         if (note) drawIcon(ctx, "warning", x + w - 19, y + 10, 9, Theme.withAlpha(Theme.ORANGE, noteHov ? 255 : 200));
