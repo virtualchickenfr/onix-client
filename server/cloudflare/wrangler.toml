@@ -1,6 +1,5 @@
-# Cloudflare Worker for the Onix server. Deployed by .github/workflows/server.yml, which creates the
-# database and fills in database_id. Manual deploy: npx wrangler d1 create onix, paste the id below,
-# npx wrangler d1 execute onix --remote --file schema.sql, npx wrangler deploy.
+# Cloudflare Worker for the Onix server. Cloudflare builds it from this folder on every push (Workers Builds:
+# root directory server/cloudflare, deploy command "npx wrangler deploy"). The tables are created on the first request.
 name = "onix-server"
 main = "src/index.js"
 compatibility_date = "2025-01-01"
@@ -15,4 +14,4 @@ crons = ["17 * * * *"]
 [[d1_databases]]
 binding = "DB"
 database_name = "onix"
-database_id = "DATABASE_ID"
+database_id = "2d635367-44d2-40e5-b063-1b6dd738bc19"

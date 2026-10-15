@@ -28,7 +28,7 @@ jobs:
       - name: Test
         working-directory: server/cloudflare
         run: node test.mjs
-      - name: Deploy
+      - name: Deploy (only with API token secrets; normally Cloudflare deploys by itself)
         working-directory: server/cloudflare
         shell: bash
         run: |

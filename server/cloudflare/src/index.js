@@ -7,6 +7,7 @@
  * with unlimited coins, only while VERIFY is on). The token secret is created in the database on first use.
  */
 import shop from '../../shop.json';
+import schema from './schema.js';
 
 const MINUTE = 60_000;
 const MAX_GAP_MS = 3 * MINUTE;
@@ -49,6 +50,18 @@ function resolveItem(id) {
 
 const hex = (bytes) => [...new Uint8Array(bytes)].map((b) => b.toString(16).padStart(2, '0')).join('');
 const randomHex = (n) => hex(crypto.getRandomValues(new Uint8Array(n)));
+
+const schemaReady = new WeakMap();
+/** Creates the tables once per running instance and database (IF NOT EXISTS, so it is cheap and safe). */
+function ensureSchema(db) {
+  if (!schemaReady.has(db)) {
+    schemaReady.set(db, db.batch(schema.map((sql) => db.prepare(sql))).catch((err) => {
+      schemaReady.delete(db);
+      throw err;
+    }));
+  }
+  return schemaReady.get(db);
+}
 
 // ---------------------------------------------------------------- tokens (signed, nothing to store)
 
@@ -288,6 +301,7 @@ export default {
       if (!body || typeof body !== 'object') body = {};
     }
     try {
+      await ensureSchema(env.DB);
       const [status, payload] = await handler(env, env.DB, body);
       return json(status, payload);
     } catch (err) {
@@ -299,6 +313,7 @@ export default {
   /** Every hour: forget old challenges and players who went offline long ago. */
   async scheduled(event, env) {
     const now = Date.now();
+    await ensureSchema(env.DB);
     await env.DB.batch([
       env.DB.prepare('DELETE FROM challenges WHERE expires < ?').bind(now),
       env.DB.prepare('DELETE FROM online WHERE seen < ?').bind(now - 24 * 60 * 60 * 1000),

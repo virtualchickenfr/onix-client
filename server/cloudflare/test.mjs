@@ -8,7 +8,8 @@ import { DatabaseSync } from 'node:sqlite';
 
 const here = path.dirname(new URL(import.meta.url).pathname);
 globalThis.__shop = { version: 1, prices: { free_cape: 0, hat_common: 60, wings_epic: 400, crown_gold: 150 }, aliases: { crown: 'crown_gold' } };
-const src = fs.readFileSync(path.join(here, 'src/index.js'), 'utf8').replace("import shop from '../../shop.json';", 'const shop = globalThis.__shop;');
+const src = fs.readFileSync(path.join(here, 'src/index.js'), 'utf8').replace("import shop from '../../shop.json';", 'const shop = globalThis.__shop;')
+  .replace("import schema from './schema.js';", `import schema from '${path.join(here, 'src/schema.js')}';`);
 const tmp = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'onix-cf-')), 'worker.mjs');
 fs.writeFileSync(tmp, src);
 const worker = (await import(tmp)).default;
@@ -22,7 +23,6 @@ class Stmt {
 }
 function d1() {
   const db = new DatabaseSync(':memory:');
-  db.exec(fs.readFileSync(path.join(here, 'schema.sql'), 'utf8'));
   return {
     prepare: (sql) => new Stmt(db, sql),
     async batch(stmts) { db.exec('BEGIN'); try { for (const s of stmts) await s.run(); db.exec('COMMIT'); } catch (e) { db.exec('ROLLBACK'); throw e; } },
