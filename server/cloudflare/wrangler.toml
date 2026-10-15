@@ -1,6 +1,6 @@
 # Cloudflare Worker for the Onix server. Cloudflare builds it from this folder on every push (Workers Builds:
 # root directory server/cloudflare, deploy command "npx wrangler deploy"). The tables are created on the first request.
-name = "onix-server"
+name = "mconixclient"
 main = "src/index.js"
 compatibility_date = "2025-01-01"
 
