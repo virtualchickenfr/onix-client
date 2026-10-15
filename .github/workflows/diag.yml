@@ -7,9 +7,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          curl -sS https://api.minecraftservices.com/publickeys > keys.json
-          python3 -c "
-          import json; d=json.load(open('keys.json'))
-          for i,k in enumerate(d['playerCertificateKeys']): print('::notice title=pc%d::%s' % (i, k['publicKey']))
-          print('::notice title=counts::%d %d' % (len(d['playerCertificateKeys']), len(d['profilePropertyKeys'])))
-          "
+          for n in Virtualchickenfr Fuzed_d; do echo "::notice title=$n::$(curl -sS https://api.mojang.com/users/profiles/minecraft/$n)"; done
+          sleep 50
+          echo "::notice title=diag::$(curl -sS https://mconixclient.virtualchickenfr.workers.dev/v1/diag/mojang | head -c 1500)"

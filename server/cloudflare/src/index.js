@@ -229,8 +229,12 @@ const routes = {
         const res = await fetch(`https://sessionserver.mojang.com/session/minecraft/hasJoined?username=Notch&serverId=${randomHex(16)}`, { headers, signal: AbortSignal.timeout(8000) });
         out[k] = res.status;
       }
-      const p = await fetch('https://api.minecraftservices.com/minecraft/profile/lookup/name/Notch', { headers: { 'user-agent': 'OnixServer/1.0' } });
-      out.services = p.status;
+      for (const [k, u] of Object.entries({ playerdb: 'https://playerdb.co/api/player/minecraft/069a79f444e94726a5befca90e38aaf5', ashcon: 'https://api.ashcon.app/mojang/v2/user/069a79f444e94726a5befca90e38aaf5', mcheads: 'https://mc-heads.net/minecraft/profile/069a79f444e94726a5befca90e38aaf5' })) {
+        try {
+          const r = await fetch(u, { headers: { 'user-agent': 'OnixServer/1.0 (+https://github.com/virtualchickenfr/onix-client)' }, signal: AbortSignal.timeout(8000) });
+          out[k] = `${r.status} ${(await r.text()).slice(0, 120)}`;
+        } catch (e) { out[k] = String(e); }
+      }
       return [200, out];
     } catch (e) {
       return [200, { error: String(e) }];
