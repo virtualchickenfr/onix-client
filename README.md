@@ -96,6 +96,23 @@ serverless hosts that do not keep memory between requests are not suitable. Test
 Behind a reverse proxy (nginx, Caddy, a platform router) set `TRUST_PROXY=1` so rate limits use the real client
 address from `X-Forwarded-For`; without a proxy leave it off, because anyone can send that header.
 
+### Onix server on Cloudflare (free)
+
+`server/cloudflare` is the same server for Cloudflare Workers with a D1 database: free for about 100,000 requests a
+day (one heartbeat per player per minute), nothing to keep running, coins and purchases stored in the database.
+The workflow *Deploy Onix server* deploys it on every change to `server/`:
+
+1. Create a free account on cloudflare.com and open **Workers & Pages** once (this creates your `workers.dev` address).
+2. **My Profile → API Tokens → Create Token → "Edit Cloudflare Workers"**, add the permission **Account · D1 · Edit**,
+   create it and copy the token. Copy your **Account ID** from the Workers & Pages page.
+3. In the GitHub repository: **Settings → Secrets and variables → Actions → New repository secret**:
+   `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
+4. **Actions → Deploy Onix server → Run workflow**. The run shows the server address
+   (`https://onix-server.<name>.workers.dev`); put it into `DEFAULT_SERVER` in `launcher/lib/onixnet.js` and
+   `OnixClient.java` so everyone uses it without setting anything.
+
+Tests: `node server/cloudflare/test.mjs` (Node 22.5+).
+
 ### Cosmetics
 
 **1,801 original cosmetics** in seven slots – wear one per slot, all at once:
