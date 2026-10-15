@@ -1,7 +1,7 @@
 {
   "name": "onix-client-launcher",
   "productName": "Onix Client",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Launcher for Onix Client (Minecraft 1.21.1 + Fabric)",
   "main": "main.js",
   "author": "Onix",
@@ -59,8 +59,20 @@
     },
     "mac": {
       "target": [
-        "dmg",
-        "zip"
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
       ],
       "icon": "build/icon.png",
       "category": "public.app-category.games"

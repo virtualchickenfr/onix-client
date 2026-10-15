@@ -1,9 +1,10 @@
 name: Build Onix Client
 
 # Every push builds the mod and the installers (Actions → Artifacts).
-# A release – which installed launchers find on their next start and install (launcher/lib/updater.js) – is made by
-#   - Actions → Build Onix Client → Run workflow → enter a version such as 1.1.0, or
-#   - pushing a version tag (git tag v1.1.0 && git push origin v1.1.0).
+# A release – which installed launchers find on their next start and install (launcher/lib/updater.js) – is made when
+#   - a push to main raises "version" in launcher/package.json (for example 1.0.0 → 1.0.1), or
+#   - Actions → Build Onix Client → Run workflow is started with a version, or
+#   - a version tag is pushed (git tag v1.1.0 && git push origin v1.1.0).
 
 on:
   push:
@@ -19,13 +20,49 @@ on:
 permissions:
   contents: write
 
-env:
-  # empty for a normal build; the version (or "true" for a tag push) when this run publishes a release
-  RELEASE: ${{ startsWith(github.ref, 'refs/tags/v') || github.event.inputs.version }}
-  TAG: ${{ github.event.inputs.version && format('v{0}', github.event.inputs.version) || github.ref_name }}
+# never run two builds of the same branch at once
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.plan.outputs.version }}
+      release: ${{ steps.plan.outputs.release }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Decide version and whether to publish
+        id: plan
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          pkg=$(node -p "require('./launcher/package.json').version")
+          release=false
+          if [ -n "$INPUT_VERSION" ]; then
+            version="$INPUT_VERSION"; release=true
+          elif [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            version="${GITHUB_REF_NAME#v}"; release=true
+          else
+            version="$pkg"
+            if [ "$GITHUB_REF" = "refs/heads/main" ]; then
+              # publish when this version has no published release yet (a draft left by a failed run is retried)
+              state=$(gh release view "v$version" --repo "$GITHUB_REPOSITORY" --json isDraft -q .isDraft 2>/dev/null || echo missing)
+              if [ "$state" != "false" ]; then release=true; fi
+            fi
+          fi
+          if ! echo "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::The version must look like 1.2.3 (got '$version')"; exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "release=$release" >> "$GITHUB_OUTPUT"
+          echo "Version $version, release: $release"
+
   mod:
+    needs: plan
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -36,12 +73,12 @@ jobs:
       - name: Build mod
         working-directory: mod
         shell: bash
+        env:
+          VERSION: ${{ needs.plan.outputs.version }}
         run: |
           chmod +x gradlew
-          args="build --no-daemon --stacktrace"
-          if [ -n "$RELEASE" ] && [ "$RELEASE" != "false" ]; then args="$args -Pmod_version=${TAG#v}"; fi
           set +e
-          ./gradlew $args 2>&1 | tee build.log
+          ./gradlew build --no-daemon --stacktrace -Pmod_version="$VERSION" 2>&1 | tee build.log
           status=${PIPESTATUS[0]}
           set -e
           if [ "$status" -ne 0 ]; then
@@ -57,24 +94,23 @@ jobs:
   # one draft release that the three installer builds upload into; it is published at the end,
   # so launchers never see a release with files missing
   prepare-release:
-    if: ${{ startsWith(github.ref, 'refs/tags/v') || github.event.inputs.version }}
+    needs: plan
+    if: needs.plan.outputs.release == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Create draft release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: v${{ needs.plan.outputs.version }}
         run: |
-          if ! echo "${TAG#v}" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-            echo "::error::The version must look like 1.2.3 (got '${TAG#v}')"; exit 1
-          fi
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft -q .isDraft 2>/dev/null | grep -q false; then
-            echo "::error::Release $TAG already exists – use a higher version"; exit 1
+            echo "::error::Release $TAG already exists – raise the version"; exit 1
           fi
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
             gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --draft --target "$GITHUB_SHA" --title "Onix Client $TAG" --generate-notes
 
   launcher:
-    needs: [mod, prepare-release]
+    needs: [plan, mod, prepare-release]
     if: ${{ !cancelled() && needs.mod.result == 'success' && needs.prepare-release.result != 'failure' }}
     strategy:
       fail-fast: false
@@ -96,16 +132,14 @@ jobs:
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.plan.outputs.version }}
+          RELEASE: ${{ needs.plan.outputs.release }}
         run: |
           # the updater finds new versions in this repository's releases
           npm pkg set repository.type=git "repository.url=https://github.com/${GITHUB_REPOSITORY}.git"
+          npm pkg set version="$VERSION"
           npm install
-          if [ -n "$RELEASE" ] && [ "$RELEASE" != "false" ]; then
-            npm pkg set version="${TAG#v}"
-            npm run release
-          else
-            npm run dist
-          fi
+          if [ "$RELEASE" = "true" ]; then npm run release; else npm run dist; fi
       - uses: actions/upload-artifact@v4
         with:
           name: onix-client-${{ matrix.os }}
@@ -115,8 +149,8 @@ jobs:
             launcher/dist/*.AppImage
 
   publish-release:
-    needs: [mod, launcher]
-    if: ${{ startsWith(github.ref, 'refs/tags/v') || github.event.inputs.version }}
+    needs: [plan, mod, launcher]
+    if: needs.plan.outputs.release == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
@@ -126,6 +160,7 @@ jobs:
       - name: Add the mod jar and publish the release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: v${{ needs.plan.outputs.version }}
         run: |
           gh release upload "$TAG" $(ls mod/onix-client-*.jar | grep -v -- -sources) --repo "$GITHUB_REPOSITORY" --clobber
           gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false --latest
