@@ -41,8 +41,12 @@ function set(patch) {
   notify(view());
 }
 
-function init(send) {
+let automatic = () => true;
+
+/** send: pushes the state to the window; isAutomatic: whether the user lets the launcher check by itself. */
+function init(send, isAutomatic) {
   notify = send;
+  if (isAutomatic) automatic = isAutomatic;
   if (!app.isPackaged) return set({ status: 'disabled', error: 'Updates are only checked in the installed launcher.' });
   if (!autoUpdater) return set({ status: 'disabled', error: 'The update module is missing.' });
   if (process.platform === 'linux' && !process.env.APPIMAGE) return set({ status: 'disabled', error: 'Only the AppImage can update itself.' });
@@ -61,7 +65,9 @@ function init(send) {
     if (state.status !== 'ready') set({ status: 'error', error: err && err.message ? err.message.split('\n')[0] : String(err) });
   });
   ready = true;
-  setInterval(() => check(), RECHECK_MS).unref();
+  setInterval(() => {
+    if (automatic()) check();
+  }, RECHECK_MS).unref();
 }
 
 /** Looks for a new version (on every start, then every few hours, or when asked). */

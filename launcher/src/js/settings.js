@@ -17,6 +17,12 @@ async function initSettings() {
   const fast = $('#set-fast');
   fast.checked = s.fastStart !== false;
   fast.addEventListener('change', () => api.setSettings({ fastStart: fast.checked }));
+  const auto = $('#set-autoupdate');
+  auto.checked = s.autoUpdate !== false;
+  auto.addEventListener('change', () => {
+    api.setSettings({ autoUpdate: auto.checked });
+    toast(auto.checked ? 'The launcher checks for updates when it starts' : 'Automatic update checks are off – use Check now');
+  });
   const java = $('#set-java');
   java.value = s.javaPath || '';
   java.addEventListener('change', () => api.setSettings({ javaPath: java.value.trim() }));

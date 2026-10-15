@@ -512,3 +512,32 @@ public class ExampleModule extends Module {
 
 To let the importer recognise the module, add its names from other clients to `MODULE_ALIASES` in
 `launcher/lib/importer.js`.
+
+## License
+
+Onix Client is free and open source under the [MIT License](LICENSE). The Inter font keeps its own SIL Open Font
+License (included next to the font files).
+
+## Privacy
+
+No analytics, tracking or advertising. The launcher and the mod only talk to Microsoft/Minecraft, Fabric, Modrinth,
+Adoptium, GitHub (launcher updates, can be turned off), mc-heads.net and – only if you set one – your Onix server.
+The full list, with what is sent and why, is in [PRIVACY.md](PRIVACY.md). The Windows installer shows this too.
+
+## Code signing policy
+
+Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by
+[SignPath Foundation](https://signpath.org).
+
+- Committers and reviewers: [virtualchickenfr](https://github.com/virtualchickenfr)
+- Approvers: [virtualchickenfr](https://github.com/virtualchickenfr)
+
+Only installers built by this repository's GitHub workflow from its own source are signed, and every signing
+request is approved by hand. Privacy policy: see [PRIVACY.md](PRIVACY.md).
+
+**Setting up signing** (once): after SignPath has accepted the project, add the GitHub.com trusted build system to
+the SignPath project, use [.signpath/artifact-configuration.xml](.signpath/artifact-configuration.xml) as its artifact
+configuration, and in the GitHub repository add the secret `SIGNPATH_API_TOKEN` and the variable
+`SIGNPATH_ORGANIZATION_ID` (*Settings → Secrets and variables → Actions*); `SIGNPATH_PROJECT_SLUG` and
+`SIGNPATH_POLICY_SLUG` are optional (defaults `onix-client` and `release-signing`). From then on every release waits
+for the approval in SignPath and publishes the signed Windows installer. Until then releases are unsigned.

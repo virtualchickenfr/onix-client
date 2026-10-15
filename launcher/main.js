@@ -33,6 +33,7 @@ const DEFAULT_SETTINGS = {
   theme: 'onyx',
   background: 'onix',
   onixServer: '',
+  autoUpdate: true,
 };
 
 /** Writes design choices into config/onix/client.json of every profile, so game and launcher match. */
@@ -628,8 +629,10 @@ app.whenReady().then(() => {
   ipcMain.handle('update:download', safe(() => updater.openDownload()));
 
   createWindow();
-  updater.init((v) => send('update:status', v));
-  win.webContents.once('did-finish-load', () => updater.check());
+  updater.init((v) => send('update:status', v), () => settings().autoUpdate !== false);
+  win.webContents.once('did-finish-load', () => {
+    if (settings().autoUpdate !== false) updater.check();
+  });
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });

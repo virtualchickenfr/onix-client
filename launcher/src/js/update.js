@@ -46,7 +46,7 @@ function renderUpdate(v) {
       text.textContent = `v${v.current} · ${v.error}`;
       break;
     default:
-      text.textContent = `v${v.current} · The launcher looks for a new version every time it starts.`;
+      text.textContent = `v${v.current} · The switch turns the automatic check on every start on or off.`;
   }
 }
 

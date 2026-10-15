@@ -19,6 +19,7 @@ on:
 
 permissions:
   contents: write
+  actions: read
 
 # never run two builds of the same branch at once
 concurrency:
@@ -134,12 +135,45 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ needs.plan.outputs.version }}
           RELEASE: ${{ needs.plan.outputs.release }}
+          # with SignPath set up, the Windows installer is signed first and uploaded by the steps below
+          SIGN: ${{ matrix.os == 'windows-latest' && vars.SIGNPATH_ORGANIZATION_ID != '' }}
         run: |
           # the updater finds new versions in this repository's releases
           npm pkg set repository.type=git "repository.url=https://github.com/${GITHUB_REPOSITORY}.git"
           npm pkg set version="$VERSION"
           npm install
-          if [ "$RELEASE" = "true" ]; then npm run release; else npm run dist; fi
+          if [ "$RELEASE" = "true" ] && [ "$SIGN" != "true" ]; then npm run release; else npm run dist; fi
+
+      # ---- Windows code signing with SignPath (free for open source, see README → Code signing policy)
+      - name: Upload the unsigned installer for signing
+        id: unsigned
+        if: matrix.os == 'windows-latest' && needs.plan.outputs.release == 'true' && vars.SIGNPATH_ORGANIZATION_ID != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-unsigned
+          path: launcher/dist/*.exe
+      - name: Sign the installer
+        if: steps.unsigned.outcome == 'success'
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG || 'onix-client' }}
+          signing-policy-slug: ${{ vars.SIGNPATH_POLICY_SLUG || 'release-signing' }}
+          github-artifact-id: ${{ steps.unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: launcher/dist-signed
+      - name: Add the signed installer to the release
+        if: steps.unsigned.outcome == 'success'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.plan.outputs.version }}
+        run: |
+          exe=$(ls launcher/dist-signed/*.exe | head -n 1)
+          node .github/latest-yml.js "$exe" "$VERSION" launcher/dist-signed/latest.yml
+          gh release upload "v$VERSION" "$exe" launcher/dist-signed/latest.yml --repo "$GITHUB_REPOSITORY" --clobber
+          cp "$exe" launcher/dist/
       - uses: actions/upload-artifact@v4
         with:
           name: onix-client-${{ matrix.os }}
