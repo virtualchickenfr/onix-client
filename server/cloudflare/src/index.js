@@ -221,6 +221,15 @@ async function withAccount(env, db, body, action) {
 
 const routes = {
   'GET /': async (env, db) => [200, { name: 'onix-presence', online: (await db.prepare('SELECT COUNT(*) AS n FROM online WHERE seen > ?').bind(Date.now() - ONLINE_TTL_MS).first()).n }],
+  // how the Mojang session server answers this Worker (a random serverId must give 204)
+  'GET /v1/diag/mojang': async () => {
+    try {
+      const res = await fetch(`https://sessionserver.mojang.com/session/minecraft/hasJoined?username=Notch&serverId=${randomHex(16)}`, { signal: AbortSignal.timeout(8000) });
+      return [200, { status: res.status, body: (await res.text()).slice(0, 200) }];
+    } catch (e) {
+      return [200, { error: String(e) }];
+    }
+  },
   'GET /v1/hello': async (env) => [200, { name: 'onix-presence', version: 2, verify: verifyOn(env), economy: true, host: 'cloudflare' }],
 
   'POST /v1/session/start': async (env, db, body) => {
