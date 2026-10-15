@@ -1,0 +1,11 @@
+name: Server diagnostics
+on:
+  push:
+    paths: ['.github/diag-trigger']
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          sleep 60
+          echo "::notice::$(curl -sS https://mconixclient.virtualchickenfr.workers.dev/v1/diag/mojang | head -c 500)"
