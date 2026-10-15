@@ -3,7 +3,7 @@ package dev.onix.client.gui;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.Drawable;
 import net.minecraft.client.gui.Element;
-import net.minecraft.client.gui.WorldGenerationProgressTracker;
+import net.minecraft.server.WorldGenerationProgressTracker;
 import net.minecraft.client.gui.screen.MessageScreen;
 import net.minecraft.client.gui.screen.ProgressScreen;
 import net.minecraft.client.gui.screen.Screen;
