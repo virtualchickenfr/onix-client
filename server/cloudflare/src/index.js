@@ -224,8 +224,14 @@ const routes = {
   // how the Mojang session server answers this Worker (a random serverId must give 204)
   'GET /v1/diag/mojang': async () => {
     try {
-      const res = await fetch(`https://sessionserver.mojang.com/session/minecraft/hasJoined?username=Notch&serverId=${randomHex(16)}`, { signal: AbortSignal.timeout(8000) });
-      return [200, { status: res.status, body: (await res.text()).slice(0, 200) }];
+      const out = {};
+      for (const [k, headers] of Object.entries({ plain: {}, ua: { 'user-agent': 'OnixServer/1.0 (+https://github.com/virtualchickenfr/onix-client)', accept: 'application/json' } })) {
+        const res = await fetch(`https://sessionserver.mojang.com/session/minecraft/hasJoined?username=Notch&serverId=${randomHex(16)}`, { headers, signal: AbortSignal.timeout(8000) });
+        out[k] = res.status;
+      }
+      const p = await fetch('https://api.minecraftservices.com/minecraft/profile/lookup/name/Notch', { headers: { 'user-agent': 'OnixServer/1.0' } });
+      out.services = p.status;
+      return [200, out];
     } catch (e) {
       return [200, { error: String(e) }];
     }
