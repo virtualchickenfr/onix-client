@@ -45,7 +45,7 @@ public class OnixClient implements ClientModInitializer {
      * The Onix server this build uses when the player has not set one (Settings → Onix Server):
      * badges, coins, the cosmetics shop and gifts. Put the address of your server (see /server) here.
      */
-    public static final String DEFAULT_SERVER = "";
+    public static final String DEFAULT_SERVER = "https://mconixclient.virtualchickenfr.workers.dev";
     public static final Logger LOGGER = LoggerFactory.getLogger(NAME);
 
     public static OnixConfig CONFIG;

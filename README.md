@@ -108,7 +108,7 @@ The workflow *Deploy Onix server* deploys it on every change to `server/`:
 3. In the GitHub repository: **Settings → Secrets and variables → Actions → New repository secret**:
    `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
 4. **Actions → Deploy Onix server → Run workflow**. The run shows the server address
-   (`https://onix-server.<name>.workers.dev`); put it into `DEFAULT_SERVER` in `launcher/lib/onixnet.js` and
+   (`https://<worker-name>.<name>.workers.dev`, the official one is https://mconixclient.virtualchickenfr.workers.dev); put it into `DEFAULT_SERVER` in `launcher/lib/onixnet.js` and
    `OnixClient.java` so everyone uses it without setting anything.
 
 Tests: `node server/cloudflare/test.mjs` (Node 22.5+).

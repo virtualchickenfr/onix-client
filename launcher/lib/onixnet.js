@@ -8,7 +8,7 @@
  */
 
 /** Same as OnixClient.DEFAULT_SERVER in the mod: the server used when none is set. */
-const DEFAULT_SERVER = '';
+const DEFAULT_SERVER = 'https://mconixclient.virtualchickenfr.workers.dev';
 const MOJANG_JOIN = 'https://sessionserver.mojang.com/session/minecraft/join';
 
 /** "server|uuid" → token */
