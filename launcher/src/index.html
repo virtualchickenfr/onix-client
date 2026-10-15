@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; img-src 'self' data: https://mc-heads.net https://cdn.modrinth.com; style-src 'self' 'unsafe-inline'; font-src 'self'; script-src 'self'">
+  <title>Onix</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></symbol>
+      <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5z"/><path d="m3 13 9 5 9-5"/></symbol>
+      <symbol id="i-shirt" viewBox="0 0 24 24"><path d="M8 3 4 5.5 2.5 10l3 1.5V21h13v-9.5l3-1.5L20 5.5 16 3c-.7 1.7-2.2 2.5-4 2.5S8.7 4.7 8 3z"/></symbol>
+      <symbol id="i-puzzle" viewBox="0 0 24 24"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></symbol>
+      <symbol id="i-import" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></symbol>
+      <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></symbol>
+      <symbol id="i-terminal" viewBox="0 0 24 24"><path d="m5 8 4 4-4 4M12 17h7"/></symbol>
+      <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15a.5.5 0 0 0 .77.42l11.5-7.5a.5.5 0 0 0 0-.84L7.77 4.08A.5.5 0 0 0 7 4.5z" fill="currentColor" stroke="none"/></symbol>
+      <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+      <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></symbol>
+      <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5M5 15v3.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V15"/></symbol>
+      <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.5h8.5A1.5 1.5 0 0 1 21 9v9.5a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5z"/></symbol>
+      <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.5-4.5L4 8"/><path d="M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.5 4.5L20 16"/><path d="M20 20v-4h-4"/></symbol>
+      <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+      <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+      <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></symbol>
+      <symbol id="i-plug" viewBox="0 0 24 24"><path d="M9 3v5M15 3v5"/><path d="M6 8h12v3a6 6 0 0 1-12 0z"/><path d="M12 17v4"/></symbol>
+      <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11"/><path d="m7 11 5 5 5-5"/><path d="M5 20h14"/></symbol>
+      <symbol id="i-send" viewBox="0 0 24 24"><path d="M4 12 20 4l-6 16-3-7z"/><path d="m11 13 9-9"/></symbol>
+      <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
+    </defs>
+  </svg>
+
+  <!-- start-up animation, removed once the launcher is ready -->
+  <div class="boot" id="boot" role="status" aria-live="polite">
+    <span class="gem"><svg viewBox="0 0 100 100" aria-hidden="true"><polygon style="--i:0" points="50,4 89.84,27 66.45,40.5 50,31"/><polygon style="--i:1" points="89.84,27 89.84,73 66.45,59.5 66.45,40.5"/><polygon style="--i:2" points="89.84,73 50,96 50,69 66.45,59.5"/><polygon style="--i:3" points="50,96 10.16,73 33.55,59.5 50,69"/><polygon style="--i:4" points="10.16,73 10.16,27 33.55,40.5 33.55,59.5"/><polygon style="--i:5" points="10.16,27 50,4 50,31 33.55,40.5"/></svg></span>
+    <div class="boot-word">ONIX</div>
+    <div class="boot-bar"><i></i></div>
+    <div class="boot-status" id="boot-status">Starting</div>
+  </div>
+  <template id="gem-template"><span class="gem"><svg viewBox="0 0 100 100" aria-hidden="true"><polygon style="--i:0" points="50,4 89.84,27 66.45,40.5 50,31"/><polygon style="--i:1" points="89.84,27 89.84,73 66.45,59.5 66.45,40.5"/><polygon style="--i:2" points="89.84,73 50,96 50,69 66.45,59.5"/><polygon style="--i:3" points="50,96 10.16,73 33.55,59.5 50,69"/><polygon style="--i:4" points="10.16,73 10.16,27 33.55,40.5 33.55,59.5"/><polygon style="--i:5" points="10.16,27 50,4 50,31 33.55,40.5"/></svg></span></template>
+
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand drag">
+        <img src="assets/logo.png" alt="">
+        <span class="brand-name">Onix</span>
+        <span class="brand-tag">Client</span>
+      </div>
+
+      <nav class="nav">
+        <button class="nav-item active" data-view="home"><svg><use href="#i-home"/></svg>Home</button>
+        <div class="nav-label">Library</div>
+        <button class="nav-item" data-view="profiles"><svg><use href="#i-layers"/></svg>Profiles</button>
+        <button class="nav-item" data-view="mods"><svg><use href="#i-puzzle"/></svg>Mods</button>
+        <button class="nav-item" data-view="cosmetics"><svg><use href="#i-shirt"/></svg>Cosmetics</button>
+        <div class="nav-label">Tools</div>
+        <button class="nav-item" data-view="import"><svg><use href="#i-import"/></svg>Import</button>
+        <button class="nav-item" data-view="install"><svg><use href="#i-plug"/></svg>Install</button>
+        <button class="nav-item" data-view="console"><svg><use href="#i-terminal"/></svg>Console</button>
+      </nav>
+
+      <div class="sidebar-foot">
+        <button class="nav-item" data-view="settings"><svg><use href="#i-settings"/></svg>Settings</button>
+        <div class="account" id="account"></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar drag">
+        <div class="crumb" id="crumb">Home</div>
+        <button class="update-pill no-drag" id="update-pill" hidden></button>
+        <button class="palette-trigger no-drag" id="btn-palette" title="Search commands"><svg><use href="#i-search"/></svg><span>Search</span><kbd>Ctrl K</kbd></button>
+        <div class="window-controls no-drag">
+          <button id="btn-min" aria-label="Minimize"><svg viewBox="0 0 12 12"><path d="M2.5 6h7"/></svg></button>
+          <button id="btn-close" class="close" aria-label="Close"><svg viewBox="0 0 12 12"><path d="M3 3l6 6M9 3l-6 6"/></svg></button>
+        </div>
+      </header>
+
+      <!-- HOME -->
+      <section class="view active" id="view-home">
+        <div class="hero">
+          <div class="hero-bg"></div>
+          <div class="hero-grain"></div>
+          <div class="hero-fade"></div>
+          <div class="particles" id="particles" aria-hidden="true"></div>
+          <div class="hero-content">
+            <span class="eyebrow" id="eyebrow">Minecraft 1.21.1 · Fabric</span>
+            <h1>Onix</h1>
+            <p>The PvP client for Java Edition. 116 modules, each one configurable down to the last detail.</p>
+          </div>
+        </div>
+
+        <div class="home-cards">
+          <button class="home-card" data-goto="import">
+            <svg><use href="#i-import"/></svg>
+            <div><b>Move from Lunar &amp; co.</b><span>Bring over settings, servers, worlds and mods</span></div>
+            <svg class="arrow"><use href="#i-arrow"/></svg>
+          </button>
+          <button class="home-card" data-goto="cosmetics">
+            <svg><use href="#i-shirt"/></svg>
+            <div><b>Cosmetics</b><span>Over 1,600 capes, hats, wings, auras and pets</span></div>
+            <svg class="arrow"><use href="#i-arrow"/></svg>
+          </button>
+          <button class="home-card" data-goto="settings">
+            <svg><use href="#i-settings"/></svg>
+            <div><b>Theme &amp; background</b><span id="home-theme">Onyx</span></div>
+            <svg class="arrow"><use href="#i-arrow"/></svg>
+          </button>
+        </div>
+
+        <div class="dock">
+          <div class="picker">
+            <button class="picker-btn" id="picker-btn">
+              <span class="dot" id="picker-dot"></span>
+              <span class="picker-text"><b id="picker-name">Profile</b><span id="picker-meta"></span></span>
+              <svg class="chev"><use href="#i-chevron-down"/></svg>
+            </button>
+            <div class="popover" id="picker-pop"></div>
+          </div>
+          <div class="launch">
+            <div class="launch-row"><span class="launch-status" id="launch-status">Ready</span><span class="launch-pct" id="launch-pct"></span></div>
+            <div class="bar"><div class="bar-fill" id="bar-fill"></div></div>
+            <div class="launch-detail" id="launch-detail"></div>
+          </div>
+          <button class="play" id="btn-play"><svg><use href="#i-play"/></svg><span>Play</span></button>
+        </div>
+      </section>
+
+      <!-- PROFILES -->
+      <section class="view" id="view-profiles">
+        <div class="page-head">
+          <div><h2>Profiles</h2><p>Every profile has its own mods, worlds, settings and cosmetics. Share them as Modrinth or CurseForge packs.</p></div>
+          <div class="btn-row">
+            <button class="btn" id="btn-modpacks"><svg><use href="#i-search"/></svg>Modpacks</button>
+            <button class="btn" id="btn-import-pack"><svg><use href="#i-upload"/></svg>Import Pack</button>
+            <button class="btn primary" id="btn-new-profile"><svg><use href="#i-plus"/></svg>New Profile</button>
+          </div>
+        </div>
+        <div class="profile-grid" id="profile-grid"></div>
+      </section>
+
+      <!-- MODS -->
+      <section class="view" id="view-mods">
+        <div class="page-head">
+          <div><h2>Mods</h2><p id="mods-sub">Fabric mods for 1.21.1. Drop your own mods into the folder.</p></div>
+          <div class="btn-row">
+            <button class="btn" id="btn-mods-folder"><svg><use href="#i-folder"/></svg>Open Folder</button>
+            <button class="btn primary" id="btn-mods-browse"><svg><use href="#i-search"/></svg>Add from Modrinth</button>
+          </div>
+        </div>
+        <div class="table" id="mod-list"></div>
+      </section>
+
+      <!-- COSMETICS -->
+      <section class="view" id="view-cosmetics">
+        <div class="page-head">
+          <div><h2>Cosmetics</h2><p id="cos-sub">Only visible to you.</p></div>
+          <div class="btn-row">
+            <button class="cos-wallet" id="cos-wallet" title="1 coin for every minute you play with Onix"><i class="coin"></i><b id="cos-coins">–</b><span id="cos-wallet-sub">Connecting…</span></button>
+            <button class="btn" id="cos-random"><svg><use href="#i-refresh"/></svg>Random Outfit</button>
+            <button class="btn" id="cos-clear"><svg><use href="#i-x"/></svg>Remove All</button>
+          </div>
+        </div>
+        <div class="cosmetics">
+          <div class="cos-stage">
+            <canvas id="cos-stage" width="440" height="560" title="Drag to turn"></canvas>
+            <div class="cos-stage-hint">Drag to turn · hover an item to try it on</div>
+            <div class="cos-worn" id="cos-worn"></div>
+            <div class="cos-partner" id="cos-cosmetica"></div>
+          </div>
+          <div class="cos-browser">
+            <div class="cos-tabs" id="cos-tabs"></div>
+            <div class="cos-filters">
+              <label class="cos-search"><svg><use href="#i-search"/></svg><input id="cos-query" placeholder="Search cosmetics…" spellcheck="false"></label>
+              <select class="input sm" id="cos-own">
+                <option value="">Everything</option><option value="owned">Owned</option><option value="shop">Not owned yet</option>
+              </select>
+              <select class="input sm" id="cos-tier">
+                <option value="">All tiers</option><option value="common">Common</option><option value="rare">Rare</option>
+                <option value="epic">Epic</option><option value="legendary">Legendary</option>
+              </select>
+            </div>
+            <div class="cos-swatches" id="cos-swatches"></div>
+            <div class="cos-count" id="cos-count"></div>
+            <div class="cos-grid" id="cos-grid"></div>
+            <div class="cos-more" id="cos-more"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- IMPORT -->
+      <section class="view" id="view-import">
+        <div class="page-head">
+          <div><h2>Import</h2><p>Bring everything from other clients and launchers into an Onix profile.</p></div>
+          <div class="btn-row">
+            <button class="btn" id="btn-import-folder"><svg><use href="#i-folder"/></svg>Choose Folder</button>
+            <button class="btn" id="btn-import-scan"><svg><use href="#i-refresh"/></svg>Scan Again</button>
+          </div>
+        </div>
+        <div class="note"><svg><use href="#i-info"/></svg>
+          <span>Settings, key binds, servers, worlds, resource and shader packs, screenshots and compatible Fabric mods are copied completely.
+          Which client modules (Keystrokes, Zoom, …) were enabled in Lunar, Feather, Badlion or LabyMod is detected from their files. This part is in beta.
+          Cosmetics from other clients belong to your account there and cannot be transferred.</span></div>
+        <div class="source-grid" id="source-grid"></div>
+      </section>
+
+      <!-- INSTALL -->
+      <section class="view" id="view-install">
+        <div class="page-head">
+          <div><h2>Install</h2><p>Bring Onix and your profiles into games and launchers outside the Onix Launcher.</p></div>
+          <div class="btn-row"><button class="btn" id="btn-install-scan"><svg><use href="#i-refresh"/></svg>Scan Again</button></div>
+        </div>
+
+        <div class="install-options">
+          <label class="field-inline"><span>Profiles from</span><select class="input sm" id="ins-profile"></select></label>
+          <label class="field-inline"><span>Include Fabric API</span><label class="switch"><input type="checkbox" id="ins-fapi" checked><i></i></label></label>
+        </div>
+
+        <div class="group-label">Running now</div>
+        <div class="table" id="running-list"></div>
+        <p class="hint">A Fabric mod has to be there when Minecraft starts, so Onix is never injected into a running game.
+          If a game already has Onix, <b>Send Profile</b> loads your profile into it instantly.</p>
+
+        <div class="group-label">Other launchers</div>
+        <div class="table" id="target-list"></div>
+
+        <div class="group-label">Download the mod</div>
+        <div class="dl-card">
+          <div class="ticon"><svg><use href="#i-download"/></svg></div>
+          <div class="tmain"><b id="dl-name">Onix Client</b><span id="dl-meta">For Fabric · Minecraft 1.21.1</span></div>
+          <label class="field-inline"><span>With Fabric API</span><label class="switch"><input type="checkbox" id="dl-fapi" checked><i></i></label></label>
+          <button class="btn primary" id="btn-dl"><svg><use href="#i-download"/></svg>Download</button>
+        </div>
+        <p class="hint">Put the files into the <span class="mono">mods</span> folder of any Fabric 1.21.1 installation
+          (Fabric Loader 0.15 or newer). Press Right Shift in game to open Onix.</p>
+      </section>
+
+      <!-- SETTINGS -->
+      <section class="view" id="view-settings">
+        <div class="page-head">
+          <div><h2>Settings</h2><p>Applies to every profile. Memory and servers are set per profile.</p></div>
+        </div>
+        <div class="group-label">Theme</div>
+        <div class="themes" id="themes"></div>
+        <p class="hint">Themes are shared with the game: a theme you make here shows up in the Onix menu and the other way round.</p>
+        <div class="group-label">Background</div>
+        <div class="backgrounds" id="backgrounds"></div>
+        <p class="hint">Used here and on the in-game title screen. Your own images: put PNG files into
+          <span class="mono">config/onix/backgrounds</span> of a profile.</p>
+        <div class="group-label">In-game sky</div>
+        <div class="group">
+          <div class="row">
+            <div class="row-text"><b>Custom sky</b><span>Replaces the overworld sky. Day and night skies fade into each other with the time of day.</span></div>
+            <label class="switch"><input type="checkbox" id="sky-on"><i></i></label>
+          </div>
+        </div>
+        <div class="sky-head">
+          <div class="segmented" id="sky-mode">
+            <button data-mode="day" class="active">Day sky <b id="sky-day-name"></b></button>
+            <button data-mode="night">Night sky <b id="sky-night-name"></b></button>
+          </div>
+        </div>
+        <div class="backgrounds skies" id="skies"></div>
+        <p class="hint">Applies to every profile. If Minecraft is running with Onix, the new sky shows up right away.
+          More options (brightness, rotation, fog) are in the Custom Sky module in game.</p>
+        <div class="group-label">Launcher</div>
+        <div class="group">
+          <div class="row">
+            <div class="row-text"><b>Hide while playing</b><span>Comes back as soon as Minecraft closes.</span></div>
+            <label class="switch"><input type="checkbox" id="set-hide"><i></i></label>
+          </div>
+          <div class="row">
+            <div class="row-text"><b>Fast start</b><span>Reuses your sign-in for a few hours, checks mod updates twice a day and caches Java classes between starts.</span></div>
+            <label class="switch"><input type="checkbox" id="set-fast"><i></i></label>
+          </div>
+          <div class="row">
+            <div class="row-text"><b>Launcher updates</b><span id="update-text">The launcher looks for a new version every time it starts.</span></div>
+            <button class="btn" id="update-check"><svg><use href="#i-refresh"/></svg>Check now</button>
+          </div>
+          <div class="row">
+            <div class="row-text"><b>Onix server</b><span>Badges, coins, the cosmetics shop and gifts. Leave empty for the built-in server.</span></div>
+            <input class="input" id="set-server" placeholder="https://onix.example.com" spellcheck="false">
+          </div>
+          <div class="row">
+            <div class="row-text"><b>Java path</b><span>Leave empty to download Java 21 automatically.</span></div>
+            <input class="input" id="set-java" placeholder="Automatic" spellcheck="false">
+          </div>
+          <div class="row">
+            <div class="row-text"><b>Folders</b><span class="mono" id="game-dir"></span></div>
+            <div class="btn-row">
+              <button class="btn sm" data-folder="profile">Profile</button>
+              <button class="btn sm" data-folder="screenshots">Screenshots</button>
+              <button class="btn sm" data-folder="game">Launcher</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CONSOLE -->
+      <section class="view" id="view-console">
+        <div class="page-head">
+          <div><h2>Console</h2><p>Output of the launcher and Minecraft. Useful when something goes wrong.</p></div>
+          <div class="btn-row">
+            <button class="btn" id="btn-copy-log">Copy</button>
+            <button class="btn" id="btn-clear-log">Clear</button>
+          </div>
+        </div>
+        <pre class="log" id="log"></pre>
+      </section>
+    </main>
+  </div>
+
+  <!-- Dialog: profile -->
+  <div class="modal-backdrop" id="profile-modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="pf-title">
+      <div class="modal-head"><h3 id="pf-title">Profile</h3><button class="icon-btn" data-close><svg><use href="#i-x"/></svg></button></div>
+      <label class="field"><span>Name</span><input class="input" id="pf-name" maxlength="24" spellcheck="false"></label>
+      <div class="field"><span>Color</span><div class="swatches" id="pf-colors"></div></div>
+      <label class="field"><span>Memory <output id="pf-ram-out"></output></span><input type="range" id="pf-ram" min="1024" max="8192" step="512"></label>
+      <label class="field"><span>Join on launch</span><input class="input" id="pf-server" placeholder="Server address (optional)" spellcheck="false"></label>
+      <div class="field inline"><span>Sodium for higher FPS</span><label class="switch"><input type="checkbox" id="pf-perf"><i></i></label></div>
+      <div class="field inline" id="pf-copy-row"><span>Copy settings from the active profile</span><label class="switch"><input type="checkbox" id="pf-copy" checked><i></i></label></div>
+      <div class="modal-actions">
+        <button class="btn danger" id="pf-delete">Delete</button>
+        <div class="spacer"></div>
+        <button class="btn" data-close>Cancel</button>
+        <button class="btn primary" id="pf-save">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dialog: mods of a profile / Modrinth browser -->
+  <div class="modal-backdrop" id="mods-modal">
+    <div class="modal xl" role="dialog" aria-modal="true" aria-labelledby="mm-title">
+      <div class="modal-head">
+        <div class="mm-head"><span class="mm-dot" id="mm-dot"></span><div><h3 id="mm-title">Mods</h3><span id="mm-sub"></span></div></div>
+        <button class="icon-btn" data-close><svg><use href="#i-x"/></svg></button>
+      </div>
+      <div class="mm-bar">
+        <div class="segmented" id="mm-tabs">
+          <button data-tab="installed">Installed <em id="mm-count"></em></button>
+          <button data-tab="browse">Browse Modrinth</button>
+        </div>
+        <div class="mm-tools" id="mm-tools-installed">
+          <button class="btn sm" id="mm-updates"><svg><use href="#i-refresh"/></svg>Check for updates</button>
+        </div>
+        <div class="mm-tools" id="mm-tools-browse">
+          <input class="input sm" id="mm-query" placeholder="Search Fabric 1.21.1 mods…" spellcheck="false">
+          <select class="input sm mm-sort" id="mm-sort">
+            <option value="relevance">Relevance</option><option value="downloads">Downloads</option>
+            <option value="follows">Followers</option><option value="newest">Newest</option><option value="updated">Updated</option>
+          </select>
+        </div>
+      </div>
+      <div class="mm-body" id="mm-body"></div>
+      <div class="mm-foot"><span id="mm-status"></span><div class="progress mm-progress"><i id="mm-bar"></i></div></div>
+    </div>
+  </div>
+
+  <!-- Dialog: export a profile -->
+  <div class="modal-backdrop" id="shop-modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="shop-title">
+      <div class="modal-head"><h3 id="shop-title">Cosmetic</h3><button class="icon-btn" data-close><svg><use href="#i-x"/></svg></button></div>
+      <div class="shop-item">
+        <canvas id="shop-canvas" width="160" height="160"></canvas>
+        <div class="shop-info"><b id="shop-name"></b><span id="shop-tier"></span><span class="shop-price"><i class="coin"></i><b id="shop-price"></b></span></div>
+      </div>
+      <div class="shop-gift" id="shop-gift" hidden>
+        <label class="field"><span>Gift to (Minecraft name)</span><input class="input" id="shop-to" maxlength="16" spellcheck="false" placeholder="Player name"></label>
+        <label class="field"><span>Message (optional)</span><input class="input" id="shop-message" maxlength="80" spellcheck="false" placeholder="Have fun!"></label>
+      </div>
+      <div class="shop-status" id="shop-status"></div>
+      <div class="modal-actions">
+        <button class="btn" id="shop-mode">Gift instead</button>
+        <div class="spacer"></div>
+        <button class="btn" data-close>Cancel</button>
+        <button class="btn primary" id="shop-run">Buy</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="export-modal">
+    <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="ex-title">
+      <div class="modal-head"><h3 id="ex-title">Export Profile</h3><button class="icon-btn" data-close><svg><use href="#i-x"/></svg></button></div>
+      <div class="ex-formats" id="ex-formats">
+        <button class="ex-format" data-format="mrpack"><b>Modrinth pack</b><span>.mrpack · Modrinth App, Prism Launcher, ATLauncher, GDLauncher, Onix</span></button>
+        <button class="ex-format" data-format="curseforge"><b>CurseForge pack</b><span>.zip · CurseForge App – every mod packed inside</span></button>
+        <button class="ex-format" data-format="launcher"><b>Into another launcher</b><span>Copies Onix, mods and settings into an installed Fabric 1.21.1 instance</span></button>
+      </div>
+      <div id="ex-file">
+        <div class="ex-row">
+          <label class="field"><span>Pack name</span><input class="input" id="ex-name" maxlength="64" spellcheck="false"></label>
+          <label class="field ex-version"><span>Version</span><input class="input" id="ex-version" maxlength="32" value="1.0.0" spellcheck="false"></label>
+        </div>
+        <div class="group-label">Include</div>
+        <div class="checklist" id="ex-parts"></div>
+        <label class="check ex-onix"><input type="checkbox" id="ex-onix" checked><span class="t"><b>Onix Client mod</b><span>So the pack works in other launchers without installing Onix separately</span></span></label>
+      </div>
+      <div id="ex-launcher" hidden>
+        <div class="group-label">Installed instances</div>
+        <div class="ex-targets" id="ex-targets"></div>
+        <label class="check"><input type="checkbox" id="ex-settings"><span class="t"><b>Also copy options and server list</b><span>The instance's own files are kept as *.before-onix</span></span></label>
+      </div>
+      <div class="ex-result" id="ex-result" hidden></div>
+      <div class="modal-actions">
+        <span class="ex-status" id="ex-status"></span>
+        <div class="spacer"></div>
+        <button class="btn" data-close>Close</button>
+        <button class="btn primary" id="ex-run">Export</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dialog: theme editor -->
+  <div class="modal-backdrop" id="theme-modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="th-title">
+      <div class="modal-head"><h3 id="th-title">Theme</h3><button class="icon-btn" data-close><svg><use href="#i-x"/></svg></button></div>
+      <div class="theme-preview" id="th-preview">
+        <div class="tp-side"><i></i><i></i><i></i></div>
+        <div class="tp-body"><b>Onix</b><span>Preview</span><div class="tp-row"><em></em><u></u></div><div class="tp-row"><em></em><u class="on"></u></div></div>
+      </div>
+      <label class="field"><span>Name</span><input class="input" id="th-name" maxlength="24" spellcheck="false"></label>
+      <div class="color-grid">
+        <label class="color-field"><input type="color" id="th-accent"><span><b>Accent</b><small>Buttons, switches, highlights</small></span></label>
+        <label class="color-field"><input type="color" id="th-panel"><span><b>Background</b><small>Menus and windows</small></span></label>
+        <label class="color-field"><input type="color" id="th-sky"><span><b>Sky tint</b><small>Title screen and sky</small></span></label>
+        <label class="color-field"><input type="color" id="th-particle"><span><b>Particle color</b><small>Menu particles</small></span></label>
+      </div>
+      <label class="field"><span>Particle style</span>
+        <select class="input" id="th-ambient"><option>Sparks</option><option>Petals</option><option>Snow</option><option>Embers</option></select></label>
+      <div class="modal-actions">
+        <button class="btn danger" id="th-delete">Delete</button>
+        <div class="spacer"></div>
+        <button class="btn" data-close>Cancel</button>
+        <button class="btn primary" id="th-save">Save Theme</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dialog: import -->
+  <div class="modal-backdrop" id="import-modal">
+    <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="im-title">
+      <div class="modal-head">
+        <div class="im-head"><div class="avatar" id="im-avatar"></div><div><h3 id="im-title">Import</h3><span class="mono" id="im-path"></span></div></div>
+        <button class="icon-btn" data-close><svg><use href="#i-x"/></svg></button>
+      </div>
+      <div id="im-form">
+        <div class="group-label">What to bring over</div>
+        <div class="checklist" id="im-what"></div>
+        <div class="group-label">Into</div>
+        <div class="target">
+          <label class="radio"><input type="radio" name="im-target" value="new" checked><span>New profile</span><input class="input sm" id="im-new-name" maxlength="24" spellcheck="false"></label>
+          <label class="radio"><input type="radio" name="im-target" value="existing"><span>Existing profile</span><select class="input sm" id="im-existing"></select></label>
+        </div>
+        <div class="modal-actions">
+          <div class="spacer"></div>
+          <button class="btn" data-close>Cancel</button>
+          <button class="btn primary" id="im-run"><svg><use href="#i-import"/></svg>Import</button>
+        </div>
+      </div>
+      <div id="im-progress" hidden>
+        <div class="launch-row im-loading"><span id="im-gem"></span><span class="launch-status" id="im-status">Importing…</span></div>
+        <div class="bar"><div class="bar-fill" id="im-bar"></div></div>
+        <ul class="done-list" id="im-done"></ul>
+        <div class="modal-actions" id="im-finish" hidden>
+          <div class="spacer"></div>
+          <button class="btn" data-close>Close</button>
+          <button class="btn primary" id="im-play">Go to Profile</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="js/data.js"></script>
+  <script src="js/helpers.js"></script>
+  <script src="js/navigation.js"></script>
+  <script src="js/design.js"></script>
+  <script src="js/account.js"></script>
+  <script src="js/home.js"></script>
+  <script src="js/profiles.js"></script>
+  <script src="js/mods.js"></script>
+  <script src="js/packs.js"></script>
+  <script src="assets/cosmetics/catalog.js"></script>
+  <script src="js/cosrender.js"></script>
+  <script src="js/cosmetics.js"></script>
+  <script src="js/import.js"></script>
+  <script src="js/install.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/console.js"></script>
+  <script src="js/palette.js"></script>
+  <script src="js/dragdrop.js"></script>
+  <script src="js/motion.js"></script>
+  <script src="js/update.js"></script>
+  <script src="js/startup.js"></script>
+</body>
+</html>

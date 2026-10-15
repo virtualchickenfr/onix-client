@@ -1,0 +1,10 @@
+mod/.gradle/
+mod/build/
+mod/run/
+mod/out/
+launcher/node_modules/
+launcher/dist/
+*.log
+.DS_Store
+server/data/
+*.args

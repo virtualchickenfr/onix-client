@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "onix",
+  "version": "${version}",
+  "name": "Onix Client",
+  "description": "A clean, highly configurable PvP client for Minecraft 1.21.1: 116 modules, a fully themeable menu, HUD editor, cosmetics and profiles.",
+  "authors": [
+    "Onix"
+  ],
+  "license": "MIT",
+  "icon": "assets/onix/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "dev.onix.client.OnixClient"
+    ]
+  },
+  "mixins": [
+    "onix.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.15.0",
+    "minecraft": "~1.21.1",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}

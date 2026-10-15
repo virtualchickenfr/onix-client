@@ -1,0 +1,80 @@
+{
+  "name": "onix-client-launcher",
+  "productName": "Onix Client",
+  "version": "1.0.0",
+  "description": "Launcher for Onix Client (Minecraft 1.21.1 + Fabric)",
+  "main": "main.js",
+  "author": "Onix",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --publish never",
+    "release": "electron-builder --publish always"
+  },
+  "dependencies": {
+    "electron-updater": "^6.3.9",
+    "extract-zip": "^2.0.1",
+    "minecraft-launcher-core": "^3.18.2",
+    "msmc": "^5.0.5",
+    "tar": "^7.4.3",
+    "yauzl": "^3.1.3"
+  },
+  "devDependencies": {
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "dev.onix.client",
+    "productName": "Onix Client",
+    "directories": {
+      "buildResources": "build",
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "lib/**/*",
+      "src/**/*",
+      "build/icon.png"
+    ],
+    "extraResources": [
+      {
+        "from": "../mod/build/libs/",
+        "to": "mods",
+        "filter": [
+          "onix-client-*.jar",
+          "!*-sources.jar"
+        ]
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "Onix Client",
+      "differentialPackage": true
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "icon": "build/icon.png",
+      "category": "public.app-category.games"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "build/icon.png",
+      "category": "Game"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "releaseType": "draft"
+      }
+    ]
+  }
+}

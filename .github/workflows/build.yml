@@ -1,0 +1,111 @@
+name: Build Onix Client
+
+# Every push builds the mod and the installers (Actions → Artifacts).
+# Pushing a version tag (git tag v1.1.0 && git push origin v1.1.0) also publishes a GitHub Release.
+# Installed launchers look for it on every start and update themselves (launcher/lib/updater.js).
+
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  RELEASE: ${{ startsWith(github.ref, 'refs/tags/v') }}
+
+jobs:
+  mod:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Build mod
+        working-directory: mod
+        shell: bash
+        run: |
+          chmod +x gradlew
+          if [ "$RELEASE" = "true" ]; then
+            ./gradlew build --no-daemon -Pmod_version="${GITHUB_REF_NAME#v}"
+          else
+            ./gradlew build --no-daemon
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: onix-client-mod
+          path: mod/build/libs/onix-client-*.jar
+
+  # one draft release that the three installer builds upload into; it is published at the end,
+  # so launchers never see a release with files missing
+  prepare-release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
+            gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft --title "Onix Client $GITHUB_REF_NAME" --generate-notes
+
+  launcher:
+    needs: [mod, prepare-release]
+    if: ${{ !cancelled() && needs.mod.result == 'success' && needs.prepare-release.result != 'failure' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: onix-client-mod
+          path: mod/build/libs
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build installers
+        working-directory: launcher
+        shell: bash
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # the updater finds new versions in this repository's releases
+          npm pkg set repository.type=git "repository.url=https://github.com/${GITHUB_REPOSITORY}.git"
+          npm install
+          if [ "$RELEASE" = "true" ]; then
+            npm pkg set version="${GITHUB_REF_NAME#v}"
+            npm run release
+          else
+            npm run dist
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: onix-client-${{ matrix.os }}
+          path: |
+            launcher/dist/*.exe
+            launcher/dist/*.dmg
+            launcher/dist/*.AppImage
+
+  publish-release:
+    needs: [mod, launcher]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: onix-client-mod
+          path: mod
+      - name: Add the mod jar and publish the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "$GITHUB_REF_NAME" $(ls mod/onix-client-*.jar | grep -v -- -sources) --repo "$GITHUB_REPOSITORY" --clobber
+          gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft=false --latest
