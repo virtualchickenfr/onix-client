@@ -407,7 +407,7 @@ Auto Tool is not allowed on some servers. Onix contains no cheats: no reach, aim
   |---|---|
   | Lunar Client | `.minecraft` + `~/.lunarclient/settings` |
   | Feather Client | `%APPDATA%/.feather` |
-  | Dawn | `%APPDATA%/.dawn` and similar (or *Choose Folder*) |
+  | Dawn | every profile in `%APPDATA%/.dawn/profiles` as its own entry (incl. worlds and servers of sync groups), or *Choose Folder* |
   | Badlion | `.minecraft` + `%APPDATA%/Badlion Client` |
   | LabyMod | `.minecraft/labymod-neo` |
   | Minecraft Launcher | `.minecraft` |
