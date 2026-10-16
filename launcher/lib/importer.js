@@ -13,7 +13,9 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
-const MC_VERSION = '1.21.1';
+const versions = require('./versions');
+
+const MC_VERSION = versions.DEFAULT;
 const SKIP_MOD_IDS = new Set(['onix', 'fabric-api', 'fabricloader', 'minecraft', 'java', 'sodium']);
 
 // ------------------------------------------------------------------ locations
@@ -279,50 +281,62 @@ function extractPackJars(packPath) {
 }
 
 async function analyzeDawnpacks(dirs) {
-  const compatible = [];
-  const incompatible = [];
+  const fabric = [];
+  const other = [];
   const packs = findDawnpacks(dirs);
   for (const pack of packs) {
     const packName = path.basename(pack);
     for (const jar of await extractPackJars(pack)) {
       const meta = await readFabricModJson(jar);
       const file = path.basename(jar);
-      if (!meta) { incompatible.push({ file, reason: `Not a Fabric mod (from ${packName})` }); continue; }
+      if (!meta) { other.push({ file, reason: `Not a Fabric mod (from ${packName})` }); continue; }
       if (SKIP_MOD_IDS.has(meta.id) || meta.environment === 'server') continue;
-      const mc = meta.depends && meta.depends.minecraft;
-      if (!matchesVersion(mc, MC_VERSION)) {
-        incompatible.push({ file, name: meta.name || meta.id, reason: `For Minecraft ${[].concat(mc).join(', ')} (from ${packName})` });
-        continue;
-      }
-      compatible.push({ file, id: meta.id, name: meta.name || meta.id, version: meta.version, srcPath: jar, fromPack: packName });
+      fabric.push({ file, id: meta.id, name: meta.name || meta.id, version: meta.version, srcPath: jar, fromPack: packName, mc: meta.depends && meta.depends.minecraft });
     }
   }
-  return { packs: packs.length, compatible, incompatible };
+  return { packs: packs.length, fabric, other };
 }
 
-async function analyzeMods(gameDir, skipFiles = new Set()) {
-  const modsDir = path.join(gameDir, 'mods');
+/** Fabric mods of a mods folder (with the Minecraft versions they accept) and the jars that are not Fabric mods. */
+async function analyzeMods(modsDir, skipFiles = new Set()) {
   const jars = list(modsDir).filter((e) => e.isFile() && e.name.endsWith('.jar') && !skipFiles.has(e.name));
-  const compatible = [];
-  const incompatible = [];
+  const fabric = [];
+  const other = [];
   const metas = await mapLimit(jars, 8, (jar) => readFabricModJson(path.join(modsDir, jar.name)));
   for (const [i, jar] of jars.entries()) {
-    const file = path.join(modsDir, jar.name);
     const meta = metas[i];
     if (!meta) {
-      incompatible.push({ file: jar.name, reason: 'Not a Fabric mod (e.g. Forge)' });
+      other.push({ file: jar.name, reason: 'Not a Fabric mod (e.g. Forge)' });
       continue;
     }
-    if (SKIP_MOD_IDS.has(meta.id) || /^onix-client-/.test(jar.name) || /^(dawn|feather)/i.test(meta.id)) continue;
+    if (SKIP_MOD_IDS.has(meta.id) || /^onix-client-/.test(jar.name) || /^(dawn|feather|carbon)/i.test(meta.id)) continue;
     if (meta.environment === 'server') continue;
-    const mc = meta.depends && meta.depends.minecraft;
-    if (!matchesVersion(mc, MC_VERSION)) {
-      incompatible.push({ file: jar.name, name: meta.name || meta.id, reason: `For Minecraft ${[].concat(mc).join(', ')}` });
-      continue;
-    }
-    compatible.push({ file: jar.name, id: meta.id, name: meta.name || meta.id, version: meta.version, srcPath: file });
+    fabric.push({ file: jar.name, id: meta.id, name: meta.name || meta.id, version: meta.version, srcPath: path.join(modsDir, jar.name), mc: meta.depends && meta.depends.minecraft });
+  }
+  return { fabric, other };
+}
+
+/** Which mods of a source load on a Minecraft version. */
+function classifyMods(source, mc) {
+  const compatible = [];
+  const incompatible = [...(source.modsOther || [])];
+  for (const m of source.modsAll || []) {
+    if (matchesVersion(m.mc, mc)) compatible.push(m);
+    else incompatible.push({ file: m.file, name: m.name, reason: `For Minecraft ${[].concat(m.mc).join(', ')}${m.fromPack ? ` (from ${m.fromPack})` : ''}` });
   }
   return { compatible, incompatible };
+}
+
+/** The Onix version that fits a source best: its own version when Onix plays it, else the one most of its mods load on. */
+function bestTarget(mcVersion, fabric) {
+  if (versions.isSupported(mcVersion)) return mcVersion;
+  let best = versions.DEFAULT;
+  let bestCount = -1;
+  for (const v of versions.LIST) {
+    const n = fabric.filter((m) => matchesVersion(m.mc, v)).length;
+    if (n > bestCount || (n === bestCount && v === versions.DEFAULT)) { best = v; bestCount = n; }
+  }
+  return best;
 }
 
 // ------------------------------------------------------------------ client modules (heuristic)
@@ -532,11 +546,13 @@ const inLayer = (layers, name) => {
 async function analyzeGameDir(gameDir, configDirs = [], opts = {}) {
   const layers = opts.layers || [gameDir];
   const modsDir = layerWith(layers, 'mods');
-  const mods = modsDir ? await analyzeMods(modsDir, opts.skipFiles) : { compatible: [], incompatible: [] };
+  const mods = modsDir ? await analyzeMods(path.join(modsDir, 'mods'), opts.skipFiles) : { fabric: [], other: [] };
   const packs = await analyzeDawnpacks([gameDir, ...configDirs]);
-  const ids = new Set(mods.compatible.map((m) => m.id));
-  for (const m of packs.compatible) if (!ids.has(m.id)) { mods.compatible.push(m); ids.add(m.id); }
-  mods.incompatible.push(...packs.incompatible);
+  const ids = new Set(mods.fabric.map((m) => m.id));
+  for (const m of packs.fabric) if (!ids.has(m.id)) { mods.fabric.push(m); ids.add(m.id); }
+  mods.other.push(...packs.other);
+  const target = bestTarget(opts.mcVersion, mods.fabric);
+  const sorted = classifyMods({ modsAll: mods.fabric, modsOther: mods.other }, target);
   const modules = scanClientModules(configDirs);
   const count = (name, filter) => {
     const d = inLayer(layers, name);
@@ -553,8 +569,11 @@ async function analyzeGameDir(gameDir, configDirs = [], opts = {}) {
     resourcepacks: count('resourcepacks', (e) => !e.name.startsWith('.')),
     shaderpacks: count('shaderpacks', (e) => !e.name.startsWith('.') && e.name !== 'shaders.properties'),
     screenshots: count('screenshots', (e) => e.isFile() && /\.png$/i.test(e.name)),
-    modsCompatible: mods.compatible,
-    modsIncompatible: mods.incompatible,
+    modsAll: mods.fabric,
+    modsOther: mods.other,
+    targetVersion: target,
+    modsCompatible: sorted.compatible,
+    modsIncompatible: sorted.incompatible,
     dawnpacks: packs.packs,
     modules,
     configDirs: configDirs.filter(isDir),
@@ -728,7 +747,7 @@ function copyDirContents(src, dst, { rename = false } = {}) {
  * Runs the import into profileDir.
  * what: { options, servers, worlds, resourcepacks, shaderpacks, screenshots, mods, modConfigs, modules }
  */
-async function runImport(source, profileDir, what, report) {
+async function runImport(source, profileDir, what, report, mc = source.targetVersion || versions.DEFAULT) {
   const g = source.gameDir;
   const layers = source.layers || (g ? [g] : []);
   const at = (name) => inLayer(layers, name);
@@ -776,12 +795,13 @@ async function runImport(source, profileDir, what, report) {
     const n = copyDirContents(at('screenshots'), path.join(profileDir, 'screenshots'));
     done.push(`${n} screenshot${n === 1 ? '' : 's'}`);
   }
-  if (what.mods && source.modsCompatible.length) {
+  const mods = source.modsAll ? classifyMods(source, mc).compatible : source.modsCompatible;
+  if (what.mods && mods.length) {
     progress('Mods');
     const modsDir = path.join(profileDir, 'mods');
     fs.mkdirSync(modsDir, { recursive: true });
     let n = 0;
-    for (const m of source.modsCompatible) {
+    for (const m of mods) {
       const target = path.join(modsDir, m.file);
       if (!exists(target)) {
         fs.copyFileSync(m.srcPath || path.join(g, 'mods', m.file), target);
@@ -842,11 +862,11 @@ function writeModules(profileDir, modules) {
 }
 
 /** True for a Minecraft version newer than the one Onix plays (worlds from it may not open). */
-function isNewerThanGame(version) {
+function isNewerThanGame(version, game = MC_VERSION) {
   const a = String(version).split('.').map((x) => parseInt(x, 10) || 0);
-  const b = MC_VERSION.split('.').map(Number);
+  const b = String(game).split('.').map(Number);
   for (let i = 0; i < 3; i++) if ((a[i] || 0) !== (b[i] || 0)) return (a[i] || 0) > (b[i] || 0);
   return false;
 }
 
-module.exports = { setCacheDir, flushCache, mapLimit, isNewerThanGame, detect, analyzeFolder, runImport, matchesVersion, readFabricModJson, MODULE_ALIASES, knownSources, dirs, gameDirOfInstance };
+module.exports = { classifyMods, setCacheDir, flushCache, mapLimit, isNewerThanGame, detect, analyzeFolder, runImport, matchesVersion, readFabricModJson, MODULE_ALIASES, knownSources, dirs, gameDirOfInstance };

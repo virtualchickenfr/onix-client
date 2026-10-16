@@ -656,3 +656,11 @@ kbd { display: inline-block; padding: 1px 6px; border-radius: 5px; background: v
 .pcard-actions { flex-wrap: wrap; align-items: center; }
 .pcard-edit { width: 28px; height: 28px; margin: -4px -6px -4px 0; }
 .pcard-edit svg { width: 14px; height: 14px; }
+
+/* Minecraft version picker (profile editor) */
+.seg { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 6px; }
+.seg-btn { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 8px 10px; border-radius: var(--r-sm); background: var(--s2); border: 1px solid var(--line); color: var(--text-2); cursor: pointer; text-align: left; font: inherit; transition: border-color .15s var(--ease), background .15s var(--ease); }
+.seg-btn b { font-size: 13px; color: var(--text); font-weight: 600; }
+.seg-btn span { font-size: 11px; color: var(--text-3); }
+.seg-btn:hover { border-color: var(--line-3); }
+.seg-btn.on { background: var(--accent-soft); border-color: var(--accent); }

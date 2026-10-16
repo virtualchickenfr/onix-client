@@ -15,6 +15,7 @@ const path = require('path');
 const { execFile } = require('child_process');
 const { download, fetchJson } = require('./download');
 const game = require('./game');
+const versions = require('./versions');
 const importer = require('./importer');
 const modrinth = require('./modrinth');
 
@@ -94,7 +95,7 @@ async function running(onixGameRoot) {
       user: arg(cmd, 'username'),
       onix: gameDir ? hasOnix(gameDir) : false,
       ownLauncher: !!(gameDir && onixGameRoot && path.resolve(gameDir).startsWith(path.resolve(onixGameRoot))),
-      compatible: fabric && mc === game.MC_VERSION,
+      compatible: fabric && versions.isSupported(mc),
     });
   }
   return found;
@@ -155,11 +156,11 @@ function targets() {
         const instanceDir = path.join(root, e.name);
         const gameDir = importer.gameDirOfInstance(instanceDir) || path.join(instanceDir, '.minecraft');
         const info = instanceInfo(instanceDir);
-        const compatible = info.minecraft === game.MC_VERSION && info.fabric === true;
+        const compatible = versions.isSupported(info.minecraft) && info.fabric === true;
         let note = null;
-        if (info.minecraft && info.minecraft !== game.MC_VERSION) note = `Minecraft ${info.minecraft} – Onix needs ${game.MC_VERSION}`;
+        if (info.minecraft && !versions.isSupported(info.minecraft)) note = `Minecraft ${info.minecraft} – Onix runs on ${versions.LIST.join(' and ')}`;
         else if (info.fabric === false) note = 'Not a Fabric instance';
-        else if (!info.minecraft) note = 'Version unknown – make sure it is Fabric 1.21.1';
+        else if (!info.minecraft) note = `Version unknown – make sure it is Fabric ${versions.LIST.join(' or ')}`;
         out.push({
           id: `${src.id}:${e.name}`,
           client: src.id,
@@ -180,16 +181,16 @@ function targets() {
 
 // ------------------------------------------------------------------ installing
 
-async function fabricApiFile() {
-  const query = `game_versions=${encodeURIComponent(JSON.stringify([game.MC_VERSION]))}&loaders=${encodeURIComponent(JSON.stringify(['fabric']))}`;
-  const versions = await fetchJson(`https://api.modrinth.com/v2/project/fabric-api/version?${query}`);
-  const version = versions.find((v) => v.version_type === 'release') || versions[0];
-  if (!version) throw new Error(`No Fabric API for Minecraft ${game.MC_VERSION} found`);
+async function fabricApiFile(mc = versions.DEFAULT) {
+  const query = `game_versions=${encodeURIComponent(JSON.stringify([mc]))}&loaders=${encodeURIComponent(JSON.stringify(['fabric']))}`;
+  const list = await fetchJson(`https://api.modrinth.com/v2/project/fabric-api/version?${query}`);
+  const version = list.find((v) => v.version_type === 'release') || list[0];
+  if (!version) throw new Error(`No Fabric API for Minecraft ${mc} found`);
   return version.files.find((f) => f.primary) || version.files[0];
 }
 
-function copyOnixJar(modsDir) {
-  const bundled = game.findBundledMod();
+function copyOnixJar(modsDir, mc = versions.DEFAULT) {
+  const bundled = game.findBundledMod(mc);
   if (!bundled) throw new Error('The Onix mod is missing from this launcher build. Run "gradlew build" in the mod folder first.');
   fs.mkdirSync(modsDir, { recursive: true });
   for (const e of list(modsDir)) {
@@ -251,8 +252,8 @@ function launcherIcon() {
 }
 
 /** Adds the Fabric version and an "Onix Client" entry to the official launcher. */
-async function setupOfficialLauncher(root, gameDir) {
-  await game.ensureFabric(root, () => {});
+async function setupOfficialLauncher(root, gameDir, mc = versions.DEFAULT) {
+  await game.ensureFabric(root, () => {}, mc);
   const file = path.join(root, 'launcher_profiles.json');
   const data = readJson(file) || { profiles: {}, settings: {}, version: 3 };
   data.profiles = data.profiles || {};
@@ -264,7 +265,7 @@ async function setupOfficialLauncher(root, gameDir) {
     type: 'custom',
     created: old.created || now,
     lastUsed: now,
-    lastVersionId: game.VERSION_ID,
+    lastVersionId: versions.versionId(mc),
     gameDir,
     icon: launcherIcon(),
   };
@@ -279,17 +280,18 @@ async function setupOfficialLauncher(root, gameDir) {
 async function install(target, options, report) {
   const done = [];
   const gameDir = target.gameDir;
+  const mc = versions.isSupported(target.minecraft) ? target.minecraft : versions.DEFAULT;
   fs.mkdirSync(gameDir, { recursive: true });
   if (target.official) {
     report({ label: 'Setting up Fabric for the Minecraft Launcher', progress: 0.1 });
-    await setupOfficialLauncher(target.root, gameDir);
+    await setupOfficialLauncher(target.root, gameDir, mc);
     done.push('Fabric and an "Onix Client" installation in the Minecraft Launcher');
   }
   report({ label: 'Copying Onix', progress: 0.3 });
-  const jar = copyOnixJar(path.join(gameDir, 'mods'));
+  const jar = copyOnixJar(path.join(gameDir, 'mods'), mc);
   done.push(`Onix (${jar})`);
   if (options.fabricApi && !hasFabricApi(gameDir)) {
-    const file = await fabricApiFile();
+    const file = await fabricApiFile(mc);
     const target = path.join(gameDir, 'mods', modrinth.safeFileName(file.filename));
     await download(file.url, target, (p) => report({ label: 'Downloading Fabric API', progress: 0.4 + p * 0.4 }));
     try {
@@ -327,7 +329,7 @@ async function modIds(modsDir) {
  * options: { settings: also copy options.txt and servers.dat }
  */
 async function copyProfileInto(target, profileDir, options, report) {
-  if (!target.official && target.compatible === false) throw new Error(target.note || `This instance is not Fabric ${game.MC_VERSION}.`);
+  if (!target.official && target.compatible === false) throw new Error(target.note || `This instance is not Fabric ${versions.LIST.join(' or ')}.`);
   const done = await install(target, { fabricApi: true, profilesFrom: profileDir }, (p) => report({ ...p, progress: p.progress * 0.6 }));
   const from = path.join(profileDir, 'mods');
   const to = path.join(target.gameDir, 'mods');
@@ -373,14 +375,14 @@ function pushProfile(gameDir, profilesFrom) {
 }
 
 /** Saves the mod jar (and optionally Fabric API) into a folder. */
-async function exportMod(folder, withFabricApi, report) {
-  const bundled = game.findBundledMod();
+async function exportMod(folder, withFabricApi, report, mc = versions.DEFAULT) {
+  const bundled = game.findBundledMod(mc);
   if (!bundled) throw new Error('The Onix mod is missing from this launcher build.');
   fs.mkdirSync(folder, { recursive: true });
   const files = [path.basename(bundled)];
   fs.copyFileSync(bundled, path.join(folder, path.basename(bundled)));
   if (withFabricApi) {
-    const file = await fabricApiFile();
+    const file = await fabricApiFile(mc);
     const name = modrinth.safeFileName(file.filename);
     const target = path.join(folder, name);
     await download(file.url, target, (p) => report({ label: 'Downloading Fabric API', progress: p }));
@@ -395,10 +397,10 @@ async function exportMod(folder, withFabricApi, report) {
   return files;
 }
 
-function bundledInfo() {
-  const jar = game.findBundledMod();
+function bundledInfo(mc = versions.DEFAULT) {
+  const jar = game.findBundledMod(mc);
   if (!jar) return null;
-  return { file: path.basename(jar), size: fs.statSync(jar).size, minecraft: game.MC_VERSION, loader: game.LOADER_VERSION };
+  return { file: path.basename(jar), size: fs.statSync(jar).size, minecraft: mc, loader: versions.get(mc).loader };
 }
 
 module.exports = { running, targets, install, copyProfileInto, pushProfile, exportMod, bundledInfo, arg, instanceInfo, copyOnixConfig };

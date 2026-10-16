@@ -36,7 +36,7 @@ async function busyButton(btn, label, action) {
 
 async function openInstall() {
   renderInstallProfiles();
-  const bundled = await api.installInfo();
+  const bundled = await api.installInfo(mcOfProfile(activeProfile()));
   $('#dl-name').textContent = bundled ? bundled.file : 'Onix Client';
   $('#dl-meta').textContent = bundled
     ? `${(bundled.size / 1024 / 1024).toFixed(1)} MB · Fabric Loader 0.15+ · Minecraft ${bundled.minecraft}`
@@ -86,7 +86,7 @@ async function refreshRunning(showLoader) {
       }));
     } else {
       state = el('span', { class: 'state warn', text: g.fabric ? `Minecraft ${g.minecraft}` : 'No Fabric' });
-      sub = `Onix needs Fabric ${'1.21.1'} – this game runs ${g.fabric ? 'Fabric ' : ''}${g.minecraft}`;
+      sub = `Onix needs Fabric ${((info && info.versions) || []).map((v) => v.id).join(' or ') || '1.21.1'} – this game runs ${g.fabric ? 'Fabric ' : ''}${g.minecraft}`;
     }
     const title = `Minecraft ${g.minecraft}${g.fabric ? ' · Fabric' : ''}${g.user ? ' · ' + g.user : ''}${g.ownLauncher ? ' · Onix Launcher' : ''}`;
     return el('div', { class: 'trow' }, [
@@ -133,7 +133,7 @@ async function scanTargets() {
 
 $('#btn-install-scan').addEventListener('click', () => { refreshRunning(true); scanTargets(); });
 $('#btn-dl').addEventListener('click', () => busyButton($('#btn-dl'), 'Saving…', async () => {
-  const r = await api.exportMod($('#dl-fapi').checked);
+  const r = await api.exportMod($('#dl-fapi').checked, mcOfProfile(activeProfile()));
   if (!r.ok) return toast(r.error, true);
   if (r.value) toast(`Saved ${r.value.files.length === 1 ? 'the mod' : 'Onix and Fabric API'} to ${r.value.folder}`);
 }));

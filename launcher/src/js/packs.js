@@ -54,10 +54,10 @@ function openMods(profileId, tab = 'installed') {
   mm.confirmRemove = null;
   const p = profileOf(profileId);
   $('#mm-title').textContent = `Mods · ${p.name}`;
-  $('#mm-sub').textContent = 'Fabric mods for Minecraft 1.21.1';
+  $('#mm-sub').textContent = `Fabric mods for Minecraft ${mcOfProfile(p)}`;
   $('#mm-dot').style.background = p.color;
   $('#mm-tabs').hidden = false;
-  $('#mm-query').placeholder = 'Search Fabric 1.21.1 mods…';
+  $('#mm-query').placeholder = `Search Fabric ${mcOfProfile(p)} mods…`;
   setBusyStatus('');
   openModal('#mods-modal');
   showTab(tab);
@@ -67,7 +67,7 @@ function openModpacks() {
   mm.mode = 'modpacks';
   mm.profileId = null;
   $('#mm-title').textContent = 'Modpacks from Modrinth';
-  $('#mm-sub').textContent = 'Fabric 1.21.1 packs – each one becomes a new profile with Onix';
+  $('#mm-sub').textContent = `Fabric ${((info && info.versions) || []).map((v) => v.id).join(' and ') || '1.21.1'} packs – each one becomes a new profile with Onix`;
   $('#mm-dot').style.background = 'var(--accent)';
   $('#mm-tabs').hidden = true;
   $('#mm-query').placeholder = 'Search modpacks…';
@@ -213,7 +213,7 @@ async function search(reset) {
       mm.installed = new Set(inst.ok ? inst.value : []);
     }
   }
-  const res = await api.searchModrinth({ query: $('#mm-query').value.trim(), type: mm.mode === 'modpacks' ? 'modpack' : 'mod', offset: mm.offset, sort: mm.sort });
+  const res = await api.searchModrinth({ query: $('#mm-query').value.trim(), type: mm.mode === 'modpacks' ? 'modpack' : 'mod', offset: mm.offset, sort: mm.sort, profileId: mm.profileId });
   if (seq !== mm.seq) return; // a newer search started meanwhile
   if (!res.ok) {
     body.replaceChildren(el('div', { class: 'empty' }, [
@@ -232,7 +232,7 @@ async function search(reset) {
 function renderHits() {
   const body = $('#mm-body');
   if (!mm.hits.length) {
-    body.replaceChildren(el('div', { class: 'empty' }, [el('b', { text: 'Nothing found' }), el('span', { text: 'Try another word – only Fabric 1.21.1 projects are shown.' })]));
+    body.replaceChildren(el('div', { class: 'empty' }, [el('b', { text: 'Nothing found' }), el('span', { text: 'Try another word – only Fabric projects for this Minecraft version are shown.' })]));
     return;
   }
   const keep = body.scrollTop;

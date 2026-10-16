@@ -5,9 +5,12 @@ const McHandler = require('minecraft-launcher-core/components/handler');
 const { download, fetchJson } = require('./download');
 const modrinth = require('./modrinth');
 
-const MC_VERSION = '1.21.1';
-const LOADER_VERSION = '0.16.5';
-const VERSION_ID = `fabric-loader-${LOADER_VERSION}-${MC_VERSION}`;
+const versions = require('./versions');
+
+// the default version; everything below takes the profile's version
+const MC_VERSION = versions.DEFAULT;
+const LOADER_VERSION = versions.get(MC_VERSION).loader;
+const VERSION_ID = versions.versionId(MC_VERSION);
 
 /** Mods the launcher fetches from Modrinth and keeps up to date. */
 const MANAGED_MODS = [
@@ -29,7 +32,7 @@ const UPDATE_CHECK_INTERVAL = 12 * 60 * 60 * 1000;
  * JVM flags for a quick start and smooth frames: G1 tuned for a game client, and a class-data
  * sharing archive that Java 21 creates on the first start and reuses afterwards (faster class loading).
  */
-function jvmArgs(root, fastStart) {
+function jvmArgs(root, fastStart, mc) {
   const args = [
     '-XX:+UseG1GC',
     '-XX:+ParallelRefProcEnabled',
@@ -43,7 +46,7 @@ function jvmArgs(root, fastStart) {
   if (fastStart) {
     const cache = path.join(root, 'cache');
     fs.mkdirSync(cache, { recursive: true });
-    args.push('-XX:+AutoCreateSharedArchive', `-XX:SharedArchiveFile=${path.join(cache, 'onix-1.21.1.jsa')}`);
+    args.push('-XX:+AutoCreateSharedArchive', `-XX:SharedArchiveFile=${path.join(cache, `onix-${mc}.jsa`)}`);
   }
   return args;
 }
@@ -102,22 +105,27 @@ function setFilesVerified(root, versionId, ok) {
 }
 
 /** Creates the Fabric version profile that MCLC launches as a "custom" version. */
-async function ensureFabric(root, report) {
-  const file = path.join(root, 'versions', VERSION_ID, `${VERSION_ID}.json`);
+async function ensureFabric(root, report, mc = MC_VERSION) {
+  const v = versions.get(mc);
+  const id = versions.versionId(mc);
+  const file = path.join(root, 'versions', id, `${id}.json`);
   if (fs.existsSync(file)) return;
   report('Setting up Fabric', 0);
   const profile = await fetchJson(
-    `https://meta.fabricmc.net/v2/versions/loader/${MC_VERSION}/${LOADER_VERSION}/profile/json`
+    `https://meta.fabricmc.net/v2/versions/loader/${v.mc}/${v.loader}/profile/json`
   );
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, JSON.stringify(profile, null, 2));
 }
 
-/** Finds the bundled Onix mod (packaged or in the development folder). */
-function findBundledMod() {
+/** Finds the bundled Onix mod for a Minecraft version (packaged or in the development folder). */
+function findBundledMod(mc = MC_VERSION) {
+  const devDir = mc === versions.DEFAULT ? 'mod' : `mod-${mc}`;
   const candidates = [
-    process.resourcesPath ? path.join(process.resourcesPath, 'mods') : null,
-    path.join(__dirname, '..', '..', 'mod', 'build', 'libs'),
+    process.resourcesPath ? path.join(process.resourcesPath, 'mods', mc) : null,
+    // launchers built before multi-version support kept the 1.21.1 jar directly in mods/
+    process.resourcesPath && mc === versions.DEFAULT ? path.join(process.resourcesPath, 'mods') : null,
+    path.join(__dirname, '..', '..', devDir, 'build', 'libs'),
   ].filter(Boolean);
   for (const dir of candidates) {
     if (!fs.existsSync(dir)) continue;
@@ -129,12 +137,12 @@ function findBundledMod() {
   return null;
 }
 
-async function ensureMods(root, settings, report, log, throttle = true) {
+async function ensureMods(root, settings, report, log, throttle = true, mc = MC_VERSION) {
   const modsDir = path.join(root, 'mods');
   fs.mkdirSync(modsDir, { recursive: true });
 
   // 1. Onix Client mod
-  const bundled = findBundledMod();
+  const bundled = findBundledMod(mc);
   if (bundled) {
     const name = path.basename(bundled);
     for (const f of fs.readdirSync(modsDir)) {
@@ -146,7 +154,7 @@ async function ensureMods(root, settings, report, log, throttle = true) {
       log(`Installed Onix Client mod: ${name}`);
     }
   } else {
-    log('Warning: Onix mod not found. Run "gradlew build" in the mod folder first.');
+    log(`Warning: Onix mod for ${mc} not found. Run "gradlew build" in the mod folder first.`);
   }
 
   // 2. Fabric API and performance mods from Modrinth (all checked at the same time)
@@ -176,7 +184,7 @@ async function ensureMods(root, settings, report, log, throttle = true) {
     if (throttle && old && fs.existsSync(path.join(modsDir, old)) && Date.now() - checked < UPDATE_CHECK_INTERVAL) return;
     try {
       report(`Checking ${mod.name}`, 0);
-      const query = `game_versions=${encodeURIComponent(JSON.stringify([MC_VERSION]))}&loaders=${encodeURIComponent(JSON.stringify(['fabric']))}`;
+      const query = `game_versions=${encodeURIComponent(JSON.stringify([mc]))}&loaders=${encodeURIComponent(JSON.stringify(['fabric']))}`;
       const versions = await fetchJson(`https://api.modrinth.com/v2/project/${mod.project}/version?${query}`);
       const version = versions.find((v) => v.version_type === 'release') || versions[0];
       if (!version) throw new Error('no matching version');
@@ -211,7 +219,20 @@ async function ensureMods(root, settings, report, log, throttle = true) {
  */
 async function launch({ root, gameDir, auth, javaPath, settings, fastStart = true, report, log, onStart, onClose }) {
   const prepStarted = Date.now();
-  await Promise.all([ensureFabric(root, report), ensureMods(gameDir, settings, report, log, fastStart)]);
+  const mc = versions.ofProfile(settings).mc;
+  const VERSION_ID = versions.versionId(mc);
+  log(`Minecraft ${mc} with Fabric Loader ${versions.get(mc).loader}`);
+  // a profile's mods are for one version: a profile moved to another version keeps a note of it
+  const marker = path.join(gameDir, 'mods', '.onix-version');
+  try {
+    const before = fs.existsSync(marker) ? fs.readFileSync(marker, 'utf8').trim() : null;
+    if (before && before !== mc) log(`This profile was on ${before} before – mods made only for ${before} may not load.`);
+    fs.mkdirSync(path.dirname(marker), { recursive: true });
+    fs.writeFileSync(marker, mc);
+  } catch {
+    // only a note
+  }
+  await Promise.all([ensureFabric(root, report, mc), ensureMods(gameDir, settings, report, log, fastStart, mc)]);
   log(`Fabric and mods ready after ${((Date.now() - prepStarted) / 1000).toFixed(1)} s`);
 
   const launcher = new Client();
@@ -219,9 +240,9 @@ async function launch({ root, gameDir, auth, javaPath, settings, fastStart = tru
     root,
     authorization: auth,
     javaPath,
-    version: { number: MC_VERSION, type: 'release', custom: VERSION_ID },
+    version: { number: mc, type: 'release', custom: VERSION_ID },
     memory: { max: `${settings.ramMb}M`, min: `${Math.min(settings.ramMb, 2048)}M` },
-    customArgs: jvmArgs(root, fastStart),
+    customArgs: jvmArgs(root, fastStart, mc),
     overrides: { maxSockets: 24, gameDirectory: gameDir },
   };
   if (settings.quickJoin && settings.quickJoin.trim()) {

@@ -33,6 +33,17 @@ function renderProfiles() {
 
 let editing = null;
 let editColor = PROFILE_COLORS[0];
+let editVersion = '1.21.1';
+
+function renderVersions() {
+  const list = (info && info.versions) || [{ id: '1.21.1', note: '' }];
+  $('#pf-version').replaceChildren(...list.map((v) => el('button', {
+    class: `seg-btn${v.id === editVersion ? ' on' : ''}`,
+    type: 'button',
+    title: v.note || '',
+    onclick: () => { editVersion = v.id; renderVersions(); },
+  }, [el('b', { text: v.id }), v.note ? el('span', { text: v.note }) : null].filter(Boolean))));
+}
 
 function openProfileEditor(profile) {
   editing = profile;
@@ -46,6 +57,8 @@ function openProfileEditor(profile) {
   showRam();
   $('#pf-server').value = profile ? profile.quickJoin : '';
   $('#pf-perf').checked = profile ? profile.performanceMods : true;
+  editVersion = profile ? mcOfProfile(profile) : mcOfProfile(activeProfile());
+  renderVersions();
   $('#pf-copy-row').hidden = !!profile;
   $('#pf-delete').hidden = !profile || profileState.profiles.length <= 1;
   openModal('#profile-modal');
@@ -68,14 +81,18 @@ $('#btn-new-profile').addEventListener('click', () => openProfileEditor(null));
 $('#pf-save').addEventListener('click', async () => {
   const name = $('#pf-name').value.trim();
   if (!name) return toast('Please enter a name.', true);
-  const values = { name, color: editColor, ramMb: Number($('#pf-ram').value), quickJoin: $('#pf-server').value.trim(), performanceMods: $('#pf-perf').checked };
+  const values = { name, color: editColor, ramMb: Number($('#pf-ram').value), quickJoin: $('#pf-server').value.trim(), performanceMods: $('#pf-perf').checked, mcVersion: editVersion };
   if (editing) {
-    profileState = await api.saveProfile({ ...editing, ...values });
+    if (mcOfProfile(editing) !== editVersion && !confirm(`Switch "${editing.name}" to Minecraft ${editVersion}? Worlds stay, but mods made only for ${mcOfProfile(editing)} will not load.`)) return;
+    const res = await api.saveProfile({ ...editing, ...values });
+    if (res && res.ok === false) return toast(res.error, true);
+    profileState = res && res.ok ? res.value : res;
   } else {
-    const res = await api.createProfile(name, $('#pf-copy').checked ? profileState.active : null);
+    const res = await api.createProfile(name, $('#pf-copy').checked ? profileState.active : null, editVersion);
     if (!res.ok) return toast(res.error, true);
     profileState = res.value;
-    profileState = await api.saveProfile({ ...activeProfile(), ...values });
+    const saved = await api.saveProfile({ ...activeProfile(), ...values });
+    profileState = saved && saved.ok ? saved.value : saved;
     toast(`${name} created`);
   }
   closeModal('#profile-modal');

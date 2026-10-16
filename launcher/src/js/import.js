@@ -72,13 +72,13 @@ function openImport(s) {
   $('#im-avatar').style.setProperty('--av', CLIENT_COLORS[s.client] || '#333');
   $('#im-avatar').textContent = s.name.charAt(0);
   $('#im-title').textContent = `Import from ${s.name}`;
-  $('#im-path').textContent = s.label;
+  $('#im-path').textContent = `${s.label} · new profile plays Minecraft ${s.targetVersion || '1.21.1'}`;
   const modules = Object.entries(s.modules);
   const onModules = modules.filter(([, v]) => v).map(([k]) => MODULE_NAMES[k] || k);
   const options = [
     ['options', 'Settings & key binds', s.options ? 'Video, sound, controls' : 'Not found', s.options],
     ['servers', 'Server list', s.servers ? 'Every saved server' : 'Not found', s.servers],
-    ['worlds', 'Worlds', s.worlds ? plural(s.worlds, 'world', 'worlds') + (s.newerWorlds ? ` · made in ${s.mcVersion}, may not open in 1.21.1` : '') : 'None', s.worlds > 0],
+    ['worlds', 'Worlds', s.worlds ? plural(s.worlds, 'world', 'worlds') + (s.newerWorlds ? ` · made in ${s.mcVersion}, may not open in ${s.targetVersion}` : '') : 'None', s.worlds > 0],
     ['resourcepacks', 'Resource packs', s.resourcepacks ? String(s.resourcepacks) : 'None', s.resourcepacks > 0],
     ['shaderpacks', 'Shader packs', s.shaderpacks ? String(s.shaderpacks) : 'None', s.shaderpacks > 0],
     ['screenshots', 'Screenshots', s.screenshots ? String(s.screenshots) : 'None', s.screenshots > 0],

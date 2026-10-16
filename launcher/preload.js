@@ -25,7 +25,7 @@ contextBridge.exposeInMainWorld('onix', {
   getProfiles: () => invoke('profiles:get'),
   selectProfile: (id) => invoke('profiles:select', id),
   saveProfile: (profile) => invoke('profiles:save', profile),
-  createProfile: (name, copyFrom) => invoke('profiles:create', name, copyFrom),
+  createProfile: (name, copyFrom, mcVersion) => invoke('profiles:create', name, copyFrom, mcVersion),
   deleteProfile: (id) => invoke('profiles:delete', id),
 
   getCosmetics: () => invoke('cosmetics:get'),
@@ -61,13 +61,13 @@ contextBridge.exposeInMainWorld('onix', {
   runImport: (sourceId, target, what) => invoke('import:run', sourceId, target, what),
   onImportProgress: (cb) => ipcRenderer.on('import:progress', (_e, v) => cb(v)),
 
-  installInfo: () => invoke('install:bundled'),
+  installInfo: (mc) => invoke('install:bundled', mc),
   runningGames: () => invoke('install:running'),
   installTargets: () => invoke('install:targets'),
   installInto: (targetId, options) => invoke('install:run', targetId, options),
   installIntoRunning: (gameDir, options) => invoke('install:runningGame', gameDir, options),
   pushProfile: (gameDir, profileId) => invoke('install:push', gameDir, profileId),
-  exportMod: (withFabricApi) => invoke('install:export', withFabricApi),
+  exportMod: (withFabricApi, mc) => invoke('install:export', withFabricApi, mc),
   onInstallProgress: (cb) => ipcRenderer.on('install:progress', (_e, v) => cb(v)),
 
   launch: () => invoke('game:launch'),

@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const versions = require('./versions');
 
 const COLORS = ['#ececf1', '#8b7cff', '#4c8dff', '#5eead4', '#ff8fc4', '#ffb547', '#ff4d5e'];
 
@@ -34,6 +35,7 @@ class Profiles {
       ramMb: Number(p.ramMb) || this.defaults.ramMb,
       quickJoin: typeof p.quickJoin === 'string' ? p.quickJoin.trim() : '',
       performanceMods: p.performanceMods !== false,
+      mcVersion: versions.isSupported(p.mcVersion) ? p.mcVersion : versions.DEFAULT,
     };
   }
 
@@ -68,11 +70,11 @@ class Profiles {
   }
 
   /** Creates a profile, optionally copying settings and cosmetics from another one. */
-  create(name, copyFrom) {
+  create(name, copyFrom, extra = {}) {
     const base = copyFrom ? this.list().find((p) => p.id === copyFrom) : null;
     const used = new Set(this.list().map((p) => p.color));
     const color = COLORS.find((c) => !used.has(c)) || COLORS[this.list().length % COLORS.length];
-    const profile = this.save({ ...(base || {}), id: undefined, name, color });
+    const profile = this.save({ ...(base || {}), ...extra, id: undefined, name, color });
     if (base) {
       const from = path.join(this.dir(base), 'config', 'onix');
       const to = path.join(this.dir(profile), 'config', 'onix');

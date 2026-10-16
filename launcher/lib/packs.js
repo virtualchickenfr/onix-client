@@ -15,8 +15,7 @@ const modrinth = require('./modrinth');
  * Import reads both. Format reference: https://support.modrinth.com/en/articles/8802351
  */
 
-const MC_VERSION = modrinth.MC_VERSION;
-const LOADER_VERSION = '0.16.5';
+const versions = require('./versions');
 /** Hosts the .mrpack format allows downloads from. */
 const ALLOWED_HOSTS = ['cdn.modrinth.com', 'github.com', 'raw.githubusercontent.com', 'gitlab.com'];
 const OTHER_LOADERS = { forge: 'Forge', neoforge: 'NeoForge', 'quilt-loader': 'Quilt' };
@@ -78,6 +77,7 @@ const allowedUrl = (u) => {
  */
 async function exportProfile(profileDir, out, options = {}, report = () => {}) {
   const format = options.format === 'curseforge' ? 'curseforge' : 'mrpack';
+  const { mc: MC_VERSION, loader: LOADER_VERSION } = versions.get(options.mc);
   const modsDir = path.join(profileDir, 'mods');
   const all = fs.existsSync(modsDir) ? fs.readdirSync(modsDir) : [];
   const jars = all.filter((f) => /\.jar$/i.test(f) && !(ONIX_JAR.test(f) && options.includeOnix === false));
@@ -185,19 +185,19 @@ async function inspect(file) {
     for (const [id, label] of Object.entries(OTHER_LOADERS)) {
       if (deps[id]) throw new Error(`This pack needs ${label}. Onix runs on Fabric, so its mods would not load.`);
     }
-    if (deps.minecraft !== MC_VERSION) throw new Error(`This pack is for Minecraft ${deps.minecraft || 'an unknown version'}. Onix runs on ${MC_VERSION}.`);
+    if (!versions.isSupported(deps.minecraft)) throw new Error(`This pack is for Minecraft ${deps.minecraft || 'an unknown version'}. Onix runs on ${versions.LIST.join(' and ')}.`);
     if (!deps['fabric-loader']) throw new Error('This pack does not use Fabric.');
-    return { type: 'mrpack', name: String(index.name || path.basename(file, path.extname(file))), index };
+    return { type: 'mrpack', name: String(index.name || path.basename(file, path.extname(file))), index, mc: deps.minecraft };
   }
   if (buffers.has('manifest.json')) {
     const manifest = parse('manifest.json');
     if (manifest.manifestType !== 'minecraftModpack') throw new Error('This zip is not a CurseForge modpack.');
     const mc = manifest.minecraft || {};
-    if (mc.version !== MC_VERSION) throw new Error(`This pack is for Minecraft ${mc.version || 'an unknown version'}. Onix runs on ${MC_VERSION}.`);
+    if (!versions.isSupported(mc.version)) throw new Error(`This pack is for Minecraft ${mc.version || 'an unknown version'}. Onix runs on ${versions.LIST.join(' and ')}.`);
     const loaders = (mc.modLoaders || []).map((l) => String(l.id || ''));
     const other = loaders.find((l) => !/^fabric/i.test(l));
     if (other) throw new Error(`This pack needs ${other.split('-')[0]}. Onix runs on Fabric.`);
-    return { type: 'curseforge', name: String(manifest.name || path.basename(file, '.zip')), manifest };
+    return { type: 'curseforge', name: String(manifest.name || path.basename(file, '.zip')), manifest, mc: mc.version };
   }
   throw new Error('This is not a Modrinth (.mrpack) or CurseForge modpack.');
 }
@@ -263,12 +263,12 @@ async function importPack(file, targetDir, report = () => {}) {
     extracted += written;
   }
   report({ label: 'Done', progress: 1 });
-  return { type: info.type, name: info.name, downloaded, extracted, missing };
+  return { type: info.type, name: info.name, mc: info.mc, downloaded, extracted, missing };
 }
 
 /** Downloads a Modrinth modpack (.mrpack) to a temporary file. */
-async function downloadModpack(projectId, report = () => {}) {
-  const { project, version, file } = await modrinth.modpackFile(projectId);
+async function downloadModpack(projectId, report = () => {}, mc = versions.DEFAULT) {
+  const { project, version, file } = await modrinth.modpackFile(projectId, mc);
   if (!allowedUrl(file.url)) throw new Error('This modpack is hosted somewhere Onix does not download from.');
   const tmp = path.join(os.tmpdir(), `onix-${crypto.randomBytes(4).toString('hex')}.mrpack`);
   await download(file.url, tmp, (p) => report({ label: `Downloading ${project.title}`, progress: p }));

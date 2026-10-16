@@ -19,7 +19,7 @@ window.addEventListener('dragenter', (e) => {
   e.preventDefault();
   dragDepth++;
   const p = activeProfile();
-  dropZone.querySelector('.drop-target').textContent = `Fabric mods for ${info.mcVersion || '1.21.1'} go into "${p ? p.name : 'your profile'}"`;
+  dropZone.querySelector('.drop-target').textContent = `Fabric mods for ${mcOfProfile(p)} go into "${p ? p.name : 'your profile'}"`;
   dropZone.classList.add('open');
 });
 window.addEventListener('dragleave', (e) => {

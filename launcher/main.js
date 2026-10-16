@@ -10,6 +10,7 @@ const cosmetics = require('./lib/cosmetics');
 const onixnet = require('./lib/onixnet');
 const { ensureJava } = require('./lib/java');
 const importer = require('./lib/importer');
+const versions = require('./lib/versions');
 const installer = require('./lib/install');
 const modrinth = require('./lib/modrinth');
 const packs = require('./lib/packs');
@@ -229,6 +230,7 @@ app.whenReady().then(() => {
     version: app.getVersion(),
     mcVersion: game.MC_VERSION,
     loader: game.LOADER_VERSION,
+    versions: versions.LIST.map((v) => ({ id: v, ...versions.get(v) })),
     totalMemMb: TOTAL_MB,
     gameDir: GAME_DIR,
   }));
@@ -300,12 +302,16 @@ app.whenReady().then(() => {
     profiles.select(id);
     return profileState();
   });
-  ipcMain.handle('profiles:save', (_e, profile) => {
+  ipcMain.handle('profiles:save', safe((_e, profile) => {
+    const before = profiles.list().find((p) => p.id === (profile && profile.id));
+    if (before && running && before.id === runningProfileId && profile.mcVersion && profile.mcVersion !== before.mcVersion) {
+      throw new Error('Close Minecraft before changing the version of this profile.');
+    }
     profiles.save(profile);
     return profileState();
-  });
-  ipcMain.handle('profiles:create', safe((_e, name, copyFrom) => {
-    profiles.create(name, copyFrom);
+  }));
+  ipcMain.handle('profiles:create', safe((_e, name, copyFrom, mcVersion) => {
+    profiles.create(name, copyFrom, versions.isSupported(mcVersion) ? { mcVersion } : {});
     return profileState();
   }));
   ipcMain.handle('profiles:delete', safe((_e, id) => {
@@ -316,6 +322,7 @@ app.whenReady().then(() => {
 
   const profileById = (id) => profiles.list().find((p) => p.id === id) || profiles.active();
   const modsDirOf = (id) => path.join(profiles.dir(profileById(id)), 'mods');
+  const mcOf = (id) => versions.ofProfile(profileById(id)).mc;
   const progress = (p) => send('mods:progress', p);
   /** Mods of the profile Minecraft is running from must not change underneath it. */
   const notWhileRunning = (profileId) => {
@@ -324,20 +331,25 @@ app.whenReady().then(() => {
   const PROJECT_ID = /^[\w-]{1,64}$/;
 
   // Modrinth: browse and install mods, keep them up to date
-  ipcMain.handle('modrinth:search', safe((_e, opts) => modrinth.search(opts || {})));
+  ipcMain.handle('modrinth:search', safe((_e, opts) => {
+    const o = opts || {};
+    // mods: for the version of the profile they go into; modpacks: any version Onix plays
+    const mc = o.type === 'modpack' ? versions.LIST : [versions.isSupported(o.mc) ? o.mc : mcOf(o.profileId)];
+    return modrinth.search({ ...o, mc });
+  }));
   ipcMain.handle('modrinth:installed', safe((_e, profileId) => Object.keys(modrinth.cleanManifest(modsDirOf(profileId)))));
   ipcMain.handle('modrinth:install', safe(async (_e, profileId, projectId) => {
     notWhileRunning(profileId);
     if (typeof projectId !== 'string' || !PROJECT_ID.test(projectId)) throw new Error('Unknown project');
-    return modrinth.install(projectId, modsDirOf(profileId), progress);
+    return modrinth.install(projectId, modsDirOf(profileId), progress, mcOf(profileId));
   }));
-  ipcMain.handle('modrinth:updates', safe((_e, profileId) => modrinth.checkUpdates(modsDirOf(profileId))));
+  ipcMain.handle('modrinth:updates', safe((_e, profileId) => modrinth.checkUpdates(modsDirOf(profileId), mcOf(profileId))));
   ipcMain.handle('modrinth:update', safe(async (_e, profileId, projectIds) => {
     notWhileRunning(profileId);
     // ask Modrinth again instead of trusting what the page sends
     const wanted = new Set(Array.isArray(projectIds) ? projectIds : []);
-    const updates = (await modrinth.checkUpdates(modsDirOf(profileId))).filter((u) => !wanted.size || wanted.has(u.projectId));
-    return modrinth.applyUpdates(modsDirOf(profileId), updates, progress);
+    const updates = (await modrinth.checkUpdates(modsDirOf(profileId), mcOf(profileId))).filter((u) => !wanted.size || wanted.has(u.projectId));
+    return modrinth.applyUpdates(modsDirOf(profileId), updates, progress, mcOf(profileId));
   }));
 
   // Profiles as modpacks: export, import, copy into other launchers
@@ -352,7 +364,7 @@ app.whenReady().then(() => {
   const importIntoNewProfile = async (file, fallbackName) => {
     const info = await packs.inspect(file); // fails early for files that are not modpacks
     const before = profiles.active().id;
-    const profile = profiles.create(uniqueProfileName(info.name || fallbackName), null);
+    const profile = profiles.create(uniqueProfileName(info.name || fallbackName), null, { mcVersion: info.mc });
     try {
       const result = await packs.importPack(file, profiles.dir(profile), progress);
       await game.adoptManagedMods(profiles.dir(profile));
@@ -384,6 +396,7 @@ app.whenReady().then(() => {
       author: (auth.current(store) || {}).name || '',
       includeOnix: o.includeOnix !== false,
       parts,
+      mc: mcOf(profileId),
     }, progress);
     shell.showItemInFolder(res.filePath);
     return result;
@@ -399,7 +412,19 @@ app.whenReady().then(() => {
   }));
   ipcMain.handle('modrinth:installPack', safe(async (_e, projectId) => {
     if (typeof projectId !== 'string' || !PROJECT_ID.test(projectId)) throw new Error('Unknown project');
-    const pack = await packs.downloadModpack(projectId, progress);
+    // the newest version of the pack that Onix plays, preferring the active profile's version
+    const order = [mcOf(), ...versions.LIST.slice().reverse()].filter((v, i, a) => a.indexOf(v) === i);
+    let pack = null;
+    let lastErr = null;
+    for (const mc of order) {
+      try {
+        pack = await packs.downloadModpack(projectId, progress, mc);
+        break;
+      } catch (err) {
+        lastErr = err;
+      }
+    }
+    if (!pack) throw lastErr || new Error('This modpack has no version Onix can play.');
     try {
       return await importIntoNewProfile(pack.file, pack.title);
     } finally {
@@ -472,7 +497,7 @@ app.whenReady().then(() => {
         continue;
       }
       const mc = info.depends && info.depends.minecraft;
-      if (!importer.matchesVersion(mc, game.MC_VERSION)) {
+      if (!importer.matchesVersion(mc, mcOf(profileId))) {
         skipped.push(`${info.name || name}: made for Minecraft ${[].concat(mc).join(' / ')}`);
         continue;
       }
@@ -562,7 +587,8 @@ app.whenReady().then(() => {
     modsSkipped: src.modsIncompatible.map((m) => `${m.name || m.file}: ${m.reason}`),
     modConfigs: src.modConfigs != null ? src.modConfigs : !!src.gameDir,
     mcVersion: src.mcVersion || null,
-    newerWorlds: !!(src.mcVersion && importer.isNewerThanGame(src.mcVersion)),
+    targetVersion: src.targetVersion || versions.DEFAULT,
+    newerWorlds: !!(src.mcVersion && importer.isNewerThanGame(src.mcVersion, src.targetVersion || versions.DEFAULT)),
     modules: src.modules,
   });
   ipcMain.handle('import:detect', safe(async () => {
@@ -583,9 +609,10 @@ app.whenReady().then(() => {
     if (!source) throw new Error('This source is no longer available. Please scan again.');
     if (running) throw new Error('Close Minecraft first.');
     let profile;
-    if (target && target.newName) profile = profiles.create(target.newName, null);
+    if (target && target.newName) profile = profiles.create(target.newName, null, { mcVersion: source.targetVersion || versions.DEFAULT });
     else profile = profiles.select(target && target.profileId ? target.profileId : profiles.active().id);
-    const done = await importer.runImport(source, profiles.dir(profile), what || {}, (p) => send('import:progress', p));
+    const mc = versions.ofProfile(profile).mc;
+    const done = await importer.runImport(source, profiles.dir(profile), what || {}, (p) => send('import:progress', p), mc);
     return { done, profile: profile.name, state: profileState() };
   }));
 
@@ -595,7 +622,7 @@ app.whenReady().then(() => {
     const p = profiles.list().find((x) => x.id === id) || profiles.active();
     return profiles.dir(p);
   };
-  ipcMain.handle('install:bundled', () => installer.bundledInfo());
+  ipcMain.handle('install:bundled', (_e, mc) => installer.bundledInfo(versions.isSupported(mc) ? mc : versions.DEFAULT));
   ipcMain.handle('install:running', safe(() => installer.running(GAME_DIR)));
   ipcMain.handle('install:targets', safe(() => {
     installTargets = installer.targets();
@@ -610,14 +637,15 @@ app.whenReady().then(() => {
   ipcMain.handle('install:runningGame', safe(async (_e, gameDir, options) => {
     if (!gameDir) throw new Error('The folder of this game could not be found.');
     const opts = { fabricApi: !!(options && options.fabricApi), profilesFrom: options && options.profileId ? profileDirById(options.profileId) : null };
-    return installer.install({ gameDir }, opts, (p) => send('install:progress', p));
+    const game0 = (await installer.running(GAME_DIR).catch(() => [])).find((g) => g.gameDir && path.resolve(g.gameDir) === path.resolve(gameDir));
+    return installer.install({ gameDir, minecraft: game0 && game0.minecraft }, opts, (p) => send('install:progress', p));
   }));
   ipcMain.handle('install:push', safe((_e, gameDir, profileId) => installer.pushProfile(gameDir, profileDirById(profileId))));
-  ipcMain.handle('install:export', safe(async (_e, withFabricApi) => {
+  ipcMain.handle('install:export', safe(async (_e, withFabricApi, mc) => {
     const res = await dialog.showOpenDialog(win, { title: 'Choose where to save the Onix mod', properties: ['openDirectory', 'createDirectory'] });
     if (res.canceled || !res.filePaths[0]) return null;
     const folder = res.filePaths[0];
-    const files = await installer.exportMod(folder, !!withFabricApi, (p) => send('install:progress', p));
+    const files = await installer.exportMod(folder, !!withFabricApi, (p) => send('install:progress', p), versions.isSupported(mc) ? mc : versions.DEFAULT);
     shell.showItemInFolder(path.join(folder, files[0]));
     return { folder, files };
   }));

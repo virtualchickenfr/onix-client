@@ -9,10 +9,15 @@ const { download, USER_AGENT } = require('./download');
  */
 
 const API = 'https://api.modrinth.com/v2';
-const MC_VERSION = '1.21.1';
+const versions = require('./versions');
+
+/** Default Minecraft version; every function takes the profile's version as `mc`. */
+const MC_VERSION = versions.DEFAULT;
 const LOADER = 'fabric';
 /** The launcher manages these itself (see game.js), so they are never installed twice. */
-const MANAGED = { P7dR8mSH: 'Fabric API', AANobbMI: 'Sodium' };
+const MANAGED = {
+  P7dR8mSH: 'Fabric API', AANobbMI: 'Sodium', gvQqBUqZ: 'Lithium', uXXizFIs: 'FerriteCore', '5ZwdcRci': 'ImmediatelyFast', NNAgCjsB: 'EntityCulling',
+};
 const MANIFEST = '.onix-modrinth.json';
 const SORTS = ['relevance', 'downloads', 'follows', 'newest', 'updated'];
 
@@ -79,8 +84,8 @@ function cleanManifest(modsDir) {
 
 // ------------------------------------------------------------------ search
 
-async function search({ query = '', type = 'mod', offset = 0, sort = 'relevance', limit = 20 } = {}) {
-  const facets = [[`project_type:${type === 'modpack' ? 'modpack' : 'mod'}`], [`categories:${LOADER}`], [`versions:${MC_VERSION}`]];
+async function search({ query = '', type = 'mod', offset = 0, sort = 'relevance', limit = 20, mc = MC_VERSION } = {}) {
+  const facets = [[`project_type:${type === 'modpack' ? 'modpack' : 'mod'}`], [`categories:${LOADER}`], [].concat(mc).map((v) => `versions:${v}`)];
   const index = SORTS.includes(sort) ? sort : 'relevance';
   const res = await api(`/search?query=${encodeURIComponent(query)}&facets=${q(facets)}&index=${index}&offset=${Math.max(0, offset | 0)}&limit=${Math.min(50, limit)}`);
   return {
@@ -101,14 +106,14 @@ async function search({ query = '', type = 'mod', offset = 0, sort = 'relevance'
 }
 
 /** The newest version of a project for Fabric on this Minecraft version (releases first). */
-async function bestVersion(projectId) {
-  const versions = await api(`/project/${encodeURIComponent(projectId)}/version?loaders=${q([LOADER])}&game_versions=${q([MC_VERSION])}`);
-  if (!versions || !versions.length) return null;
-  return versions.find((v) => v.version_type === 'release') || versions[0];
+async function bestVersion(projectId, mc = MC_VERSION) {
+  const list = await api(`/project/${encodeURIComponent(projectId)}/version?loaders=${q([LOADER])}&game_versions=${q([mc])}`);
+  if (!list || !list.length) return null;
+  return list.find((v) => v.version_type === 'release') || list[0];
 }
 
 const primaryFile = (version) => version.files.find((f) => f.primary) || version.files[0];
-const fitsHere = (v) => v && (v.loaders || []).includes(LOADER) && (v.game_versions || []).includes(MC_VERSION);
+const fitsHere = (v, mc = MC_VERSION) => v && (v.loaders || []).includes(LOADER) && (v.game_versions || []).includes(mc);
 
 // ------------------------------------------------------------------ install
 
@@ -116,7 +121,7 @@ const fitsHere = (v) => v && (v.loaders || []).includes(LOADER) && (v.game_versi
  * Installs a mod and its required dependencies into a mods folder.
  * Returns { installed: [{title, version}], skipped: [reason], warnings: [text] }.
  */
-async function install(projectId, modsDir, report = () => {}) {
+async function install(projectId, modsDir, report = () => {}, mc = MC_VERSION) {
   fs.mkdirSync(modsDir, { recursive: true });
   const manifest = cleanManifest(modsDir);
   const installed = [];
@@ -134,7 +139,7 @@ async function install(projectId, modsDir, report = () => {}) {
       const pinned = await api(`/version/${encodeURIComponent(item.versionId)}`);
       if (pinned && !item.projectId) item.projectId = pinned.project_id;
       // a pinned version for another loader or game version: use the newest fitting one instead
-      version = fitsHere(pinned) ? pinned : null;
+      version = fitsHere(pinned, mc) ? pinned : null;
     }
     if (!item.projectId) continue;
     if (seen.has(item.projectId)) continue;
@@ -157,9 +162,9 @@ async function install(projectId, modsDir, report = () => {}) {
       if (item.root) throw new Error(`${project.title} only runs on servers.`);
       continue;
     }
-    if (!version) version = await bestVersion(item.projectId);
+    if (!version) version = await bestVersion(item.projectId, mc);
     if (!version) {
-      const msg = `${project.title} has no version for Fabric ${MC_VERSION}.`;
+      const msg = `${project.title} has no version for Fabric ${mc}.`;
       if (item.root) throw new Error(msg);
       warnings.push(`${msg} It is required by the mod you installed.`);
       continue;
@@ -220,13 +225,13 @@ const jarFiles = (modsDir) => (fs.existsSync(modsDir) ? fs.readdirSync(modsDir) 
   .map((f) => path.join(modsDir, f));
 
 /** Mods in the folder with a newer Fabric version on Modrinth. */
-async function checkUpdates(modsDir) {
+async function checkUpdates(modsDir, mc = MC_VERSION) {
   const files = jarFiles(modsDir).filter((f) => !/onix-client-/.test(path.basename(f)));
   if (!files.length) return [];
   const hashes = new Map(files.map((f) => [sha(f, 'sha1'), f]));
   const latest = await api('/version_files/update', {
     method: 'POST',
-    body: { hashes: [...hashes.keys()], algorithm: 'sha1', loaders: [LOADER], game_versions: [MC_VERSION] },
+    body: { hashes: [...hashes.keys()], algorithm: 'sha1', loaders: [LOADER], game_versions: [mc] },
   });
   const updates = [];
   for (const [hash, version] of Object.entries(latest || {})) {
@@ -245,12 +250,12 @@ async function checkUpdates(modsDir) {
 }
 
 /** Installs the given updates (from checkUpdates); a disabled mod stays disabled. */
-async function applyUpdates(modsDir, updates, report = () => {}) {
+async function applyUpdates(modsDir, updates, report = () => {}, mc = MC_VERSION) {
   const manifest = cleanManifest(modsDir);
   const done = [];
   for (const u of updates) {
     const version = await api(`/version/${encodeURIComponent(u.versionId)}`);
-    if (!fitsHere(version)) continue;
+    if (!fitsHere(version, mc)) continue;
     const file = primaryFile(version);
     const name = safeFileName(file.filename);
     const oldName = safeFileName(u.file);
@@ -272,11 +277,11 @@ async function applyUpdates(modsDir, updates, report = () => {}) {
 }
 
 /** Newest modpack file (.mrpack) of a Modrinth modpack project for this version. */
-async function modpackFile(projectId) {
+async function modpackFile(projectId, mc = MC_VERSION) {
   const project = await api(`/project/${encodeURIComponent(projectId)}`);
   if (!project || project.project_type !== 'modpack') throw new Error('This project is not a modpack.');
-  const version = await bestVersion(projectId);
-  if (!version) throw new Error(`${project.title} has no version for Fabric ${MC_VERSION}.`);
+  const version = await bestVersion(projectId, mc);
+  if (!version) throw new Error(`${project.title} has no version for Fabric ${mc}.`);
   const file = primaryFile(version);
   if (!/\.mrpack$/i.test(file.filename)) throw new Error(`${project.title} does not offer a .mrpack file.`);
   return { project, version, file };

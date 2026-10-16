@@ -42,6 +42,7 @@ jobs:
         run: |
           ver=$(grep '^minecraft_version=' ${{ matrix.dir }}/gradle.properties | cut -d= -f2)
           jar=$(find ~/.gradle ${{ matrix.dir }}/.gradle -name '*-sources.jar' 2>/dev/null | grep -i minecraft | grep -v -i fabric-api | head -n 1)
+          jar=$(realpath "$jar")
           echo "::notice::sources jar: $jar"
           test -n "$jar"
           mkdir -p /tmp/out && cd /tmp/out && unzip -q "$jar" -x 'META-INF/*'
