@@ -1,0 +1,56 @@
+package net.minecraft.recipe;
+
+import java.util.Iterator;
+import net.minecraft.util.math.MathHelper;
+
+public interface RecipeGridAligner<T> {
+	default void alignRecipeToGrid(int gridWidth, int gridHeight, int gridOutputSlot, RecipeEntry<?> recipe, Iterator<T> inputs, int amount) {
+		int i = gridWidth;
+		int j = gridHeight;
+		if (recipe.value() instanceof ShapedRecipe shapedRecipe) {
+			i = shapedRecipe.getWidth();
+			j = shapedRecipe.getHeight();
+		}
+
+		int k = 0;
+
+		for (int l = 0; l < gridHeight; l++) {
+			if (k == gridOutputSlot) {
+				k++;
+			}
+
+			boolean bl = j < gridHeight / 2.0F;
+			int m = MathHelper.floor(gridHeight / 2.0F - j / 2.0F);
+			if (bl && m > l) {
+				k += gridWidth;
+				l++;
+			}
+
+			for (int n = 0; n < gridWidth; n++) {
+				if (!inputs.hasNext()) {
+					return;
+				}
+
+				bl = i < gridWidth / 2.0F;
+				m = MathHelper.floor(gridWidth / 2.0F - i / 2.0F);
+				int o = i;
+				boolean bl2 = n < i;
+				if (bl) {
+					o = m + i;
+					bl2 = m <= n && n < m + i;
+				}
+
+				if (bl2) {
+					this.acceptAlignedInput((T)inputs.next(), k, amount, n, l);
+				} else if (o == n) {
+					k += gridWidth - n;
+					break;
+				}
+
+				k++;
+			}
+		}
+	}
+
+	void acceptAlignedInput(T input, int slot, int amount, int gridX, int gridY);
+}
