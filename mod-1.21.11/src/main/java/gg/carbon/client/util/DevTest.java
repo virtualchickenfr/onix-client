@@ -57,7 +57,7 @@ public final class DevTest {
 		});
 		var client = CarbonClient.modules().client;
 		int right = com.mojang.blaze3d.platform.InputConstants.KEY_RIGHT;
-		for (String id : List.of("Carbon", "Carbon Client", "Voxel", "Portal", "Classic")) {
+		for (String id : List.of("Carbon", "Voxel", "Portal", "Classic")) {
 			then(5, () -> client.menuDesign.set(id));
 			then(80, () -> snap(mc, "01_menu_" + id.toLowerCase()));
 		}

@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 
 /** Persists every module, setting and HUD position to config/carbon/config.json. */
 public final class ConfigManager {
-	private static final Logger LOG = LoggerFactory.getLogger("Carbon");
+	private static final Logger LOG = LoggerFactory.getLogger("Onix");
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
 	private final ModuleManager modules;
@@ -66,7 +66,7 @@ public final class ConfigManager {
 				if (o.has("extra")) m.loadExtra(o.getAsJsonObject("extra"));
 			}
 		} catch (IOException | RuntimeException e) {
-			LOG.error("Failed to load Carbon config", e);
+			LOG.error("Failed to load Onix config", e);
 		}
 	}
 
@@ -98,7 +98,7 @@ public final class ConfigManager {
 			Files.writeString(tmp, GSON.toJson(root), StandardCharsets.UTF_8);
 			Files.move(tmp, file, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
 		} catch (IOException e) {
-			LOG.error("Failed to save Carbon config", e);
+			LOG.error("Failed to save Onix config", e);
 		}
 	}
 

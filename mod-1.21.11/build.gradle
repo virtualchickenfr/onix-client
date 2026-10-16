@@ -2,13 +2,15 @@ plugins {
 	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
 }
 
+version = "${project.mod_version}+${project.minecraft_version}"
+
 base {
-	archivesName = 'carbon-client'
+	archivesName = 'onix-client'
 }
 
 loom {
 	mods {
-		"carbon" {
+		"onix" {
 			sourceSet sourceSets.main
 		}
 	}
@@ -44,6 +46,7 @@ processResources {
 tasks.withType(JavaCompile).configureEach {
 	it.options.release = 21
 	it.options.encoding = 'UTF-8'
+	it.options.compilerArgs += ['-Xmaxerrs', '2000']
 }
 
 java {

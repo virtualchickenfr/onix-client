@@ -36,7 +36,7 @@ public class HudEditor extends Screen {
 	private final Smooth btnHover = new Smooth(0, 16f), resetHover = new Smooth(0, 16f);
 
 	public HudEditor(@Nullable Screen parent) {
-		super(Component.literal("Carbon HUD Editor"));
+		super(Component.literal("Onix HUD Editor"));
 		this.parent = parent;
 	}
 

@@ -2,7 +2,7 @@
   "name": "onix-client-launcher",
   "productName": "Onix Client",
   "version": "1.0.6",
-  "description": "Launcher for Onix Client (Minecraft 1.21.1 + Fabric)",
+  "description": "Launcher for Onix Client (Minecraft 1.21.1 and 1.21.11 + Fabric)",
   "main": "main.js",
   "author": "Onix",
   "license": "MIT",
@@ -40,7 +40,15 @@
     "extraResources": [
       {
         "from": "../mod/build/libs/",
-        "to": "mods",
+        "to": "mods/1.21.1",
+        "filter": [
+          "onix-client-*.jar",
+          "!*-sources.jar"
+        ]
+      },
+      {
+        "from": "../mod-1.21.11/build/libs/",
+        "to": "mods/1.21.11",
         "filter": [
           "onix-client-*.jar",
           "!*-sources.jar"

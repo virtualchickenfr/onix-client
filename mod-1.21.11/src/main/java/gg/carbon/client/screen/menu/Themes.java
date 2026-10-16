@@ -6,7 +6,7 @@ import java.util.List;
 public final class Themes {
 	private Themes() {}
 
-	public static final List<String> IDS = List.of("Carbon", "Carbon Client", "Voxel", "Portal", "Classic", "Vanilla");
+	public static final List<String> IDS = List.of("Carbon", "Voxel", "Portal", "Classic", "Vanilla");
 
 	public static MenuTheme create(String id) {
 		return switch (id) {

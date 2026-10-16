@@ -29,7 +29,7 @@ public final class MenuImages {
 	private static final Map<String, Tex> CACHE = new HashMap<>();
 
 	public static boolean logoEnabled() {
-		return CarbonClient.modules() != null && CarbonClient.modules().client.menuLogo.on();
+		return false; // the logo artwork reads CARBON CLIENT – Onix shows its wordmark instead
 	}
 
 	public static boolean skinEnabled() {

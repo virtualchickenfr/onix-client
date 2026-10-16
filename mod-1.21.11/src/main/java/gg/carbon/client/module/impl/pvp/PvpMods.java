@@ -50,7 +50,7 @@ public final class PvpMods {
 				|| (totems.on() && s.is(Items.TOTEM_OF_UNDYING));
 			if (block && mc.player != null && System.currentTimeMillis() - lastWarn > 1500) {
 				lastWarn = System.currentTimeMillis();
-				mc.player.displayClientMessage(Component.literal("§7Drop prevented — disable in §fCarbon §7› Drop Prevention"), true);
+				mc.player.displayClientMessage(Component.literal("§7Drop prevented — disable in §fOnix §7› Drop Prevention"), true);
 			}
 			return block;
 		}

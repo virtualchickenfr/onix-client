@@ -9,4 +9,4 @@ pluginManagement {
 	}
 }
 
-rootProject.name = 'carbon-client'
+rootProject.name = 'onix-client-1.21.11'

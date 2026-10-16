@@ -19,7 +19,7 @@ public abstract class MinecraftMixin {
 
 	@Inject(method = "createTitle", at = @At("RETURN"), cancellable = true)
 	private void carbon$title(CallbackInfoReturnable<String> cir) {
-		cir.setReturnValue("Carbon Client " + CarbonClient.VERSION + "  ·  " + cir.getReturnValue());
+		cir.setReturnValue("Onix Client " + CarbonClient.VERSION + "  ·  " + cir.getReturnValue());
 	}
 
 	/** Swaps the vanilla title screen for Carbon's main menu. */

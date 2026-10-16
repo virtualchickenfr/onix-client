@@ -36,8 +36,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class CarbonClient implements ClientModInitializer {
-	public static final String NAME = "Carbon";
-	public static final String VERSION = "1.0.0";
+	public static final String NAME = "Onix";
+	public static final String VERSION = net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer("onix")
+		.map(c -> c.getMetadata().getVersion().getFriendlyString().replaceFirst("\\+.*$", "")).orElse("dev");
 	public static final Logger LOG = LoggerFactory.getLogger(NAME);
 
 	private static ModuleManager modules;
@@ -76,7 +77,7 @@ public class CarbonClient implements ClientModInitializer {
 		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> config.save());
 		ScreenEvents.AFTER_INIT.register(CarbonClient::afterScreenInit);
 
-		LOG.info("Carbon Client {} initialised with {} modules", VERSION, modules.all().size());
+		LOG.info("Onix Client (1.21.11) {} initialised with {} modules", VERSION, modules.all().size());
 	}
 
 	private static void registerHud() {

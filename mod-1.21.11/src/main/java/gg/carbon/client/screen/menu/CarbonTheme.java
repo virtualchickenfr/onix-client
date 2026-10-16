@@ -76,10 +76,10 @@ public final class CarbonTheme implements MenuTheme {
 		float tb = c.stage(0.9f, 0.8f);
 		R2D.pushAlpha(tb);
 		Carbon.mark(g, 26, 22, 14, Ink.accent(), Ink.accent());
-		Fonts.draw(g, "Carbon", 39, 17.5f, Ink.strong(), Face.BODY_BOLD, 1f, false);
+		Fonts.draw(g, "Onix", 39, 17.5f, Ink.strong(), Face.BODY_BOLD, 1f, false);
 		R2D.popAlpha();
 
-		if (showcase || MenuImages.logoEnabled()) {
+		if (MenuImages.logoEnabled()) {
 			float lo = c.stage(0.1f, 1.0f);
 			R2D.pushAlpha(lo);
 			MenuImages.drawCentered(g, MenuImages.LOGO, cx, cy - 122 + (1 - lo) * 12, 100);

@@ -39,7 +39,7 @@ public final class PortalTheme implements MenuTheme {
 		HINTS[Entries.SINGLEPLAYER] = "Play your worlds";
 		HINTS[Entries.MULTIPLAYER] = "Join a server";
 		HINTS[Entries.REALMS] = "Minecraft Realms";
-		HINTS[Entries.MODS] = "Carbon mod menu";
+		HINTS[Entries.MODS] = "Onix mod menu";
 		HINTS[Entries.OPTIONS] = "Game settings";
 		HINTS[Entries.LANGUAGE] = "Choose a language";
 		HINTS[Entries.ACCESSIBILITY] = "Accessibility settings";
@@ -412,7 +412,7 @@ public final class PortalTheme implements MenuTheme {
 		Fonts.draw(g, c.user(), px + 25, py + 6.5f, Ink.strong(), Face.BODY_BOLD, 0.88f, false);
 		// brand
 		Carbon.mark(g, 30, 27, 14, Ink.accent(), Ink.accent());
-		Fonts.draw(g, "Carbon", 43, 22.5f, Ink.strong(), Face.BODY_BOLD, 1f, false);
+		Fonts.draw(g, "Onix", 43, 22.5f, Ink.strong(), Face.BODY_BOLD, 1f, false);
 		// hints
 		String key = CarbonClient.modules().client.menuKey.display().toUpperCase();
 		float kw = Ui.keycap(g, key, 22, h - 30, 0);

@@ -237,7 +237,7 @@ public final class SimpleHuds {
 			if (dead && !wasDead) {
 				last = String.format(Locale.ROOT, "%d, %d, %d", mc.player.getBlockX(), mc.player.getBlockY(), mc.player.getBlockZ());
 				if (chat.on()) {
-					mc.player.displayClientMessage(net.minecraft.network.chat.Component.literal("§7[§fCarbon§7] §fYou died at §7" + last
+					mc.player.displayClientMessage(net.minecraft.network.chat.Component.literal("§7[§fOnix§7] §fYou died at §7" + last
 						+ " §8(" + mc.player.level().dimension().identifier().getPath() + ")"), false);
 				}
 			}

@@ -230,7 +230,7 @@ public final class VoxelTheme implements MenuTheme {
 
 		float t0 = c.stage(0.2f, 0.9f);
 		R2D.pushAlpha(t0);
-		Ui.eyebrow(g, "Carbon client", x0, y0 + (1 - t0) * 6, Ink.dim());
+		Ui.eyebrow(g, "Onix client", x0, y0 + (1 - t0) * 6, Ink.dim());
 		R2D.popAlpha();
 
 		float lt = c.stage(0.3f, 1.0f);

@@ -85,7 +85,7 @@ public class ClickGui extends Screen {
 	}
 
 	public ClickGui(@Nullable Screen parent) {
-		super(Component.literal("Carbon"));
+		super(Component.literal("Onix"));
 		this.parent = parent;
 		this.nav = lastNav;
 		for (int i = 0; i < navHover.length; i++) navHover[i] = new Smooth(0, 16f);
@@ -427,7 +427,7 @@ public class ClickGui extends Screen {
 		Ui.eyebrow(g, filtered ? "Search" : mods.size() + " modules  ·  " + on + " on", x0, y0 - 2, 0xFFB4B4BC);
 		String title = filtered ? "Results" : cat == null ? "All modules" : cat.title;
 		Pixel.headline(g, title, x0, y0 + 10, Theme.WHITE, 2f, true);
-		String sub = filtered ? "for \"" + search.text() + "\"" : cat == null ? "everything Carbon ships with" : cat.subtitle.toLowerCase(Locale.ROOT);
+		String sub = filtered ? "for \"" + search.text() + "\"" : cat == null ? "everything Onix ships with" : cat.subtitle.toLowerCase(Locale.ROOT);
 		Fonts.draw(g, sub, x0 + Pixel.width(title, 2f) + 9, y0 + 17, Theme.TEXT_MUTED, false, 0.82f, false);
 		float top = y0 + 34, bottom = wy + wh - 6;
 		int cols = Math.max(2, (int) ((cw + GAP) / (160 + GAP)));
@@ -543,7 +543,7 @@ public class ClickGui extends Screen {
 		float ty = y0 + 18;
 		Ui.iconTile(g, isClient ? (designPage ? "sparkle" : "gear") : PixelIcons.forModule(m.id()), x0, ty, 32, isClient ? 0 : detailToggle.get(), 0);
 		Pixel.headline(g, isClient ? (designPage ? "Design" : "Settings") : m.name(), x0 + 42, ty + 2, Theme.WHITE, 2f, true);
-		Fonts.draw(g, isClient ? (designPage ? "Menu designs, light mode and backgrounds" : "Carbon client preferences") : m.description(),
+		Fonts.draw(g, isClient ? (designPage ? "Menu designs, light mode and backgrounds" : "Onix client preferences") : m.description(),
 			x0 + 42, ty + 21, Theme.TEXT_DIM, false, 0.8f, false);
 
 		float rx = x0 + cw;

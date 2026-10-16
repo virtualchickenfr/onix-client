@@ -1,11 +1,14 @@
 {
 	"schemaVersion": 1,
-	"id": "carbon",
+	"id": "onix",
 	"version": "${version}",
-	"name": "Carbon Client",
-	"description": "A clean monochrome PvP & performance client.",
-	"authors": ["Carbon"],
-	"license": "All-Rights-Reserved",
+	"name": "Onix Client",
+	"description": "Onix Client for Minecraft 1.21.11: PvP, HUD and performance modules, menu designs and a pixel-sharp interface.",
+	"authors": ["virtualchickenfr"],
+	"contact": {
+		"sources": "https://github.com/virtualchickenfr/onix-client"
+	},
+	"license": "MIT",
 	"icon": "assets/carbon/icon.png",
 	"environment": "client",
 	"entrypoints": {

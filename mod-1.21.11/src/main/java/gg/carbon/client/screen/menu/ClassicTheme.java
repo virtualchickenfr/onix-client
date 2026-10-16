@@ -46,7 +46,7 @@ public final class ClassicTheme implements MenuTheme {
 
 	@Override
 	public String description() {
-		return "Minecraft's panorama and layout with Carbon buttons";
+		return "Minecraft's panorama and layout with Onix buttons";
 	}
 
 	@Override
@@ -96,7 +96,7 @@ public final class ClassicTheme implements MenuTheme {
 		button(c, Entries.DESIGN, cx + 128, y + 108, 20, 20, fade);
 
 		R2D.pushAlpha(fade);
-		Fonts.draw(g, "Minecraft " + net.minecraft.SharedConstants.getCurrentVersion().name() + "  ·  Carbon " + CarbonClient.VERSION, 3, h - 8, 0x70E0E0E0, Face.BODY, 0.6f, false);
+		Fonts.draw(g, "Minecraft " + net.minecraft.SharedConstants.getCurrentVersion().name() + "  ·  Onix " + CarbonClient.VERSION, 3, h - 8, 0x70E0E0E0, Face.BODY, 0.6f, false);
 		String copy = "Copyright Mojang AB. Do not distribute!";
 		Fonts.draw(g, copy, w - 3 - Fonts.width(copy, Face.BODY, 0.6f), h - 8, 0x70E0E0E0, Face.BODY, 0.6f, false);
 		R2D.popAlpha();

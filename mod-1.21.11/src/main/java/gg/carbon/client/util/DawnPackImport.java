@@ -82,7 +82,7 @@ public final class DawnPackImport {
 			} finally {
 				running = false;
 			}
-		}, "Carbon Dawn import");
+		}, "Onix Dawn import");
 		t.setDaemon(true);
 		t.start();
 	}
@@ -277,7 +277,7 @@ public final class DawnPackImport {
 
 	private static HttpRequest.Builder request(String path) {
 		return HttpRequest.newBuilder(URI.create(API + path)).timeout(Duration.ofSeconds(30))
-			.header("User-Agent", "carbon-client/" + CarbonClient.VERSION + " (dawnpack import)");
+			.header("User-Agent", "onix-client/" + CarbonClient.VERSION + " (dawnpack import)");
 	}
 
 	private static JsonElement getJson(String path) throws Exception {
@@ -297,7 +297,7 @@ public final class DawnPackImport {
 		if (url == null || !url.startsWith("https://")) throw new IOException("bad download url " + url);
 		Path tmp = target.resolveSibling(target.getFileName() + ".part");
 		HttpResponse<Path> res = HTTP.send(HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofMinutes(2))
-			.header("User-Agent", "carbon-client/" + CarbonClient.VERSION).GET().build(), HttpResponse.BodyHandlers.ofFile(tmp));
+			.header("User-Agent", "onix-client/" + CarbonClient.VERSION).GET().build(), HttpResponse.BodyHandlers.ofFile(tmp));
 		if (res.statusCode() != 200) {
 			Files.deleteIfExists(tmp);
 			throw new IOException("download failed (" + res.statusCode() + "): " + url);

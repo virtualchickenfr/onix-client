@@ -41,7 +41,7 @@ public class CarbonMainMenu extends Screen {
 	private float ss = 1f, vw, vh;
 
 	public CarbonMainMenu() {
-		super(Component.literal("Carbon"));
+		super(Component.literal("Onix"));
 	}
 
 	@Override
