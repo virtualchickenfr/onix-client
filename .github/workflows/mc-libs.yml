@@ -1,0 +1,53 @@
+name: Compile classpath (for development)
+# Pushes the jars each mod build compiles against (mapped Minecraft, Fabric API, libraries) to the
+# branch mc-libs-<version>, so code can be compile-checked without Gradle.
+on:
+  push:
+    paths: ['.github/mc-libs-trigger']
+permissions:
+  contents: write
+jobs:
+  libs:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - dir: mod
+            java: 21
+          - dir: mod-1.21.11
+            java: 25
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+      - name: Collect classpath
+        working-directory: ${{ matrix.dir }}
+        shell: bash
+        run: |
+          chmod +x gradlew
+          cat > /tmp/cp.gradle <<'G'
+          allprojects {
+            tasks.register('printCp') {
+              doLast {
+                configurations.compileClasspath.resolve().each { println "CP:" + it }
+              }
+            }
+          }
+          G
+          ./gradlew -I /tmp/cp.gradle printCp --no-daemon -q > cp.txt 2> err.txt || { tail -n 30 err.txt | while IFS= read -r l; do echo "::error::$l"; done; exit 1; }
+          mkdir -p /tmp/libs
+          grep '^CP:' cp.txt | cut -c4- | while IFS= read -r f; do [ -f "$f" ] && cp "$f" /tmp/libs/; done
+          echo "::notice::$(ls /tmp/libs | wc -l) jars, $(du -sh /tmp/libs | cut -f1)"
+          ls /tmp/libs | grep -i minecraft | while IFS= read -r l; do echo "::notice::$l"; done
+      - name: Push
+        shell: bash
+        run: |
+          ver=$(grep '^minecraft_version=' ${{ matrix.dir }}/gradle.properties | cut -d= -f2)
+          cd /tmp/libs
+          find . -size +95M -print -delete
+          git init -q -b "mc-libs-$ver" && git add -A
+          git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -q -m "Compile classpath for Minecraft $ver"
+          git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" "HEAD:refs/heads/mc-libs-$ver"
