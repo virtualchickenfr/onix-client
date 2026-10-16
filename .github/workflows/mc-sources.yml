@@ -1,0 +1,38 @@
+name: Minecraft sources (for development)
+# Decompiles Minecraft for each mod build and pushes the sources to the branch mc-sources-<version>,
+# so APIs can be looked up without a local Gradle setup.
+on:
+  push:
+    paths: ['.github/mc-sources-trigger']
+permissions:
+  contents: write
+jobs:
+  sources:
+    strategy:
+      fail-fast: false
+      matrix:
+        dir: [mod, mod-1.21.11]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Decompile
+        working-directory: ${{ matrix.dir }}
+        run: |
+          chmod +x gradlew
+          ./gradlew genSources --no-daemon -q || ./gradlew genSourcesWithVineflower --no-daemon -q
+      - name: Push sources
+        shell: bash
+        run: |
+          ver=$(grep '^minecraft_version=' ${{ matrix.dir }}/gradle.properties | cut -d= -f2)
+          jar=$(find ~/.gradle ${{ matrix.dir }}/.gradle -name '*-sources.jar' -path '*minecraft*' 2>/dev/null | grep -v fabric-api | head -n 1)
+          echo "sources: $jar"
+          mkdir -p /tmp/out && cd /tmp/out && unzip -q "$jar" -x 'META-INF/*'
+          find ~/.gradle -name 'fabric-api-*sources*.jar' -o -name 'fabric-*-sources.jar' 2>/dev/null | head -n 200 | while read j; do unzip -q -o "$j" -d /tmp/out/fabric-api -x 'META-INF/*' || true; done
+          git init -q -b "mc-sources-$ver" && git add -A
+          git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -q -m "Minecraft $ver sources ($(basename "$jar"))"
+          git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" "HEAD:refs/heads/mc-sources-$ver"
+          echo "::notice::pushed mc-sources-$ver from $(basename "$jar")"

@@ -1,0 +1,41 @@
+{
+	"required": true,
+	"minVersion": "0.8",
+	"package": "gg.carbon.client.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"client": [
+		"AbstractButtonInvoker",
+		"AbstractButtonMixin",
+		"ButtonPlainMixin",
+		"AbstractSliderButtonMixin",
+		"AbstractWidgetInvoker",
+		"CameraMixin",
+		"ClientPacketListenerMixin",
+		"ContainerScreenInvoker",
+		"ContainerScreenMixin",
+		"DarkModeBlitMixin",
+		"EntityRenderDispatcherMixin",
+		"FramerateLimitTrackerMixin",
+		"GameRendererInvoker",
+		"GameRendererMixin",
+		"KeyboardHandlerMixin",
+		"LevelMixin",
+		"LevelRendererMixin",
+		"LightmapMixin",
+		"LivingEntityRendererMixin",
+		"LoadingOverlayMixin",
+		"LocalPlayerMixin",
+		"MenuSkinGraphicsMixin",
+		"MenuSkinListMixin",
+		"MenuSkinScreenMixin",
+		"MenuSkinTextMixin",
+		"MinecraftMixin",
+		"MouseHandlerMixin",
+		"MultiPlayerGameModeMixin",
+		"ParticleEngineMixin",
+		"ToastManagerMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

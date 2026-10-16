@@ -1,0 +1,21 @@
+{
+	"schemaVersion": 1,
+	"id": "carbon",
+	"version": "${version}",
+	"name": "Carbon Client",
+	"description": "A clean monochrome PvP & performance client.",
+	"authors": ["Carbon"],
+	"license": "All-Rights-Reserved",
+	"icon": "assets/carbon/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"client": ["gg.carbon.client.CarbonClient"]
+	},
+	"mixins": ["carbon.mixins.json"],
+	"depends": {
+		"fabricloader": ">=0.19.3",
+		"minecraft": "~1.21.11",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}
