@@ -11,7 +11,7 @@ async function renderMods() {
   }
   const mods = await api.listMods(profileState.active);
   if (!mods.length) {
-    list.replaceChildren(el('div', { class: 'empty' }, [el('b', { text: 'No mods yet' }), el('span', { text: 'Onix, Fabric API and Sodium are installed on the first launch. Add more with “Add from Modrinth”.' })]));
+    list.replaceChildren(el('div', { class: 'empty' }, [el('b', { text: 'No mods yet' }), el('span', { text: 'Onix, Fabric API and the performance pack are installed on the first launch. Add more with “Add from Modrinth”.' })]));
     return;
   }
   list.replaceChildren(...mods.map((mod) => {

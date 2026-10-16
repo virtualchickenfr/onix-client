@@ -50,6 +50,13 @@ function knownSources() {
   ];
 }
 
+/** Folders that never hold client settings or .dawnpack files, but can hold thousands of files. */
+const HEAVY_DIRS = new Set(['assets', 'libraries', 'versions', 'natives', 'saves', 'mods', 'resourcepacks', 'shaderpacks',
+  'screenshots', 'logs', 'crash-reports', 'cache', 'caches', 'Cache', 'GPUCache', 'Code Cache', 'blob_storage', 'node_modules',
+  'runtime', 'jre', 'java', 'tmp', 'temp', 'update', 'updates', 'sentry', 'browser', 'backups', 'Distant_Horizons_server_data',
+  'xaero', 'moddata', '.git', '.mixin.out', '.fabric', 'skin', 'themes', 'hosted-servers', '.minecraft', 'auto-sync', 'private-game-content',
+  'pre-auto-sync-game', 'downloads', 'schematics', 'emotes', 'essential', 'debug', 'defaultconfigs']);
+
 const exists = (p) => { try { fs.accessSync(p); return true; } catch { return false; } };
 const isDir = (p) => { try { return fs.statSync(p).isDirectory(); } catch { return false; } };
 const list = (p) => { try { return fs.readdirSync(p, { withFileTypes: true }); } catch { return []; } };
@@ -104,8 +111,84 @@ function matchesVersion(range, version) {
   }));
 }
 
-/** Reads fabric.mod.json from a jar. */
-function readFabricModJson(jarPath) {
+/**
+ * fabric.mod.json of jars seen before, keyed by path, size and modification time. Scanning other launchers
+ * opens hundreds of jars; with the cache a second scan only opens new or changed ones.
+ */
+let modCache = null;
+let modCacheFile = null;
+let modCacheDirty = false;
+
+function setCacheDir(dir) {
+  modCacheFile = path.join(dir, 'mod-info-cache.json');
+}
+
+function cacheGet(key) {
+  if (!modCache) {
+    try {
+      modCache = modCacheFile ? JSON.parse(fs.readFileSync(modCacheFile, 'utf8')) : {};
+    } catch {
+      modCache = {};
+    }
+  }
+  return Object.prototype.hasOwnProperty.call(modCache, key) ? modCache[key] : undefined;
+}
+
+function cachePut(key, value) {
+  cacheGet(key);
+  modCache[key] = value;
+  modCacheDirty = true;
+}
+
+function flushCache() {
+  if (!modCacheDirty || !modCacheFile || !modCache) return;
+  try {
+    // keep it small: only the essentials of each mod
+    fs.mkdirSync(path.dirname(modCacheFile), { recursive: true });
+    fs.writeFileSync(modCacheFile, JSON.stringify(modCache));
+    modCacheDirty = false;
+  } catch {
+    // a cache is optional
+  }
+}
+
+/** The parts of fabric.mod.json the launcher uses. */
+const slimMeta = (m) => (m ? {
+  id: m.id, name: m.name, version: m.version, environment: m.environment,
+  depends: m.depends && m.depends.minecraft !== undefined ? { minecraft: m.depends.minecraft } : undefined,
+} : null);
+
+/** Reads fabric.mod.json from a jar (cached by path, size and modification time). */
+async function readFabricModJson(jarPath) {
+  let key = null;
+  try {
+    const st = fs.statSync(jarPath);
+    key = `${jarPath}|${st.size}|${Math.round(st.mtimeMs)}`;
+    const hit = cacheGet(key);
+    if (hit !== undefined) return hit;
+  } catch {
+    return null;
+  }
+  const meta = slimMeta(await readFabricModJsonUncached(jarPath));
+  cachePut(key, meta);
+  return meta;
+}
+
+/** Runs fn over items with at most `limit` at a time. */
+async function mapLimit(items, limit, fn) {
+  const out = new Array(items.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < items.length) {
+      const i = next++;
+      out[i] = await fn(items[i], i);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return out;
+}
+
+function readFabricModJsonUncached(jarPath) {
   return new Promise((resolve) => {
     let yauzl;
     try {
@@ -148,12 +231,14 @@ function readFabricModJson(jarPath) {
 /** Dawn exports mod sets as .dawnpack files (zip archives with jars inside). */
 function findDawnpacks(dirs) {
   const found = new Set();
+  let budget = 3000;
   const walk = (dir, depth) => {
-    if (depth > 2) return;
+    if (depth > 2 || budget <= 0) return;
     for (const e of list(dir)) {
+      if (--budget <= 0) return;
       const p = path.join(dir, e.name);
       if (e.isFile() && e.name.toLowerCase().endsWith('.dawnpack')) found.add(p);
-      else if (e.isDirectory() && depth < 2 && !['saves', 'mods', 'screenshots', 'resourcepacks', 'shaderpacks', 'logs', 'crash-reports', 'versions', 'libraries', 'assets'].includes(e.name)) walk(p, depth + 1);
+      else if (e.isDirectory() && depth < 2 && !HEAVY_DIRS.has(e.name)) walk(p, depth + 1);
     }
   };
   for (const d of dirs) if (d && isDir(d)) walk(d, 0);
@@ -217,13 +302,13 @@ async function analyzeDawnpacks(dirs) {
 
 async function analyzeMods(gameDir, skipFiles = new Set()) {
   const modsDir = path.join(gameDir, 'mods');
-  const jars = list(modsDir).filter((e) => e.isFile() && e.name.endsWith('.jar'));
+  const jars = list(modsDir).filter((e) => e.isFile() && e.name.endsWith('.jar') && !skipFiles.has(e.name));
   const compatible = [];
   const incompatible = [];
-  for (const jar of jars) {
+  const metas = await mapLimit(jars, 8, (jar) => readFabricModJson(path.join(modsDir, jar.name)));
+  for (const [i, jar] of jars.entries()) {
     const file = path.join(modsDir, jar.name);
-    if (skipFiles.has(jar.name)) continue;
-    const meta = await readFabricModJson(file);
+    const meta = metas[i];
     if (!meta) {
       incompatible.push({ file: jar.name, reason: 'Not a Fabric mod (e.g. Forge)' });
       continue;
@@ -407,12 +492,15 @@ function collectModules(json, out, depth = 0) {
 function scanClientModules(configDirs) {
   const out = {};
   let files = 0;
+  let entries = 0;
   const walk = (dir, depth) => {
-    if (depth > 4 || files > 400) return;
+    if (depth > 4 || files > 400 || entries > 5000) return;
     for (const e of list(dir)) {
+      if (++entries > 5000 || files > 400) return;
       const p = path.join(dir, e.name);
-      if (e.isDirectory()) walk(p, depth + 1);
-      else if (e.name.endsWith('.json')) {
+      if (e.isDirectory()) {
+        if (!HEAVY_DIRS.has(e.name)) walk(p, depth + 1);
+      } else if (e.name.endsWith('.json')) {
         try {
           if (fs.statSync(p).size > 2 * 1024 * 1024) continue;
           files++;
@@ -495,13 +583,16 @@ const readJson = (file) => {
  */
 async function dawnProfiles(dawnDir) {
   const root = path.join(dawnDir, 'profiles');
-  const out = [];
-  for (const e of list(root)) {
-    if (!e.isDirectory()) continue;
+  const found = await Promise.all(list(root).filter((e) => e.isDirectory()).map((e) => dawnProfile(dawnDir, root, e).catch(() => null)));
+  return found.filter(Boolean);
+}
+
+async function dawnProfile(dawnDir, root, e) {
+  {
     const dir = path.join(root, e.name);
     const json = readJson(path.join(dir, 'profile.json'));
     const profile = json && json.profile;
-    if (!profile) continue;
+    if (!profile) return null;
     const layers = [];
     const sync = profile.settings && profile.settings.autoSyncMembership;
     for (const sub of ['private-game-content', '.minecraft', 'minecraft']) if (isDir(path.join(dir, sub))) layers.push(path.join(dir, sub));
@@ -509,54 +600,68 @@ async function dawnProfiles(dawnDir) {
       const shared = path.join(dawnDir, 'auto-sync', 'groups', sync.groupId);
       if (isDir(shared)) layers.push(shared);
     }
-    if (!layers.length) continue;
+    if (!layers.length) return null;
     // Dawn's own client jar is not a mod to carry over
     const managed = readJson(path.join(dir, 'dawn-managed-client-mods.json'));
     const skipFiles = new Set(['dawn-client.jar', ...((managed && managed.mods) || []).map((m) => m.fileName).filter(Boolean)]);
     const mcVersion = profile.minecraftVersion || null;
     const configDirs = layers.flatMap((l) => ['config', 'dawn', 'feather'].map((n) => path.join(l, n)));
     const a = await analyzeGameDir(layers[0], configDirs, { layers, skipFiles, mcVersion });
-    if (!hasContent(a)) continue;
+    if (!hasContent(a)) return null;
     const name = profile.name || e.name;
-    out.push({ id: `dawn:${e.name}`, client: 'dawn', name: `Dawn · ${name}`, profileName: name,
-      label: `Minecraft ${mcVersion || '?'}${profile.loader && profile.loader.kind ? ` · ${profile.loader.kind}` : ''}`, ...a });
+    return { id: `dawn:${e.name}`, client: 'dawn', name: `Dawn · ${name}`, profileName: name,
+      label: `Minecraft ${mcVersion || '?'}${profile.loader && profile.loader.kind ? ` · ${profile.loader.kind}` : ''}`, ...a };
   }
-  return out;
 }
 
-/** Finds every known source on this computer. */
+/** Finds every known source on this computer (all sources are looked at in parallel). */
 async function detect() {
-  const results = [];
-  results.push(...await dawnProfiles(path.join(dirs().appData, '.dawn')));
+  const started = Date.now();
+  const tasks = [dawnProfiles(path.join(dirs().appData, '.dawn'))];
   for (const src of knownSources()) {
     if (src.instances) {
       for (const root of src.instances) {
         for (const e of list(root)) {
           if (!e.isDirectory()) continue;
-          const gameDir = gameDirOfInstance(path.join(root, e.name));
-          if (!gameDir) continue;
-          const a = await analyzeGameDir(gameDir, [path.join(gameDir, 'config')]);
-          if (hasContent(a)) results.push({ id: `${src.id}:${e.name}`, client: src.id, name: src.name, label: e.name, ...a });
+          tasks.push((async () => {
+            const gameDir = gameDirOfInstance(path.join(root, e.name));
+            if (!gameDir) return [];
+            const a = await analyzeGameDir(gameDir, [path.join(gameDir, 'config')]);
+            return hasContent(a) ? [{ id: `${src.id}:${e.name}`, client: src.id, name: src.name, label: e.name, ...a }] : [];
+          })());
         }
       }
       continue;
     }
-    const configDirs = (src.config || []).filter(isDir);
-    const gameDir = (src.gameDirs || []).find((d) => isDir(d) && looksLikeGameDir(d));
-    // Clients like Lunar/Badlion use .minecraft: only list them when the client itself is installed
-    if (src.id !== 'minecraft' && configDirs.length === 0) continue;
-    if (!gameDir && configDirs.length === 0) continue;
-    const a = gameDir ? await analyzeGameDir(gameDir, configDirs) : {
-      gameDir: null, options: false, servers: false, worlds: 0, resourcepacks: 0, shaderpacks: 0, screenshots: 0,
-      modsCompatible: [], modsIncompatible: [], modules: scanClientModules(configDirs), configDirs,
-    };
-    if (hasContent(a)) results.push({ id: src.id, client: src.id, name: src.name, label: gameDir ? shortPath(gameDir) : shortPath(configDirs[0]), ...a });
+    tasks.push((async () => {
+      const configDirs = (src.config || []).filter(isDir);
+      const gameDir = (src.gameDirs || []).find((d) => isDir(d) && looksLikeGameDir(d));
+      // Clients like Lunar/Badlion use .minecraft: only list them when the client itself is installed
+      if (src.id !== 'minecraft' && configDirs.length === 0) return [];
+      if (!gameDir && configDirs.length === 0) return [];
+      const a = gameDir ? await analyzeGameDir(gameDir, configDirs) : {
+        gameDir: null, options: false, servers: false, worlds: 0, resourcepacks: 0, shaderpacks: 0, screenshots: 0,
+        modsCompatible: [], modsIncompatible: [], modules: scanClientModules(configDirs), configDirs,
+      };
+      return hasContent(a) ? [{ id: src.id, client: src.id, name: src.name, label: gameDir ? shortPath(gameDir) : shortPath(configDirs[0]), ...a }] : [];
+    })());
   }
+  const results = (await Promise.all(tasks.map((t) => t.catch(() => [])))).flat();
+  flushCache();
+  detect.lastMs = Date.now() - started;
   return results;
 }
 
 /** A folder picked by the user (also searched for instances). */
 async function analyzeFolder(folder) {
+  try {
+    return await analyzeFolderUncached(folder);
+  } finally {
+    flushCache();
+  }
+}
+
+async function analyzeFolderUncached(folder) {
   // a Dawn folder (.dawn or .dawn/profiles) or one Dawn profile
   for (const dawnDir of [folder, path.dirname(folder), path.dirname(path.dirname(folder))]) {
     if (!isDir(path.join(dawnDir, 'profiles')) || !exists(path.join(dawnDir, 'launcher-settings.json'))) continue;
@@ -744,4 +849,4 @@ function isNewerThanGame(version) {
   return false;
 }
 
-module.exports = { isNewerThanGame, detect, analyzeFolder, runImport, matchesVersion, readFabricModJson, MODULE_ALIASES, knownSources, dirs, gameDirOfInstance };
+module.exports = { setCacheDir, flushCache, mapLimit, isNewerThanGame, detect, analyzeFolder, runImport, matchesVersion, readFabricModJson, MODULE_ALIASES, knownSources, dirs, gameDirOfInstance };

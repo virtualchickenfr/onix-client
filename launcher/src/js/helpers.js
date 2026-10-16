@@ -48,7 +48,7 @@ function toast(text, error = false) {
 
 const gb = (mb) => `${(mb / 1024).toFixed(mb % 1024 ? 1 : 0)} GB`;
 const activeProfile = () => profileState.profiles.find((p) => p.id === profileState.active) || profileState.profiles[0];
-const profileMeta = (p) => [gb(p.ramMb), p.performanceMods ? 'Sodium' : null, p.quickJoin || null].filter(Boolean).join(' · ');
+const profileMeta = (p) => [gb(p.ramMb), p.performanceMods ? 'Performance pack' : null, p.quickJoin || null].filter(Boolean).join(' · ');
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 
 function mix(a, b, t) {

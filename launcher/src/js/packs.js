@@ -105,7 +105,7 @@ async function renderInstalled() {
   if (!mods.length) {
     body.replaceChildren(el('div', { class: 'empty' }, [
       el('b', { text: 'No mods yet' }),
-      el('span', { text: 'Onix, Fabric API and Sodium are added on the first launch. Find more under Browse Modrinth.' }),
+      el('span', { text: 'Onix, Fabric API and the performance pack are added on the first launch. Find more under Browse Modrinth.' }),
       el('button', { class: 'btn sm primary', text: 'Browse Modrinth', onclick: () => showTab('browse') }),
     ]));
     return;

@@ -223,6 +223,7 @@ app.whenReady().then(() => {
   fs.mkdirSync(GAME_DIR, { recursive: true });
   store = new Store(path.join(app.getPath('userData'), 'onix-launcher.json'), {});
   profiles = new Profiles(store, GAME_DIR, { ramMb: Math.min(4096, Math.floor(TOTAL_MB / 2)) });
+  importer.setCacheDir(path.join(app.getPath('userData'), 'cache'));
 
   ipcMain.handle('app:info', () => ({
     version: app.getVersion(),

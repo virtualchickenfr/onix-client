@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { Client } = require('minecraft-launcher-core');
+const McHandler = require('minecraft-launcher-core/components/handler');
 const { download, fetchJson } = require('./download');
 const modrinth = require('./modrinth');
 
@@ -10,8 +11,13 @@ const VERSION_ID = `fabric-loader-${LOADER_VERSION}-${MC_VERSION}`;
 
 /** Mods the launcher fetches from Modrinth and keeps up to date. */
 const MANAGED_MODS = [
-  { project: 'fabric-api', name: 'Fabric API', always: true },
-  { project: 'sodium', name: 'Sodium', performance: true },
+  { project: 'fabric-api', id: 'fabric-api', name: 'Fabric API', always: true },
+  // performance pack (Profile → Performance mods): faster rendering, less memory, faster logic
+  { project: 'sodium', id: 'sodium', name: 'Sodium', performance: true },
+  { project: 'lithium', id: 'lithium', name: 'Lithium', performance: true },
+  { project: 'ferrite-core', id: 'ferritecore', name: 'FerriteCore', performance: true },
+  { project: 'immediatelyfast', id: 'immediatelyfast', name: 'ImmediatelyFast', performance: true },
+  { project: 'entityculling', id: 'entityculling', name: 'EntityCulling', performance: true },
 ];
 
 const MANIFEST = '.onix-managed.json';
@@ -52,6 +58,47 @@ function readManifest(modsDir) {
 
 function writeManifest(modsDir, data) {
   fs.writeFileSync(path.join(modsDir, MANIFEST), JSON.stringify(data, null, 2));
+}
+
+/*
+ * minecraft-launcher-core hashes every asset (about 4,000 files) on every start, which takes from several
+ * seconds to minutes on a slow disk. After one start that checked everything, later starts only check
+ * that the files are there; "Fast start" off in the settings (or a crash right at start) checks everything again.
+ */
+const verifiedMarker = (root, versionId) => path.join(root, 'cache', `verified-${versionId}.json`);
+let trustFilesThatExist = false;
+const originalCheckSum = McHandler.prototype.checkSum;
+McHandler.prototype.checkSum = function checkSum(hash, file) {
+  if (trustFilesThatExist) {
+    try {
+      return Promise.resolve(fs.statSync(file).size > 0);
+    } catch {
+      return Promise.resolve(false);
+    }
+  }
+  return originalCheckSum.call(this, hash, file);
+};
+
+function filesVerified(root, versionId) {
+  try {
+    return JSON.parse(fs.readFileSync(verifiedMarker(root, versionId), 'utf8')).ok === true;
+  } catch {
+    return false;
+  }
+}
+
+function setFilesVerified(root, versionId, ok) {
+  const file = verifiedMarker(root, versionId);
+  try {
+    if (ok) {
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, JSON.stringify({ ok: true, at: Date.now() }));
+    } else {
+      fs.rmSync(file, { force: true });
+    }
+  } catch {
+    // only a speed-up
+  }
 }
 
 /** Creates the Fabric version profile that MCLC launches as a "custom" version. */
@@ -102,21 +149,31 @@ async function ensureMods(root, settings, report, log, throttle = true) {
     log('Warning: Onix mod not found. Run "gradlew build" in the mod folder first.');
   }
 
-  // 2. Fabric API and performance mods from Modrinth
+  // 2. Fabric API and performance mods from Modrinth (all checked at the same time)
   const manifest = readManifest(modsDir);
-  for (const mod of MANAGED_MODS) {
-    const wanted = mod.always || (mod.performance && settings.performanceMods);
+  const managedFiles = new Set(MANAGED_MODS.map((m) => manifest[m.project]).filter(Boolean));
+  // mods the player added themselves: never download a second copy of those (two copies stop Fabric)
+  const { readFabricModJson, flushCache } = require('./importer');
+  const ownIds = new Set();
+  for (const f of fs.readdirSync(modsDir)) {
+    if (!f.endsWith('.jar') || managedFiles.has(f) || /^onix-client-/.test(f)) continue;
+    const info = await readFabricModJson(path.join(modsDir, f));
+    if (info && info.id) ownIds.add(info.id);
+  }
+  flushCache();
+  await Promise.all(MANAGED_MODS.map(async (mod) => {
+    const wanted = (mod.always || (mod.performance && settings.performanceMods)) && !ownIds.has(mod.id);
     const old = manifest[mod.project];
     if (!wanted) {
       if (old) {
         fs.rmSync(path.join(modsDir, old), { force: true });
         delete manifest[mod.project];
-        log(`Removed ${mod.name}`);
+        log(ownIds.has(mod.id) ? `${mod.name}: using your own copy` : `Removed ${mod.name}`);
       }
-      continue;
+      return;
     }
     const checked = (manifest._checked || {})[mod.project] || 0;
-    if (throttle && old && fs.existsSync(path.join(modsDir, old)) && Date.now() - checked < UPDATE_CHECK_INTERVAL) continue;
+    if (throttle && old && fs.existsSync(path.join(modsDir, old)) && Date.now() - checked < UPDATE_CHECK_INTERVAL) return;
     try {
       report(`Checking ${mod.name}`, 0);
       const query = `game_versions=${encodeURIComponent(JSON.stringify([MC_VERSION]))}&loaders=${encodeURIComponent(JSON.stringify(['fabric']))}`;
@@ -126,9 +183,9 @@ async function ensureMods(root, settings, report, log, throttle = true) {
       const file = version.files.find((f) => f.primary) || version.files[0];
       const filename = modrinth.safeFileName(file.filename);
       manifest._checked = { ...(manifest._checked || {}), [mod.project]: Date.now() };
-      if (old === filename && fs.existsSync(path.join(modsDir, filename))) continue;
+      if (old === filename && fs.existsSync(path.join(modsDir, filename))) return;
       // respect a disabled copy
-      if (old && fs.existsSync(path.join(modsDir, old + '.disabled'))) continue;
+      if (old && fs.existsSync(path.join(modsDir, old + '.disabled'))) return;
       const target = path.join(modsDir, filename);
       await download(file.url, target, (p) => report(`Downloading ${mod.name}`, p));
       try {
@@ -144,7 +201,7 @@ async function ensureMods(root, settings, report, log, throttle = true) {
       log(`Could not update ${mod.name}: ${err.message}`);
       if (mod.always && !old) throw err;
     }
-  }
+  }));
   writeManifest(modsDir, manifest);
 }
 
@@ -172,10 +229,15 @@ async function launch({ root, gameDir, auth, javaPath, settings, fastStart = tru
   }
 
   let started = false;
+  const quick = fastStart && filesVerified(root, VERSION_ID);
+  trustFilesThatExist = quick;
+  log(quick ? 'Game files were checked before: only looking for missing files' : 'Checking all game files (first start or Fast start off)');
   launcher.on('debug', (line) => log(String(line)));
   launcher.on('data', (line) => {
     if (!started) {
       started = true;
+      trustFilesThatExist = false;
+      setFilesVerified(root, VERSION_ID, true);
       onStart();
     }
     log(String(line).trimEnd());
@@ -183,10 +245,21 @@ async function launch({ root, gameDir, auth, javaPath, settings, fastStart = tru
   launcher.on('progress', (e) => {
     if (e && e.total) report(`Downloading Minecraft (${e.type})`, e.task / e.total);
   });
-  launcher.on('close', (code) => onClose(code));
+  const launchedAt = Date.now();
+  launcher.on('close', (code) => {
+    trustFilesThatExist = false;
+    // a crash within the first seconds may be a damaged file: check everything next time
+    if (code !== 0 && Date.now() - launchedAt < 60_000) setFilesVerified(root, VERSION_ID, false);
+    onClose(code);
+  });
 
   report('Starting Minecraft', 1);
-  const proc = await launcher.launch(options);
+  let proc;
+  try {
+    proc = await launcher.launch(options);
+  } finally {
+    trustFilesThatExist = false;
+  }
   if (!proc) throw new Error('Minecraft could not be started (see the console).');
   return proc;
 }
@@ -203,7 +276,8 @@ async function adoptManagedMods(root) {
   for (const f of fs.readdirSync(modsDir).filter((n) => n.endsWith('.jar'))) {
     const info = await readFabricModJson(path.join(modsDir, f));
     const id = info && info.id;
-    if (id === 'fabric-api' || id === 'sodium') manifest[id] = f;
+    const managed = MANAGED_MODS.find((m) => m.id === id);
+    if (managed) manifest[managed.project] = f;
   }
   writeManifest(modsDir, manifest);
 }
