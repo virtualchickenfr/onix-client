@@ -42,8 +42,14 @@ pickerBtn.addEventListener('click', (e) => {
 });
 document.addEventListener('click', (e) => { if (!pickerPop.contains(e.target)) closePicker(); });
 
+function renderEyebrow() {
+  if (!info) return;
+  $('#eyebrow').textContent = `Minecraft ${mcOfProfile(activeProfile())} · Fabric · v${info.version}`;
+}
+
 function refreshProfiles() {
   renderPicker();
+  renderEyebrow();
   if (currentView === 'profiles') renderProfiles();
   if (currentView === 'mods') renderMods();
   if (currentView === 'cosmetics') loadCosmetics();

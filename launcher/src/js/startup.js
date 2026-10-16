@@ -14,6 +14,7 @@
     bootStatus('Loading profiles');
     profileState = await api.getProfiles();
     renderPicker();
+    renderEyebrow();
     await initSettings();
     bootStatus('Ready');
   } finally {
