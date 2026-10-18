@@ -1,0 +1,41 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.onix.client.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "AbstractClientPlayerEntityMixin",
+    "BossBarHudMixin",
+    "CameraMixin",
+    "ChatHudMixin",
+    "ConnectScreenMixin",
+    "ContainerScreenMixin",
+    "DarkModeBlitMixin",
+    "EntityMixin",
+    "EntityRendererMixin",
+    "FogColorMixin",
+    "FoodDataAccessor",
+    "GameRendererMixin",
+    "HeldItemRendererMixin",
+    "InGameHudMixin",
+    "InGameOverlayRendererMixin",
+    "KeyBindingAccessor",
+    "KeyboardMixin",
+    "LevelLoadingScreenMixin",
+    "LivingEntityRendererMixin",
+    "LocalPlayerMixin",
+    "MinecraftClientMixin",
+    "MouseMixin",
+    "ParticleEngineMixin",
+    "PlayerListHudMixin",
+    "ScreenMixin",
+    "SimpleOptionAccessor",
+    "SkyRendererMixin",
+    "SplashOverlayMixin",
+    "ToastManagerMixin",
+    "WorldMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

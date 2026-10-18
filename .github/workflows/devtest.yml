@@ -1,0 +1,54 @@
+name: Dev test (1.21.11)
+# Starts Minecraft 1.21.11 with the mod in a virtual display, walks through the screens (util/DevTest.java),
+# joins a test world and pushes the screenshots and the game log to the branch devtest-results.
+on:
+  push:
+    paths: ['.github/devtest-trigger']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: devtest
+  cancel-in-progress: true
+jobs:
+  devtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+      - name: Virtual display and software OpenGL
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq xvfb mesa-utils libgl1-mesa-dri > /dev/null
+      - name: Run the dev test
+        working-directory: mod-1.21.11
+        shell: bash
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+          MESA_GL_VERSION_OVERRIDE: '4.5'
+        run: |
+          chmod +x gradlew
+          set +e
+          timeout 1800 xvfb-run -a -s "-screen 0 1600x900x24" ./gradlew runDevtest --no-daemon --stacktrace > devtest.log 2>&1
+          echo "exit=$?" >> devtest.log
+          set -e
+          tail -n 40 devtest.log
+      - name: Push results
+        if: always()
+        shell: bash
+        run: |
+          out=$(mktemp -d)
+          mkdir -p "$out/screenshots"
+          cp mod-1.21.11/run/screenshots/*.png "$out/screenshots/" 2>/dev/null || true
+          cp mod-1.21.11/run/logs/latest.log "$out/latest.log" 2>/dev/null || true
+          cp mod-1.21.11/devtest.log "$out/gradle.log" 2>/dev/null || true
+          cp -r mod-1.21.11/run/crash-reports "$out/" 2>/dev/null || true
+          cd "$out"
+          git init -q -b devtest-results
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Dev test of ${GITHUB_SHA}"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" devtest-results

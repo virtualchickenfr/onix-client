@@ -417,7 +417,7 @@ public final class PortalTheme implements MenuTheme {
 		String key = CarbonClient.modules().client.menuKey.display().toUpperCase();
 		float kw = Ui.keycap(g, key, 22, h - 30, 0);
 		Fonts.draw(g, "Mod menu", 22 + kw + 6, h - 27.5f, Ink.dim(), Face.MEDIUM, 0.82f, false);
-		String v = "carbon " + CarbonClient.VERSION;
+		String v = "onix " + CarbonClient.VERSION;
 		Fonts.draw(g, v, w - 22 - Fonts.width(v, Face.MONO, 0.75f), h - 26, Ink.faint(), Face.MONO, 0.75f, false);
 		R2D.popAlpha();
 	}

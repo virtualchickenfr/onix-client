@@ -3,7 +3,6 @@ package gg.carbon.client.screen.menu;
 import gg.carbon.client.CarbonClient;
 import gg.carbon.client.screen.CarbonBackground;
 import gg.carbon.client.screen.widget.Ui;
-import gg.carbon.client.setting.KeySetting;
 import gg.carbon.client.ui.Carbon;
 import gg.carbon.client.ui.Fonts;
 import gg.carbon.client.ui.Fonts.Face;
@@ -206,12 +205,7 @@ public final class CarbonTheme implements MenuTheme {
 		R2D.popAlpha();
 	}
 
-	static KeySetting firstKey(java.util.List<gg.carbon.client.setting.Setting<?>> settings) {
-		for (var s : settings) if (s instanceof KeySetting k) return k;
-		return null;
-	}
-
-	static String key(KeySetting k) {
+	static String key(CarbonClient.Key k) {
 		return k == null ? "-" : k.display().toUpperCase();
 	}
 
@@ -223,7 +217,7 @@ public final class CarbonTheme implements MenuTheme {
 		R2D.rrect(g, 17, h - 26, 16, 16, 3, Ink.line());
 		MenuArt.face(g, 18, h - 25, 14);
 		Fonts.draw(g, c.user(), 39, h - 22.2f, Ink.dim(), Face.MEDIUM, 0.85f, false);
-		String version = "carbon " + CarbonClient.VERSION;
+		String version = "onix " + CarbonClient.VERSION;
 		Fonts.draw(g, version, c.w() - 18 - Fonts.width(version, Face.MONO, 0.78f), h - 21.5f, Ink.faint(), Face.MONO, 0.78f, false);
 		R2D.popAlpha();
 	}

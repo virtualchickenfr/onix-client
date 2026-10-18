@@ -68,7 +68,7 @@ public class CarbonMainMenu extends Screen {
 		entries.add(new MenuEntry("Multiplayer", "server", false, false, () -> minecraft.setScreen(
 			minecraft.options.skipMultiplayerWarning ? new JoinMultiplayerScreen(this) : new SafetyScreen(this))));
 		entries.add(new MenuEntry("Realms", "cloud", false, false, () -> minecraft.setScreen(new RealmsMainScreen(this))));
-		entries.add(new MenuEntry("Mods", "grid", false, true, () -> minecraft.setScreen(new ClickGui(this))));
+		entries.add(new MenuEntry("Mods", "grid", false, true, () -> minecraft.setScreen(new dev.onix.client.gui.OnixMenuScreen(this))));
 		entries.add(new MenuEntry("Options", "gear", false, false, () -> minecraft.setScreen(new OptionsScreen(this, minecraft.options))));
 		entries.add(new MenuEntry("Language", "chat", false, false,
 			() -> minecraft.setScreen(new LanguageSelectScreen(this, minecraft.options, minecraft.getLanguageManager()))));
@@ -85,6 +85,17 @@ public class CarbonMainMenu extends Screen {
 	/** Picks up design changes; the Vanilla design hands over to Minecraft's own title screen. */
 	private boolean syncTheme() {
 		String id = CarbonClient.modules().client.menuDesign.get();
+		if (id.equals("Onix")) {
+			// Onix's own title screen
+			if (!handingOver) {
+				handingOver = true;
+				minecraft.execute(() -> {
+					handingOver = false;
+					if (minecraft.screen == this) minecraft.setScreen(new dev.onix.client.gui.OnixTitleScreen());
+				});
+			}
+			return false;
+		}
 		if (id.equals("Vanilla")) {
 			if (!handingOver) {
 				handingOver = true;
@@ -214,7 +225,7 @@ public class CarbonMainMenu extends Screen {
 	@Override
 	public boolean keyPressed(KeyEvent event) {
 		if (event.key() == CarbonClient.modules().client.menuKey.key()) {
-			minecraft.setScreen(new ClickGui(this));
+			minecraft.setScreen(new dev.onix.client.gui.OnixMenuScreen(this));
 			return true;
 		}
 		if (theme != null && pending == null) {

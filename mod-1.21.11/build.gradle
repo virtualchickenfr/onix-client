@@ -19,8 +19,8 @@ loom {
 		// Automated screenshot walkthrough: gradlew runDevtest
 		devtest {
 			client()
-			name = "Carbon Dev Test"
-			vmArg "-Dcarbon.devtest=true"
+			name = "Onix Dev Test"
+			vmArg "-Donix.devtest=true"
 			programArgs "--width", "1600", "--height", "900"
 			runDir "run"
 		}

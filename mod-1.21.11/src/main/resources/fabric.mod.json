@@ -1,24 +1,30 @@
 {
-	"schemaVersion": 1,
-	"id": "onix",
-	"version": "${version}",
-	"name": "Onix Client",
-	"description": "Onix Client for Minecraft 1.21.11: PvP, HUD and performance modules, menu designs and a pixel-sharp interface.",
-	"authors": ["virtualchickenfr"],
-	"contact": {
-		"sources": "https://github.com/virtualchickenfr/onix-client"
-	},
-	"license": "MIT",
-	"icon": "assets/carbon/icon.png",
-	"environment": "client",
-	"entrypoints": {
-		"client": ["gg.carbon.client.CarbonClient"]
-	},
-	"mixins": ["carbon.mixins.json"],
-	"depends": {
-		"fabricloader": ">=0.19.3",
-		"minecraft": "~1.21.11",
-		"java": ">=21",
-		"fabric-api": "*"
-	}
+  "schemaVersion": 1,
+  "id": "onix",
+  "version": "${version}",
+  "name": "Onix Client",
+  "description": "Onix Client for Minecraft 1.21.11 with the Carbon features: 124 modules, cosmetics, coins and shop, Onix and Carbon menu designs, HUD editor and profiles.",
+  "authors": [
+    "virtualchickenfr"
+  ],
+  "contact": {
+    "sources": "https://github.com/virtualchickenfr/onix-client"
+  },
+  "license": "MIT",
+  "icon": "assets/onix/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "dev.onix.client.OnixClient"
+    ]
+  },
+  "mixins": [
+    "onix.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "minecraft": "~1.21.11",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
 }
