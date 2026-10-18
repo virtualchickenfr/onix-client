@@ -922,7 +922,7 @@ public class OnixMenuScreen extends Screen {
             int ph = 58;
             Theme.card(ctx, x, top - 4, r[2], top - 4 + ph, 8, Theme.SURFACE_SUNKEN, Theme.BORDER);
             Theme.label(ctx, "Live Preview", x + 10, top + 2, Theme.TEXT_3);
-            ctx.enableScissor(sx(x + 1), sy(top - 3), sx(r[2] - 1), sy(top - 5 + ph));
+            scissor(ctx, sx(x + 1), sy(top - 3), sx(r[2] - 1), sy(top - 5 + ph));
             try {
                 hud.renderPreview(ctx, (x + r[2]) / 2, top - 4 + ph / 2 + 3, w - 40, ph - 18);
             } catch (RuntimeException e) {
@@ -1113,7 +1113,7 @@ public class OnixMenuScreen extends Screen {
             Skies.Sky s = list.get(i);
             boolean isDay = sky.daySky.is(s.name());
             boolean isNight = sky.nightSky.is(s.name());
-            ctx.enableScissor(sx(x), sy(y), sx(x + tw), sy(y + th));
+            scissor(ctx, sx(x), sy(y), sx(x + tw), sy(y + th));
             if (s.thumbnail() != null) {
                 ctx.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, s.thumbnail(), x, y, 0f, 0f, tw, th, 256, 144, 256, 144);
             } else {
@@ -1873,7 +1873,7 @@ public class OnixMenuScreen extends Screen {
             }
             TitleBackgrounds.Background b = list.get(i);
             boolean selected = !c.backgroundSlideshow.isOn() && b.id().equals(c.titleBackground.get());
-            ctx.enableScissor(sx(x), sy(y), sx(x + tw), sy(y + th));
+            scissor(ctx, sx(x), sy(y), sx(x + tw), sy(y + th));
             TitleBackgrounds.drawThumbnail(ctx, b, x, y, tw, th);
             ctx.disableScissor();
             int border = selected ? Theme.accent() : hov ? Theme.withAlpha(0xFFFFFFFF, 90) : Theme.withAlpha(0xFFFFFFFF, 26);
@@ -1903,7 +1903,7 @@ public class OnixMenuScreen extends Screen {
         if (PlayerPreview.available()) {
             if (!draggingPreview) previewRotation += dt * 22f;
             int size = Math.min(48, (r[3] - r[1] - 80) / 2);
-            ctx.enableScissor(sx(r[0] + 1), sy(r[1] + 32), sx(pv2 - 1), sy(r[3] - 1));
+            scissor(ctx, sx(r[0] + 1), sy(r[1] + 32), sx(pv2 - 1), sy(r[3] - 1));
             PlayerPreview.draw(ctx, sx((r[0] + pv2) / 2.0), sy((r[1] + 30 + r[3] - 36) / 2.0), Math.round(size * uiScale * openScale), previewRotation);
             ctx.disableScissor();
             String hint = "Drag to rotate";
@@ -2496,7 +2496,7 @@ public class OnixMenuScreen extends Screen {
 
     private void beginClip(GuiGraphics ctx, int x1, int y1, int x2, int y2) {
         clip = new int[]{x1, y1, x2, y2};
-        ctx.enableScissor(sx(x1), sy(y1), sx(x2), sy(y2));
+        scissor(ctx, sx(x1), sy(y1), sx(x2), sy(y2));
     }
 
     private void endClip(GuiGraphics ctx) {
@@ -2786,5 +2786,16 @@ public class OnixMenuScreen extends Screen {
         if (search.charTyped(chr) || profileName.charTyped(chr) || cosSearch.charTyped(chr) || giftTo.charTyped(chr) || giftMessage.charTyped(chr)) return true;
         for (Input in : textInputs.values()) if (in.charTyped(chr)) return true;
         return super.charTyped(onix$c);
+    }
+
+    /**
+     * Scissor in screen coordinates (sx/sy already apply the menu scale). Since 1.21.6 enableScissor transforms the
+     * rectangle by the current pose, so the pose is reset while the rectangle is pushed.
+     */
+    private static void scissor(GuiGraphics ctx, int x1, int y1, int x2, int y2) {
+        ctx.pose().pushMatrix();
+        ctx.pose().identity();
+        ctx.enableScissor(x1, y1, x2, y2);
+        ctx.pose().popMatrix();
     }
 }
