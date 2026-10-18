@@ -1,10 +1,11 @@
 # Onix Client
 
-A PvP client for Minecraft **Java Edition 1.21.1** (Fabric), in two parts:
+A PvP client for Minecraft **Java Edition 1.21.1 and 1.21.11** (Fabric), in these parts:
 
 | Folder | Contents |
 |---|---|
-| `mod/` | The in-game client: **116 modules** with about 1,900 settings, the Onix menu, HUD editor, themes, cosmetics, profiles and a custom title screen |
+| `mod/` | The in-game client for 1.21.1: **116 modules** with about 1,900 settings, the Onix menu, HUD editor, themes, cosmetics, profiles and a custom title screen |
+| `mod-1.21.11/` | The same client for 1.21.11, **combined with Carbon Client**: 124 modules (Mousestrokes, Dark Mode, Shulker Preview, Title Tweaker, Auto Perspective, Drop Prevention, Toast Control and Particle Limiter come from Carbon) and Carbon's main menu designs (Carbon, Voxel, Portal, Classic) next to Onix's own title screen (*Design → Main Menu*, or "More designs" on the title screen) |
 | `launcher/` | Desktop launcher: Microsoft sign-in, profiles, import from other clients, install into other launchers, mod download, cosmetics, mods, themes |
 | `server/` | Onix server: badge presence, coins, cosmetics shop and gifts (Node, no dependencies) |
 
