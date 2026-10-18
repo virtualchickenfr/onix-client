@@ -19,9 +19,11 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 25
+          java-version: |
+            21
+            25
       - name: Virtual display and software OpenGL
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq xvfb mesa-utils libgl1-mesa-dri > /dev/null
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq xvfb mesa-utils libgl1-mesa-dri x11-apps imagemagick > /dev/null
       - name: Run the dev test
         working-directory: mod-1.21.11
         shell: bash
@@ -30,10 +32,19 @@ jobs:
           MESA_GL_VERSION_OVERRIDE: '4.5'
         run: |
           chmod +x gradlew
-          set +e
-          timeout 1800 xvfb-run -a -s "-screen 0 1600x900x24" ./gradlew runDevtest --no-daemon --stacktrace > devtest.log 2>&1
-          echo "exit=$?" >> devtest.log
-          set -e
+          Xvfb :99 -screen 0 1600x900x24 > /dev/null 2>&1 &
+          export DISPLAY=:99
+          ./gradlew runDevtest --no-daemon --stacktrace > devtest.log 2>&1 &
+          gradle_pid=$!
+          mkdir -p diag
+          # the test stops the game itself; meanwhile take a screen capture and thread dumps every 3 minutes
+          for i in 1 2 3 4 5 6 7 8; do
+            for s in $(seq 1 18); do kill -0 $gradle_pid 2>/dev/null || break 2; sleep 10; done
+            xwd -root -display :99 2>/dev/null | convert xwd:- diag/screen_$i.png 2>/dev/null || true
+            for p in $(pgrep -f KnotClient || true); do jstack $p > diag/threads_$i.txt 2>&1 || true; done
+          done
+          kill $gradle_pid 2>/dev/null || true
+          pkill -f KnotClient || true
           tail -n 40 devtest.log
       - name: Push results
         if: always()
@@ -45,6 +56,7 @@ jobs:
           cp mod-1.21.11/run/logs/latest.log "$out/latest.log" 2>/dev/null || true
           cp mod-1.21.11/devtest.log "$out/gradle.log" 2>/dev/null || true
           cp -r mod-1.21.11/run/crash-reports "$out/" 2>/dev/null || true
+          cp -r mod-1.21.11/diag "$out/" 2>/dev/null || true
           cd "$out"
           git init -q -b devtest-results
           git config user.name "github-actions"

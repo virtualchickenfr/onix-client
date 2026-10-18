@@ -27,6 +27,11 @@ loom {
 	}
 }
 
+// Minecraft runs on Java 21 (the build itself may use a newer JDK)
+tasks.matching { it.name == 'runDevtest' || it.name == 'runClient' }.configureEach {
+	javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(21) }
+}
+
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	mappings loom.officialMojangMappings()
