@@ -32,7 +32,10 @@ jobs:
           MESA_GL_VERSION_OVERRIDE: '4.5'
         run: |
           chmod +x gradlew
-          Xvfb :99 -screen 0 1600x900x24 > /dev/null 2>&1 &
+          # first start without the accessibility onboarding, small render distance, no menu blur (software OpenGL is slow)
+          mkdir -p run
+          printf 'onboardAccessibility:false\nmenuBackgroundBlurriness:0\nrenderDistance:4\nsimulationDistance:5\nmaxFps:30\nsoundCategory_master:0.0\nskipMultiplayerWarning:true\n' > run/options.txt
+          Xvfb :99 -screen 0 1280x720x24 > /dev/null 2>&1 &
           export DISPLAY=:99
           ./gradlew runDevtest --no-daemon --stacktrace > devtest.log 2>&1 &
           gradle_pid=$!

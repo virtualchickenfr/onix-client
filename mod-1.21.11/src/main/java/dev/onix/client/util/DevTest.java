@@ -52,7 +52,7 @@ public final class DevTest {
     }
 
     private static void build(Minecraft mc) {
-        until(() -> mc.screen instanceof OnixTitleScreen || mc.screen instanceof CarbonMainMenu || mc.screen instanceof TitleScreen);
+        until(() -> mc.getOverlay() == null && (mc.screen instanceof OnixTitleScreen || mc.screen instanceof CarbonMainMenu || mc.screen instanceof TitleScreen));
         then(20, () -> mc.options.pauseOnLostFocus = false);
         then(2, () -> design("Onix"));
         then(80, () -> snap(mc, "01_title_onix"));
@@ -144,9 +144,15 @@ public final class DevTest {
         });
     }
 
+    private static int ticks;
+
     public static void tick(Minecraft mc) {
         if (!ENABLED) return;
         if (STEPS.isEmpty()) build(mc);
+        if (++ticks % 200 == 0) {
+            OnixClient.LOGGER.info("[devtest] tick {}, step {}/{}, screen {}, overlay {}, fps {}", ticks, index, STEPS.size(),
+                    mc.screen == null ? "none" : mc.screen.getClass().getSimpleName(), mc.getOverlay() != null, mc.getFps());
+        }
         if (index >= STEPS.size()) return;
         if (wait > 0) {
             wait--;
@@ -161,6 +167,7 @@ public final class DevTest {
             done = true;
         }
         if (done) {
+            OnixClient.LOGGER.info("[devtest] step {} done", index);
             index++;
             if (index < STEPS.size()) wait = STEPS.get(index).delay();
         }
