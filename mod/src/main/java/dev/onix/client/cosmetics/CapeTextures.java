@@ -13,12 +13,12 @@ import java.util.Map;
 
 /**
  * Cape textures. The first capes are PNG files; every other cape is painted from its pattern and
- * palette into a 256 x 128 texture (the vanilla 64 x 32 layout at four times the resolution) the first time it
+ * palette into a 512 x 256 texture (the vanilla 64 x 32 layout at eight times the resolution, matching the 80 x 128 face) the first time it
  * is needed, with the detailed finish of {@link CapeFinish}. Animated capes repaint it when the frame changes.
  */
 public final class CapeTextures {
-    private static final int TW = 256;
-    private static final int TH = 128;
+    private static final int TW = 512;
+    private static final int TH = 256;
     private static final int MAX_CACHED = 200;
     /** A registered cape texture and the animation frame it shows. */
     private static final class Entry {
@@ -101,13 +101,13 @@ public final class CapeTextures {
         for (int y = 0; y < h; y++) {
             for (int x = 0; x < w; x++) {
                 int c = face[y * w + x];
-                img.setColor(4 + x, 4 + y, abgr(c));                              // outside (vanilla x 1..11, y 1..17)
-                img.setColor(48 + (w - 1 - x), 4 + y, abgr(shade(c, 0.62f)));      // inside, mirrored (vanilla x 12..22)
+                img.setColor(8 + x, 8 + y, abgr(c));                              // outside (vanilla x 1..11, y 1..17)
+                img.setColor(96 + (w - 1 - x), 8 + y, abgr(shade(c, 0.62f)));      // inside, mirrored (vanilla x 12..22)
             }
         }
         // elytra (vanilla x 22..46, y 0..22): the face, repeated
-        for (int y = 0; y < 88; y++) {
-            for (int x = 88; x < 184; x++) img.setColor(x, y, abgr(face[(y % h) * w + ((x - 88) % w)]));
+        for (int y = 0; y < 176; y++) {
+            for (int x = 176; x < 368; x++) img.setColor(x, y, abgr(face[(y % h) * w + ((x - 176) % w)]));
         }
     }
 
@@ -116,7 +116,7 @@ public final class CapeTextures {
         Identifier tex = get(item);
         if (tex == null) return;
         if (item.texture() != null) ctx.drawTexture(tex, x, y, width, height, 1f, 1f, 10, 16, 64, 32);
-        else ctx.drawTexture(tex, x, y, width, height, 4f, 4f, CapeFinish.W, CapeFinish.H, TW, TH);
+        else ctx.drawTexture(tex, x, y, width, height, 8f, 8f, CapeFinish.W, CapeFinish.H, TW, TH);
     }
 
     static int shade(int argb, float f) {
