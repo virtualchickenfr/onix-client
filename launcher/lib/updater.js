@@ -42,11 +42,19 @@ function set(patch) {
 }
 
 let automatic = () => true;
+let gameRunning = () => false;
+const startedAt = Date.now();
+/** An update that finishes downloading this soon after the start is installed right away. */
+const INSTALL_ON_START_MS = 3 * 60 * 1000;
 
-/** send: pushes the state to the window; isAutomatic: whether the user lets the launcher check by itself. */
-function init(send, isAutomatic) {
+/**
+ * send: pushes the state to the window; isAutomatic: whether the user lets the launcher check by itself;
+ * isGameRunning: whether Minecraft runs (then the update waits).
+ */
+function init(send, isAutomatic, isGameRunning) {
   notify = send;
   if (isAutomatic) automatic = isAutomatic;
+  if (isGameRunning) gameRunning = isGameRunning;
   if (!app.isPackaged) return set({ status: 'disabled', error: 'Updates are only checked in the installed launcher.' });
   if (!autoUpdater) return set({ status: 'disabled', error: 'The update module is missing.' });
   if (process.platform === 'linux' && !process.env.APPIMAGE) return set({ status: 'disabled', error: 'Only the AppImage can update itself.' });
@@ -59,7 +67,18 @@ function init(send, isAutomatic) {
   autoUpdater.on('update-not-available', () => set({ status: 'latest', version: null }));
   autoUpdater.on('update-available', (info) => set({ status: selfInstall ? 'downloading' : 'available', version: info.version, percent: 0 }));
   autoUpdater.on('download-progress', (p) => set({ status: 'downloading', percent: Math.round(p.percent || 0) }));
-  autoUpdater.on('update-downloaded', (info) => set({ status: 'ready', version: info.version, percent: 100 }));
+  autoUpdater.on('update-downloaded', (info) => {
+    set({ status: 'ready', version: info.version, percent: 100 });
+    // Installing only when the launcher closes left many players on old versions (the launcher often keeps
+    // running). Right after the start nothing is lost by restarting, so the new version is installed at once.
+    if (automatic() && !gameRunning() && Date.now() - startedAt < INSTALL_ON_START_MS) {
+      set({ status: 'installing' });
+      setTimeout(() => {
+        if (!gameRunning()) autoUpdater.quitAndInstall(true, true);
+        else set({ status: 'ready' });
+      }, 1500);
+    }
+  });
   autoUpdater.on('error', (err) => {
     // keep a finished download even if a later check fails
     if (state.status !== 'ready') set({ status: 'error', error: err && err.message ? err.message.split('\n')[0] : String(err) });
@@ -72,7 +91,7 @@ function init(send, isAutomatic) {
 
 /** Looks for a new version (on every start, then every few hours, or when asked). */
 async function check() {
-  if (!ready || state.status === 'downloading' || state.status === 'ready') return view();
+  if (!ready || ['downloading', 'ready', 'installing'].includes(state.status)) return view();
   try {
     await autoUpdater.checkForUpdates();
   } catch (err) {

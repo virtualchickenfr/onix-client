@@ -27,6 +27,13 @@ function renderUpdate(v) {
       pill.title = 'Restart the launcher to install the update now. Otherwise it installs when you close the launcher.';
       text.textContent = `Version${version} is downloaded. Restart the launcher to install it, or it installs when you close the launcher.`;
       break;
+    case 'installing':
+      pill.hidden = false;
+      pill.disabled = true;
+      pill.classList.add('ready');
+      pill.replaceChildren(icon('refresh'), `Installing update${version}…`);
+      text.textContent = `Installing version${version} – the launcher restarts in a moment.`;
+      break;
     case 'available':
       pill.hidden = false;
       pill.replaceChildren(icon('download'), `Update${version} available`);

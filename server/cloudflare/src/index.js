@@ -219,10 +219,12 @@ const MOJANG_CERT_KEYS = [
 const unb64 = (s) => Uint8Array.from(atob(String(s)), (c) => c.charCodeAt(0));
 const proofMessage = (serverId, uuid) => new TextEncoder().encode(`onix-session:${serverId}:${uuid}`);
 
+/** Checks the player certificate and the signed challenge; returns null when valid, else the reason. */
 async function verifyCertificate(uuid, serverId, cert, proof, extraKeys = []) {
   try {
     const expires = Number(cert.expiresAt);
-    if (!Number.isFinite(expires) || expires < Date.now()) return false;
+    if (!Number.isFinite(expires)) return 'certificate without expiry';
+    if (expires < Date.now()) return 'certificate expired – restart Minecraft or the launcher';
     const key = unb64(cert.publicKey);
     const signed = new Uint8Array(24 + key.length);
     for (let i = 0; i < 16; i++) signed[i] = parseInt(uuid.slice(i * 2, i * 2 + 2), 16);
@@ -234,11 +236,12 @@ async function verifyCertificate(uuid, serverId, cert, proof, extraKeys = []) {
       const mojang = await crypto.subtle.importKey('spki', unb64(k), { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-1' }, false, ['verify']);
       if (await crypto.subtle.verify('RSASSA-PKCS1-v1_5', mojang, signature, signed)) { byMojang = true; break; }
     }
-    if (!byMojang) return false;
+    if (!byMojang) return 'certificate not signed by Mojang';
     const player = await crypto.subtle.importKey('spki', key, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['verify']);
-    return crypto.subtle.verify('RSASSA-PKCS1-v1_5', player, unb64(proof), proofMessage(serverId, uuid));
-  } catch {
-    return false;
+    const ok = await crypto.subtle.verify('RSASSA-PKCS1-v1_5', player, unb64(proof), proofMessage(serverId, uuid));
+    return ok ? null : 'challenge signature does not match';
+  } catch (e) {
+    return `unreadable certificate (${e && e.message ? e.message : e})`;
   }
 }
 
@@ -271,7 +274,7 @@ async function withAccount(env, db, body, action) {
 
 const routes = {
   'GET /': async (env, db) => [200, { name: 'onix-presence', online: (await db.prepare('SELECT COUNT(*) AS n FROM online WHERE seen > ?').bind(Date.now() - ONLINE_TTL_MS).first()).n }],
-  'GET /v1/hello': async (env) => [200, { name: 'onix-presence', version: 2, verify: verifyOn(env), economy: true, host: 'cloudflare' }],
+  'GET /v1/hello': async (env) => [200, { name: 'onix-presence', version: 3, verify: verifyOn(env), proof: ['certificate', 'hasJoined'], economy: true, host: 'cloudflare' }],
 
   'POST /v1/session/start': async (env, db, body) => {
     const uuid = normUuid(body.uuid);
@@ -291,14 +294,25 @@ const routes = {
     if (body.cert && typeof body.cert === 'object') {
       // TEST_CERT_KEYS: only for the tests (test.mjs)
       const extra = String(env.TEST_CERT_KEYS || '').split(',').filter(Boolean);
-      if (!(await verifyCertificate(uuid, c.server_id, body.cert, body.proof, extra))) return [403, { error: 'verification failed' }];
+      const problem = await verifyCertificate(uuid, c.server_id, body.cert, body.proof, extra);
+      if (problem) {
+        console.log(`verification failed for ${uuid}: ${problem}`);
+        return [403, { error: `verification failed: ${problem}` }];
+      }
       let name;
       try {
         name = await nameOf(uuid);
       } catch {
         name = null;
       }
-      if (!name) return [502, { error: 'Could not look up your Minecraft name – try again in a minute' }];
+      if (!name) {
+        // the name lookup service is down or slow: go on with the name the client gave, but never with a name
+        // that unlocks unlimited coins
+        if (unlimitedNames(env).has(String(c.name).toLowerCase())) {
+          return [502, { error: 'Could not look up your Minecraft name – try again in a minute' }];
+        }
+        name = c.name;
+      }
       return [200, { token: await newToken(db, uuid, name) }];
     }
     let verified;
@@ -307,7 +321,7 @@ const routes = {
     } catch {
       return [502, { error: 'Mojang session server unreachable' }];
     }
-    if (verified !== uuid) return [403, { error: 'verification failed – update Onix Client' }];
+    if (verified !== uuid) return [403, { error: 'verification failed – this Onix version is too old, update the launcher' }];
     return [200, { token: await newToken(db, uuid, c.name) }];
   },
 

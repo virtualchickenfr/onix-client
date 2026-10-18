@@ -54,3 +54,12 @@ jobs:
           curl -fsS "$url/v1/hello"
           echo "::notice title=Onix server URL::$url"
           echo "### Onix server: $url" >> "$GITHUB_STEP_SUMMARY"
+      - name: Check the live server (Cloudflare builds it from this commit)
+        shell: bash
+        run: |
+          for i in $(seq 1 20); do
+            hello=$(curl -fsS https://mconixclient.virtualchickenfr.workers.dev/v1/hello || true)
+            if echo "$hello" | grep -q '"version":3'; then break; fi
+            sleep 15
+          done
+          echo "::notice title=Live server::$hello"

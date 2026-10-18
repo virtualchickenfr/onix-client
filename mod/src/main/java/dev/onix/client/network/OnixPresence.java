@@ -275,7 +275,8 @@ public final class OnixPresence {
         }
         Response f = post(url + "/v1/session/finish", finish, 12);
         if (f.status != 200 || f.json == null || !f.json.has("token")) {
-            status = "Verification failed";
+            status = f.json != null && f.json.has("error") ? f.json.get("error").getAsString() : "Verification failed (" + f.status + ")";
+            OnixClient.LOGGER.warn("Onix server sign-in failed: {}", status);
             return null;
         }
         return f.json.get("token").getAsString();
@@ -303,6 +304,7 @@ public final class OnixPresence {
             finish.addProperty("proof", Base64.getEncoder().encodeToString(signer.sign()));
             return true;
         } catch (Exception e) {
+            OnixClient.LOGGER.warn("No player certificate for the Onix server: {}", e.toString());
             return false;
         }
     }

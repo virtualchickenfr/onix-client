@@ -660,7 +660,7 @@ app.whenReady().then(() => {
   ipcMain.handle('update:download', safe(() => updater.openDownload()));
 
   createWindow();
-  updater.init((v) => send('update:status', v), () => settings().autoUpdate !== false);
+  updater.init((v) => send('update:status', v), () => settings().autoUpdate !== false, () => running);
   win.webContents.once('did-finish-load', () => {
     if (settings().autoUpdate !== false) updater.check();
   });
