@@ -21,6 +21,8 @@ loom {
 			client()
 			name = "Onix Dev Test"
 			vmArg "-Donix.devtest=true"
+			vmArg "-Dmixin.debug.countInjections=true"
+			vmArg "-Dmixin.debug.verbose=false"
 			programArgs "--width", "1280", "--height", "720"
 			runDir "run"
 		}
