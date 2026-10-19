@@ -4,7 +4,9 @@
     python3 tools/port.py 1.21.10            -> ports/build/mod-1.21.10 (a normal Gradle project)
 
 ports/<version>/port.json describes the version:
+    base          source folder (default mod-1.21.11; "mod" for the yarn-mapped 1.21.1 mod)
     minecraft     Minecraft version
+    yarn, loom    yarn mappings / Loom version for a yarn-based port
     fabric_api    Fabric API version, or "auto" (latest build for that Minecraft version from maven.fabricmc.net)
     loader        Fabric Loader version (optional, defaults to the one of mod-1.21.11)
     depends       fabric.mod.json "minecraft" range
@@ -40,13 +42,23 @@ def latest_fabric_api(mc):
     return max(found, key=lambda v: [int(x) for x in v.split('+')[0].split('.')])
 
 
+def latest_yarn(mc):
+    url = 'https://maven.fabricmc.net/net/fabricmc/yarn/maven-metadata.xml'
+    xml = urllib.request.urlopen(url, timeout=60).read().decode()
+    found = re.findall(r'<version>(' + re.escape(mc) + r'\+build\.(\d+))</version>', xml)
+    if not found:
+        raise SystemExit(f'no yarn mappings for {mc}')
+    return max(found, key=lambda v: int(v[1]))[0]
+
+
 def main(version, out=None):
     spec_dir = os.path.join(ROOT, 'ports', version)
     spec = json.load(open(os.path.join(spec_dir, 'port.json'), encoding='utf8'))
     out = out or os.path.join(ROOT, 'ports', 'build', 'mod-' + version)
+    base = os.path.join(ROOT, spec.get('base', 'mod-1.21.11'))
     if os.path.exists(out):
         shutil.rmtree(out)
-    shutil.copytree(BASE, out, ignore=shutil.ignore_patterns('.gradle', 'build', 'run', 'out', 'CLAUDE.md'))
+    shutil.copytree(base, out, ignore=shutil.ignore_patterns('.gradle', 'build', 'run', 'out', 'CLAUDE.md'))
 
     for rel in spec.get('drop', []):
         p = os.path.join(out, rel)
@@ -101,10 +113,10 @@ def main(version, out=None):
     fmj = os.path.join(res, 'fabric.mod.json')
     d = json.load(open(fmj, encoding='utf8'))
     d['depends']['minecraft'] = spec.get('depends', '~' + spec['minecraft'])
-    d['description'] = d['description'].replace('1.21.11', spec['minecraft'])
+    d['description'] = d['description'].replace('1.21.11', spec['minecraft']).replace('1.21.1', spec['minecraft'])
     json.dump(d, open(fmj, 'w', encoding='utf8'), indent=2)
 
-    p = props(os.path.join(BASE, 'gradle.properties'))
+    p = props(os.path.join(base, 'gradle.properties'))
     api = spec.get('fabric_api', 'auto')
     if api == 'auto':
         try:
@@ -116,10 +128,29 @@ def main(version, out=None):
     s = open(gp, encoding='utf8').read()
     s = re.sub(r'(?m)^minecraft_version=.*$', 'minecraft_version=' + spec['minecraft'], s)
     s = re.sub(r'(?m)^fabric_api_version=.*$', 'fabric_api_version=' + api, s)
+    s = re.sub(r'(?m)^fabric_version=.*$', 'fabric_version=' + api, s)
+    if spec.get('yarn'):
+        yarn = spec['yarn']
+        if yarn == 'auto':
+            try:
+                yarn = latest_yarn(spec['minecraft'])
+            except OSError as e:
+                print(f'warning: yarn lookup failed ({e})')
+                yarn = 'UNRESOLVED'
+        s = re.sub(r'(?m)^yarn_mappings=.*$', 'yarn_mappings=' + yarn, s)
+    if spec.get('loom'):
+        s = re.sub(r'(?m)^loom_version=.*$', 'loom_version=' + spec['loom'], s)
     if spec.get('loader'):
         s = re.sub(r'(?m)^loader_version=.*$', 'loader_version=' + spec['loader'], s)
     s = s.replace('+1.21.11.jar', '+' + spec['minecraft'] + '.jar')
+    if 'mod_version' in p and '+' not in p.get('mod_version', ''):
+        pass
     open(gp, 'w', encoding='utf8').write(s)
+    # every jar names its Minecraft version (the 1.21.1 mod's jar has none)
+    bg = os.path.join(out, 'build.gradle')
+    b = open(bg, encoding='utf8').read()
+    b = re.sub(r'(?m)^version = project\.mod_version$', 'version = "${project.mod_version}+${project.minecraft_version}"', b)
+    open(bg, 'w', encoding='utf8').write(b)
     print(f'{out} (Minecraft {spec["minecraft"]}, Fabric API {api}, mod {p.get("mod_version")})')
     return out
 

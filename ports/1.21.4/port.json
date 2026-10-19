@@ -1,0 +1,11 @@
+{
+  "base": "mod",
+  "minecraft": "1.21.4",
+  "fabric_api": "auto",
+  "yarn": "auto",
+  "depends": "1.21.4",
+  "rules": [],
+  "file_rules": {},
+  "drop": [],
+  "mixins_drop": []
+}
