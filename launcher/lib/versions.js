@@ -12,6 +12,9 @@ const path = require('path');
 
 const ONIX = {
   '1.21.1': { mc: '1.21.1', loader: '0.16.5', note: 'Onix Classic' },
+  '1.21.4': { mc: '1.21.4', loader: '0.16.14', note: 'Onix Classic' },
+  '1.21.6': { mc: '1.21.6', loader: '0.19.5', note: 'Onix + Carbon' },
+  '1.21.7': { mc: '1.21.7', loader: '0.19.5', note: 'Onix + Carbon' },
   '1.21.8': { mc: '1.21.8', loader: '0.19.5', note: 'Onix + Carbon' },
   '1.21.10': { mc: '1.21.10', loader: '0.19.5', note: 'Onix + Carbon' },
   '1.21.11': { mc: '1.21.11', loader: '0.19.5', note: 'Onix + Carbon' },
