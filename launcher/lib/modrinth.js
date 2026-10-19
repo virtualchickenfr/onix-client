@@ -352,7 +352,11 @@ async function modpackFile(projectId, mc = MC_VERSION) {
   return { project, version, file };
 }
 
+/** One version by its id (null when Modrinth does not know it). */
+const versionById = (id) => api(`/version/${encodeURIComponent(id)}`);
+
 module.exports = {
+  versionById, primaryFile,
   search, bestVersion, install, installAsset, identify, checkUpdates, applyUpdates, modpackFile,
   readManifest, writeManifest, cleanManifest, verify, sha, safeFileName, MANAGED, MC_VERSION, TYPES, IRIS,
 };

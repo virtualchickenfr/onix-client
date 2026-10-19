@@ -187,7 +187,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        os: [windows-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -260,6 +260,50 @@ jobs:
             launcher/dist/*.exe
             launcher/dist/*.dmg
             launcher/dist/*.AppImage
+
+  # macOS runners can wait in GitHub's queue for a long time: the release does not wait for them,
+  # the Mac files are added to it once they are built.
+  launcher-mac:
+    needs: [plan, mod, mod-1-21-11, mod-ports, prepare-release]
+    if: ${{ !cancelled() && needs.mod.result == 'success' && needs.mod-1-21-11.result == 'success' && needs.mod-ports.result == 'success' && needs.prepare-release.result != 'failure' }}
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: onix-client-mod
+          path: mod/build/libs
+      - uses: actions/download-artifact@v4
+        with:
+          name: onix-client-mod-1.21.11
+          path: mod-1.21.11/build/libs
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: onix-client-mod-port-*
+          path: ports/build/jars
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build the Mac app and add it to the release
+        working-directory: launcher
+        shell: bash
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.plan.outputs.version }}
+          RELEASE: ${{ needs.plan.outputs.release }}
+        run: |
+          npm pkg set repository.type=git "repository.url=https://github.com/${GITHUB_REPOSITORY}.git"
+          npm pkg set version="$VERSION"
+          npm install
+          npm run dist
+          if [ "$RELEASE" = "true" ]; then
+            gh release upload "v$VERSION" dist/*.dmg dist/*.zip dist/*.blockmap dist/latest-mac.yml --repo "$GITHUB_REPOSITORY" --clobber
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: onix-client-macos-latest
+          path: launcher/dist/*.dmg
 
   publish-release:
     needs: [plan, mod, mod-1-21-11, mod-ports, launcher]

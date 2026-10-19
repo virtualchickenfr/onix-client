@@ -169,7 +169,8 @@ async function exportProfile(profileDir, out, options = {}, report = () => {}) {
 // ------------------------------------------------------------------ import
 
 /** Type, name and index of a pack, checked against Onix's Minecraft version and loader. */
-async function inspect(file) {
+async function inspect(file, fallbackMc) {
+  if (!isZip(file)) return inspectLoose(file, fallbackMc);
   const { buffers } = await walkZip(file, (name) => (name === 'modrinth.index.json' || name === 'manifest.json' ? 'buffer' : null));
   const parse = (name) => {
     try {
@@ -191,7 +192,7 @@ async function inspect(file) {
   }
   if (buffers.has('manifest.json')) {
     const manifest = parse('manifest.json');
-    if (manifest.manifestType !== 'minecraftModpack') throw new Error('This zip is not a CurseForge modpack.');
+    if (manifest.manifestType !== 'minecraftModpack') return inspectLoose(file, fallbackMc);
     const mc = manifest.minecraft || {};
     if (!versions.isSupported(mc.version)) throw new Error(`This pack is for Minecraft ${mc.version || 'an unknown version'}. Onix runs on ${versions.LIST.join(' and ')}.`);
     const loaders = (mc.modLoaders || []).map((l) => String(l.id || ''));
@@ -199,7 +200,168 @@ async function inspect(file) {
     if (other) throw new Error(`This pack needs ${other.split('-')[0]}. Onix runs on Fabric.`);
     return { type: 'curseforge', name: String(manifest.name || path.basename(file, '.zip')), manifest, mc: mc.version };
   }
-  throw new Error('This is not a Modrinth (.mrpack) or CurseForge modpack.');
+  return inspectLoose(file, fallbackMc);
+}
+
+// ------------------------------------------------------------------ .dawnpack and other mod sets
+
+/** Folders and files of a game folder that a pack may carry as they are. */
+const GAME_PARTS = /^(mods|resourcepacks|shaderpacks|config|defaultconfigs|kubejs|schematics|saves)\/|^(options|optionsof|optionsshaders|servers)\.(txt|dat)$/i;
+const MC_RE = /^1\.\d{1,2}(\.\d{1,2})?$/;
+
+/** Finds a Minecraft version in a manifest: under keys like minecraft, mcVersion or gameVersion. */
+function findMc(node, depth = 0) {
+  if (!node || typeof node !== 'object' || depth > 6) return null;
+  for (const [k, v] of Object.entries(node)) {
+    if (/minecraft|^mc_?version$|^game_?versions?$/i.test(k)) {
+      const vals = [].concat(v).filter((x) => typeof x === 'string' && MC_RE.test(x.trim()));
+      if (vals.length) return vals[vals.length - 1].trim();
+    }
+  }
+  for (const v of Object.values(node)) {
+    const found = typeof v === 'object' ? findMc(v, depth + 1) : null;
+    if (found) return found;
+  }
+  return null;
+}
+
+/** Mod entries of a manifest: objects inside lists that carry a download link or a Modrinth id. */
+function findModEntries(node, out = [], depth = 0) {
+  if (!node || typeof node !== 'object' || depth > 6) return out;
+  if (Array.isArray(node)) {
+    for (const item of node) {
+      if (item && typeof item === 'object' && !Array.isArray(item)) {
+        const url = [item.url, item.downloadUrl, item.download_url, ...[].concat(item.downloads || [])].find((u) => typeof u === 'string' && /^https:/.test(u));
+        const versionId = item.versionId || item.version_id || item.modrinthVersionId;
+        const projectId = item.projectId || item.project_id || item.modrinthId || item.modrinth_id || item.slug;
+        if (url || versionId || projectId) {
+          out.push({
+            url: url || null,
+            versionId: typeof versionId === 'string' ? versionId : null,
+            projectId: typeof projectId === 'string' ? projectId : null,
+            name: String(item.fileName || item.filename || item.file || item.name || item.title || projectId || ''),
+            hashes: item.hashes || (item.sha1 || item.sha512 ? { sha1: item.sha1, sha512: item.sha512 } : null),
+          });
+          continue;
+        }
+      }
+      findModEntries(item, out, depth + 1);
+    }
+    return out;
+  }
+  for (const v of Object.values(node)) findModEntries(v, out, depth + 1);
+  return out;
+}
+
+/** Where a file of a loose pack goes in the profile, or null to leave it out. */
+function looseTarget(rel) {
+  if (GAME_PARTS.test(rel)) return rel;
+  const base = rel.split('/').pop();
+  if (/\.jar$/i.test(base)) return `mods/${base}`;
+  if (/\.zip$/i.test(base)) return /shader/i.test(rel) ? `shaderpacks/${base}` : `resourcepacks/${base}`;
+  return null;
+}
+
+/** A .dawnpack (or any zip/JSON with mods that is no Modrinth or CurseForge pack). */
+function isZip(file) {
+  const head = Buffer.alloc(2);
+  const fd = fs.openSync(file, 'r');
+  try {
+    fs.readSync(fd, head, 0, 2, 0);
+  } finally {
+    fs.closeSync(fd);
+  }
+  return head[0] === 0x50 && head[1] === 0x4b;
+}
+
+async function inspectLoose(file, fallbackMc) {
+  const name = path.basename(file).replace(/\.(dawnpack|zip|json|mrpack)$/i, '');
+  if (!isZip(file)) {
+    // not a zip: a manifest on its own
+    let json;
+    try {
+      json = JSON.parse(fs.readFileSync(file, 'utf8').replace(/^\uFEFF/, ''));
+    } catch {
+      throw new Error('This file is neither a modpack nor a .dawnpack Onix can read.');
+    }
+    const mods = findModEntries(json);
+    if (!mods.length) throw new Error('This pack lists no mods Onix can download.');
+    return { type: 'loose', name: String(json.name || json.title || name), mc: pickMc(findMc(json), fallbackMc), packMc: findMc(json), manifests: [json], mods, files: [], strip: '' };
+  }
+  const names = [];
+  const { buffers } = await walkZip(file, (entry, size) => {
+    names.push(entry);
+    return /\.json$/i.test(entry) && entry.split('/').length <= 2 && size < 4 * 1024 * 1024 ? 'buffer' : null;
+  });
+  // one shared top folder (MyPack/...) or an overrides/ or .minecraft/ folder is not part of the target path
+  const tops = new Set(names.map((n) => n.split('/')[0]));
+  let strip = tops.size === 1 && names.every((n) => n.includes('/')) ? `${[...tops][0]}/` : '';
+  const rest = (n) => n.slice(strip.length);
+  const inner = names.map(rest);
+  for (const pre of ['overrides/', 'client-overrides/', '.minecraft/', 'minecraft/']) {
+    if (inner.some((n) => n.startsWith(pre))) { strip += pre; break; }
+  }
+  const manifests = [];
+  for (const buf of buffers.values()) {
+    try {
+      manifests.push(JSON.parse(buf.toString('utf8').replace(/^\uFEFF/, '')));
+    } catch {
+      // not a manifest
+    }
+  }
+  const files = names.filter((n) => n.startsWith(strip)).map((n) => ({ entry: n, target: looseTarget(n.slice(strip.length)) })).filter((f) => f.target);
+  const mods = manifests.flatMap((m) => findModEntries(m));
+  if (!files.length && !mods.length) throw new Error('This pack contains no mods, resource packs or settings Onix can use.');
+  const packMc = manifests.map((m) => findMc(m)).find(Boolean) || null;
+  const title = manifests.map((m) => m && (m.name || m.title)).find((x) => typeof x === 'string' && x.trim());
+  return { type: 'loose', name: String(title || name), mc: pickMc(packMc, fallbackMc), packMc, manifests, mods, files, strip };
+}
+
+const pickMc = (packMc, fallbackMc) => (packMc && versions.isSupported(packMc) ? packMc : versions.isSupported(fallbackMc) ? fallbackMc : versions.DEFAULT);
+
+async function importLoose(file, info, targetDir, report) {
+  const missing = [];
+  let downloaded = 0;
+  if (info.packMc && info.packMc !== info.mc) missing.push(`The pack was made for Minecraft ${info.packMc}; the profile uses ${info.mc}`);
+  // files inside the pack
+  report({ label: 'Unpacking', progress: 0.1 });
+  const wanted = new Map(info.files.map((f) => [f.entry, inside(targetDir, f.target)]));
+  const { written } = info.files.length ? await walkZip(file, (entry) => wanted.get(entry) || null) : { written: 0 };
+  // mods the pack only links to
+  let finished = 0;
+  await pool(info.mods, 6, async (m) => {
+    const label = m.name || m.projectId || m.versionId || 'mod';
+    try {
+      let url = m.url;
+      let fileName = m.name && /\.jar$/i.test(m.name) ? m.name : null;
+      let hashes = m.hashes;
+      if (!url || !allowedUrl(url)) {
+        const version = m.versionId ? await modrinth.versionById(m.versionId).catch(() => null)
+          : m.projectId ? await modrinth.bestVersion(m.projectId, info.mc) : null;
+        const pf = version && modrinth.primaryFile(version);
+        if (!pf) throw new Error(m.url ? 'download link from an unknown site' : `not on Modrinth for ${info.mc}`);
+        url = pf.url;
+        fileName = pf.filename;
+        hashes = pf.hashes;
+      }
+      if (!allowedUrl(url)) throw new Error('download link from an unknown site');
+      const dest = inside(targetDir, `mods/${modrinth.safeFileName(fileName || decodeURIComponent(new URL(url).pathname.split('/').pop()))}`);
+      await download(url, dest);
+      try {
+        if (hashes && (hashes.sha1 || hashes.sha512)) modrinth.verify(dest, hashes);
+      } catch (err) {
+        fs.rmSync(dest, { force: true });
+        throw err;
+      }
+      downloaded++;
+    } catch (err) {
+      missing.push(`${label} (${err.message})`);
+    }
+    finished++;
+    report({ label: `Downloading mods (${finished}/${info.mods.length})`, progress: 0.15 + (finished / Math.max(1, info.mods.length)) * 0.8 });
+  });
+  report({ label: 'Done', progress: 1 });
+  return { type: 'dawnpack', name: info.name, mc: info.mc, downloaded, extracted: written, missing };
 }
 
 /** Runs async jobs with a small concurrency limit. */
@@ -218,9 +380,10 @@ async function pool(items, limit, job) {
  * Imports a pack into an empty profile folder.
  * Returns { type, name, downloaded, extracted, missing: [..] }.
  */
-async function importPack(file, targetDir, report = () => {}) {
-  const info = await inspect(file);
+async function importPack(file, targetDir, report = () => {}, fallbackMc) {
+  const info = await inspect(file, fallbackMc);
   fs.mkdirSync(targetDir, { recursive: true });
+  if (info.type === 'loose') return importLoose(file, info, targetDir, report);
   const missing = [];
   let downloaded = 0;
 

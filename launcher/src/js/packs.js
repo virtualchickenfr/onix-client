@@ -360,7 +360,7 @@ function afterImport(result) {
   refreshProfiles();
   if (currentView !== 'profiles') showView('profiles');
   const missing = result.missing || [];
-  toast(`Profile "${result.profile}" created · ${plural(result.downloaded, 'mod', 'mods')} downloaded`);
+  toast(`Profile "${result.profile}" created · ${plural(result.downloaded, 'mod', 'mods')} downloaded${result.extracted ? `, ${plural(result.extracted, 'file', 'files')} unpacked` : ''}`);
   if (missing.length) {
     setTimeout(() => toast(`${plural(missing.length, 'file', 'files')} could not be added: ${missing[0]}`, true), 2800);
     missing.forEach((m) => console.warn('Not imported:', m));
@@ -369,6 +369,16 @@ function afterImport(result) {
 
 $('#btn-modpacks').addEventListener('click', openModpacks);
 $('#btn-mods-browse').addEventListener('click', () => openMods(profileState.active, 'browse'));
+/** Imports one modpack file (.dawnpack, .mrpack, CurseForge .zip) into a new profile. */
+async function importPackFile(file) {
+  toast(`Importing ${file.split(/[\\/]/).pop()}…`);
+  const res = await api.importFile(file);
+  if (!res.ok) toast(res.error, true);
+  else if (res.value) afterImport(res.value);
+}
+api.onImportFile((file) => importPackFile(file));
+api.pendingImport().then((file) => { if (file) importPackFile(file); });
+
 $('#btn-import-pack').addEventListener('click', async () => {
   const btn = $('#btn-import-pack');
   btn.disabled = true;

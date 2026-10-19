@@ -38,7 +38,12 @@ window.addEventListener('drop', async (e) => {
   dropZone.classList.remove('open');
   const files = Array.from((e.dataTransfer && e.dataTransfer.files) || []);
   if (!files.length) return;
-  const paths = files.map((f) => api.pathForFile(f)).filter(Boolean);
+  const all = files.map((f) => api.pathForFile(f)).filter(Boolean);
+  // modpacks (.dawnpack, .mrpack) become a new profile; everything else goes into the active profile
+  const packFiles = all.filter((p) => /\.(dawnpack|mrpack)$/i.test(p));
+  for (const p of packFiles) await importPackFile(p);
+  const paths = all.filter((p) => !packFiles.includes(p));
+  if (!paths.length) return;
   const res = await api.addMods(paths, profileState.active);
   if (!res.ok) {
     toast(res.error, true);

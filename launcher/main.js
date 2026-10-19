@@ -33,6 +33,15 @@ let playStartedAt = 0;
 let gameProc = null;
 /** A shortcut start (--launch=…) waiting for the page to be ready. */
 let pendingShortcut = shortcuts.launchArgs(process.argv);
+const PACK_FILE = /\.(mrpack|dawnpack|zip)$/i;
+const packArg = (argv) => (argv || []).slice(1).find((a) => /\.(mrpack|dawnpack)$/i.test(String(a)) && fs.existsSync(String(a))) || null;
+let pendingImport = packArg(process.argv);
+// macOS hands opened files over as an event
+app.on('open-file', (e, file) => {
+  e.preventDefault();
+  if (win) win.webContents.send('import-file', file);
+  else pendingImport = file;
+});
 const importSources = new Map();
 
 const DEFAULT_SETTINGS = {
@@ -240,6 +249,8 @@ if (!app.requestSingleInstanceLock()) {
       win.focus();
     }
     if (req && win) win.webContents.send('shortcut', req);
+    const pack = packArg(argv);
+    if (pack && win) win.webContents.send('import-file', pack);
   });
 }
 
@@ -479,11 +490,12 @@ app.whenReady().then(() => {
   };
   /** Imports a pack file into a new profile; the profile is removed again if anything fails. */
   const importIntoNewProfile = async (file, fallbackName) => {
-    const info = await packs.inspect(file); // fails early for files that are not modpacks
+    const fallbackMc = mcOf();
+    const info = await packs.inspect(file, fallbackMc); // fails early for files that are not modpacks
     const before = profiles.active().id;
     const profile = profiles.create(uniqueProfileName(info.name || fallbackName), null, { mcVersion: info.mc });
     try {
-      const result = await packs.importPack(file, profiles.dir(profile), progress);
+      const result = await packs.importPack(file, profiles.dir(profile), progress, fallbackMc);
       await game.adoptManagedMods(profiles.dir(profile));
       return { ...result, profile: profile.name, state: profileState() };
     } catch (err) {
@@ -522,11 +534,22 @@ app.whenReady().then(() => {
     const res = await dialog.showOpenDialog(win, {
       title: 'Import a modpack',
       properties: ['openFile'],
-      filters: [{ name: 'Modpacks (.mrpack, CurseForge .zip)', extensions: ['mrpack', 'zip'] }],
+      filters: [{ name: 'Modpacks (.mrpack, .dawnpack, CurseForge .zip)', extensions: ['mrpack', 'dawnpack', 'zip', 'json'] }],
     });
     if (res.canceled || !res.filePaths[0]) return null;
     return importIntoNewProfile(res.filePaths[0], path.basename(res.filePaths[0], path.extname(res.filePaths[0])));
   }));
+  // a pack dropped on the window or opened with the launcher (double-click on a .dawnpack / .mrpack)
+  ipcMain.handle('profile:importFile', safe(async (_e, file) => {
+    const p = String(file || '');
+    if (!PACK_FILE.test(p) || !fs.existsSync(p) || !fs.statSync(p).isFile()) throw new Error('Only .mrpack, .dawnpack and modpack .zip files can be imported.');
+    return importIntoNewProfile(p, path.basename(p, path.extname(p)));
+  }));
+  ipcMain.handle('profile:pendingImport', () => {
+    const p = pendingImport;
+    pendingImport = null;
+    return p;
+  });
   ipcMain.handle('modrinth:installPack', safe(async (_e, projectId) => {
     if (typeof projectId !== 'string' || !PROJECT_ID.test(projectId)) throw new Error('Unknown project');
     // the newest version of the pack that Onix plays, preferring the active profile's version
