@@ -123,7 +123,7 @@ public class OnixMenuScreen extends Screen {
     private int filter;
     private final Deque<State> history = new ArrayDeque<>();
 
-    private final Input search = new Input("Search modules and settings", 40);
+    private final Input search = new Input("Search…", 40);
     private final Input profileName = new Input("New profile name", 20);
     private final Input cosSearch = new Input("Search cosmetics", 30);
     private Cosmetics.Slot cosSlot = Cosmetics.Slot.CAPE;
@@ -540,8 +540,11 @@ public class OnixMenuScreen extends Screen {
             tx += 20;
         }
         int reserved = withSearch ? 250 : 0;
-        String title = font.plainSubstrByWidth(pageTitle(), (int) ((x2 - tx - reserved) / 2f) - 6);
-        Theme.pixelTitle(ctx, title, tx, ty - 5, 2f, Theme.TEXT);
+        int room = x2 - tx - reserved;
+        String title = pageTitle();
+        float ts = Math.max(1f, Math.min(2f, room / (float) (font.width(title + ".") + 2)));
+        if (font.width(title + ".") * ts > room) title = font.plainSubstrByWidth(title, (int) (room / ts) - font.width("….")) + "…";
+        Theme.pixelTitle(ctx, title, tx, ty - 5 + Math.round((2f - ts) * 4), ts, Theme.TEXT);
         Theme.small(ctx, Theme.ellipsize(pageSubtitle(), (int) ((x2 - tx - reserved) / 0.75f)), tx, ty + 15, Theme.TEXT_3);
 
         if (!withSearch) return;
@@ -918,7 +921,7 @@ public class OnixMenuScreen extends Screen {
         int hy = r[1];
         Theme.card(ctx, x, hy, r[2], hy + 36, 8, Theme.SURFACE_2, Theme.lerpColor(Theme.BORDER, Theme.withAlpha(Theme.accent(), 160), on * 0.6f));
         drawIcon(ctx, m.getCategory().getIcon(), x + 12, hy + 13, 10, Theme.lerpColor(Theme.TEXT_3, Theme.accent(), on));
-        Theme.textBold(ctx, m.isEnabled() ? "Enabled" : "Disabled", x + 30, hy + 9, Theme.TEXT);
+        Theme.textBold(ctx, m.isEnabled() ? "On" : "Off", x + 30, hy + 9, m.isEnabled() ? Theme.TEXT : Theme.TEXT_2);
         String meta = m.getCategory().getDisplayName() + " · " + m.visibleSettingCount() + " settings"
                 + (m.toggleKey.isBound() ? " · Key " + m.toggleKey.display() : "")
                 + (m.statusLine() != null ? " · " + m.statusLine() : "");
@@ -1624,10 +1627,11 @@ public class OnixMenuScreen extends Screen {
     private int chip(GuiGraphics ctx, int mx, int my, int x, int y, String label, boolean on, Runnable action) {
         int w = Theme.smallWidth(label) + 18;
         boolean hov = hovered(mx, my, x, y, x + w, y + 15);
-        Theme.card(ctx, x, y, x + w, y + 15, Theme.corner(7), on ? Theme.withAlpha(Theme.accent(), 70) : hov ? Theme.SURFACE_4 : Theme.SURFACE_3,
-                on ? Theme.accent() : Theme.BORDER);
+        Theme.card(ctx, x, y, x + w, y + 15, Theme.corner(7), on ? Theme.TEXT : hov ? Theme.SURFACE_4 : Theme.SURFACE_3,
+                on ? Theme.TEXT : Theme.BORDER);
+        if (!on) Theme.bevel(ctx, x, y, x + w, y + 15, 1f);
         Theme.round(ctx, x + 6, y + 6, x + 9, y + 9, 1, on ? Theme.accent() : Theme.TEXT_3);
-        Theme.small(ctx, label, x + 13, y + 5, on ? Theme.TEXT : Theme.TEXT_2);
+        Theme.small(ctx, label, x + 13, y + 5, on ? Theme.SURFACE : Theme.TEXT_2);
         hit(x, y, x + w, y + 15, () -> {
             action.run();
             click();
