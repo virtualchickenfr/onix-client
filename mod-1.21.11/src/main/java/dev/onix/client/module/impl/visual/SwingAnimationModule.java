@@ -25,6 +25,11 @@ public class SwingAnimationModule extends Module {
     }
 
     /** Replaces vanilla's swing transform; returns false to keep vanilla. f = swing progress 0..1, side = 1 right / -1 left. */
+    /** True when a custom swing replaces the vanilla one. */
+    public boolean active() {
+        return isEnabled() && !style.get().equals("Vanilla");
+    }
+
     public boolean apply(PoseStack m, float f, int side) {
         String s = style.get();
         if (s.equals("Vanilla")) return false;

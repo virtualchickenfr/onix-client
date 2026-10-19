@@ -50,6 +50,14 @@
     [
       "\\bthis\\.sampler = RenderSystem\\.getSamplerCache\\(\\)\\.getRepeat\\(FilterMode\\.LINEAR\\);",
       "this.setFilter(true, false); this.setClamp(false);"
+    ],
+    [
+      "private void onix\\$swing\\(float progress, PoseStack matrices, int side, HumanoidArm arm, CallbackInfo ci\\) \\{",
+      "private void onix$swing(float progress, float equip, PoseStack matrices, int side, HumanoidArm arm, CallbackInfo ci) {"
+    ],
+    [
+      "if \\(swing != null && swing\\.isEnabled\\(\\) && swing\\.apply\\(matrices, progress, side\\)\\) ci\\.cancel\\(\\);",
+      "if (swing != null && swing.active()) { matrices.translate(side * 0.56F, -0.52F + equip * -0.6F, -0.72F); swing.apply(matrices, progress, side); ci.cancel(); }"
     ]
   ],
   "file_rules": {
