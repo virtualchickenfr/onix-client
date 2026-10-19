@@ -8,7 +8,7 @@
   try {
     bootStatus('Starting');
     info = await api.info();
-    $('#eyebrow').textContent = `Minecraft ${info.mcVersion} · Fabric · v${info.version}`;
+    $('#eyebrow').textContent = `Minecraft ${info.mcVersion}`;
     bootStatus('Checking your account');
     await loadAccounts();
     bootStatus('Loading profiles');

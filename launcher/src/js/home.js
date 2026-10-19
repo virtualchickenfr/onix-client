@@ -44,7 +44,7 @@ document.addEventListener('click', (e) => { if (!pickerPop.contains(e.target)) c
 
 function renderEyebrow() {
   if (!info) return;
-  $('#eyebrow').textContent = `Minecraft ${mcOfProfile(activeProfile())} · Fabric · v${info.version}`;
+  $('#eyebrow').textContent = `Minecraft ${mcOfProfile(activeProfile())}`;
 }
 
 function refreshProfiles() {

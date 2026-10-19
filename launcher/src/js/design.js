@@ -35,7 +35,7 @@ function applyTheme(id) {
   r.setProperty('--s4', mix(mix(t.panel, t.accent, 0.05), '#ffffff', 0.09));
   spawnParticles(t);
   $$('.theme[data-theme]').forEach((b) => b.classList.toggle('selected', b.dataset.theme === t.id));
-  $('#home-theme').textContent = `Current: ${t.name}`;
+  if ($('#home-theme')) $('#home-theme').textContent = `Current: ${t.name}`;
 }
 
 async function selectTheme(id) {

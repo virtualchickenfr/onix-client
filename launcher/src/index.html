@@ -50,19 +50,16 @@
       <div class="brand drag">
         <img src="assets/logo.png" alt="">
         <span class="brand-name">Onix</span>
-        <span class="brand-tag">Client</span>
       </div>
 
       <nav class="nav">
         <button class="nav-item active" data-view="home"><svg><use href="#i-home"/></svg>Home</button>
-        <div class="nav-label">Library</div>
+        <button class="nav-item" data-view="cosmetics"><svg><use href="#i-shirt"/></svg>Cosmetics</button>
         <button class="nav-item" data-view="profiles"><svg><use href="#i-layers"/></svg>Profiles</button>
         <button class="nav-item" data-view="mods"><svg><use href="#i-puzzle"/></svg>Mods</button>
-        <button class="nav-item" data-view="cosmetics"><svg><use href="#i-shirt"/></svg>Cosmetics</button>
-        <div class="nav-label">Tools</div>
+        <div class="nav-sep"></div>
         <button class="nav-item" data-view="import"><svg><use href="#i-import"/></svg>Import</button>
         <button class="nav-item" data-view="install"><svg><use href="#i-plug"/></svg>Install</button>
-        <button class="nav-item" data-view="console"><svg><use href="#i-terminal"/></svg>Console</button>
       </nav>
 
       <div class="sidebar-foot">
@@ -73,7 +70,7 @@
 
     <main class="main">
       <header class="topbar drag">
-        <div class="crumb" id="crumb">Home</div>
+        <div class="crumb" id="crumb"></div>
         <button class="update-pill no-drag" id="update-pill" hidden></button>
         <button class="palette-trigger no-drag" id="btn-palette" title="Search commands"><svg><use href="#i-search"/></svg><span>Search</span><kbd>Ctrl K</kbd></button>
         <div class="window-controls no-drag">
@@ -90,28 +87,9 @@
           <div class="hero-fade"></div>
           <div class="particles" id="particles" aria-hidden="true"></div>
           <div class="hero-content">
-            <span class="eyebrow" id="eyebrow">Minecraft 1.21.1 · Fabric</span>
             <h1>Onix</h1>
-            <p>The PvP client for Java Edition. 116 modules, each one configurable down to the last detail.</p>
+            <p class="eyebrow" id="eyebrow">Minecraft 1.21.1</p>
           </div>
-        </div>
-
-        <div class="home-cards">
-          <button class="home-card" data-goto="import">
-            <svg><use href="#i-import"/></svg>
-            <div><b>Move from Lunar &amp; co.</b><span>Bring over settings, servers, worlds and mods</span></div>
-            <svg class="arrow"><use href="#i-arrow"/></svg>
-          </button>
-          <button class="home-card" data-goto="cosmetics">
-            <svg><use href="#i-shirt"/></svg>
-            <div><b>Cosmetics</b><span>Over 1,600 capes, hats, wings, auras and pets</span></div>
-            <svg class="arrow"><use href="#i-arrow"/></svg>
-          </button>
-          <button class="home-card" data-goto="settings">
-            <svg><use href="#i-settings"/></svg>
-            <div><b>Theme &amp; background</b><span id="home-theme">Onyx</span></div>
-            <svg class="arrow"><use href="#i-arrow"/></svg>
-          </button>
         </div>
 
         <div class="dock">
@@ -124,7 +102,7 @@
             <div class="popover" id="picker-pop"></div>
           </div>
           <div class="launch">
-            <div class="launch-row"><span class="launch-status" id="launch-status">Ready</span><span class="launch-pct" id="launch-pct"></span></div>
+            <div class="launch-row"><span class="launch-status" id="launch-status">Ready</span><span class="launch-pct" id="launch-pct"></span><button class="launch-logs" data-goto="console" title="Game output">Logs</button></div>
             <div class="bar"><div class="bar-fill" id="bar-fill"></div></div>
             <div class="launch-detail" id="launch-detail"></div>
           </div>
@@ -135,7 +113,7 @@
       <!-- PROFILES -->
       <section class="view" id="view-profiles">
         <div class="page-head">
-          <div><h2>Profiles</h2><p>Every profile has its own mods, worlds, settings and cosmetics. Share them as Modrinth or CurseForge packs.</p></div>
+          <div><h2>Profiles</h2><p>Separate mods, worlds and settings for every version or server.</p></div>
           <div class="btn-row">
             <button class="btn" id="btn-modpacks"><svg><use href="#i-search"/></svg>Modpacks</button>
             <button class="btn" id="btn-import-pack"><svg><use href="#i-upload"/></svg>Import Pack</button>
@@ -170,7 +148,7 @@
         <div class="cosmetics">
           <div class="cos-stage">
             <canvas id="cos-stage" width="440" height="560" title="Drag to turn"></canvas>
-            <div class="cos-stage-hint">Drag to turn · hover an item to try it on</div>
+            <div class="cos-stage-hint">Drag to turn</div>
             <div class="cos-worn" id="cos-worn"></div>
             <div class="cos-partner" id="cos-cosmetica"></div>
           </div>
@@ -197,23 +175,19 @@
       <!-- IMPORT -->
       <section class="view" id="view-import">
         <div class="page-head">
-          <div><h2>Import</h2><p>Bring everything from other clients and launchers into an Onix profile.</p></div>
+          <div><h2>Import</h2><p>Settings, key binds, servers, worlds, packs and mods from other clients.</p></div>
           <div class="btn-row">
             <button class="btn" id="btn-import-folder"><svg><use href="#i-folder"/></svg>Choose Folder</button>
             <button class="btn" id="btn-import-scan"><svg><use href="#i-refresh"/></svg>Scan Again</button>
           </div>
         </div>
-        <div class="note"><svg><use href="#i-info"/></svg>
-          <span>Settings, key binds, servers, worlds, resource and shader packs, screenshots and compatible Fabric mods are copied completely.
-          Which client modules (Keystrokes, Zoom, …) were enabled in Lunar, Feather, Badlion or LabyMod is detected from their files. This part is in beta.
-          Cosmetics from other clients belong to your account there and cannot be transferred.</span></div>
         <div class="source-grid" id="source-grid"></div>
       </section>
 
       <!-- INSTALL -->
       <section class="view" id="view-install">
         <div class="page-head">
-          <div><h2>Install</h2><p>Bring Onix and your profiles into games and launchers outside the Onix Launcher.</p></div>
+          <div><h2>Install</h2><p>Use Onix in other launchers.</p></div>
           <div class="btn-row"><button class="btn" id="btn-install-scan"><svg><use href="#i-refresh"/></svg>Scan Again</button></div>
         </div>
 
@@ -224,8 +198,6 @@
 
         <div class="group-label">Running now</div>
         <div class="table" id="running-list"></div>
-        <p class="hint">A Fabric mod has to be there when Minecraft starts, so Onix is never injected into a running game.
-          If a game already has Onix, <b>Send Profile</b> loads your profile into it instantly.</p>
 
         <div class="group-label">Other launchers</div>
         <div class="table" id="target-list"></div>
@@ -237,14 +209,13 @@
           <label class="field-inline"><span>With Fabric API</span><label class="switch"><input type="checkbox" id="dl-fapi" checked><i></i></label></label>
           <button class="btn primary" id="btn-dl"><svg><use href="#i-download"/></svg>Download</button>
         </div>
-        <p class="hint">Put the files into the <span class="mono">mods</span> folder of any Fabric 1.21.1 installation
-          (Fabric Loader 0.15 or newer). Press Right Shift in game to open Onix.</p>
+        <p class="hint">Put the files into the <span class="mono">mods</span> folder of a Fabric installation. Right Shift opens Onix in game.</p>
       </section>
 
       <!-- SETTINGS -->
       <section class="view" id="view-settings">
         <div class="page-head">
-          <div><h2>Settings</h2><p>Applies to every profile. Memory and servers are set per profile.</p></div>
+          <div><h2>Settings</h2><p>For every profile.</p></div>
         </div>
         <div class="group-label">Theme</div>
         <div class="themes" id="themes"></div>
@@ -306,7 +277,7 @@
       <!-- CONSOLE -->
       <section class="view" id="view-console">
         <div class="page-head">
-          <div><h2>Console</h2><p>Output of the launcher and Minecraft. Useful when something goes wrong.</p></div>
+          <div><h2>Console</h2><p>Launcher and game output.</p></div>
           <div class="btn-row">
             <button class="btn" id="btn-copy-log">Copy</button>
             <button class="btn" id="btn-clear-log">Clear</button>

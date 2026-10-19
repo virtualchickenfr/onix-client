@@ -188,7 +188,7 @@ async function loadCosmetics() {
   setupCosmetics();
   cosmetics = await api.getCosmetics();
   const p = activeProfile();
-  $('#cos-sub').textContent = `${CosRender.catalog.items.length.toLocaleString('en')} cosmetics · only visible to you · applies to profile "${p ? p.name : ''}".`;
+  $('#cos-sub').textContent = `Only visible to you · profile "${p ? p.name : ''}"`;
   renderCosmetics();
   startStage();
   renderCosmetica();
@@ -208,14 +208,13 @@ async function renderCosmetica() {
   if (!p) return;
   const mods = await api.listMods(p.id);
   const mod = (Array.isArray(mods) ? mods : []).find((m) => (m.modrinth && m.modrinth.id === COSMETICA_ID) || /^cosmetica/i.test(m.file));
-  const title = el('b', {}, ['Cosmetica', el('span', { class: 'tag', text: mod ? 'In this profile' : 'Free mod' })]);
-  const text = mod
-    ? 'Choose your Cosmetica capes and hats in its own menu in game. Its cape is shown instead of the Onix cape (switch in Onix → Cosmetics).'
-    : 'Another free cosmetics mod with community-made capes and hats – players who also use Cosmetica see yours. Adds it to this profile.';
-  const button = mod
-    ? el('button', { class: 'btn sm', disabled: cosmeticaBusy, onclick: () => setCosmetica(p.id, mod) }, [cosmeticaBusy ? 'Removing…' : 'Remove'])
-    : el('button', { class: 'btn sm', disabled: cosmeticaBusy, onclick: () => setCosmetica(p.id, null) }, [icon('download'), cosmeticaBusy ? 'Adding…' : 'Add to Profile']);
-  box.replaceChildren(title, el('span', { text }), button);
+  // one quiet line: the Onix cosmetics are the focus of this page
+  box.title = mod
+    ? 'Cosmetica is in this profile: pick its capes and hats in its own menu in game. Its cape replaces the Onix cape (switch in Onix → Cosmetics).'
+    : 'Cosmetica is another free cosmetics mod with community-made capes and hats; players who also use it see yours.';
+  const action = el('button', { class: 'link', disabled: cosmeticaBusy, onclick: () => setCosmetica(p.id, mod || null) },
+    [cosmeticaBusy ? (mod ? 'Removing…' : 'Adding…') : mod ? 'Remove' : 'Add']);
+  box.replaceChildren(el('span', { text: mod ? 'Cosmetica is in this profile' : 'Also use Cosmetica (free)' }), action);
 }
 
 async function setCosmetica(profileId, installed) {

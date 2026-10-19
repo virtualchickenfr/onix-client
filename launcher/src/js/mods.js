@@ -4,7 +4,7 @@
 
 async function renderMods() {
   const p = activeProfile();
-  $('#mods-sub').textContent = `Profile "${p ? p.name : ''}" · Fabric mods for ${mcOfProfile(p)}. Drop .jar files anywhere on the launcher to add them.`;
+  $('#mods-sub').textContent = `Profile "${p ? p.name : ''}" · Minecraft ${mcOfProfile(p)} · drop .jar files here to add them`;
   const list = $('#mod-list');
   if (!list.children.length || list.querySelector('.empty')) {
     list.replaceChildren(...[0, 1, 2, 3].map(() => el('div', { class: 'skeleton row' })));

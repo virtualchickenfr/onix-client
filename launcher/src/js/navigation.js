@@ -8,7 +8,6 @@ function showView(name) {
   currentView = name;
   $$('.nav-item').forEach((b) => b.classList.toggle('active', b.dataset.view === name));
   $$('.view').forEach((v) => v.classList.toggle('active', v.id === `view-${name}`));
-  $('#crumb').textContent = TITLES[name] || '';
   closePicker();
   if (name === 'profiles') renderProfiles();
   if (name === 'mods') renderMods();
