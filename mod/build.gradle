@@ -10,6 +10,20 @@ base {
     archivesName = project.archives_base_name
 }
 
+loom {
+    runs {
+        // Automated screenshot walkthrough: gradlew runDevtest
+        devtest {
+            client()
+            name = "Onix Dev Test"
+            vmArg "-Donix.devtest=true"
+            vmArg "-Dmixin.debug.countInjections=true"
+            programArgs "--width", "1280", "--height", "720"
+            runDir "run"
+        }
+    }
+}
+
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"

@@ -51,6 +51,52 @@ def latest_yarn(mc):
     return max(found, key=lambda v: int(v[1]))[0]
 
 
+def split_args(s, start):
+    """Arguments of the call whose '(' is at s[start-1]; returns (args, index after ')')."""
+    depth, args, cur, i, q = 0, [], [], start, None
+    while i < len(s):
+        c = s[i]
+        if q:
+            cur.append(c)
+            if c == '\\':
+                cur.append(s[i + 1]); i += 2; continue
+            if c == q: q = None
+        elif c in '"\'':
+            q = c; cur.append(c)
+        elif c in '([{':
+            depth += 1; cur.append(c)
+        elif c in ')]}':
+            if depth == 0:
+                args.append(''.join(cur).strip())
+                return args, i + 1
+            depth -= 1; cur.append(c)
+        elif c == ',' and depth == 0:
+            args.append(''.join(cur).strip()); cur = []
+        else:
+            cur.append(c)
+        i += 1
+    raise ValueError('unbalanced call')
+
+
+def rewrite_calls(s, calls):
+    """calls: [{"match": regex ending at '(' (named groups usable in "to"), "argc": n, "to": template with {0}.. and {name}}]"""
+    for c in calls:
+        rx = re.compile(c['match'])
+        pos = 0
+        while True:
+            m = rx.search(s, pos)
+            if not m:
+                break
+            args, end = split_args(s, m.end())
+            if c.get('argc') is not None and len(args) != c['argc']:
+                pos = m.end()
+                continue
+            rep = c['to'].format(*args, **m.groupdict())
+            s = s[:m.start()] + rep + s[end:]
+            pos = m.start() + len(rep)
+    return s
+
+
 def main(version, out=None):
     spec_dir = os.path.join(ROOT, 'ports', version)
     spec = json.load(open(os.path.join(spec_dir, 'port.json'), encoding='utf8'))
@@ -79,6 +125,7 @@ def main(version, out=None):
             s = orig = open(p, encoding='utf8').read()
             for rx, rep in rules:
                 s = rx.sub(rep, s)
+            s = rewrite_calls(s, spec.get('calls', []))
             for rx, rep in file_rules.get(rel, []):
                 s2 = rx.sub(rep, s)
                 if s2 == s:

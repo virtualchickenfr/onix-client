@@ -4,8 +4,155 @@
   "fabric_api": "auto",
   "yarn": "auto",
   "depends": "1.21.4",
-  "rules": [],
-  "file_rules": {},
-  "drop": [],
-  "mixins_drop": []
+  "rules": [
+    [
+      "\\bnet\\.minecraft\\.client\\.option\\.ParticlesMode\\b",
+      "net.minecraft.particle.ParticlesMode"
+    ],
+    [
+      "\\b(\\w+)\\.setShaderColor\\(",
+      "dev.onix.compat.Tint.set("
+    ],
+    [
+      "GameRenderer::getPositionColorProgram",
+      "net.minecraft.client.gl.ShaderProgramKeys.POSITION_COLOR"
+    ],
+    [
+      "GameRenderer::getPositionTexColorProgram",
+      "net.minecraft.client.gl.ShaderProgramKeys.POSITION_TEX_COLOR"
+    ],
+    [
+      "GameRenderer::getPositionTexProgram",
+      "net.minecraft.client.gl.ShaderProgramKeys.POSITION_TEX"
+    ],
+    [
+      "\\bimage\\.getColor\\(x, y\\)",
+      "dev.onix.compat.Tint.swap(image.getColorArgb(x, y))"
+    ],
+    [
+      "\\.drawItemInSlot\\(",
+      ".drawStackOverlay("
+    ],
+    [
+      "\\.isFallFlying\\(\\)",
+      ".isGliding()"
+    ],
+    [
+      "EntityAttributes\\.GENERIC_(MOVEMENT_SPEED|JUMP_STRENGTH)",
+      "EntityAttributes.\\1"
+    ],
+    [
+      "\\.world\\.setTimeOfDay\\(",
+      ".world.getLevelProperties().setTimeOfDay("
+    ],
+    [
+      "\\.world\\.getTopY\\(\\)",
+      ".world.getTopYInclusive() + 1"
+    ],
+    [
+      "\\bWorldRenderer\\.drawBox\\(",
+      "net.minecraft.client.render.VertexRendering.drawBox("
+    ],
+    [
+      "\\bWorldRenderer\\.renderFilledBox\\(",
+      "net.minecraft.client.render.VertexRendering.drawFilledBox("
+    ],
+    [
+      "\\bctx\\.getVertexConsumers\\(\\)",
+      "((dev.onix.client.mixin.DrawContextAccess) ctx).onix$vertexConsumers()"
+    ],
+    [
+      "\\bh\\.getExhaustion\\(\\)",
+      "((dev.onix.client.mixin.HungerManagerAccess) h).onix$exhaustion()"
+    ],
+    [
+      "getCooldownProgress\\(item, 0f\\)",
+      "getCooldownProgress(new net.minecraft.item.ItemStack(item), 0f)"
+    ],
+    [
+      "FeatureRenderer(Context)?<AbstractClientPlayerEntity, PlayerEntityModel<AbstractClientPlayerEntity>>",
+      "FeatureRenderer\\1<net.minecraft.client.render.entity.state.PlayerEntityRenderState, PlayerEntityModel>"
+    ],
+    [
+      "public void render\\(MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, AbstractClientPlayerEntity player,\\s*float limbAngle, float limbDistance, float tickDelta, float animationProgress, float headYaw, float headPitch\\) \\{",
+      "public void render(MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, net.minecraft.client.render.entity.state.PlayerEntityRenderState player, float limbAngle, float limbDistance) {"
+    ],
+    [
+      "\\bCreateWorldScreen\\.create\\(",
+      "CreateWorldScreen.show("
+    ]
+  ],
+  "calls": [
+    {
+      "match": "(?P<r>\\b[\\w.]+(?:\\(\\))?)\\.drawTexture\\(",
+      "argc": 11,
+      "to": "{r}.drawTexture(net.minecraft.client.render.RenderLayer::getGuiTextured, {0}, {1}, {2}, {5}, {6}, {3}, {4}, {7}, {8}, {9}, {10}, dev.onix.compat.Tint.argb())"
+    },
+    {
+      "match": "(?P<r>\\b[\\w.]+(?:\\(\\))?)\\.drawSprite\\(",
+      "argc": 6,
+      "to": "{r}.drawSpriteStretched(net.minecraft.client.render.RenderLayer::getGuiTextured, {5}, {0}, {1}, {3}, {4})"
+    },
+    {
+      "match": "\\bimg\\.setColor\\(",
+      "argc": 3,
+      "to": "img.setColorArgb({0}, {1}, dev.onix.compat.Tint.swap({2}))"
+    }
+  ],
+  "file_rules": {
+    "src/main/java/dev/onix/client/cosmetics/Cosmetics.java": [
+      [
+        "(    public static boolean appliesTo\\(PlayerEntity player\\) \\{)",
+        "    /** For render states (1.21.2+): the local player, not invisible. */\n    public static boolean appliesTo(net.minecraft.client.render.entity.state.PlayerEntityRenderState state) {\n        MinecraftClient mc = MinecraftClient.getInstance();\n        return mc.player != null && state.id == mc.player.getId() && !state.invisible;\n    }\n\n\\1"
+      ]
+    ],
+    "src/main/java/dev/onix/client/cosmetics/CapeRenderer.java": [
+      [
+        "if \\(!player\\.isPartVisible\\(PlayerModelPart\\.CAPE\\)\\) return;",
+        "if (!player.capeVisible) return;"
+      ],
+      [
+        "player\\.getEquippedStack\\(EquipmentSlot\\.CHEST\\)",
+        "player.equippedChestStack"
+      ],
+      [
+        "double dx = .*?if \\(player\\.isInSneakingPose\\(\\)\\) lift \\+= 25f;",
+        "float lift = player.field_53536;\n        float back = player.field_53537;\n        float side = player.field_53538;\n        if (player.isInSneakingPose) lift += 25f;"
+      ],
+      [
+        "player\\.age \\+ tickDelta",
+        "player.age"
+      ]
+    ],
+    "src/main/java/dev/onix/client/cosmetics/CosmeticsFeatureRenderer.java": [
+      [
+        "player\\.getEquippedStack\\(EquipmentSlot\\.HEAD\\)",
+        "player.equippedHeadStack"
+      ],
+      [
+        "player\\.getEquippedStack\\(EquipmentSlot\\.CHEST\\)",
+        "player.equippedChestStack"
+      ],
+      [
+        "player\\.isGliding\\(\\)",
+        "player.isGliding"
+      ],
+      [
+        "player\\.age \\+ tickDelta",
+        "player.age"
+      ]
+    ]
+  },
+  "drop": [
+    "src/main/java/dev/onix/client/mixin/WorldRendererMixin.java"
+  ],
+  "mixins_drop": [
+    "WorldRendererMixin"
+  ],
+  "mixins_add": {
+    "onix.mixins.json": [
+      "DrawContextAccess",
+      "HungerManagerAccess"
+    ]
+  }
 }

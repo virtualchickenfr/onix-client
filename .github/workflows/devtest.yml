@@ -30,6 +30,13 @@ jobs:
           - dir: ports/build/mod-1.21.6
             port: '1.21.6'
             branch: devtest-results-1.21.6
+          - dir: mod
+            branch: devtest-results-1.21.1
+            java21: true
+          - dir: ports/build/mod-1.21.4
+            port: '1.21.4'
+            branch: devtest-results-1.21.4
+            java21: true
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
@@ -40,6 +47,9 @@ jobs:
           java-version: |
             21
             25
+      - name: Gradle on Java 21 (yarn builds use an older Gradle)
+        if: matrix.java21
+        run: echo "JAVA_HOME=$JAVA_HOME_21_X64" >> "$GITHUB_ENV"
       - name: Generate port
         if: matrix.port
         run: python3 tools/port.py ${{ matrix.port }}

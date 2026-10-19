@@ -71,6 +71,7 @@ public class OnixClient implements ClientModInitializer {
                 "key.onix.cwt", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_UNKNOWN, "category.onix"));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            dev.onix.client.util.DevTest.tick(client);
             while (MENU_KEY.wasPressed()) {
                 if (client.currentScreen == null) client.setScreen(new OnixMenuScreen(null));
             }
