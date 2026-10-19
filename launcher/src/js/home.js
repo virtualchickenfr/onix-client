@@ -109,6 +109,19 @@ api.onProgress(({ label, progress }) => {
   setProgress(progress > 0 && progress <= 1 ? progress : null);
 });
 
+// background downloads after an import or a new profile (see prepareProfile in main.js)
+api.onPrepare((p) => {
+  if (state !== 'idle') return;
+  if (p.done) {
+    $('#launch-status').textContent = p.error ? 'Ready' : 'Ready – files downloaded';
+    $('#launch-detail').textContent = p.error ? `Download will be retried at start: ${p.error}` : '';
+    setProgress(0);
+    return;
+  }
+  $('#launch-status').textContent = `Getting "${p.profile}" ready · ${p.label}`;
+  setProgress(p.progress > 0 && p.progress <= 1 ? p.progress : null);
+});
+
 api.onState((s) => {
   if (s === 'running') {
     state = 'running';

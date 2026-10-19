@@ -10,7 +10,7 @@ const PROFILE_COLORS = ['#ececf1', '#8b7cff', '#4c8dff', '#5eead4', '#ff8fc4', '
 
 /** Same built-in themes as the mod (ThemeDef.java). Custom themes come from the main process. */
 const THEMES = [
-  { id: 'onyx', name: 'Onyx', accent: '#ececf1', panel: '#0d0d11', sky: '#6c63ff', ambient: 'Sparks', particle: '#ffffff' },
+  { id: 'onyx', name: 'Onyx', accent: '#ececf1', panel: '#0d0d11', sky: '#a4a4b0', ambient: 'Sparks', particle: '#ffffff' },
   { id: 'aurora', name: 'Aurora', accent: '#8b7cff', panel: '#0e0c17', sky: '#7c6cf6', ambient: 'Sparks', particle: '#c4baff' },
   { id: 'cobalt', name: 'Cobalt', accent: '#4c8dff', panel: '#0a0e17', sky: '#4f7be8', ambient: 'Sparks', particle: '#9db9ff' },
   { id: 'glacier', name: 'Glacier', accent: '#5eead4', panel: '#0a1312', sky: '#9ee6e0', ambient: 'Snow', particle: '#ffffff' },
@@ -21,7 +21,7 @@ const THEMES = [
 
 /** Same title screen backgrounds as the mod (TitleBackgrounds.java). */
 const BACKGROUNDS = [
-  ['onix', 'Onix Glow'], ['dusk', 'Dusk Ridge'], ['aurora', 'Aurora'], ['golden_hour', 'Golden Hour'],
+  ['carbon', 'Carbon'], ['onix', 'Onix Glow'], ['dusk', 'Dusk Ridge'], ['aurora', 'Aurora'], ['golden_hour', 'Golden Hour'],
   ['midnight_sea', 'Midnight Sea'], ['misty_pines', 'Misty Pines'], ['cherry_grove', 'Cherry Grove'], ['dunes', 'Dunes'],
   ['glacier', 'Glacier'], ['lavender', 'Lavender'], ['nether', 'Nether'], ['the_end', 'The End'], ['deep_space', 'Deep Space'],
 ];
@@ -38,7 +38,7 @@ const SAME_AS_DAY = 'Same as Day';
 
 let customThemes = [];
 let currentThemeId = 'onyx';
-let currentBackground = 'onix';
+let currentBackground = 'carbon';
 const allThemes = () => [...THEMES, ...customThemes];
 const themeById = (id) => allThemes().find((t) => t.id === id || t.name.toLowerCase() === String(id).toLowerCase()) || THEMES[0];
 

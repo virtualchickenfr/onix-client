@@ -7,7 +7,7 @@ async function initSettings() {
   customThemes = await api.listThemes();
   applyTheme(s.theme || 'onyx');
   renderThemes();
-  currentBackground = s.background || 'onix';
+  currentBackground = s.background || 'carbon';
   renderBackgrounds();
   applyBackground(currentBackground);
   await loadSky();

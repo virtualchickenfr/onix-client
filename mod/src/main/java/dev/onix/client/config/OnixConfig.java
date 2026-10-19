@@ -23,7 +23,7 @@ public class OnixConfig {
     public final TextSetting theme = new TextSetting("theme", "Theme", "onyx", 64).hidden();
 
     // Title screen background, see TitleBackgrounds
-    public final TextSetting titleBackground = new TextSetting("titleBackground", "Background", "onix", 128).hidden();
+    public final TextSetting titleBackground = new TextSetting("titleBackground", "Background", "carbon", 128).hidden();
     public final BoolSetting backgroundSlideshow = new BoolSetting("backgroundSlideshow", "Slideshow", false)
             .describe("Cycles through every background with a soft crossfade.");
     public final NumberSetting slideshowSeconds = new NumberSetting("slideshowSeconds", "Show Each For", 12, 4, 60, 1).unit("s")

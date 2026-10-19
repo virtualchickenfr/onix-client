@@ -24,12 +24,12 @@ function findJava(dir, depth = 0) {
 }
 
 /**
- * Provides Java 21. Minecraft 1.21.1 needs Java 21; if it is missing we download an
- * Eclipse Temurin JRE from Adoptium into the game folder.
+ * Provides the Java a Minecraft version needs (21, 17 or 8 – see versions.javaMajor). If it is missing, an
+ * Eclipse Temurin JRE is downloaded from Adoptium into the game folder.
  */
-async function ensureJava(root, onProgress) {
+async function ensureJava(root, onProgress, major = 21) {
   const runtimeDir = path.join(root, 'runtime');
-  const javaDir = path.join(runtimeDir, 'java21');
+  const javaDir = path.join(runtimeDir, `java${major}`);
   const existing = findJava(javaDir);
   if (existing) return existing;
 
@@ -37,20 +37,20 @@ async function ensureJava(root, onProgress) {
   if (!os) throw new Error(`Operating system ${process.platform} is not supported`);
   const arch = process.arch === 'arm64' ? 'aarch64' : 'x64';
   // the assets endpoint names the package and its SHA-256, so the download can be checked
-  const assets = await fetchJson(`https://api.adoptium.net/v3/assets/latest/21/hotspot?architecture=${arch}&image_type=jre&os=${os}&vendor=eclipse`);
+  const assets = await fetchJson(`https://api.adoptium.net/v3/assets/latest/${major}/hotspot?architecture=${arch}&image_type=jre&os=${os}&vendor=eclipse`);
   const pkg = Array.isArray(assets) && assets[0] && assets[0].binary && assets[0].binary.package;
-  if (!pkg || !pkg.link || !pkg.checksum) throw new Error('Java 21 could not be found for this system. Set a Java path in Settings.');
+  if (!pkg || !pkg.link || !pkg.checksum) throw new Error(`Java ${major} could not be found for this system. Set a Java path in Settings.`);
   const isZip = os === 'windows';
-  const archive = path.join(runtimeDir, isZip ? 'java21.zip' : 'java21.tar.gz');
-  const tmpDir = path.join(runtimeDir, 'java21-tmp');
+  const archive = path.join(runtimeDir, isZip ? `java${major}.zip` : `java${major}.tar.gz`);
+  const tmpDir = path.join(runtimeDir, `java${major}-tmp`);
 
-  await download(pkg.link, archive, (p) => onProgress && onProgress('Downloading Java 21', p));
+  await download(pkg.link, archive, (p) => onProgress && onProgress(`Downloading Java ${major}`, p));
   const sha256 = crypto.createHash('sha256').update(fs.readFileSync(archive)).digest('hex');
   if (sha256 !== String(pkg.checksum).toLowerCase()) {
     fs.rmSync(archive, { force: true });
     throw new Error('The Java download was damaged (checksum mismatch). Please try again.');
   }
-  onProgress && onProgress('Extracting Java 21', 1);
+  onProgress && onProgress(`Extracting Java ${major}`, 1);
 
   fs.rmSync(tmpDir, { recursive: true, force: true });
   fs.mkdirSync(tmpDir, { recursive: true });

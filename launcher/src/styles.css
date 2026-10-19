@@ -664,3 +664,93 @@ kbd { display: inline-block; padding: 1px 6px; border-radius: 5px; background: v
 
 /* Home: the version under the wordmark is plain text, not a pill */
 .hero .eyebrow { display: block; height: auto; padding: 0; border: 0; background: none; backdrop-filter: none; font-size: 13px; color: var(--text-3); letter-spacing: .01em; }
+
+/* ==========================================================================
+   Carbon look (from Carbon Client): monochrome stone surfaces, block buttons with a depth band
+   that lift on hover and press in on click, a light sweep, pixel headlines and a graphene lattice.
+   ========================================================================== */
+@font-face { font-family: 'Pixelify Sans'; font-weight: 700; src: url(fonts/pixelify-700.ttf) format('truetype'); }
+@font-face { font-family: 'JetBrains Mono'; font-weight: 500; src: url(fonts/mono-500.ttf) format('truetype'); }
+@font-face { font-family: 'JetBrains Mono'; font-weight: 700; src: url(fonts/mono-700.ttf) format('truetype'); }
+
+:root {
+  --bg: #0b0b0d;
+  --s1: #111114;
+  --s2: #18181b;
+  --s3: #222226;
+  --s4: #2b2b30;
+  --stone-edge: #34343a;
+  --stone-dark: #060607;
+  --pixel: 'Pixelify Sans', var(--display);
+  --mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+  --r-sm: 5px;
+  --r: 8px;
+  --r-lg: 12px;
+}
+
+/* ---- block buttons ---- */
+.btn, .play, .picker-btn, .cos-wallet {
+  position: relative; overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, .08); border-radius: var(--r-sm);
+  background: var(--s3);
+  box-shadow: 0 4px 0 var(--stone-dark), 0 7px 14px rgba(0, 0, 0, .45);
+  transform: translateY(0);
+  transition: transform .14s var(--ease), box-shadow .14s var(--ease), background .14s, opacity .14s;
+}
+.btn { height: 32px; margin-bottom: 4px; }
+.btn:hover:not(:disabled), .picker-btn:hover:not(:disabled), .cos-wallet:hover {
+  background: var(--s4); transform: translateY(-2px);
+  box-shadow: 0 6px 0 var(--stone-dark), 0 10px 18px rgba(0, 0, 0, .5);
+}
+.btn:active:not(:disabled), .picker-btn:active:not(:disabled), .cos-wallet:active {
+  transform: translateY(2.5px); box-shadow: 0 1.5px 0 var(--stone-dark), 0 3px 6px rgba(0, 0, 0, .4);
+}
+/* light sweep across the face on hover */
+.btn::after, .play::after {
+  content: ''; position: absolute; top: 0; bottom: 0; left: -60%; width: 45%; pointer-events: none;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .09), transparent);
+  transform: translateX(0); opacity: 0;
+}
+.btn:hover:not(:disabled)::after, .play:hover:not(:disabled)::after { animation: carbon-sheen .7s var(--ease) forwards; }
+@keyframes carbon-sheen { from { transform: translateX(0); opacity: 1; } to { transform: translateX(380%); opacity: 1; } }
+
+.btn.primary, .play {
+  background: #e6e6e9; color: #0b0b0d; border-color: transparent;
+  box-shadow: 0 4px 0 #8c8c94, 0 8px 18px rgba(0, 0, 0, .5);
+}
+.btn.primary:hover:not(:disabled), .play:hover:not(:disabled) {
+  background: #fff; opacity: 1; transform: translateY(-2px);
+  box-shadow: 0 6px 0 #8c8c94, 0 12px 22px rgba(0, 0, 0, .55);
+}
+.btn.primary:active:not(:disabled), .play:active:not(:disabled) { transform: translateY(2.5px); box-shadow: 0 1.5px 0 #8c8c94, 0 3px 6px rgba(0, 0, 0, .4); }
+.btn.primary::after, .play::after { background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .7), transparent); }
+.play { height: 46px; margin-bottom: 4px; font-weight: 700; letter-spacing: .02em; text-transform: uppercase; font-size: 13px; }
+.play:disabled { background: var(--s3); color: var(--text-3); box-shadow: 0 4px 0 var(--stone-dark); }
+.btn:disabled { box-shadow: 0 4px 0 var(--stone-dark); }
+.btn.danger { color: #ff8a8e; }
+.picker-btn { background: var(--s2); margin-bottom: 4px; }
+
+/* ---- headlines in the pixel face, labels as "— LABEL" kickers ---- */
+.hero h1 { font: 700 64px/1 var(--pixel); letter-spacing: .02em; text-transform: uppercase; background: none; color: #f4f4f5; text-shadow: 0 5px 0 #2b2b30, 0 10px 24px rgba(0, 0, 0, .6); -webkit-background-clip: initial; background-clip: initial; }
+.page-head h2 { font: 700 24px/1.15 var(--pixel); letter-spacing: .02em; text-transform: uppercase; }
+.brand-name { font: 700 16px var(--pixel); letter-spacing: .06em; text-transform: uppercase; }
+.boot-word { font-family: var(--pixel) !important; }
+.group-label, .nav-label { display: flex; align-items: center; gap: 7px; letter-spacing: .14em; }
+.group-label::before { content: ''; width: 8px; height: 1px; background: currentColor; }
+.cos-wallet b, .launch-pct, .pcard-meta, .mono { font-family: var(--mono); }
+
+/* ---- surfaces: stone cards with a darker base edge ---- */
+.dock, .group, .table, .dl-card, .note, .pcard, .cos-stage, .source, .install-options {
+  background: var(--s1); border-color: rgba(255, 255, 255, .07);
+  box-shadow: 0 3px 0 var(--stone-dark);
+}
+.sidebar { background: #0b0b0d; }
+.nav-item { border-radius: var(--r-sm); }
+.nav-item.active { background: var(--s3); color: var(--text); box-shadow: inset 0 -2px 0 var(--stone-dark), 0 0 0 1px rgba(255, 255, 255, .07); }
+.nav-item.active svg { color: var(--text); }
+
+/* ---- graphene lattice over the home picture ---- */
+.hero-grain { opacity: .5; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='28' height='48.5' viewBox='0 0 28 48.5'><path d='M14 0 28 8.08v16.17L14 32.33 0 24.25V8.08z M14 32.33V48.5' fill='none' stroke='white' stroke-opacity='.06' stroke-width='1'/></svg>"); mask-image: linear-gradient(90deg, transparent 0%, #000 55%); }
+.seg-select { height: auto; min-height: 44px; align-self: stretch; }
+.seg-select.on { border-color: var(--line-3); color: var(--text); }
+.seg-note { grid-column: 1 / -1; font-size: 11.5px; color: var(--text-3); }

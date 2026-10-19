@@ -38,7 +38,7 @@ public record ThemeDef(String id, String name, int accent, int panel, int sky, A
     }
 
     public static final ThemeDef[] BUILT_IN = {
-            builtIn("Onyx", 0xFFECECF1, 0xFF0D0D11, 0xFF6C63FF, Ambient.SPARKS, 0xFFFFFFFF),
+            builtIn("Onyx", 0xFFECECF1, 0xFF0D0D11, 0xFFA4A4B0, Ambient.SPARKS, 0xFFFFFFFF),
             builtIn("Aurora", 0xFF8B7CFF, 0xFF0E0C17, 0xFF7C6CF6, Ambient.SPARKS, 0xFFC4BAFF),
             builtIn("Cobalt", 0xFF4C8DFF, 0xFF0A0E17, 0xFF4F7BE8, Ambient.SPARKS, 0xFF9DB9FF),
             builtIn("Glacier", 0xFF5EEAD4, 0xFF0A1312, 0xFF9EE6E0, Ambient.SNOW, 0xFFFFFFFF),

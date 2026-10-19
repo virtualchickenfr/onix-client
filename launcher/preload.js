@@ -4,6 +4,7 @@ const invoke = (channel, ...args) => ipcRenderer.invoke(channel, ...args);
 
 contextBridge.exposeInMainWorld('onix', {
   info: () => invoke('app:info'),
+  versions: () => invoke('versions:list'),
 
   account: () => invoke('auth:get'),
   login: () => invoke('auth:login'),
@@ -71,6 +72,8 @@ contextBridge.exposeInMainWorld('onix', {
   onInstallProgress: (cb) => ipcRenderer.on('install:progress', (_e, v) => cb(v)),
 
   launch: () => invoke('game:launch'),
+  prepareProfile: (id) => invoke('profile:prepare', id),
+  onPrepare: (cb) => ipcRenderer.on('prepare:progress', (_e, v) => cb(v)),
   minimize: () => ipcRenderer.send('win:minimize'),
   close: () => ipcRenderer.send('win:close'),
 

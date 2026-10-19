@@ -36,13 +36,28 @@ let editColor = PROFILE_COLORS[0];
 let editVersion = '1.21.1';
 
 function renderVersions() {
-  const list = (info && info.versions) || [{ id: '1.21.1', note: '' }];
-  $('#pf-version').replaceChildren(...list.map((v) => el('button', {
+  const list = (info && info.versions) || [{ id: '1.21.1', note: '', onix: true }];
+  const onix = list.filter((v) => v.onix);
+  const others = list.filter((v) => !v.onix);
+  const buttons = onix.map((v) => el('button', {
     class: `seg-btn${v.id === editVersion ? ' on' : ''}`,
     type: 'button',
     title: v.note || '',
     onclick: () => { editVersion = v.id; renderVersions(); },
-  }, [el('b', { text: v.id }), v.note ? el('span', { text: v.note }) : null].filter(Boolean))));
+  }, [el('b', { text: v.id }), v.note ? el('span', { text: v.note }) : null].filter(Boolean)));
+  const otherOn = others.some((v) => v.id === editVersion);
+  const select = el('select', { class: `input sm seg-select${otherOn ? ' on' : ''}`, title: 'Every Minecraft version Fabric supports' }, [
+    el('option', { value: '', text: others.length ? 'Other versions…' : 'Loading versions…', selected: !otherOn }),
+    ...others.map((v) => el('option', { value: v.id, text: v.id, selected: v.id === editVersion })),
+  ]);
+  select.addEventListener('change', () => {
+    if (select.value) editVersion = select.value;
+    renderVersions();
+  });
+  const note = otherOn
+    ? el('span', { class: 'seg-note', text: 'Fabric API and the performance pack – the Onix mod is not available for this version yet.' })
+    : null;
+  $('#pf-version').replaceChildren(...buttons, select, ...(note ? [note] : []));
 }
 
 function openProfileEditor(profile) {
@@ -58,6 +73,13 @@ function openProfileEditor(profile) {
   $('#pf-server').value = profile ? profile.quickJoin : '';
   $('#pf-perf').checked = profile ? profile.performanceMods : true;
   editVersion = profile ? mcOfProfile(profile) : mcOfProfile(activeProfile());
+  // the full version list is fetched from Fabric in the background
+  api.versions().then((list) => {
+    if (Array.isArray(list) && list.length) {
+      info.versions = list;
+      renderVersions();
+    }
+  }).catch(() => {});
   renderVersions();
   $('#pf-copy-row').hidden = !!profile;
   $('#pf-delete').hidden = !profile || profileState.profiles.length <= 1;

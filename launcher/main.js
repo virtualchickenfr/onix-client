@@ -32,7 +32,7 @@ const DEFAULT_SETTINGS = {
   closeOnLaunch: false,
   fastStart: true,
   theme: 'onyx',
-  background: 'onix',
+  background: 'carbon',
   onixServer: '',
   autoUpdate: true,
 };
@@ -223,14 +223,21 @@ function safe(fn) {
 app.whenReady().then(() => {
   fs.mkdirSync(GAME_DIR, { recursive: true });
   store = new Store(path.join(app.getPath('userData'), 'onix-launcher.json'), {});
+  // all Minecraft versions Fabric supports (cached, refreshed in the background)
+  versions.init(path.join(app.getPath('userData'), 'cache', 'versions.json'));
   profiles = new Profiles(store, GAME_DIR, { ramMb: Math.min(4096, Math.floor(TOTAL_MB / 2)) });
   importer.setCacheDir(path.join(app.getPath('userData'), 'cache'));
 
+  versions.refresh(require('./lib/download').fetchJson).catch(() => {});
+  ipcMain.handle('versions:list', async () => {
+    await versions.refresh(require('./lib/download').fetchJson).catch(() => {});
+    return versions.all();
+  });
   ipcMain.handle('app:info', () => ({
     version: app.getVersion(),
     mcVersion: game.MC_VERSION,
     loader: game.LOADER_VERSION,
-    versions: versions.LIST.map((v) => ({ id: v, ...versions.get(v) })),
+    versions: versions.all(),
     totalMemMb: TOTAL_MB,
     gameDir: GAME_DIR,
   }));
@@ -311,7 +318,8 @@ app.whenReady().then(() => {
     return profileState();
   }));
   ipcMain.handle('profiles:create', safe((_e, name, copyFrom, mcVersion) => {
-    profiles.create(name, copyFrom, versions.isSupported(mcVersion) ? { mcVersion } : {});
+    const created = profiles.create(name, copyFrom, versions.isSupported(mcVersion) ? { mcVersion } : {});
+    prepareProfile(created);
     return profileState();
   }));
   ipcMain.handle('profiles:delete', safe((_e, id) => {
@@ -525,9 +533,47 @@ app.whenReady().then(() => {
   });
 
   // Play
+  /**
+   * Downloads everything a profile needs in the background (after an import or when a profile is created),
+   * so its first start is quick. A start waits for a download that is still running.
+   */
+  let preparing = null;
+  const prepareProfile = (profile) => {
+    if (!profile || running) return;
+    const before = preparing || Promise.resolve();
+    const job = before.then(async () => {
+      const report = (label, progress) => send('prepare:progress', { profile: profile.name, label, progress });
+      const log = (line) => send('game:log', line);
+      try {
+        log(`Getting profile "${profile.name}" ready in the background`);
+        report('Downloading Java', 0);
+        const s = settings();
+        const javaPath = s.javaPath && s.javaPath.trim() ? s.javaPath.trim() : await ensureJava(GAME_DIR, report, versions.javaMajor(versions.ofProfile(profile).mc));
+        await game.prepare({ root: GAME_DIR, gameDir: profiles.dir(profile), javaPath, settings: profile, report, log });
+        send('prepare:progress', { profile: profile.name, done: true });
+        log(`Profile "${profile.name}" is ready`);
+      } catch (err) {
+        log(`Could not prepare "${profile.name}": ${err && err.message ? err.message : err}`);
+        send('prepare:progress', { profile: profile.name, done: true, error: friendlyError(err) });
+      }
+    });
+    const settled = job.finally(() => {
+      if (preparing === settled) preparing = null;
+    });
+    preparing = settled;
+  };
+  ipcMain.handle('profile:prepare', (_e, id) => {
+    prepareProfile(profiles.list().find((p) => p.id === id) || profiles.active());
+    return true;
+  });
+
   ipcMain.handle('game:launch', async () => {
     if (running) return { ok: false, error: 'Minecraft is already running.' };
     running = true;
+    if (preparing) {
+      send('game:progress', { label: 'Finishing downloads', progress: 0 });
+      await preparing.catch(() => {});
+    }
     const s = settings();
     const profile = profiles.active();
     runningProfileId = profile.id;
@@ -540,7 +586,7 @@ app.whenReady().then(() => {
       // sign-in, Java and the game files do not depend on each other – check them at the same time
       const [authorization, javaPath] = await Promise.all([
         auth.refresh(store, s.fastStart !== false),
-        s.javaPath && s.javaPath.trim() ? s.javaPath.trim() : ensureJava(GAME_DIR, report),
+        s.javaPath && s.javaPath.trim() ? s.javaPath.trim() : ensureJava(GAME_DIR, report, versions.javaMajor(versions.ofProfile(profile).mc)),
       ]);
       log(`Sign-in and Java ready after ${((Date.now() - started) / 1000).toFixed(1)} s`);
       await game.launch({
@@ -613,6 +659,8 @@ app.whenReady().then(() => {
     else profile = profiles.select(target && target.profileId ? target.profileId : profiles.active().id);
     const mc = versions.ofProfile(profile).mc;
     const done = await importer.runImport(source, profiles.dir(profile), what || {}, (p) => send('import:progress', p), mc);
+    // download Minecraft, Fabric, Java and the mods now, so the first start of the imported profile is quick
+    prepareProfile(profile);
     return { done, profile: profile.name, state: profileState() };
   }));
 
@@ -622,7 +670,7 @@ app.whenReady().then(() => {
     const p = profiles.list().find((x) => x.id === id) || profiles.active();
     return profiles.dir(p);
   };
-  ipcMain.handle('install:bundled', (_e, mc) => installer.bundledInfo(versions.isSupported(mc) ? mc : versions.DEFAULT));
+  ipcMain.handle('install:bundled', (_e, mc) => installer.bundledInfo(versions.hasOnix(mc) ? mc : versions.DEFAULT));
   ipcMain.handle('install:running', safe(() => installer.running(GAME_DIR)));
   ipcMain.handle('install:targets', safe(() => {
     installTargets = installer.targets();
@@ -645,7 +693,7 @@ app.whenReady().then(() => {
     const res = await dialog.showOpenDialog(win, { title: 'Choose where to save the Onix mod', properties: ['openDirectory', 'createDirectory'] });
     if (res.canceled || !res.filePaths[0]) return null;
     const folder = res.filePaths[0];
-    const files = await installer.exportMod(folder, !!withFabricApi, (p) => send('install:progress', p), versions.isSupported(mc) ? mc : versions.DEFAULT);
+    const files = await installer.exportMod(folder, !!withFabricApi, (p) => send('install:progress', p), versions.hasOnix(mc) ? mc : versions.DEFAULT);
     shell.showItemInFolder(path.join(folder, files[0]));
     return { folder, files };
   }));

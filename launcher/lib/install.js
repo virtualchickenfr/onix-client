@@ -95,7 +95,7 @@ async function running(onixGameRoot) {
       user: arg(cmd, 'username'),
       onix: gameDir ? hasOnix(gameDir) : false,
       ownLauncher: !!(gameDir && onixGameRoot && path.resolve(gameDir).startsWith(path.resolve(onixGameRoot))),
-      compatible: fabric && versions.isSupported(mc),
+      compatible: fabric && versions.hasOnix(mc),
     });
   }
   return found;
@@ -156,9 +156,9 @@ function targets() {
         const instanceDir = path.join(root, e.name);
         const gameDir = importer.gameDirOfInstance(instanceDir) || path.join(instanceDir, '.minecraft');
         const info = instanceInfo(instanceDir);
-        const compatible = versions.isSupported(info.minecraft) && info.fabric === true;
+        const compatible = versions.hasOnix(info.minecraft) && info.fabric === true;
         let note = null;
-        if (info.minecraft && !versions.isSupported(info.minecraft)) note = `Minecraft ${info.minecraft} – Onix runs on ${versions.LIST.join(' and ')}`;
+        if (info.minecraft && !versions.hasOnix(info.minecraft)) note = `Minecraft ${info.minecraft} – Onix runs on ${versions.LIST.join(' and ')}`;
         else if (info.fabric === false) note = 'Not a Fabric instance';
         else if (!info.minecraft) note = `Version unknown – make sure it is Fabric ${versions.LIST.join(' or ')}`;
         out.push({
@@ -280,7 +280,7 @@ async function setupOfficialLauncher(root, gameDir, mc = versions.DEFAULT) {
 async function install(target, options, report) {
   const done = [];
   const gameDir = target.gameDir;
-  const mc = versions.isSupported(target.minecraft) ? target.minecraft : versions.DEFAULT;
+  const mc = versions.hasOnix(target.minecraft) ? target.minecraft : versions.DEFAULT;
   fs.mkdirSync(gameDir, { recursive: true });
   if (target.official) {
     report({ label: 'Setting up Fabric for the Minecraft Launcher', progress: 0.1 });

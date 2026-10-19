@@ -27,6 +27,7 @@ public final class TitleBackgrounds {
     public record Background(String id, String name, Identifier texture, int width, int height, boolean custom) {}
 
     private static final List<Background> BUILT_IN = List.of(
+            builtIn("carbon", "Carbon", 960, 540),
             builtIn("onix", "Onix Glow", 960, 540),
             builtIn("dusk", "Dusk Ridge", 1280, 720),
             builtIn("aurora", "Aurora", 1280, 720),

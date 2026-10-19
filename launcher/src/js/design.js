@@ -140,7 +140,7 @@ $('#th-delete').addEventListener('click', async () => {
 // ---------- backgrounds
 
 function applyBackground(id) {
-  currentBackground = BACKGROUNDS.some(([b]) => b === id) ? id : 'onix';
+  currentBackground = BACKGROUNDS.some(([b]) => b === id) ? id : 'carbon';
   document.documentElement.style.setProperty('--hero-image', `url(assets/backgrounds/${currentBackground}.jpg)`);
   $$('.bg-tile').forEach((b) => b.classList.toggle('selected', b.dataset.bg === currentBackground));
 }

@@ -43,7 +43,8 @@ function jvmArgs(root, fastStart, mc) {
     '-XX:G1HeapRegionSize=16M',
     '-XX:+DisableExplicitGC',
   ];
-  if (fastStart) {
+  // class-data sharing archives need Java 19+ (Minecraft before 1.20.5 runs on Java 17 or 8)
+  if (fastStart && versions.javaMajor(mc) >= 21) {
     const cache = path.join(root, 'cache');
     fs.mkdirSync(cache, { recursive: true });
     args.push('-XX:+AutoCreateSharedArchive', `-XX:SharedArchiveFile=${path.join(cache, `onix-${mc}.jsa`)}`);
@@ -154,7 +155,13 @@ async function ensureMods(root, settings, report, log, throttle = true, mc = MC_
       log(`Installed Onix Client mod: ${name}`);
     }
   } else {
-    log(`Warning: Onix mod for ${mc} not found. Run "gradlew build" in the mod folder first.`);
+    log(versions.hasOnix(mc)
+      ? `Warning: Onix mod for ${mc} not found. Run "gradlew build" in the mod folder first.`
+      : `Onix is not available for Minecraft ${mc} yet – starting with Fabric API and the performance pack.`);
+    // an Onix jar from another version would stop Fabric
+    for (const f of fs.readdirSync(modsDir)) {
+      if (/^onix-client-.*\.jar$/.test(f)) fs.renameSync(path.join(modsDir, f), path.join(modsDir, f + '.disabled'));
+    }
   }
 
   // 2. Fabric API and performance mods from Modrinth (all checked at the same time)
@@ -286,6 +293,36 @@ async function launch({ root, gameDir, auth, javaPath, settings, fastStart = tru
 }
 
 /**
+ * Downloads everything a profile needs (Minecraft, libraries, assets, natives, Fabric and the mods) without
+ * playing, so its first start is as quick as any later one. Minecraft Launcher Core is run as for a real start,
+ * but the JVM gets -version, which prints the Java version and exits before the game would load.
+ */
+async function prepare({ root, gameDir, javaPath, settings, report, log }) {
+  const mc = versions.ofProfile(settings).mc;
+  const VERSION_ID = versions.versionId(mc);
+  await Promise.all([ensureFabric(root, report, mc), ensureMods(gameDir, settings, report, log, true, mc)]);
+  if (filesVerified(root, VERSION_ID)) return;
+  const launcher = new Client();
+  launcher.on('progress', (e) => {
+    if (e && e.total) report(`Downloading Minecraft (${e.type})`, e.task / e.total);
+  });
+  launcher.on('debug', (line) => log(String(line)));
+  const closed = new Promise((resolve) => launcher.on('close', resolve));
+  const proc = await launcher.launch({
+    root,
+    authorization: { access_token: '0', client_token: '0', uuid: '00000000000000000000000000000000', name: 'Player', user_properties: '{}', meta: { type: 'msa' } },
+    javaPath,
+    version: { number: mc, type: 'release', custom: VERSION_ID },
+    memory: { max: '512M', min: '256M' },
+    customArgs: ['-version'],
+    overrides: { maxSockets: 24, gameDirectory: gameDir },
+  });
+  if (!proc) throw new Error('The game files could not be downloaded (see the console).');
+  const code = await closed;
+  if (code === 0) setFilesVerified(root, VERSION_ID, true);
+}
+
+/**
  * After an import: if the pack brought its own Fabric API or Sodium, let the launcher manage that
  * file instead of downloading a second copy (two copies of a mod stop Fabric from starting).
  */
@@ -334,4 +371,4 @@ function toggleMod(root, file) {
   fs.renameSync(src, dest);
 }
 
-module.exports = { launch, listMods, toggleMod, adoptManagedMods, ensureFabric, findBundledMod, MC_VERSION, LOADER_VERSION, VERSION_ID };
+module.exports = { prepare, launch, listMods, toggleMod, adoptManagedMods, ensureFabric, findBundledMod, MC_VERSION, LOADER_VERSION, VERSION_ID };
