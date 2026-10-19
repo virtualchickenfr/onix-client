@@ -1,0 +1,156 @@
+package net.minecraft.test;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.entity.BlockEntityType;
+import net.minecraft.block.entity.TestInstanceBlockEntity;
+import net.minecraft.command.argument.BlockStateArgument;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.structure.StructureTemplate;
+import net.minecraft.util.BlockMirror;
+import net.minecraft.util.BlockRotation;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.math.BlockBox;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.Vec3i;
+import net.minecraft.world.Heightmap;
+
+public class TestInstanceUtil {
+	public static final int field_51468 = 10;
+	public static final String TEST_STRUCTURES_DIRECTORY_NAME = "Minecraft.Server/src/test/convertables/data";
+	public static Path testStructuresDirectoryName = Paths.get("Minecraft.Server/src/test/convertables/data");
+
+	public static BlockRotation getRotation(int steps) {
+		switch (steps) {
+			case 0:
+				return BlockRotation.NONE;
+			case 1:
+				return BlockRotation.CLOCKWISE_90;
+			case 2:
+				return BlockRotation.CLOCKWISE_180;
+			case 3:
+				return BlockRotation.COUNTERCLOCKWISE_90;
+			default:
+				throw new IllegalArgumentException("rotationSteps must be a value from 0-3. Got value " + steps);
+		}
+	}
+
+	public static int getRotationSteps(BlockRotation rotation) {
+		switch (rotation) {
+			case NONE:
+				return 0;
+			case CLOCKWISE_90:
+				return 1;
+			case CLOCKWISE_180:
+				return 2;
+			case COUNTERCLOCKWISE_90:
+				return 3;
+			default:
+				throw new IllegalArgumentException("Unknown rotation value, don't know how many steps it represents: " + rotation);
+		}
+	}
+
+	public static TestInstanceBlockEntity createTestInstanceBlockEntity(
+		Identifier testInstanceId, BlockPos pos, Vec3i size, BlockRotation rotation, ServerWorld world
+	) {
+		BlockBox blockBox = getTestInstanceBlockBox(TestInstanceBlockEntity.getStructurePos(pos), size, rotation);
+		clearArea(blockBox, world);
+		world.setBlockState(pos, Blocks.TEST_INSTANCE_BLOCK.getDefaultState());
+		TestInstanceBlockEntity testInstanceBlockEntity = (TestInstanceBlockEntity)world.getBlockEntity(pos);
+		RegistryKey<TestInstance> registryKey = RegistryKey.of(RegistryKeys.TEST_INSTANCE, testInstanceId);
+		testInstanceBlockEntity.setData(
+			new TestInstanceBlockEntity.Data(Optional.of(registryKey), size, rotation, false, TestInstanceBlockEntity.Status.CLEARED, Optional.empty())
+		);
+		return testInstanceBlockEntity;
+	}
+
+	public static void clearArea(BlockBox area, ServerWorld world) {
+		int i = area.getMinY() - 1;
+		BlockBox blockBox = new BlockBox(area.getMinX() - 2, area.getMinY() - 3, area.getMinZ() - 3, area.getMaxX() + 3, area.getMaxY() + 20, area.getMaxZ() + 3);
+		BlockPos.stream(blockBox).forEach(pos -> resetBlock(i, pos, world));
+		world.getBlockTickScheduler().clearNextTicks(blockBox);
+		world.clearUpdatesInArea(blockBox);
+		Box box = Box.from(blockBox);
+		List<Entity> list = world.getEntitiesByClass(Entity.class, box, entity -> !(entity instanceof PlayerEntity));
+		list.forEach(Entity::discard);
+	}
+
+	public static BlockPos getTestInstanceBlockBoxCornerPos(BlockPos pos, Vec3i size, BlockRotation rotation) {
+		BlockPos blockPos = pos.add(size).add(-1, -1, -1);
+		return StructureTemplate.transformAround(blockPos, BlockMirror.NONE, rotation, pos);
+	}
+
+	public static BlockBox getTestInstanceBlockBox(BlockPos pos, Vec3i relativePos, BlockRotation rotation) {
+		BlockPos blockPos = getTestInstanceBlockBoxCornerPos(pos, relativePos, rotation);
+		BlockBox blockBox = BlockBox.create(pos, blockPos);
+		int i = Math.min(blockBox.getMinX(), blockBox.getMaxX());
+		int j = Math.min(blockBox.getMinZ(), blockBox.getMaxZ());
+		return blockBox.move(pos.getX() - i, 0, pos.getZ() - j);
+	}
+
+	public static Optional<BlockPos> findContainingTestInstanceBlock(BlockPos pos, int radius, ServerWorld world) {
+		return findTestInstanceBlocks(pos, radius, world).filter(blockPos -> isInBounds(blockPos, pos, world)).findFirst();
+	}
+
+	public static Optional<BlockPos> findNearestTestInstanceBlock(BlockPos pos, int radius, ServerWorld world) {
+		Comparator<BlockPos> comparator = Comparator.comparingInt(blockPos -> blockPos.getManhattanDistance(pos));
+		return findTestInstanceBlocks(pos, radius, world).min(comparator);
+	}
+
+	public static Stream<BlockPos> findTestInstanceBlocks(BlockPos pos, int radius, ServerWorld world) {
+		BlockBox blockBox = createBox(pos, radius, world);
+		return BlockPos.stream(blockBox).filter(blockPos -> world.getBlockState(blockPos).isOf(Blocks.TEST_INSTANCE_BLOCK)).map(BlockPos::toImmutable);
+	}
+
+	private static BlockBox createBox(BlockPos pos, int radius, ServerWorld world) {
+		BlockPos blockPos = BlockPos.ofFloored(pos.getX(), world.getTopPosition(Heightmap.Type.WORLD_SURFACE, pos).getY(), pos.getZ());
+		return new BlockBox(blockPos).expand(radius, 10, radius);
+	}
+
+	public static Stream<BlockPos> findTargetedTestInstanceBlock(BlockPos pos, Entity entity, ServerWorld world) {
+		int i = 200;
+		Vec3d vec3d = entity.getEyePos();
+		Vec3d vec3d2 = vec3d.add(entity.getRotationVector().multiply(200.0));
+		return findTestInstanceBlocks(pos, 200, world)
+			.map(blockPos -> world.getBlockEntity(blockPos, BlockEntityType.TEST_INSTANCE_BLOCK))
+			.flatMap(Optional::stream)
+			.filter(testInstanceBlockEntity -> testInstanceBlockEntity.getBox().raycast(vec3d, vec3d2).isPresent())
+			.map(BlockEntity::getPos)
+			.sorted(Comparator.comparing(pos::getSquaredDistance))
+			.limit(1L);
+	}
+
+	private static void resetBlock(int altitude, BlockPos pos, ServerWorld world) {
+		BlockState blockState;
+		if (pos.getY() < altitude) {
+			blockState = Blocks.STONE.getDefaultState();
+		} else {
+			blockState = Blocks.AIR.getDefaultState();
+		}
+
+		BlockStateArgument blockStateArgument = new BlockStateArgument(blockState, Collections.emptySet(), null);
+		blockStateArgument.setBlockState(world, pos, Block.FORCE_STATE_AND_SKIP_CALLBACKS_AND_DROPS | Block.NOTIFY_LISTENERS);
+		world.updateNeighbors(pos, blockState.getBlock());
+	}
+
+	private static boolean isInBounds(BlockPos testInstanceBlockPos, BlockPos pos, ServerWorld world) {
+		return world.getBlockEntity(testInstanceBlockPos) instanceof TestInstanceBlockEntity testInstanceBlockEntity
+			? testInstanceBlockEntity.getBlockBox().contains(pos)
+			: false;
+	}
+}
