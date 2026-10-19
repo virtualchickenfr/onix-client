@@ -1,0 +1,54 @@
+package net.minecraft.client.renderer.entity;
+
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.state.ThrownItemRenderState;
+import net.minecraft.client.renderer.item.ItemModelResolver;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.projectile.ItemSupplier;
+import net.minecraft.world.item.ItemDisplayContext;
+
+@Environment(EnvType.CLIENT)
+public class ThrownItemRenderer<T extends Entity & ItemSupplier> extends EntityRenderer<T, ThrownItemRenderState> {
+	private final ItemModelResolver itemModelResolver;
+	private final float scale;
+	private final boolean fullBright;
+
+	public ThrownItemRenderer(EntityRendererProvider.Context context, float f, boolean bl) {
+		super(context);
+		this.itemModelResolver = context.getItemModelResolver();
+		this.scale = f;
+		this.fullBright = bl;
+	}
+
+	public ThrownItemRenderer(EntityRendererProvider.Context context) {
+		this(context, 1.0F, false);
+	}
+
+	@Override
+	protected int getBlockLightLevel(T entity, BlockPos blockPos) {
+		return this.fullBright ? 15 : super.getBlockLightLevel(entity, blockPos);
+	}
+
+	public void render(ThrownItemRenderState thrownItemRenderState, PoseStack poseStack, MultiBufferSource multiBufferSource, int i) {
+		poseStack.pushPose();
+		poseStack.scale(this.scale, this.scale, this.scale);
+		poseStack.mulPose(this.entityRenderDispatcher.cameraOrientation());
+		thrownItemRenderState.item.render(poseStack, multiBufferSource, i, OverlayTexture.NO_OVERLAY);
+		poseStack.popPose();
+		super.render(thrownItemRenderState, poseStack, multiBufferSource, i);
+	}
+
+	public ThrownItemRenderState createRenderState() {
+		return new ThrownItemRenderState();
+	}
+
+	public void extractRenderState(T entity, ThrownItemRenderState thrownItemRenderState, float f) {
+		super.extractRenderState(entity, thrownItemRenderState, f);
+		this.itemModelResolver.updateForNonLiving(thrownItemRenderState.item, entity.getItem(), ItemDisplayContext.GROUND, entity);
+	}
+}
