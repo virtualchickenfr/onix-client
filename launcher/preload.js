@@ -122,6 +122,7 @@ contextBridge.exposeInMainWorld('onix', {
   onProgress: (cb) => ipcRenderer.on('game:progress', (_e, v) => cb(v)),
   onLog: (cb) => ipcRenderer.on('game:log', (_e, v) => cb(v)),
   onState: (cb) => ipcRenderer.on('game:state', (_e, v) => cb(v)),
+  onCrash: (cb) => ipcRenderer.on('game:crash', (_e, v) => cb(v)),
 
   updateStatus: () => invoke('update:get'),
   checkUpdate: () => invoke('update:check'),

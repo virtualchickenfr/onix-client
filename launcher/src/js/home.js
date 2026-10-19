@@ -127,6 +127,30 @@ api.onPrepare((p) => {
   setProgress(p.progress > 0 && p.progress <= 1 ? p.progress : null);
 });
 
+// a failed start names the mods that caused it; they can be turned off right here
+let crashToast = null;
+api.onCrash((d) => {
+  clearTimeout(crashToast);
+  $('#crash-title').textContent = d.title;
+  $('#crash-text').textContent = d.text || '';
+  $('#crash-mods').replaceChildren(...d.mods.map((m) => el('div', { class: 'crash-mod' }, [
+    el('div', {}, [el('b', { text: m.name }), el('small', { text: m.file || `${m.id} (not found in the mods folder)` })]),
+    m.file ? el('button', {
+      class: 'btn sm',
+      text: 'Turn off',
+      onclick: async (e) => {
+        const r = await api.toggleMod(m.file, d.profileId);
+        if (r && r.ok === false) return toast(r.error, true);
+        e.target.replaceWith(el('span', { class: 'tag', text: 'Off' }));
+        toast(`${m.name} is off – turn it on again under Mods`);
+      },
+    }) : null,
+  ])));
+  openModal('#crash-modal');
+});
+$('#crash-console').addEventListener('click', () => { closeModal('#crash-modal'); showView('console'); });
+$('#crash-retry').addEventListener('click', () => { closeModal('#crash-modal'); $('#btn-play').click(); });
+
 api.onState((s) => {
   if (s === 'running') {
     state = 'running';
@@ -137,7 +161,7 @@ api.onState((s) => {
     state = 'idle';
     setProgress(0);
     $('#launch-detail').textContent = '';
-    if (s === 'crashed') toast('Minecraft exited with an error. See the console for details.', true);
+    if (s === 'crashed') crashToast = setTimeout(() => toast('Minecraft exited with an error. See the console for details.', true), 1500);
   }
   updatePlay();
 });

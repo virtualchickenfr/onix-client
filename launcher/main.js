@@ -19,6 +19,7 @@ const content = require('./lib/content');
 const skins = require('./lib/skins');
 const shortcuts = require('./lib/shortcuts');
 const packFolders = require('./lib/packfolders');
+const crashDoctor = require('./lib/crashdoctor');
 
 const GAME_DIR = path.join(app.getPath('appData'), '.onix');
 const TOTAL_MB = Math.floor(os.totalmem() / 1024 / 1024);
@@ -715,7 +716,12 @@ app.whenReady().then(() => {
     const profile = profiles.active();
     runningProfileId = profile.id;
     const report = (label, progress) => send('game:progress', { label, progress });
-    const log = (line) => send('game:log', line);
+    const output = [];
+    const log = (line) => {
+      send('game:log', line);
+      output.push(String(line));
+      if (output.length > 6000) output.splice(0, 1000);
+    };
     try {
       log(`Starting profile "${profile.name}"`);
       const started = Date.now();
@@ -753,6 +759,12 @@ app.whenReady().then(() => {
           }
           send('game:state', code === 0 ? 'closed' : 'crashed');
           if (win) win.show();
+          if (code !== 0) {
+            // name the mod that broke the start, so it can be turned off with one click
+            crashDoctor.attachFiles(crashDoctor.analyze(output), path.join(profiles.dir(profile), 'mods'))
+              .then((d) => { if (d) send('game:crash', { ...d, profileId: profile.id }); })
+              .catch(() => {});
+          }
         },
       });
       return { ok: true };

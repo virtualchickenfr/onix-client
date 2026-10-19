@@ -425,6 +425,14 @@
   </div>
 
   <!-- Dialog: export a profile -->
+  <div class="modal-backdrop" id="crash-modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="crash-title">
+      <div class="modal-head"><h3 id="crash-title">Minecraft did not start</h3><button class="icon-btn" data-close><svg><use href="#i-x"/></svg></button></div>
+      <p class="crash-text" id="crash-text"></p>
+      <div class="crash-mods" id="crash-mods"></div>
+      <div class="modal-foot"><button class="btn" id="crash-console">Show the log</button><button class="btn primary" id="crash-retry">Play again</button></div>
+    </div>
+  </div>
   <div class="modal-backdrop" id="shop-modal">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="shop-title">
       <div class="modal-head"><h3 id="shop-title">Cosmetic</h3><button class="icon-btn" data-close><svg><use href="#i-x"/></svg></button></div>
