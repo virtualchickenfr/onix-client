@@ -1,0 +1,85 @@
+package net.minecraft.world.phys.shapes;
+
+import java.util.function.Predicate;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.CollisionGetter;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FluidState;
+import org.jetbrains.annotations.Nullable;
+
+public class EntityCollisionContext implements CollisionContext {
+	protected static final CollisionContext EMPTY = new EntityCollisionContext(false, false, -Double.MAX_VALUE, ItemStack.EMPTY, fluidState -> false, null) {
+		@Override
+		public boolean isAbove(VoxelShape voxelShape, BlockPos blockPos, boolean bl) {
+			return bl;
+		}
+	};
+	private final boolean descending;
+	private final double entityBottom;
+	private final boolean placement;
+	private final ItemStack heldItem;
+	private final Predicate<FluidState> canStandOnFluid;
+	@Nullable
+	private final Entity entity;
+
+	protected EntityCollisionContext(boolean bl, boolean bl2, double d, ItemStack itemStack, Predicate<FluidState> predicate, @Nullable Entity entity) {
+		this.descending = bl;
+		this.placement = bl2;
+		this.entityBottom = d;
+		this.heldItem = itemStack;
+		this.canStandOnFluid = predicate;
+		this.entity = entity;
+	}
+
+	@Deprecated
+	protected EntityCollisionContext(Entity entity, boolean bl, boolean bl2) {
+		this(
+			entity.isDescending(),
+			bl2,
+			entity.getY(),
+			entity instanceof LivingEntity livingEntity ? livingEntity.getMainHandItem() : ItemStack.EMPTY,
+			bl ? fluidState -> true : (entity instanceof LivingEntity livingEntity ? fluidState -> livingEntity.canStandOnFluid(fluidState) : fluidState -> false),
+			entity
+		);
+	}
+
+	@Override
+	public boolean isHoldingItem(Item item) {
+		return this.heldItem.is(item);
+	}
+
+	@Override
+	public boolean canStandOnFluid(FluidState fluidState, FluidState fluidState2) {
+		return this.canStandOnFluid.test(fluidState2) && !fluidState.getType().isSame(fluidState2.getType());
+	}
+
+	@Override
+	public VoxelShape getCollisionShape(BlockState blockState, CollisionGetter collisionGetter, BlockPos blockPos) {
+		return blockState.getCollisionShape(collisionGetter, blockPos, this);
+	}
+
+	@Override
+	public boolean isDescending() {
+		return this.descending;
+	}
+
+	@Override
+	public boolean isAbove(VoxelShape voxelShape, BlockPos blockPos, boolean bl) {
+		return this.entityBottom > blockPos.getY() + voxelShape.max(Direction.Axis.Y) - 1.0E-5F;
+	}
+
+	@Nullable
+	public Entity getEntity() {
+		return this.entity;
+	}
+
+	@Override
+	public boolean isPlacement() {
+		return this.placement;
+	}
+}

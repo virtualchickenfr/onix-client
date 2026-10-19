@@ -1,0 +1,60 @@
+package net.minecraft.client.renderer.entity.layers;
+
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.model.ArmedModel;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.model.HeadedModel;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.RenderLayerParent;
+import net.minecraft.client.renderer.entity.state.PlayerRenderState;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.HumanoidArm;
+
+@Environment(EnvType.CLIENT)
+public class PlayerItemInHandLayer<S extends PlayerRenderState, M extends EntityModel<S> & ArmedModel & HeadedModel> extends ItemInHandLayer<S, M> {
+	private static final float X_ROT_MIN = (float) (-Math.PI / 6);
+	private static final float X_ROT_MAX = (float) (Math.PI / 2);
+
+	public PlayerItemInHandLayer(RenderLayerParent<S, M> renderLayerParent) {
+		super(renderLayerParent);
+	}
+
+	protected void renderArmWithItem(
+		S playerRenderState, ItemStackRenderState itemStackRenderState, HumanoidArm humanoidArm, PoseStack poseStack, MultiBufferSource multiBufferSource, int i
+	) {
+		if (!itemStackRenderState.isEmpty()) {
+			InteractionHand interactionHand = humanoidArm == playerRenderState.mainArm ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
+			if (playerRenderState.isUsingItem
+				&& playerRenderState.useItemHand == interactionHand
+				&& playerRenderState.attackTime < 1.0E-5F
+				&& !playerRenderState.heldOnHead.isEmpty()) {
+				this.renderItemHeldToEye(playerRenderState.heldOnHead, humanoidArm, poseStack, multiBufferSource, i);
+			} else {
+				super.renderArmWithItem(playerRenderState, itemStackRenderState, humanoidArm, poseStack, multiBufferSource, i);
+			}
+		}
+	}
+
+	private void renderItemHeldToEye(
+		ItemStackRenderState itemStackRenderState, HumanoidArm humanoidArm, PoseStack poseStack, MultiBufferSource multiBufferSource, int i
+	) {
+		poseStack.pushPose();
+		this.getParentModel().root().translateAndRotate(poseStack);
+		ModelPart modelPart = this.getParentModel().getHead();
+		float f = modelPart.xRot;
+		modelPart.xRot = Mth.clamp(modelPart.xRot, (float) (-Math.PI / 6), (float) (Math.PI / 2));
+		modelPart.translateAndRotate(poseStack);
+		modelPart.xRot = f;
+		CustomHeadLayer.translateToHead(poseStack, CustomHeadLayer.Transforms.DEFAULT);
+		boolean bl = humanoidArm == HumanoidArm.LEFT;
+		poseStack.translate((bl ? -2.5F : 2.5F) / 16.0F, -0.0625F, 0.0F);
+		itemStackRenderState.render(poseStack, multiBufferSource, i, OverlayTexture.NO_OVERLAY);
+		poseStack.popPose();
+	}
+}

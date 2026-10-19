@@ -1,0 +1,578 @@
+package net.minecraft.client.particle;
+
+import com.google.common.collect.EvictingQueue;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Queues;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.logging.LogUtils;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import java.io.IOException;
+import java.io.Reader;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.stream.Collectors;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.CrashReport;
+import net.minecraft.CrashReportCategory;
+import net.minecraft.ReportedException;
+import net.minecraft.Util;
+import net.minecraft.client.Camera;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.texture.SpriteLoader;
+import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.texture.TextureManager;
+import net.minecraft.client.resources.model.AtlasIds;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleGroup;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleType;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.FileToIdConverter;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.PreparableReloadListener;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
+import net.minecraft.util.profiling.Profiler;
+import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+
+@Environment(EnvType.CLIENT)
+public class ParticleEngine implements PreparableReloadListener {
+	private static final Logger LOGGER = LogUtils.getLogger();
+	private static final FileToIdConverter PARTICLE_LISTER = FileToIdConverter.json("particles");
+	private static final int MAX_PARTICLES_PER_LAYER = 16384;
+	private static final List<ParticleRenderType> RENDER_ORDER = List.of(
+		ParticleRenderType.TERRAIN_SHEET, ParticleRenderType.PARTICLE_SHEET_OPAQUE, ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT
+	);
+	protected ClientLevel level;
+	private final Map<ParticleRenderType, Queue<Particle>> particles = Maps.newIdentityHashMap();
+	private final Queue<TrackingEmitter> trackingEmitters = Queues.newArrayDeque();
+	private final RandomSource random = RandomSource.create();
+	private final Int2ObjectMap<ParticleProvider<?>> providers = new Int2ObjectOpenHashMap<>();
+	private final Queue<Particle> particlesToAdd = Queues.newArrayDeque();
+	private final Map<ResourceLocation, ParticleEngine.MutableSpriteSet> spriteSets = Maps.newHashMap();
+	private final TextureAtlas textureAtlas;
+	private final Object2IntOpenHashMap<ParticleGroup> trackedParticleCounts = new Object2IntOpenHashMap<>();
+
+	public ParticleEngine(ClientLevel clientLevel, TextureManager textureManager) {
+		this.textureAtlas = new TextureAtlas(TextureAtlas.LOCATION_PARTICLES);
+		textureManager.register(this.textureAtlas.location(), this.textureAtlas);
+		this.level = clientLevel;
+		this.registerProviders();
+	}
+
+	private void registerProviders() {
+		this.register(ParticleTypes.ANGRY_VILLAGER, HeartParticle.AngryVillagerProvider::new);
+		this.register(ParticleTypes.BLOCK_MARKER, new BlockMarker.Provider());
+		this.register(ParticleTypes.BLOCK, new TerrainParticle.Provider());
+		this.register(ParticleTypes.BUBBLE, BubbleParticle.Provider::new);
+		this.register(ParticleTypes.BUBBLE_COLUMN_UP, BubbleColumnUpParticle.Provider::new);
+		this.register(ParticleTypes.BUBBLE_POP, BubblePopParticle.Provider::new);
+		this.register(ParticleTypes.CAMPFIRE_COSY_SMOKE, CampfireSmokeParticle.CosyProvider::new);
+		this.register(ParticleTypes.CAMPFIRE_SIGNAL_SMOKE, CampfireSmokeParticle.SignalProvider::new);
+		this.register(ParticleTypes.CLOUD, PlayerCloudParticle.Provider::new);
+		this.register(ParticleTypes.COMPOSTER, SuspendedTownParticle.ComposterFillProvider::new);
+		this.register(ParticleTypes.CRIT, CritParticle.Provider::new);
+		this.register(ParticleTypes.CURRENT_DOWN, WaterCurrentDownParticle.Provider::new);
+		this.register(ParticleTypes.DAMAGE_INDICATOR, CritParticle.DamageIndicatorProvider::new);
+		this.register(ParticleTypes.DRAGON_BREATH, DragonBreathParticle.Provider::new);
+		this.register(ParticleTypes.DOLPHIN, SuspendedTownParticle.DolphinSpeedProvider::new);
+		this.register(ParticleTypes.DRIPPING_LAVA, DripParticle::createLavaHangParticle);
+		this.register(ParticleTypes.FALLING_LAVA, DripParticle::createLavaFallParticle);
+		this.register(ParticleTypes.LANDING_LAVA, DripParticle::createLavaLandParticle);
+		this.register(ParticleTypes.DRIPPING_WATER, DripParticle::createWaterHangParticle);
+		this.register(ParticleTypes.FALLING_WATER, DripParticle::createWaterFallParticle);
+		this.register(ParticleTypes.DUST, DustParticle.Provider::new);
+		this.register(ParticleTypes.DUST_COLOR_TRANSITION, DustColorTransitionParticle.Provider::new);
+		this.register(ParticleTypes.EFFECT, SpellParticle.Provider::new);
+		this.register(ParticleTypes.ELDER_GUARDIAN, new MobAppearanceParticle.Provider());
+		this.register(ParticleTypes.ENCHANTED_HIT, CritParticle.MagicProvider::new);
+		this.register(ParticleTypes.ENCHANT, FlyTowardsPositionParticle.EnchantProvider::new);
+		this.register(ParticleTypes.END_ROD, EndRodParticle.Provider::new);
+		this.register(ParticleTypes.ENTITY_EFFECT, SpellParticle.MobEffectProvider::new);
+		this.register(ParticleTypes.EXPLOSION_EMITTER, new HugeExplosionSeedParticle.Provider());
+		this.register(ParticleTypes.EXPLOSION, HugeExplosionParticle.Provider::new);
+		this.register(ParticleTypes.SONIC_BOOM, SonicBoomParticle.Provider::new);
+		this.register(ParticleTypes.FALLING_DUST, FallingDustParticle.Provider::new);
+		this.register(ParticleTypes.GUST, GustParticle.Provider::new);
+		this.register(ParticleTypes.SMALL_GUST, GustParticle.SmallProvider::new);
+		this.register(ParticleTypes.GUST_EMITTER_LARGE, new GustSeedParticle.Provider(3.0, 7, 0));
+		this.register(ParticleTypes.GUST_EMITTER_SMALL, new GustSeedParticle.Provider(1.0, 3, 2));
+		this.register(ParticleTypes.FIREWORK, FireworkParticles.SparkProvider::new);
+		this.register(ParticleTypes.FISHING, WakeParticle.Provider::new);
+		this.register(ParticleTypes.FLAME, FlameParticle.Provider::new);
+		this.register(ParticleTypes.INFESTED, SpellParticle.Provider::new);
+		this.register(ParticleTypes.SCULK_SOUL, SoulParticle.EmissiveProvider::new);
+		this.register(ParticleTypes.SCULK_CHARGE, SculkChargeParticle.Provider::new);
+		this.register(ParticleTypes.SCULK_CHARGE_POP, SculkChargePopParticle.Provider::new);
+		this.register(ParticleTypes.SOUL, SoulParticle.Provider::new);
+		this.register(ParticleTypes.SOUL_FIRE_FLAME, FlameParticle.Provider::new);
+		this.register(ParticleTypes.FLASH, FireworkParticles.FlashProvider::new);
+		this.register(ParticleTypes.HAPPY_VILLAGER, SuspendedTownParticle.HappyVillagerProvider::new);
+		this.register(ParticleTypes.HEART, HeartParticle.Provider::new);
+		this.register(ParticleTypes.INSTANT_EFFECT, SpellParticle.InstantProvider::new);
+		this.register(ParticleTypes.ITEM, new BreakingItemParticle.Provider());
+		this.register(ParticleTypes.ITEM_SLIME, new BreakingItemParticle.SlimeProvider());
+		this.register(ParticleTypes.ITEM_COBWEB, new BreakingItemParticle.CobwebProvider());
+		this.register(ParticleTypes.ITEM_SNOWBALL, new BreakingItemParticle.SnowballProvider());
+		this.register(ParticleTypes.LARGE_SMOKE, LargeSmokeParticle.Provider::new);
+		this.register(ParticleTypes.LAVA, LavaParticle.Provider::new);
+		this.register(ParticleTypes.MYCELIUM, SuspendedTownParticle.Provider::new);
+		this.register(ParticleTypes.NAUTILUS, FlyTowardsPositionParticle.NautilusProvider::new);
+		this.register(ParticleTypes.NOTE, NoteParticle.Provider::new);
+		this.register(ParticleTypes.POOF, ExplodeParticle.Provider::new);
+		this.register(ParticleTypes.PORTAL, PortalParticle.Provider::new);
+		this.register(ParticleTypes.RAIN, WaterDropParticle.Provider::new);
+		this.register(ParticleTypes.SMOKE, SmokeParticle.Provider::new);
+		this.register(ParticleTypes.WHITE_SMOKE, WhiteSmokeParticle.Provider::new);
+		this.register(ParticleTypes.SNEEZE, PlayerCloudParticle.SneezeProvider::new);
+		this.register(ParticleTypes.SNOWFLAKE, SnowflakeParticle.Provider::new);
+		this.register(ParticleTypes.SPIT, SpitParticle.Provider::new);
+		this.register(ParticleTypes.SWEEP_ATTACK, AttackSweepParticle.Provider::new);
+		this.register(ParticleTypes.TOTEM_OF_UNDYING, TotemParticle.Provider::new);
+		this.register(ParticleTypes.SQUID_INK, SquidInkParticle.Provider::new);
+		this.register(ParticleTypes.UNDERWATER, SuspendedParticle.UnderwaterProvider::new);
+		this.register(ParticleTypes.SPLASH, SplashParticle.Provider::new);
+		this.register(ParticleTypes.WITCH, SpellParticle.WitchProvider::new);
+		this.register(ParticleTypes.DRIPPING_HONEY, DripParticle::createHoneyHangParticle);
+		this.register(ParticleTypes.FALLING_HONEY, DripParticle::createHoneyFallParticle);
+		this.register(ParticleTypes.LANDING_HONEY, DripParticle::createHoneyLandParticle);
+		this.register(ParticleTypes.FALLING_NECTAR, DripParticle::createNectarFallParticle);
+		this.register(ParticleTypes.FALLING_SPORE_BLOSSOM, DripParticle::createSporeBlossomFallParticle);
+		this.register(ParticleTypes.SPORE_BLOSSOM_AIR, SuspendedParticle.SporeBlossomAirProvider::new);
+		this.register(ParticleTypes.ASH, AshParticle.Provider::new);
+		this.register(ParticleTypes.CRIMSON_SPORE, SuspendedParticle.CrimsonSporeProvider::new);
+		this.register(ParticleTypes.WARPED_SPORE, SuspendedParticle.WarpedSporeProvider::new);
+		this.register(ParticleTypes.DRIPPING_OBSIDIAN_TEAR, DripParticle::createObsidianTearHangParticle);
+		this.register(ParticleTypes.FALLING_OBSIDIAN_TEAR, DripParticle::createObsidianTearFallParticle);
+		this.register(ParticleTypes.LANDING_OBSIDIAN_TEAR, DripParticle::createObsidianTearLandParticle);
+		this.register(ParticleTypes.REVERSE_PORTAL, ReversePortalParticle.ReversePortalProvider::new);
+		this.register(ParticleTypes.WHITE_ASH, WhiteAshParticle.Provider::new);
+		this.register(ParticleTypes.SMALL_FLAME, FlameParticle.SmallFlameProvider::new);
+		this.register(ParticleTypes.DRIPPING_DRIPSTONE_WATER, DripParticle::createDripstoneWaterHangParticle);
+		this.register(ParticleTypes.FALLING_DRIPSTONE_WATER, DripParticle::createDripstoneWaterFallParticle);
+		this.register(ParticleTypes.CHERRY_LEAVES, FallingLeavesParticle.CherryProvider::new);
+		this.register(ParticleTypes.PALE_OAK_LEAVES, FallingLeavesParticle.PaleOakProvider::new);
+		this.register(ParticleTypes.TINTED_LEAVES, FallingLeavesParticle.TintedLeavesProvider::new);
+		this.register(ParticleTypes.DRIPPING_DRIPSTONE_LAVA, DripParticle::createDripstoneLavaHangParticle);
+		this.register(ParticleTypes.FALLING_DRIPSTONE_LAVA, DripParticle::createDripstoneLavaFallParticle);
+		this.register(ParticleTypes.VIBRATION, VibrationSignalParticle.Provider::new);
+		this.register(ParticleTypes.TRAIL, TrailParticle.Provider::new);
+		this.register(ParticleTypes.GLOW_SQUID_INK, SquidInkParticle.GlowInkProvider::new);
+		this.register(ParticleTypes.GLOW, GlowParticle.GlowSquidProvider::new);
+		this.register(ParticleTypes.WAX_ON, GlowParticle.WaxOnProvider::new);
+		this.register(ParticleTypes.WAX_OFF, GlowParticle.WaxOffProvider::new);
+		this.register(ParticleTypes.ELECTRIC_SPARK, GlowParticle.ElectricSparkProvider::new);
+		this.register(ParticleTypes.SCRAPE, GlowParticle.ScrapeProvider::new);
+		this.register(ParticleTypes.SHRIEK, ShriekParticle.Provider::new);
+		this.register(ParticleTypes.EGG_CRACK, SuspendedTownParticle.EggCrackProvider::new);
+		this.register(ParticleTypes.DUST_PLUME, DustPlumeParticle.Provider::new);
+		this.register(ParticleTypes.TRIAL_SPAWNER_DETECTED_PLAYER, TrialSpawnerDetectionParticle.Provider::new);
+		this.register(ParticleTypes.TRIAL_SPAWNER_DETECTED_PLAYER_OMINOUS, TrialSpawnerDetectionParticle.Provider::new);
+		this.register(ParticleTypes.VAULT_CONNECTION, FlyTowardsPositionParticle.VaultConnectionProvider::new);
+		this.register(ParticleTypes.DUST_PILLAR, new TerrainParticle.DustPillarProvider());
+		this.register(ParticleTypes.RAID_OMEN, SpellParticle.Provider::new);
+		this.register(ParticleTypes.TRIAL_OMEN, SpellParticle.Provider::new);
+		this.register(ParticleTypes.OMINOUS_SPAWNING, FlyStraightTowardsParticle.OminousSpawnProvider::new);
+		this.register(ParticleTypes.BLOCK_CRUMBLE, new TerrainParticle.CrumblingProvider());
+		this.register(ParticleTypes.FIREFLY, FireflyParticle.FireflyProvider::new);
+	}
+
+	private <T extends ParticleOptions> void register(ParticleType<T> particleType, ParticleProvider<T> particleProvider) {
+		this.providers.put(BuiltInRegistries.PARTICLE_TYPE.getId(particleType), particleProvider);
+	}
+
+	private <T extends ParticleOptions> void register(ParticleType<T> particleType, ParticleProvider.Sprite<T> sprite) {
+		this.register(particleType, spriteSet -> (particleOptions, clientLevel, d, e, f, g, h, i) -> {
+			TextureSheetParticle textureSheetParticle = sprite.createParticle(particleOptions, clientLevel, d, e, f, g, h, i);
+			if (textureSheetParticle != null) {
+				textureSheetParticle.pickSprite(spriteSet);
+			}
+
+			return textureSheetParticle;
+		});
+	}
+
+	private <T extends ParticleOptions> void register(ParticleType<T> particleType, ParticleEngine.SpriteParticleRegistration<T> spriteParticleRegistration) {
+		ParticleEngine.MutableSpriteSet mutableSpriteSet = new ParticleEngine.MutableSpriteSet();
+		this.spriteSets.put(BuiltInRegistries.PARTICLE_TYPE.getKey(particleType), mutableSpriteSet);
+		this.providers.put(BuiltInRegistries.PARTICLE_TYPE.getId(particleType), spriteParticleRegistration.create(mutableSpriteSet));
+	}
+
+	@Override
+	public CompletableFuture<Void> reload(
+		PreparableReloadListener.PreparationBarrier preparationBarrier, ResourceManager resourceManager, Executor executor, Executor executor2
+	) {
+		@Environment(EnvType.CLIENT)
+		record ParticleDefinition(ResourceLocation id, Optional<List<ResourceLocation>> sprites) {
+		}
+
+		CompletableFuture<List<ParticleDefinition>> completableFuture = CompletableFuture.<Map<ResourceLocation, Resource>>supplyAsync(
+				() -> PARTICLE_LISTER.listMatchingResources(resourceManager), executor
+			)
+			.thenCompose(
+				map -> {
+					List<CompletableFuture<ParticleDefinition>> list = new ArrayList<>(map.size());
+					map.forEach(
+						(resourceLocation, resource) -> {
+							ResourceLocation resourceLocation2 = PARTICLE_LISTER.fileToId(resourceLocation);
+							list.add(
+								CompletableFuture.supplyAsync(() -> new ParticleDefinition(resourceLocation2, this.loadParticleDescription(resourceLocation2, resource)), executor)
+							);
+						}
+					);
+					return Util.sequence(list);
+				}
+			);
+		CompletableFuture<SpriteLoader.Preparations> completableFuture2 = SpriteLoader.create(this.textureAtlas)
+			.loadAndStitch(resourceManager, AtlasIds.PARTICLES, 0, executor)
+			.thenCompose(SpriteLoader.Preparations::waitForUpload);
+		return CompletableFuture.allOf(completableFuture2, completableFuture).thenCompose(preparationBarrier::wait).thenAcceptAsync(void_ -> {
+			this.clearParticles();
+			ProfilerFiller profilerFiller = Profiler.get();
+			profilerFiller.push("upload");
+			SpriteLoader.Preparations preparations = completableFuture2.join();
+			this.textureAtlas.upload(preparations);
+			profilerFiller.popPush("bindSpriteSets");
+			Set<ResourceLocation> set = new HashSet<>();
+			TextureAtlasSprite textureAtlasSprite = preparations.missing();
+			completableFuture.join().forEach(arg -> {
+				Optional<List<ResourceLocation>> optional = arg.sprites();
+				if (!optional.isEmpty()) {
+					List<TextureAtlasSprite> list = new ArrayList<>();
+
+					for (ResourceLocation resourceLocation : optional.get()) {
+						TextureAtlasSprite textureAtlasSprite2 = preparations.regions().get(resourceLocation);
+						if (textureAtlasSprite2 == null) {
+							set.add(resourceLocation);
+							list.add(textureAtlasSprite);
+						} else {
+							list.add(textureAtlasSprite2);
+						}
+					}
+
+					if (list.isEmpty()) {
+						list.add(textureAtlasSprite);
+					}
+
+					this.spriteSets.get(arg.id()).rebind(list);
+				}
+			});
+			if (!set.isEmpty()) {
+				LOGGER.warn("Missing particle sprites: {}", set.stream().sorted().map(ResourceLocation::toString).collect(Collectors.joining(",")));
+			}
+
+			profilerFiller.pop();
+		}, executor2);
+	}
+
+	public void close() {
+		this.textureAtlas.clearTextureData();
+	}
+
+	private Optional<List<ResourceLocation>> loadParticleDescription(ResourceLocation resourceLocation, Resource resource) {
+		if (!this.spriteSets.containsKey(resourceLocation)) {
+			LOGGER.debug("Redundant texture list for particle: {}", resourceLocation);
+			return Optional.empty();
+		}
+
+		try (Reader reader = resource.openAsReader()) {
+			ParticleDescription particleDescription = ParticleDescription.fromJson(GsonHelper.parse(reader));
+			return Optional.of(particleDescription.getTextures());
+		} catch (IOException iOException) {
+			throw new IllegalStateException("Failed to load description for particle " + resourceLocation, iOException);
+		}
+	}
+
+	public void createTrackingEmitter(Entity entity, ParticleOptions particleOptions) {
+		this.trackingEmitters.add(new TrackingEmitter(this.level, entity, particleOptions));
+	}
+
+	public void createTrackingEmitter(Entity entity, ParticleOptions particleOptions, int i) {
+		this.trackingEmitters.add(new TrackingEmitter(this.level, entity, particleOptions, i));
+	}
+
+	@Nullable
+	public Particle createParticle(ParticleOptions particleOptions, double d, double e, double f, double g, double h, double i) {
+		Particle particle = this.makeParticle(particleOptions, d, e, f, g, h, i);
+		if (particle != null) {
+			this.add(particle);
+			return particle;
+		} else {
+			return null;
+		}
+	}
+
+	@Nullable
+	private <T extends ParticleOptions> Particle makeParticle(T particleOptions, double d, double e, double f, double g, double h, double i) {
+		ParticleProvider<T> particleProvider = (ParticleProvider<T>)this.providers.get(BuiltInRegistries.PARTICLE_TYPE.getId(particleOptions.getType()));
+		return particleProvider == null ? null : particleProvider.createParticle(particleOptions, this.level, d, e, f, g, h, i);
+	}
+
+	public void add(Particle particle) {
+		Optional<ParticleGroup> optional = particle.getParticleGroup();
+		if (optional.isPresent()) {
+			if (this.hasSpaceInParticleLimit(optional.get())) {
+				this.particlesToAdd.add(particle);
+				this.updateCount(optional.get(), 1);
+			}
+		} else {
+			this.particlesToAdd.add(particle);
+		}
+	}
+
+	public void tick() {
+		this.particles.forEach((particleRenderType, queue) -> {
+			Profiler.get().push(particleRenderType.toString());
+			this.tickParticleList(queue);
+			Profiler.get().pop();
+		});
+		if (!this.trackingEmitters.isEmpty()) {
+			List<TrackingEmitter> list = Lists.newArrayList();
+
+			for (TrackingEmitter trackingEmitter : this.trackingEmitters) {
+				trackingEmitter.tick();
+				if (!trackingEmitter.isAlive()) {
+					list.add(trackingEmitter);
+				}
+			}
+
+			this.trackingEmitters.removeAll(list);
+		}
+
+		Particle particle;
+		if (!this.particlesToAdd.isEmpty()) {
+			while ((particle = this.particlesToAdd.poll()) != null) {
+				this.particles.computeIfAbsent(particle.getRenderType(), particleRenderType -> EvictingQueue.create(16384)).add(particle);
+			}
+		}
+	}
+
+	private void tickParticleList(Collection<Particle> collection) {
+		if (!collection.isEmpty()) {
+			Iterator<Particle> iterator = collection.iterator();
+
+			while (iterator.hasNext()) {
+				Particle particle = iterator.next();
+				this.tickParticle(particle);
+				if (!particle.isAlive()) {
+					particle.getParticleGroup().ifPresent(particleGroup -> this.updateCount(particleGroup, -1));
+					iterator.remove();
+				}
+			}
+		}
+	}
+
+	private void updateCount(ParticleGroup particleGroup, int i) {
+		this.trackedParticleCounts.addTo(particleGroup, i);
+	}
+
+	private void tickParticle(Particle particle) {
+		try {
+			particle.tick();
+		} catch (Throwable throwable) {
+			CrashReport crashReport = CrashReport.forThrowable(throwable, "Ticking Particle");
+			CrashReportCategory crashReportCategory = crashReport.addCategory("Particle being ticked");
+			crashReportCategory.setDetail("Particle", particle::toString);
+			crashReportCategory.setDetail("Particle Type", particle.getRenderType()::toString);
+			throw new ReportedException(crashReport);
+		}
+	}
+
+	public void render(Camera camera, float f, MultiBufferSource.BufferSource bufferSource) {
+		for (ParticleRenderType particleRenderType : RENDER_ORDER) {
+			Queue<Particle> queue = this.particles.get(particleRenderType);
+			if (queue != null && !queue.isEmpty()) {
+				renderParticleType(camera, f, bufferSource, particleRenderType, queue);
+			}
+		}
+
+		Queue<Particle> queue2 = this.particles.get(ParticleRenderType.CUSTOM);
+		if (queue2 != null && !queue2.isEmpty()) {
+			renderCustomParticles(camera, f, bufferSource, queue2);
+		}
+
+		bufferSource.endBatch();
+	}
+
+	private static void renderParticleType(
+		Camera camera, float f, MultiBufferSource.BufferSource bufferSource, ParticleRenderType particleRenderType, Queue<Particle> queue
+	) {
+		VertexConsumer vertexConsumer = bufferSource.getBuffer(Objects.requireNonNull(particleRenderType.renderType()));
+
+		for (Particle particle : queue) {
+			try {
+				particle.render(vertexConsumer, camera, f);
+			} catch (Throwable throwable) {
+				CrashReport crashReport = CrashReport.forThrowable(throwable, "Rendering Particle");
+				CrashReportCategory crashReportCategory = crashReport.addCategory("Particle being rendered");
+				crashReportCategory.setDetail("Particle", particle::toString);
+				crashReportCategory.setDetail("Particle Type", particleRenderType::toString);
+				throw new ReportedException(crashReport);
+			}
+		}
+	}
+
+	private static void renderCustomParticles(Camera camera, float f, MultiBufferSource.BufferSource bufferSource, Queue<Particle> queue) {
+		PoseStack poseStack = new PoseStack();
+
+		for (Particle particle : queue) {
+			try {
+				particle.renderCustom(poseStack, bufferSource, camera, f);
+			} catch (Throwable throwable) {
+				CrashReport crashReport = CrashReport.forThrowable(throwable, "Rendering Particle");
+				CrashReportCategory crashReportCategory = crashReport.addCategory("Particle being rendered");
+				crashReportCategory.setDetail("Particle", particle::toString);
+				crashReportCategory.setDetail("Particle Type", "Custom");
+				throw new ReportedException(crashReport);
+			}
+		}
+	}
+
+	public void setLevel(@Nullable ClientLevel clientLevel) {
+		this.level = clientLevel;
+		this.clearParticles();
+		this.trackingEmitters.clear();
+	}
+
+	public void destroy(BlockPos blockPos, BlockState blockState) {
+		if (!blockState.isAir() && blockState.shouldSpawnTerrainParticles()) {
+			VoxelShape voxelShape = blockState.getShape(this.level, blockPos);
+			double d = 0.25;
+			voxelShape.forAllBoxes(
+				(dx, e, f, g, h, i) -> {
+					double j = Math.min(1.0, g - dx);
+					double k = Math.min(1.0, h - e);
+					double l = Math.min(1.0, i - f);
+					int m = Math.max(2, Mth.ceil(j / 0.25));
+					int n = Math.max(2, Mth.ceil(k / 0.25));
+					int o = Math.max(2, Mth.ceil(l / 0.25));
+
+					for (int p = 0; p < m; p++) {
+						for (int q = 0; q < n; q++) {
+							for (int r = 0; r < o; r++) {
+								double s = (p + 0.5) / m;
+								double t = (q + 0.5) / n;
+								double u = (r + 0.5) / o;
+								double v = s * j + dx;
+								double w = t * k + e;
+								double x = u * l + f;
+								this.add(
+									new TerrainParticle(this.level, blockPos.getX() + v, blockPos.getY() + w, blockPos.getZ() + x, s - 0.5, t - 0.5, u - 0.5, blockState, blockPos)
+								);
+							}
+						}
+					}
+				}
+			);
+		}
+	}
+
+	public void crack(BlockPos blockPos, Direction direction) {
+		BlockState blockState = this.level.getBlockState(blockPos);
+		if (blockState.getRenderShape() != RenderShape.INVISIBLE && blockState.shouldSpawnTerrainParticles()) {
+			int i = blockPos.getX();
+			int j = blockPos.getY();
+			int k = blockPos.getZ();
+			float f = 0.1F;
+			AABB aABB = blockState.getShape(this.level, blockPos).bounds();
+			double d = i + this.random.nextDouble() * (aABB.maxX - aABB.minX - 0.2F) + 0.1F + aABB.minX;
+			double e = j + this.random.nextDouble() * (aABB.maxY - aABB.minY - 0.2F) + 0.1F + aABB.minY;
+			double g = k + this.random.nextDouble() * (aABB.maxZ - aABB.minZ - 0.2F) + 0.1F + aABB.minZ;
+			if (direction == Direction.DOWN) {
+				e = j + aABB.minY - 0.1F;
+			}
+
+			if (direction == Direction.UP) {
+				e = j + aABB.maxY + 0.1F;
+			}
+
+			if (direction == Direction.NORTH) {
+				g = k + aABB.minZ - 0.1F;
+			}
+
+			if (direction == Direction.SOUTH) {
+				g = k + aABB.maxZ + 0.1F;
+			}
+
+			if (direction == Direction.WEST) {
+				d = i + aABB.minX - 0.1F;
+			}
+
+			if (direction == Direction.EAST) {
+				d = i + aABB.maxX + 0.1F;
+			}
+
+			this.add(new TerrainParticle(this.level, d, e, g, 0.0, 0.0, 0.0, blockState, blockPos).setPower(0.2F).scale(0.6F));
+		}
+	}
+
+	public String countParticles() {
+		return String.valueOf(this.particles.values().stream().mapToInt(Collection::size).sum());
+	}
+
+	private boolean hasSpaceInParticleLimit(ParticleGroup particleGroup) {
+		return this.trackedParticleCounts.getInt(particleGroup) < particleGroup.getLimit();
+	}
+
+	private void clearParticles() {
+		this.particles.clear();
+		this.particlesToAdd.clear();
+		this.trackingEmitters.clear();
+		this.trackedParticleCounts.clear();
+	}
+
+	@Environment(EnvType.CLIENT)
+	static class MutableSpriteSet implements SpriteSet {
+		private List<TextureAtlasSprite> sprites;
+
+		@Override
+		public TextureAtlasSprite get(int i, int j) {
+			return this.sprites.get(i * (this.sprites.size() - 1) / j);
+		}
+
+		@Override
+		public TextureAtlasSprite get(RandomSource randomSource) {
+			return this.sprites.get(randomSource.nextInt(this.sprites.size()));
+		}
+
+		public void rebind(List<TextureAtlasSprite> list) {
+			this.sprites = ImmutableList.copyOf(list);
+		}
+	}
+
+	@FunctionalInterface
+	@Environment(EnvType.CLIENT)
+	interface SpriteParticleRegistration<T extends ParticleOptions> {
+		ParticleProvider<T> create(SpriteSet spriteSet);
+	}
+}
