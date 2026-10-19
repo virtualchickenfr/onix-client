@@ -19,9 +19,6 @@ jobs:
           - dir: ports/build/mod-1.21.10
             port: '1.21.10'
             java: 25
-          - dir: ports/build/mod-1.21.9
-            port: '1.21.9'
-            java: 25
           - dir: ports/build/mod-1.21.8
             port: '1.21.8'
             java: 25

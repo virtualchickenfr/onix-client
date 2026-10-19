@@ -21,6 +21,9 @@ jobs:
           - dir: ports/build/mod-1.21.10
             port: '1.21.10'
             branch: devtest-results-1.21.10
+          - dir: ports/build/mod-1.21.8
+            port: '1.21.8'
+            branch: devtest-results-1.21.8
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:

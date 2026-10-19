@@ -46,6 +46,134 @@
     [
       "\\bthis\\.sampler = RenderSystem\\.getSamplerCache\\(\\)\\.getClampToEdge\\(FilterMode\\.LINEAR\\);",
       "this.setFilter(true, false); this.setClamp(true);"
+    ],
+    [
+      "\\bnet\\.minecraft\\.client\\.input\\.(MouseButtonEvent|KeyEvent|CharacterEvent|MouseButtonInfo)\\b",
+      "dev.onix.compat.\\1"
+    ],
+    [
+      "public boolean mouseClicked\\((?:[\\w.]+\\.)?MouseButtonEvent ([\\w$]+), boolean ([\\w$]+)\\) \\{",
+      "public boolean mouseClicked(double \\1$x, double \\1$y, int \\1$b) { dev.onix.compat.MouseButtonEvent \\1 = new dev.onix.compat.MouseButtonEvent(\\1$x, \\1$y, \\1$b); boolean \\2 = false;"
+    ],
+    [
+      "public boolean mouseReleased\\((?:[\\w.]+\\.)?MouseButtonEvent ([\\w$]+)\\) \\{",
+      "public boolean mouseReleased(double \\1$x, double \\1$y, int \\1$b) { dev.onix.compat.MouseButtonEvent \\1 = new dev.onix.compat.MouseButtonEvent(\\1$x, \\1$y, \\1$b);"
+    ],
+    [
+      "public boolean mouseDragged\\((?:[\\w.]+\\.)?MouseButtonEvent ([\\w$]+), double ([\\w$]+), double ([\\w$]+)\\) \\{",
+      "public boolean mouseDragged(double \\1$x, double \\1$y, int \\1$b, double \\2, double \\3) { dev.onix.compat.MouseButtonEvent \\1 = new dev.onix.compat.MouseButtonEvent(\\1$x, \\1$y, \\1$b);"
+    ],
+    [
+      "public boolean keyPressed\\((?:[\\w.]+\\.)?KeyEvent ([\\w$]+)\\) \\{",
+      "public boolean keyPressed(int \\1$key, int \\1$scan, int \\1$mods) { dev.onix.compat.KeyEvent \\1 = new dev.onix.compat.KeyEvent(\\1$key, \\1$scan, \\1$mods);"
+    ],
+    [
+      "public boolean keyReleased\\((?:[\\w.]+\\.)?KeyEvent ([\\w$]+)\\) \\{",
+      "public boolean keyReleased(int \\1$key, int \\1$scan, int \\1$mods) { dev.onix.compat.KeyEvent \\1 = new dev.onix.compat.KeyEvent(\\1$key, \\1$scan, \\1$mods);"
+    ],
+    [
+      "public boolean charTyped\\((?:[\\w.]+\\.)?CharacterEvent ([\\w$]+)\\) \\{",
+      "public boolean charTyped(char \\1$chr, int \\1$mods) { dev.onix.compat.CharacterEvent \\1 = new dev.onix.compat.CharacterEvent(\\1$chr, \\1$mods);"
+    ],
+    [
+      "super\\.mouseClicked\\(([\\w$]+), [\\w$]+\\)",
+      "super.mouseClicked(\\1.x(), \\1.y(), \\1.button())"
+    ],
+    [
+      "super\\.mouseReleased\\(([\\w$]+)\\)",
+      "super.mouseReleased(\\1.x(), \\1.y(), \\1.button())"
+    ],
+    [
+      "super\\.mouseDragged\\(([\\w$]+), ([\\w$]+), ([\\w$]+)\\)",
+      "super.mouseDragged(\\1.x(), \\1.y(), \\1.button(), \\2, \\3)"
+    ],
+    [
+      "super\\.keyPressed\\(([\\w$]+)\\)",
+      "super.keyPressed(\\1.key(), \\1.scancode(), \\1.modifiers())"
+    ],
+    [
+      "super\\.keyReleased\\(([\\w$]+)\\)",
+      "super.keyReleased(\\1.key(), \\1.scancode(), \\1.modifiers())"
+    ],
+    [
+      "super\\.charTyped\\(([\\w$]+)\\)",
+      "super.charTyped((char) \\1.codepoint(), \\1.modifiers())"
+    ],
+    [
+      "\\bnet\\.minecraft\\.world\\.entity\\.player\\.PlayerSkin\\b",
+      "net.minecraft.client.resources.PlayerSkin"
+    ],
+    [
+      "getSkinManager\\(\\)\\.createLookup\\(([^,]+), false\\)",
+      "getSkinManager().lookupInsecure(\\1)"
+    ],
+    [
+      "\\bnet\\.minecraft\\.client\\.renderer\\.SubmitNodeCollector\\b",
+      "net.minecraft.client.renderer.MultiBufferSource"
+    ],
+    [
+      "\\bSubmitNodeCollector\\b",
+      "MultiBufferSource"
+    ],
+    [
+      "\\bnet\\.minecraft\\.client\\.renderer\\.entity\\.state\\.AvatarRenderState\\b",
+      "net.minecraft.client.renderer.entity.state.PlayerRenderState"
+    ],
+    [
+      "\\bAvatarRenderState\\b",
+      "PlayerRenderState"
+    ],
+    [
+      "public void submit\\(PoseStack (\\w+), MultiBufferSource (\\w+), int (\\w+), PlayerRenderState",
+      "public void render(PoseStack \\1, MultiBufferSource \\2, int \\3, PlayerRenderState"
+    ],
+    [
+      "\\bnet\\.fabricmc\\.fabric\\.api\\.client\\.rendering\\.v1\\.world\\.",
+      "net.fabricmc.fabric.api.client.rendering.v1."
+    ],
+    [
+      "\\bcontext\\.matrices\\(\\)",
+      "context.matrixStack()"
+    ],
+    [
+      "\\bnew net\\.minecraft\\.network\\.chat\\.FontDescription\\.Resource\\(([\\w.]+)\\)",
+      "\\1"
+    ],
+    [
+      "InputConstants\\.isKeyDown\\(([^,]*getWindow\\(\\)|window),",
+      "InputConstants.isKeyDown(\\1.getWindow(),"
+    ],
+    [
+      "getWindow\\(\\)\\.handle\\(\\)",
+      "getWindow().getWindow()"
+    ],
+    [
+      "\\bwindow\\.handle\\(\\)",
+      "window.getWindow()"
+    ],
+    [
+      "\\b(?:minecraft|mc\\(\\)|mc|Minecraft\\.getInstance\\(\\))\\.has(Control|Shift|Alt)Down\\(\\)",
+      "net.minecraft.client.gui.screens.Screen.has\\1Down()"
+    ],
+    [
+      "\\.matches\\((onix\\$k|event)\\)",
+      ".matches(\\1.key(), \\1.scancode())"
+    ],
+    [
+      "\\.getProfile\\(\\)\\.id\\(\\)",
+      ".getProfile().getId()"
+    ],
+    [
+      "\\.getProfile\\(\\)\\.name\\(\\)",
+      ".getProfile().getName()"
+    ],
+    [
+      "Minecraft\\.getInstance\\(\\)\\.services\\(\\)\\.sessionService\\(\\)",
+      "Minecraft.getInstance().getMinecraftSessionService()"
+    ],
+    [
+      "\\bOptions::invertMouseY\\b",
+      "Options::invertYMouse"
     ]
   ],
   "file_rules": {
@@ -73,12 +201,8 @@
     ],
     "src/main/java/dev/onix/client/module/impl/utility/StreamerModeModule.java": [
       [
-        "isOverlayVisible\\(\\)",
-        "isF3Visible()"
-      ],
-      [
-        "setOverlayVisible\\(",
-        "setF3Visible("
+        "mc\\(\\)\\.debugEntries\\.isOverlayVisible\\(\\)\\) mc\\(\\)\\.debugEntries\\.setOverlayVisible\\(false\\)",
+        "mc().getDebugOverlay().showDebugScreen()) mc().getDebugOverlay().toggleOverlay()"
       ]
     ],
     "src/main/java/dev/onix/client/render/SkyRenderer.java": [
@@ -95,12 +219,20 @@
       [
         "argb\\(r, g, b, a\\), LINE_WIDTH\\)",
         "argb(r, g, b, a))"
+      ],
+      [
+        "var state = context\\.worldState\\(\\);\\n.*?\\n\\s*return Minecraft\\.getInstance\\(\\)\\.gameRenderer\\.getMainCamera\\(\\)\\.position\\(\\);",
+        "return context.camera().getPosition();"
       ]
     ],
     "src/main/java/dev/onix/client/render/VertexRecorder.java": [
       [
         "    @Override\\n    public VertexConsumer setLineWidth",
         "    public VertexConsumer setLineWidth"
+      ],
+      [
+        "collector\\.submitCustomGeometry\\(new PoseStack\\(\\), type, \\(pose, vc\\) -> copy\\.replay\\(vc\\)\\);",
+        "copy.replay(collector.getBuffer(type));"
       ]
     ],
     "src/main/java/dev/onix/client/gui/OnixButton.java": [
@@ -113,6 +245,108 @@
       [
         "AtmosphericFogEnvironment",
         "AirBasedFogEnvironment"
+      ]
+    ],
+    "src/main/java/dev/onix/client/util/DevTest.java": [
+      [
+        "mc\\.screen\\.keyPressed\\(new KeyEvent\\(([^,]+), 0, 0\\)\\)",
+        "mc.screen.keyPressed(\\1, 0, 0)"
+      ],
+      [
+        "b\\.onPress\\(new KeyEvent\\([^;]*\\)\\);",
+        "b.onPress();"
+      ],
+      [
+        "CreateWorldScreen\\.testWorld\\(mc, \\(\\) -> \\{\\}\\);",
+        "CreateWorldScreen.testWorld(mc, null);"
+      ]
+    ],
+    "src/main/java/dev/onix/client/module/impl/visual/ChunkBordersModule.java": [
+      [
+        "    private static final net\\.minecraft\\.resources\\.ResourceLocation VANILLA = [^\\n]*\\n",
+        ""
+      ],
+      [
+        "mc\\(\\)\\.debugEntries\\.isCurrentlyEnabled\\(VANILLA\\)",
+        "dev.onix.compat.ChunkBorderState.on"
+      ],
+      [
+        "mc\\(\\)\\.debugEntries\\.toggleStatus\\(VANILLA\\)",
+        "dev.onix.compat.ChunkBorderState.toggle()"
+      ],
+      [
+        "mc\\(\\)\\.debugEntries (==|!=) null",
+        "mc().debugRenderer \\1 null"
+      ]
+    ],
+    "src/main/java/dev/onix/client/module/impl/visual/BlockOutlineModule.java": [
+      [
+        "\\|\\| outline == null\\) return true;",
+        "|| !(outline instanceof net.minecraft.world.phys.BlockHitResult onix$hit) || onix$hit.getType() != net.minecraft.world.phys.HitResult.Type.BLOCK || mc().level == null) return true;"
+      ],
+      [
+        "outline\\.pos\\(\\)",
+        "onix$hit.getBlockPos()"
+      ],
+      [
+        "outline\\.shape\\(\\)",
+        "mc().level.getBlockState(pos).getShape(mc().level, pos, net.minecraft.world.phys.shapes.CollisionContext.of(mc().getCameraEntity()))"
+      ]
+    ],
+    "src/main/java/dev/onix/client/OnixClient.java": [
+      [
+        "public static final KeyMapping\\.Category KEY_CATEGORY = KeyMapping\\.Category\\.register\\([^;]*\\);",
+        "public static final String KEY_CATEGORY = \"key.category.onix.main\";"
+      ],
+      [
+        "import net\\.minecraft\\.client\\.renderer\\.entity\\.player\\.AvatarRenderer;",
+        "import net.minecraft.client.renderer.entity.player.PlayerRenderer;"
+      ],
+      [
+        "instanceof AvatarRenderer<\\?> avatarRenderer",
+        "instanceof PlayerRenderer avatarRenderer"
+      ]
+    ],
+    "src/main/java/dev/onix/client/gui/LoadingScreens.java": [
+      [
+        "import net\\.minecraft\\.client\\.multiplayer\\.LevelLoadTracker;",
+        "import net.minecraft.server.level.progress.StoringChunkProgressListener;"
+      ],
+      [
+        "LevelLoadTracker tracker = fieldOfType\\(screen, LevelLoadTracker\\.class\\);\\n(\\s*)float progress = tracker == null \\? -1f : tracker\\.serverProgress\\(\\);",
+        "StoringChunkProgressListener tracker = fieldOfType(screen, StoringChunkProgressListener.class);\\n\\1float progress = tracker == null ? -1f : Math.max(0, Math.min(100, tracker.getProgress())) / 100f;"
+      ]
+    ],
+    "src/main/java/dev/onix/client/gui/PlayerPreview.java": [
+      [
+        "\\s*state\\.lightCoords = 15728880;\\n\\s*state\\.shadowPieces\\.clear\\(\\);\\n\\s*state\\.outlineColor = 0;",
+        ""
+      ]
+    ],
+    "src/main/java/dev/onix/client/gui/GuiTriangles.java": [
+      [
+        "public void buildVertices\\(VertexConsumer vc\\)",
+        "public void buildVertices(VertexConsumer vc, float onix$z)"
+      ],
+      [
+        "addVertexWith2DPose\\(pose, xy\\[v \\* 2\\], xy\\[v \\* 2 \\+ 1\\]\\)",
+        "addVertexWith2DPose(pose, xy[v * 2], xy[v * 2 + 1], onix$z)"
+      ]
+    ],
+    "src/main/java/dev/onix/client/mixin/MouseMixin.java": [
+      [
+        "@Inject\\(method = \"onButton\", at = @At\\(\"HEAD\"\\)\\)\\n(\\s*)private void onix\\$countClicks\\(long window, MouseButtonInfo info, int action, CallbackInfo ci\\) \\{\\n(\\s*)int button = info\\.button\\(\\);",
+        "@Inject(method = \"onPress\", at = @At(\"HEAD\"))\n\\1private void onix$countClicks(long window, int button, int action, int mods, CallbackInfo ci) {"
+      ],
+      [
+        "import net\\.minecraft\\.client\\.input\\.MouseButtonInfo;\\n|import dev\\.onix\\.compat\\.MouseButtonInfo;\\n",
+        ""
+      ]
+    ],
+    "src/main/java/dev/onix/client/mixin/KeyboardMixin.java": [
+      [
+        "private void onix\\$extraKeys\\(long window, int action, (?:dev\\.onix\\.compat\\.)?KeyEvent event, CallbackInfo ci\\) \\{\\n(\\s*)ExtraKeys\\.onInput\\(event\\.key\\(\\), action\\);",
+        "private void onix$extraKeys(long window, int key, int scancode, int action, int mods, CallbackInfo ci) {\n\\1ExtraKeys.onInput(key, action);"
       ]
     ]
   },
