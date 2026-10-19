@@ -15,7 +15,7 @@
     ],
     [
       "GameRenderer::getPositionColorProgram",
-      "net.minecraft.client.gl.ShaderProgramKeys.POSITION_COLOR"
+      "net.minecraft.client.gl.ShaderProgramKeys.RENDERTYPE_GUI"
     ],
     [
       "GameRenderer::getPositionTexColorProgram",
