@@ -363,6 +363,9 @@
   "mixins_add": {
     "carbon.mixins.json": [
       "AbstractWidgetAlpha"
+    ],
+    "onix.mixins.json": [
+      "CosmeticIconPoolMixin"
     ]
   }
 }
