@@ -34,7 +34,7 @@ function renderProfiles() {
         el('div', { class: 'pcard-icon', text: p.name.charAt(0).toUpperCase() }),
         el('div', { class: 'pcard-head' }, [
           el('div', { class: 'pcard-name', text: p.name }),
-          el('div', { class: 'pcard-sub', text: `Minecraft ${mcOfProfile(p)}` }),
+          el('div', { class: 'pcard-sub', text: `${loaderName(p)} · Minecraft ${mcOfProfile(p)}` }),
         ]),
         active ? el('span', { class: 'badge', text: 'Active' }) : null,
       ]),
@@ -87,6 +87,22 @@ $('#pf-sort').addEventListener('change', () => {
 let editing = null;
 let editColor = PROFILE_COLORS[0];
 let editVersion = '1.21.1';
+let editLoader = 'fabric';
+let loaderList = [
+  { id: 'fabric', name: 'Fabric', note: 'Onix + mods' },
+  { id: 'quilt', name: 'Quilt', note: 'Fabric mods too' },
+  { id: 'neoforge', name: 'NeoForge', note: 'NeoForge mods' },
+  { id: 'forge', name: 'Forge', note: 'Forge mods' },
+  { id: 'vanilla', name: 'Vanilla', note: 'No mods' },
+];
+
+function renderLoaders() {
+  $('#pf-loader').replaceChildren(...loaderList.map((l) => el('button', {
+    class: `seg-btn${l.id === editLoader ? ' on' : ''}`,
+    type: 'button',
+    onclick: () => { editLoader = l.id; renderLoaders(); renderVersions(); },
+  }, [el('b', { text: l.name }), el('span', { text: l.note })])));
+}
 
 function renderVersions() {
   const list = (info && info.versions) || [{ id: '1.21.1', note: '', onix: true }];
@@ -107,9 +123,11 @@ function renderVersions() {
     if (select.value) editVersion = select.value;
     renderVersions();
   });
-  const note = otherOn
-    ? el('span', { class: 'seg-note', text: 'Fabric API and the performance pack – the Onix mod is not available for this version yet.' })
-    : null;
+  const note = editLoader !== 'fabric'
+    ? el('span', { class: 'seg-note', text: `${editLoader === 'vanilla' ? 'Plain Minecraft' : `${loaderList.find((l) => l.id === editLoader).name} with your own mods`} – the Onix mod needs Fabric.` })
+    : otherOn
+      ? el('span', { class: 'seg-note', text: 'Fabric API and the performance pack – the Onix mod is not available for this version yet.' })
+      : null;
   $('#pf-version').replaceChildren(...buttons, select, ...(note ? [note] : []));
 }
 
@@ -126,6 +144,8 @@ function openProfileEditor(profile) {
   $('#pf-server').value = profile ? profile.quickJoin : '';
   $('#pf-perf').checked = profile ? profile.performanceMods : true;
   editVersion = profile ? mcOfProfile(profile) : mcOfProfile(activeProfile());
+  editLoader = (profile && profile.loader) || 'fabric';
+  renderLoaders();
   // the full version list is fetched from Fabric in the background
   api.versions().then((list) => {
     if (Array.isArray(list) && list.length) {
@@ -156,7 +176,7 @@ $('#btn-new-profile').addEventListener('click', () => openProfileEditor(null));
 $('#pf-save').addEventListener('click', async () => {
   const name = $('#pf-name').value.trim();
   if (!name) return toast('Please enter a name.', true);
-  const values = { name, color: editColor, ramMb: Number($('#pf-ram').value), quickJoin: $('#pf-server').value.trim(), performanceMods: $('#pf-perf').checked, mcVersion: editVersion };
+  const values = { name, color: editColor, ramMb: Number($('#pf-ram').value), quickJoin: $('#pf-server').value.trim(), performanceMods: $('#pf-perf').checked, mcVersion: editVersion, loader: editLoader };
   if (editing) {
     if (mcOfProfile(editing) !== editVersion && !confirm(`Switch "${editing.name}" to Minecraft ${editVersion}? Worlds stay, but mods made only for ${mcOfProfile(editing)} will not load.`)) return;
     const res = await api.saveProfile({ ...editing, ...values });

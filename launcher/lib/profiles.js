@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const versions = require('./versions');
+const LOADER_IDS = ['fabric', 'quilt', 'neoforge', 'forge', 'vanilla'];
 
 const clampInt = (v, min, max) => {
   const n = Math.round(Number(v) || 0);
@@ -41,6 +42,9 @@ class Profiles {
       quickJoin: typeof p.quickJoin === 'string' ? p.quickJoin.trim() : '',
       performanceMods: p.performanceMods !== false,
       mcVersion: versions.isSupported(p.mcVersion) ? p.mcVersion : versions.DEFAULT,
+      // Fabric (with Onix) by default; Quilt, NeoForge, Forge and Vanilla run without the Onix mod
+      loader: LOADER_IDS.includes(p.loader) ? p.loader : 'fabric',
+      loaderVersion: typeof p.loaderVersion === 'string' ? p.loaderVersion.slice(0, 40) : '',
       // extra Java arguments, a Java to use instead of the bundled one, and the game window
       jvmArgs: typeof p.jvmArgs === 'string' ? p.jvmArgs.slice(0, 2000) : '',
       javaPath: typeof p.javaPath === 'string' ? p.javaPath.trim().slice(0, 500) : '',

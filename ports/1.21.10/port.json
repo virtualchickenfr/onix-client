@@ -46,6 +46,10 @@
     [
       "\\bthis\\.sampler = RenderSystem\\.getSamplerCache\\(\\)\\.getClampToEdge\\(FilterMode\\.LINEAR\\);",
       "this.setFilter(true, false); this.setClamp(true);"
+    ],
+    [
+      "\\bthis\\.sampler = RenderSystem\\.getSamplerCache\\(\\)\\.getRepeat\\(FilterMode\\.LINEAR\\);",
+      "this.setFilter(true, false); this.setClamp(false);"
     ]
   ],
   "file_rules": {

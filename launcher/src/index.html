@@ -55,38 +55,27 @@
   <template id="gem-template"><span class="gem"><svg viewBox="0 0 100 100" aria-hidden="true"><polygon style="--i:0" points="50,4 89.84,27 66.45,40.5 50,31"/><polygon style="--i:1" points="89.84,27 89.84,73 66.45,59.5 66.45,40.5"/><polygon style="--i:2" points="89.84,73 50,96 50,69 66.45,59.5"/><polygon style="--i:3" points="50,96 10.16,73 33.55,59.5 50,69"/><polygon style="--i:4" points="10.16,73 10.16,27 33.55,40.5 33.55,59.5"/><polygon style="--i:5" points="10.16,27 50,4 50,31 33.55,40.5"/></svg></span></template>
 
   <div class="shell">
-    <aside class="sidebar">
-      <div class="brand drag">
-        <img src="assets/logo.png" alt="">
-        <span class="brand-name">Onix</span>
-      </div>
-
-      <nav class="nav">
-        <button class="nav-item active" data-view="home"><svg><use href="#i-home"/></svg>Home</button>
-        <button class="nav-item" data-view="cosmetics"><svg><use href="#i-shirt"/></svg>Cosmetics</button>
-        <button class="nav-item" data-view="profiles"><svg><use href="#i-layers"/></svg>Profiles</button>
-        <button class="nav-item" data-view="mods"><svg><use href="#i-puzzle"/></svg>Mods</button>
-        <div class="nav-sep"></div>
-        <button class="nav-item" data-view="import"><svg><use href="#i-import"/></svg>Import</button>
-        <button class="nav-item" data-view="install"><svg><use href="#i-plug"/></svg>Install</button>
-      </nav>
-
-      <div class="sidebar-foot">
-        <button class="nav-item" data-view="settings"><svg><use href="#i-settings"/></svg>Settings</button>
-        <div class="account" id="account"></div>
-      </div>
-    </aside>
 
     <main class="main">
-      <header class="topbar drag">
-        <div class="crumb" id="crumb"></div>
-        <button class="update-pill no-drag" id="update-pill" hidden></button>
+      <header class="topbar titlebar drag">
+        <div class="tb-brand">
+          <span class="tb-logo" aria-hidden="true"></span>
+          <b>Onix</b><span>Launcher</span>
+        </div>
+        <div class="crumb" id="crumb" hidden></div>
         <button class="palette-trigger no-drag" id="btn-palette" title="Search commands"><svg><use href="#i-search"/></svg><span>Search</span><kbd>Ctrl K</kbd></button>
-        <div class="window-controls no-drag">
-          <button id="btn-min" aria-label="Minimize"><svg viewBox="0 0 12 12"><path d="M2.5 6h7"/></svg></button>
-          <button id="btn-close" class="close" aria-label="Close"><svg viewBox="0 0 12 12"><path d="M3 3l6 6M9 3l-6 6"/></svg></button>
+        <div class="tb-right no-drag">
+          <button class="update-pill" id="update-pill" hidden></button>
+          <div class="account" id="account"></div>
+          <div class="window-controls">
+            <button id="btn-min" aria-label="Minimize"><svg viewBox="0 0 12 12"><path d="M2.5 6h7"/></svg></button>
+            <button id="btn-close" class="close" aria-label="Close"><svg viewBox="0 0 12 12"><path d="M3 3l6 6M9 3l-6 6"/></svg></button>
+          </div>
         </div>
       </header>
+      <!-- progress as an XP bar along the top, with the task line under the title bar -->
+      <div class="xp idle" id="xp"><i id="xp-fill"></i></div>
+      <div class="taskline" id="taskline"><span class="lvl" id="task-lvl">0</span><span id="task-text"></span></div>
 
       <!-- HOME -->
       <section class="view active" id="view-home">
@@ -95,27 +84,31 @@
           <div class="hero-grain"></div>
           <div class="hero-fade"></div>
           <div class="particles" id="particles" aria-hidden="true"></div>
-          <div class="hero-content">
-            <h1>Onix</h1>
+          <canvas class="world" id="world"></canvas>
+          <div class="home-inner" id="home-inner">
             <p class="eyebrow" id="eyebrow">Minecraft 1.21.1</p>
+            <h1 class="logo" aria-label="Onix"><span class="ch" style="--i:0">O</span><span class="ch" style="--i:1">N</span><span class="ch" style="--i:2">I</span><span class="ch" style="--i:3">X</span></h1>
+            <div class="logo-sub">CLIENT</div>
+            <div class="play-row">
+              <button class="play" id="btn-play"><svg><use href="#i-play"/></svg><span>Play</span></button>
+              <div class="picker">
+                <button class="picker-btn" id="picker-btn">
+                  <span class="dot" id="picker-dot"></span>
+                  <span class="picker-text"><b id="picker-name">Profile</b><span id="picker-meta"></span></span>
+                  <svg class="chev"><use href="#i-chevron-down"/></svg>
+                </button>
+                <div class="popover" id="picker-pop"></div>
+              </div>
+              <button class="btn xl-sq" id="home-folder" title="Open the profile folder" aria-label="Open the profile folder"></button>
+              <button class="btn xl-sq" id="home-manage" title="Manage the profile: mods, packs, worlds, settings" aria-label="Manage the profile"></button>
+            </div>
+            <div class="launch">
+              <div class="launch-row"><span class="launch-status" id="launch-status">Ready</span><span class="launch-pct" id="launch-pct"></span><button class="launch-logs" data-goto="console" title="Game output">Logs</button><button class="launch-stop" id="btn-stop" hidden>Stop</button></div>
+              <div class="bar"><div class="bar-fill" id="bar-fill"></div></div>
+              <div class="launch-detail" id="launch-detail"></div>
+            </div>
           </div>
-        </div>
-
-        <div class="dock">
-          <div class="picker">
-            <button class="picker-btn" id="picker-btn">
-              <span class="dot" id="picker-dot"></span>
-              <span class="picker-text"><b id="picker-name">Profile</b><span id="picker-meta"></span></span>
-              <svg class="chev"><use href="#i-chevron-down"/></svg>
-            </button>
-            <div class="popover" id="picker-pop"></div>
-          </div>
-          <div class="launch">
-            <div class="launch-row"><span class="launch-status" id="launch-status">Ready</span><span class="launch-pct" id="launch-pct"></span><button class="launch-logs" data-goto="console" title="Game output">Logs</button></div>
-            <div class="bar"><div class="bar-fill" id="bar-fill"></div></div>
-            <div class="launch-detail" id="launch-detail"></div>
-          </div>
-          <button class="play" id="btn-play"><svg><use href="#i-play"/></svg><span>Play</span></button>
+          <div class="recent" id="recent"></div>
         </div>
       </section>
 
@@ -147,6 +140,7 @@
           <div class="btn-row">
             <button class="btn" id="pv-folder" title="Open the profile folder"><svg><use href="#i-folder"/></svg>Folder</button>
             <button class="btn" id="pv-duplicate" title="Copy this profile with its worlds and mods"><svg><use href="#i-copy"/></svg>Duplicate</button>
+            <button class="btn" id="pv-shortcut" title="A desktop shortcut that starts this profile"><svg><use href="#i-plus"/></svg>Shortcut</button>
             <button class="btn" id="pv-export"><svg><use href="#i-send"/></svg>Export</button>
             <button class="btn" id="pv-edit"><svg><use href="#i-pencil"/></svg>Edit</button>
             <button class="btn primary" id="pv-play"><svg><use href="#i-play"/></svg>Play</button>
@@ -330,8 +324,56 @@
         </div>
         <pre class="log" id="log"></pre>
       </section>
+
+      <!-- DISCOVER: Modrinth for every profile -->
+      <section class="view" id="view-discover">
+        <div class="page-head">
+          <div><h2>Modrinth</h2><p>Mods, resource packs, shaders and modpacks – straight into a profile.</p></div>
+          <div class="btn-row"><span class="dc-label">Install into</span><select class="input sm dc-target" id="dc-target"></select></div>
+        </div>
+        <div class="dc-bar">
+          <div class="segmented" id="dc-tabs">
+            <button data-type="mod" class="active">Mods</button>
+            <button data-type="resourcepack">Resource Packs</button>
+            <button data-type="shader">Shaders</button>
+            <button data-type="modpack">Modpacks</button>
+          </div>
+          <input class="input sm dc-query" id="dc-query" placeholder="Search Modrinth…" spellcheck="false">
+          <select class="input sm dc-sort" id="dc-sort">
+            <option value="relevance">Relevance</option><option value="downloads">Downloads</option>
+            <option value="follows">Followers</option><option value="newest">Newest</option><option value="updated">Updated</option>
+          </select>
+        </div>
+        <div class="dc-body" id="dc-body"></div>
+      </section>
+
+      <!-- SKINS: skin and cape of the signed-in account, plus a skin library -->
+      <section class="view" id="view-skins">
+        <div class="page-head">
+          <div><h2>Skin &amp; Cape</h2><p>Change your Minecraft skin and cape. Every skin you replace is kept in your library.</p></div>
+          <div class="btn-row"><button class="btn primary" id="sk-upload"><svg><use href="#i-upload"/></svg>Add skin</button></div>
+        </div>
+        <div class="sk-body" id="sk-body"></div>
+      </section>
     </main>
   </div>
+
+  <!-- navigation: a Minecraft hotbar (keys 1–9) -->
+  <nav class="hotbar-wrap" aria-label="Pages">
+    <div class="hotbar-name" id="hot-name"></div>
+    <div class="hotbar" id="hotbar">
+      <button class="nav-item active" data-view="home" data-name="Home" data-icon="hex"><span class="num">1</span></button>
+      <button class="nav-item" data-view="profiles" data-name="Profiles" data-icon="chest"><span class="num">2</span></button>
+      <button class="nav-item" data-view="discover" data-name="Discover" data-icon="compass"><span class="num">3</span></button>
+      <button class="nav-item" data-view="cosmetics" data-name="Cosmetics" data-icon="sparkle"><span class="num">4</span></button>
+      <button class="nav-item" data-view="skins" data-name="Skins" data-icon="person"><span class="num">5</span></button>
+      <button class="nav-item" data-view="import" data-name="Import" data-icon="arrowdown"><span class="num">6</span></button>
+      <button class="nav-item" data-view="install" data-name="Install" data-icon="shulker"><span class="num">7</span></button>
+      <button class="nav-item" data-view="settings" data-name="Settings" data-icon="gear"><span class="num">8</span></button>
+      <button class="nav-item" data-view="console" data-name="Console" data-icon="console"><span class="num">9</span></button>
+      <i class="hot-sel" id="hot-sel"></i>
+    </div>
+  </nav>
 
   <!-- Dialog: profile -->
   <div class="modal-backdrop" id="profile-modal">
@@ -339,6 +381,7 @@
       <div class="modal-head"><h3 id="pf-title">Profile</h3><button class="icon-btn" data-close><svg><use href="#i-x"/></svg></button></div>
       <label class="field"><span>Name</span><input class="input" id="pf-name" maxlength="24" spellcheck="false"></label>
       <div class="field"><span>Color</span><div class="swatches" id="pf-colors"></div></div>
+      <div class="field"><span>Mod loader</span><div class="seg pf-loaders" id="pf-loader"></div></div>
       <div class="field"><span>Minecraft version</span><div class="seg" id="pf-version"></div></div>
       <label class="field"><span>Memory <output id="pf-ram-out"></output></span><input type="range" id="pf-ram" min="1024" max="8192" step="512"></label>
       <label class="field"><span>Join on launch</span><input class="input" id="pf-server" placeholder="Server address (optional)" spellcheck="false"></label>
@@ -496,6 +539,10 @@
   </div>
 
   <div class="toast" id="toast"></div>
+  <script src="js/carbon/icons.js"></script>
+  <script src="js/carbon/l.js"></script>
+  <script src="js/carbon/world.js"></script>
+  <script src="js/carbon/skinview.js"></script>
   <script src="js/data.js"></script>
   <script src="js/helpers.js"></script>
   <script src="js/navigation.js"></script>
@@ -517,6 +564,9 @@
   <script src="js/dragdrop.js"></script>
   <script src="js/motion.js"></script>
   <script src="js/update.js"></script>
+  <script src="js/discover.js"></script>
+  <script src="js/skins.js"></script>
+  <script src="js/shell.js"></script>
   <script src="js/startup.js"></script>
 </body>
 </html>

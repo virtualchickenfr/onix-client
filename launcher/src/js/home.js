@@ -50,6 +50,7 @@ function renderEyebrow() {
 function refreshProfiles() {
   renderPicker();
   renderEyebrow();
+  if (typeof renderRecent === 'function') renderRecent();
   if (currentView === 'profiles') renderProfiles();
   if (currentView === 'profile') renderProfileView();
   if (currentView === 'mods') renderMods();
@@ -139,4 +140,56 @@ api.onState((s) => {
     if (s === 'crashed') toast('Minecraft exited with an error. See the console for details.', true);
   }
   updatePlay();
+});
+
+// ---------------------------------------------------------------- Carbon-style home: voxel island, quick buttons, recent profiles
+
+$('#home-folder').append(L.picon('folder'));
+$('#home-manage').append(L.picon('dots'));
+$('#home-folder').addEventListener('click', () => api.openFolder('profile', profileState.active));
+$('#home-manage').addEventListener('click', () => openProfile(profileState.active));
+$('#btn-stop').addEventListener('click', async () => {
+  const res = await api.stopGame();
+  if (res && res.ok === false) toast(res.error, true);
+});
+
+let homeIsland = null;
+/** Starts the voxel island on the home page, stops it elsewhere and while Minecraft runs (the game gets the GPU). */
+function homeWorld(on) {
+  if (!homeIsland) {
+    homeIsland = L.World($('#world'), {
+      textRight: () => {
+        let right = 0;
+        $$('#home-inner .logo .ch, #home-inner .play-row > *').forEach((n) => { right = Math.max(right, n.getBoundingClientRect().right); });
+        return right - $('#view-home').getBoundingClientRect().left;
+      },
+      bottomSpace: 150,
+    });
+  }
+  if (on && state !== 'running') homeIsland.start(); else homeIsland.stop();
+}
+requestAnimationFrame(() => homeWorld(currentView === 'home'));
+
+function renderRecent() {
+  const box = $('#recent');
+  const list = profileState.profiles.filter((p) => p.lastPlayed).sort((a, b) => b.lastPlayed - a.lastPlayed).slice(0, 3);
+  if (!list.length) return box.replaceChildren();
+  box.replaceChildren(el('span', { class: 'recent-label', text: 'Recent' }), ...list.map((p) => el('button', {
+    class: 'tile',
+    style: `--pc:${p.color}`,
+    onclick: async () => {
+      if (p.id !== profileState.active) {
+        profileState = await api.selectProfile(p.id);
+        refreshProfiles();
+      }
+    },
+  }, [
+    el('span', { class: 'tile-ico', text: p.name.charAt(0).toUpperCase() }),
+    el('span', {}, [el('b', { text: p.name }), el('small', { text: `${mcOfProfile(p)} · ${fmtAgo(p.lastPlayed)}` })]),
+  ])));
+}
+
+api.onState((s) => {
+  $('#btn-stop').hidden = s !== 'running';
+  homeWorld(currentView === 'home');
 });

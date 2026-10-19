@@ -222,6 +222,18 @@ async function ensureMods(root, settings, report, log, throttle = true, mc = MC_
   writeManifest(modsDir, manifest);
 }
 
+/** Profiles with another loader cannot load the Onix (Fabric) mod: switch its jar off. */
+function disableOnixFor(gameDir, log) {
+  const modsDir = path.join(gameDir, 'mods');
+  if (!fs.existsSync(modsDir)) return;
+  for (const f of fs.readdirSync(modsDir)) {
+    if (/^onix-client-.*\.jar$/.test(f)) {
+      fs.renameSync(path.join(modsDir, f), path.join(modsDir, `${f}.disabled`));
+      log(`The Onix mod needs Fabric – switched off ${f} for this profile.`);
+    }
+  }
+}
+
 /**
  * Splits the profile's extra Java arguments like a shell would (quotes keep spaces). Memory flags are left to the
  * RAM slider and nothing but JVM options (starting with -) is passed on.
@@ -238,7 +250,7 @@ function extraJvmArgs(text) {
  * Launches Minecraft. root holds shared files (versions, libraries, assets),
  * gameDir is the profile folder (mods, worlds, settings).
  */
-async function launch({ root, gameDir, auth, javaPath, settings, world = null, fastStart = true, report, log, onStart, onClose }) {
+async function launch({ root, gameDir, auth, javaPath, settings, world = null, server = null, fastStart = true, report, log, onStart, onClose }) {
   const prepStarted = Date.now();
   const mc = versions.ofProfile(settings).mc;
   const VERSION_ID = versions.versionId(mc);
@@ -253,15 +265,23 @@ async function launch({ root, gameDir, auth, javaPath, settings, world = null, f
   } catch {
     // only a note
   }
-  await Promise.all([ensureFabric(root, report, mc), ensureMods(gameDir, settings, report, log, fastStart, mc)]);
-  log(`Fabric and mods ready after ${((Date.now() - prepStarted) / 1000).toFixed(1)} s`);
+  const loader = settings.loader || 'fabric';
+  let VERSION_ID_RUN = VERSION_ID;
+  if (loader === 'fabric') {
+    await Promise.all([ensureFabric(root, report, mc), ensureMods(gameDir, settings, report, log, fastStart, mc)]);
+    log(`Fabric and mods ready after ${((Date.now() - prepStarted) / 1000).toFixed(1)} s`);
+  } else {
+    VERSION_ID_RUN = await require('./loaders').install({ loader, game: mc, version: settings.loaderVersion, root, javaPath, report, log });
+    disableOnixFor(gameDir, log);
+    log(`${loader} ready (${VERSION_ID_RUN || 'vanilla'}) after ${((Date.now() - prepStarted) / 1000).toFixed(1)} s`);
+  }
 
   const launcher = new Client();
   const options = {
     root,
     authorization: auth,
     javaPath,
-    version: { number: mc, type: 'release', custom: VERSION_ID },
+    version: VERSION_ID_RUN ? { number: mc, type: 'release', custom: VERSION_ID_RUN } : { number: mc, type: 'release' },
     memory: { max: `${settings.ramMb}M`, min: `${Math.min(settings.ramMb, 2048)}M` },
     customArgs: [...jvmArgs(root, fastStart, mc), ...extraJvmArgs(settings.jvmArgs)],
     overrides: { maxSockets: 24, gameDirectory: gameDir },
@@ -272,12 +292,15 @@ async function launch({ root, gameDir, auth, javaPath, settings, world = null, f
     // straight into a singleplayer world (Quick Play, Minecraft 1.20 and newer)
     options.quickPlay = { type: 'singleplayer', identifier: world };
     log(`Opening the world "${world}"`);
+  } else if (server) {
+    options.quickPlay = { type: 'multiplayer', identifier: server };
   } else if (settings.quickJoin && settings.quickJoin.trim()) {
     options.quickPlay = { type: 'multiplayer', identifier: settings.quickJoin.trim() };
   }
 
   let started = false;
-  const quick = fastStart && filesVerified(root, VERSION_ID);
+  const VERIFY_ID = VERSION_ID_RUN || `vanilla-${mc}`;
+  const quick = fastStart && filesVerified(root, VERIFY_ID);
   trustFilesThatExist = quick;
   log(quick ? 'Game files were checked before: only looking for missing files' : 'Checking all game files (first start or Fast start off)');
   launcher.on('debug', (line) => log(String(line)));
@@ -285,7 +308,7 @@ async function launch({ root, gameDir, auth, javaPath, settings, world = null, f
     if (!started) {
       started = true;
       trustFilesThatExist = false;
-      setFilesVerified(root, VERSION_ID, true);
+      setFilesVerified(root, VERIFY_ID, true);
       onStart();
     }
     log(String(line).trimEnd());
@@ -297,7 +320,7 @@ async function launch({ root, gameDir, auth, javaPath, settings, world = null, f
   launcher.on('close', (code) => {
     trustFilesThatExist = false;
     // a crash within the first seconds may be a damaged file: check everything next time
-    if (code !== 0 && Date.now() - launchedAt < 60_000) setFilesVerified(root, VERSION_ID, false);
+    if (code !== 0 && Date.now() - launchedAt < 60_000) setFilesVerified(root, VERIFY_ID, false);
     onClose(code);
   });
 
@@ -320,6 +343,8 @@ async function launch({ root, gameDir, auth, javaPath, settings, world = null, f
 async function prepare({ root, gameDir, javaPath, settings, report, log }) {
   const mc = versions.ofProfile(settings).mc;
   const VERSION_ID = versions.versionId(mc);
+  const loader = settings.loader || 'fabric';
+  if (loader !== 'fabric') return; // other loaders are set up on the first start (Forge needs its installer)
   await Promise.all([ensureFabric(root, report, mc), ensureMods(gameDir, settings, report, log, true, mc)]);
   if (filesVerified(root, VERSION_ID)) return;
   const launcher = new Client();

@@ -50,7 +50,9 @@ const gb = (mb) => `${(mb / 1024).toFixed(mb % 1024 ? 1 : 0)} GB`;
 /** Minecraft version of a profile (profiles from before multi-version support are 1.21.1). */
 const mcOfProfile = (p) => (p && p.mcVersion) || '1.21.1';
 const activeProfile = () => profileState.profiles.find((p) => p.id === profileState.active) || profileState.profiles[0];
-const profileMeta = (p) => [mcOfProfile(p), gb(p.ramMb), p.performanceMods ? 'Performance pack' : null, p.quickJoin || null].filter(Boolean).join(' · ');
+const LOADER_NAMES = { fabric: 'Fabric', quilt: 'Quilt', neoforge: 'NeoForge', forge: 'Forge', vanilla: 'Vanilla' };
+const loaderName = (p) => LOADER_NAMES[(p && p.loader) || 'fabric'];
+const profileMeta = (p) => [mcOfProfile(p), (p.loader || 'fabric') !== 'fabric' ? loaderName(p) : null, gb(p.ramMb), (p.loader || 'fabric') === 'fabric' && p.performanceMods ? 'Performance pack' : null, p.quickJoin || null].filter(Boolean).join(' · ');
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 
 function mix(a, b, t) {

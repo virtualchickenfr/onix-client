@@ -5,6 +5,7 @@ const invoke = (channel, ...args) => ipcRenderer.invoke(channel, ...args);
 contextBridge.exposeInMainWorld('onix', {
   info: () => invoke('app:info'),
   versions: () => invoke('versions:list'),
+  loaders: () => invoke('loaders:list'),
 
   account: () => invoke('auth:get'),
   login: () => invoke('auth:login'),
@@ -93,6 +94,23 @@ contextBridge.exposeInMainWorld('onix', {
   onInstallProgress: (cb) => ipcRenderer.on('install:progress', (_e, v) => cb(v)),
 
   launch: (profileId, quick) => invoke('game:launch', profileId, quick),
+  stopGame: () => invoke('game:stop'),
+
+  skinProfile: () => invoke('skins:profile'),
+  applySkin: (sha, variant) => invoke('skins:apply', sha, variant),
+  skinVariant: (variant) => invoke('skins:variant', variant),
+  resetSkin: () => invoke('skins:reset'),
+  setCape: (capeId) => invoke('skins:cape', capeId),
+  skinLibrary: () => invoke('skins:library'),
+  keepSkin: () => invoke('skins:keep'),
+  removeSkin: (sha) => invoke('skins:remove', sha),
+  renameSkin: (sha, name) => invoke('skins:rename', sha, name),
+  importSkins: () => invoke('skins:import'),
+  dropSkins: (paths) => invoke('skins:drop', paths),
+
+  createShortcut: (profileId, spec) => invoke('shortcuts:create', profileId, spec),
+  pendingShortcut: () => invoke('shortcuts:pending'),
+  onShortcut: (cb) => ipcRenderer.on('shortcut', (_e, v) => cb(v)),
   prepareProfile: (id) => invoke('profile:prepare', id),
   onPrepare: (cb) => ipcRenderer.on('prepare:progress', (_e, v) => cb(v)),
   minimize: () => ipcRenderer.send('win:minimize'),

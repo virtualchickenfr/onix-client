@@ -48,6 +48,10 @@
       "this.setFilter(true, false); this.setClamp(true);"
     ],
     [
+      "\\bthis\\.sampler = RenderSystem\\.getSamplerCache\\(\\)\\.getRepeat\\(FilterMode\\.LINEAR\\);",
+      "this.setFilter(true, false); this.setClamp(false);"
+    ],
+    [
       "\\bnet\\.minecraft\\.client\\.input\\.(MouseButtonEvent|KeyEvent|CharacterEvent|MouseButtonInfo)\\b",
       "dev.onix.compat.\\1"
     ],

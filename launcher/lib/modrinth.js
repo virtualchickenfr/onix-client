@@ -90,10 +90,14 @@ const SHADER_LOADER = 'iris';
 /** Iris runs shader packs on Fabric (it needs Sodium, which the performance pack brings). */
 const IRIS = 'YL57xq9U';
 
-async function search({ query = '', type = 'mod', offset = 0, sort = 'relevance', limit = 20, mc = MC_VERSION } = {}) {
+/** Modrinth's name for a profile's loader (vanilla profiles see Fabric content only for modpacks). */
+const loaderOf = (loader) => (['fabric', 'quilt', 'neoforge', 'forge'].includes(loader) ? loader : LOADER);
+
+async function search({ query = '', type = 'mod', offset = 0, sort = 'relevance', limit = 20, mc = MC_VERSION, loader = LOADER } = {}) {
   const kind = TYPES.includes(type) ? type : 'mod';
   const facets = [[`project_type:${kind}`], [].concat(mc).map((v) => `versions:${v}`)];
-  if (kind === 'mod' || kind === 'modpack') facets.push([`categories:${LOADER}`]);
+  if (kind === 'mod') facets.push(loader === 'quilt' ? ['categories:quilt', 'categories:fabric'] : [`categories:${loaderOf(loader)}`]);
+  if (kind === 'modpack') facets.push([`categories:${LOADER}`]);
   if (kind === 'shader') facets.push([`categories:${SHADER_LOADER}`]);
   const index = SORTS.includes(sort) ? sort : 'relevance';
   const res = await api(`/search?query=${encodeURIComponent(query)}&facets=${q(facets)}&index=${index}&offset=${Math.max(0, offset | 0)}&limit=${Math.min(50, limit)}`);
@@ -109,20 +113,22 @@ async function search({ query = '', type = 'mod', offset = 0, sort = 'relevance'
       icon: h.icon_url || null,
       categories: (h.categories || []).filter((c) => c !== LOADER && c !== SHADER_LOADER && c !== 'minecraft').slice(0, 3),
       clientSide: h.client_side,
-      managed: !!MANAGED[h.project_id],
+      managed: loader === LOADER && !!MANAGED[h.project_id],
     })),
   };
 }
 
 /** The newest version of a project for Fabric on this Minecraft version (releases first). */
-async function bestVersion(projectId, mc = MC_VERSION) {
-  const list = await api(`/project/${encodeURIComponent(projectId)}/version?loaders=${q([LOADER])}&game_versions=${q([mc])}`);
+async function bestVersion(projectId, mc = MC_VERSION, loader = LOADER) {
+  const loaders = loader === 'quilt' ? ['quilt', 'fabric'] : [loaderOf(loader)];
+  const list = await api(`/project/${encodeURIComponent(projectId)}/version?loaders=${q(loaders)}&game_versions=${q([mc])}`);
   if (!list || !list.length) return null;
   return list.find((v) => v.version_type === 'release') || list[0];
 }
 
 const primaryFile = (version) => version.files.find((f) => f.primary) || version.files[0];
-const fitsHere = (v, mc = MC_VERSION) => v && (v.loaders || []).includes(LOADER) && (v.game_versions || []).includes(mc);
+const fitsHere = (v, mc = MC_VERSION, loader = LOADER) => v && (v.game_versions || []).includes(mc)
+  && (v.loaders || []).some((l) => l === loaderOf(loader) || (loader === 'quilt' && l === 'fabric'));
 
 // ------------------------------------------------------------------ install
 
@@ -130,7 +136,8 @@ const fitsHere = (v, mc = MC_VERSION) => v && (v.loaders || []).includes(LOADER)
  * Installs a mod and its required dependencies into a mods folder.
  * Returns { installed: [{title, version}], skipped: [reason], warnings: [text] }.
  */
-async function install(projectId, modsDir, report = () => {}, mc = MC_VERSION) {
+async function install(projectId, modsDir, report = () => {}, mc = MC_VERSION, loader = LOADER) {
+  const managedHere = loader === LOADER;
   fs.mkdirSync(modsDir, { recursive: true });
   const manifest = cleanManifest(modsDir);
   const installed = [];
@@ -148,13 +155,13 @@ async function install(projectId, modsDir, report = () => {}, mc = MC_VERSION) {
       const pinned = await api(`/version/${encodeURIComponent(item.versionId)}`);
       if (pinned && !item.projectId) item.projectId = pinned.project_id;
       // a pinned version for another loader or game version: use the newest fitting one instead
-      version = fitsHere(pinned, mc) ? pinned : null;
+      version = fitsHere(pinned, mc, loader) ? pinned : null;
     }
     if (!item.projectId) continue;
     if (seen.has(item.projectId)) continue;
     seen.add(item.projectId);
 
-    if (MANAGED[item.projectId]) {
+    if (managedHere && MANAGED[item.projectId]) {
       if (item.root) skipped.push(`${MANAGED[item.projectId]} is already managed by the launcher`);
       continue;
     }
@@ -171,9 +178,9 @@ async function install(projectId, modsDir, report = () => {}, mc = MC_VERSION) {
       if (item.root) throw new Error(`${project.title} only runs on servers.`);
       continue;
     }
-    if (!version) version = await bestVersion(item.projectId, mc);
+    if (!version) version = await bestVersion(item.projectId, mc, loader);
     if (!version) {
-      const msg = `${project.title} has no version for Fabric ${mc}.`;
+      const msg = `${project.title} has no version for ${loaderOf(loader)} ${mc}.`;
       if (item.root) throw new Error(msg);
       warnings.push(`${msg} It is required by the mod you installed.`);
       continue;
@@ -234,13 +241,13 @@ const jarFiles = (modsDir) => (fs.existsSync(modsDir) ? fs.readdirSync(modsDir) 
   .map((f) => path.join(modsDir, f));
 
 /** Mods in the folder with a newer Fabric version on Modrinth. */
-async function checkUpdates(modsDir, mc = MC_VERSION) {
+async function checkUpdates(modsDir, mc = MC_VERSION, loader = LOADER) {
   const files = jarFiles(modsDir).filter((f) => !/onix-client-/.test(path.basename(f)));
   if (!files.length) return [];
   const hashes = new Map(files.map((f) => [sha(f, 'sha1'), f]));
   const latest = await api('/version_files/update', {
     method: 'POST',
-    body: { hashes: [...hashes.keys()], algorithm: 'sha1', loaders: [LOADER], game_versions: [mc] },
+    body: { hashes: [...hashes.keys()], algorithm: 'sha1', loaders: loader === 'quilt' ? ['quilt', 'fabric'] : [loaderOf(loader)], game_versions: [mc] },
   });
   const updates = [];
   for (const [hash, version] of Object.entries(latest || {})) {
@@ -259,12 +266,12 @@ async function checkUpdates(modsDir, mc = MC_VERSION) {
 }
 
 /** Installs the given updates (from checkUpdates); a disabled mod stays disabled. */
-async function applyUpdates(modsDir, updates, report = () => {}, mc = MC_VERSION) {
+async function applyUpdates(modsDir, updates, report = () => {}, mc = MC_VERSION, loader = LOADER) {
   const manifest = cleanManifest(modsDir);
   const done = [];
   for (const u of updates) {
     const version = await api(`/version/${encodeURIComponent(u.versionId)}`);
-    if (!fitsHere(version, mc)) continue;
+    if (!fitsHere(version, mc, loader)) continue;
     const file = primaryFile(version);
     const name = safeFileName(file.filename);
     const oldName = safeFileName(u.file);
@@ -291,7 +298,7 @@ async function applyUpdates(modsDir, updates, report = () => {}, mc = MC_VERSION
  * Installs a resource pack or shader pack into its folder of the profile (dir), with the same manifest as mods.
  * Shaders also bring Iris into the mods folder. Returns { installed, skipped, warnings } like install().
  */
-async function installAsset(projectId, kind, dir, modsDir, report = () => {}, mc = MC_VERSION) {
+async function installAsset(projectId, kind, dir, modsDir, report = () => {}, mc = MC_VERSION, loader = LOADER) {
   const project = await api(`/project/${encodeURIComponent(projectId)}`);
   if (!project) throw new Error('This project no longer exists on Modrinth.');
   if (project.project_type !== kind) throw new Error(`${project.title} is a ${project.project_type}, not a ${kind === 'shader' ? 'shader pack' : 'resource pack'}.`);
@@ -324,7 +331,7 @@ async function installAsset(projectId, kind, dir, modsDir, report = () => {}, mc
   }
   if (kind === 'shader') {
     try {
-      const iris = await install(IRIS, modsDir, report, mc);
+      const iris = await install(IRIS, modsDir, report, mc, loader);
       for (const i of iris.installed) result.installed.push({ ...i, dependency: true });
       result.warnings.push(...iris.warnings);
     } catch (err) {

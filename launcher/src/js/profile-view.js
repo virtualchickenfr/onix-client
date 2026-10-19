@@ -52,7 +52,8 @@ function renderProfileView() {
   iconBox.style.setProperty('--pc', p.color);
   $('#pv-name').textContent = p.name;
   const active = p.id === profileState.active;
-  $('#pv-meta').textContent = [`Minecraft ${mc}`, v && v.onix ? v.note || 'Onix' : 'Fabric without Onix', active ? 'Active profile' : null].filter(Boolean).join(' · ');
+  const loader = p.loader || 'fabric';
+  $('#pv-meta').textContent = [`Minecraft ${mc}`, loader !== 'fabric' ? loaderName(p) : v && v.onix ? v.note || 'Onix' : 'Fabric without Onix', active ? 'Active profile' : null].filter(Boolean).join(' · ');
   pvSyncPlay();
   renderStats(p);
   $$('#pv-tabs button').forEach((b) => b.classList.toggle('active', b.dataset.tab === pv.tab));
@@ -137,6 +138,40 @@ $('#pv-duplicate').addEventListener('click', async () => {
   toast(`${copy ? copy.name : 'Copy'} created`);
   openProfile(res.value.id);
 });
+/** The shortcut icon: the profile's colour tile with its letter in the pixel face, drawn in several sizes. */
+async function shortcutIcons(p) {
+  await document.fonts.load('700 64px "Pixelify Sans"').catch(() => {});
+  const out = {};
+  for (const size of [256, 64, 48, 32, 16]) {
+    const c = document.createElement('canvas');
+    c.width = c.height = size;
+    const g = c.getContext('2d');
+    const u = size / 16;
+    g.fillStyle = '#0b0b0e';
+    g.fillRect(u, u, size - 2 * u, size - 2 * u);
+    g.fillStyle = p.color;
+    g.fillRect(2 * u, 2 * u, size - 4 * u, size - 4 * u);
+    g.fillStyle = 'rgba(255,255,255,.35)';
+    g.fillRect(2 * u, 2 * u, size - 4 * u, u);
+    g.fillStyle = 'rgba(0,0,0,.35)';
+    g.fillRect(2 * u, size - 3 * u, size - 4 * u, u);
+    g.fillStyle = '#0b0b0e';
+    g.font = `700 ${Math.round(size * 0.6)}px "Pixelify Sans", sans-serif`;
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.fillText(p.name.charAt(0).toUpperCase(), size / 2, size / 2 + u * 0.5);
+    out[size] = c.toDataURL('image/png');
+  }
+  return out;
+}
+
+$('#pv-shortcut').addEventListener('click', async () => {
+  const p = pvProfile();
+  const res = await api.createShortcut(p.id, { name: `${p.name} – Onix`, icons: await shortcutIcons(p) });
+  if (!res.ok) return toast(res.error, true);
+  toast('Shortcut created on your desktop');
+});
+
 $('#pv-play').addEventListener('click', async () => {
   if (!account) return login();
   if (pv.id !== profileState.active) {

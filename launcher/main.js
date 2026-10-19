@@ -16,6 +16,8 @@ const modrinth = require('./lib/modrinth');
 const packs = require('./lib/packs');
 const updater = require('./lib/updater');
 const content = require('./lib/content');
+const skins = require('./lib/skins');
+const shortcuts = require('./lib/shortcuts');
 
 const GAME_DIR = path.join(app.getPath('appData'), '.onix');
 const TOTAL_MB = Math.floor(os.totalmem() / 1024 / 1024);
@@ -27,6 +29,9 @@ let running = false;
 /** Launcher profile the running game was started from (its folder must not change underneath it). */
 let runningProfileId = null;
 let playStartedAt = 0;
+let gameProc = null;
+/** A shortcut start (--launch=…) waiting for the page to be ready. */
+let pendingShortcut = shortcuts.launchArgs(process.argv);
 const importSources = new Map();
 
 const DEFAULT_SETTINGS = {
@@ -222,6 +227,21 @@ function safe(fn) {
   };
 }
 
+// one launcher: a second start (for example from a desktop shortcut) hands its arguments to the open window
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  app.on('second-instance', (_e, argv) => {
+    const req = shortcuts.launchArgs(argv);
+    if (win) {
+      if (win.isMinimized()) win.restore();
+      win.show();
+      win.focus();
+    }
+    if (req && win) win.webContents.send('shortcut', req);
+  });
+}
+
 app.whenReady().then(() => {
   fs.mkdirSync(GAME_DIR, { recursive: true });
   store = new Store(path.join(app.getPath('userData'), 'onix-launcher.json'), {});
@@ -231,6 +251,8 @@ app.whenReady().then(() => {
   importer.setCacheDir(path.join(app.getPath('userData'), 'cache'));
 
   versions.refresh(require('./lib/download').fetchJson).catch(() => {});
+  ipcMain.handle('loaders:list', () => require('./lib/loaders').LOADERS);
+  ipcMain.handle('loaders:versions', safe((_e, loader, game) => require('./lib/loaders').versions(String(loader), String(game))));
   ipcMain.handle('versions:list', async () => {
     await versions.refresh(require('./lib/download').fetchJson).catch(() => {});
     return versions.all();
@@ -313,8 +335,8 @@ app.whenReady().then(() => {
   });
   ipcMain.handle('profiles:save', safe((_e, profile) => {
     const before = profiles.list().find((p) => p.id === (profile && profile.id));
-    if (before && running && before.id === runningProfileId && profile.mcVersion && profile.mcVersion !== before.mcVersion) {
-      throw new Error('Close Minecraft before changing the version of this profile.');
+    if (before && running && before.id === runningProfileId && ((profile.mcVersion && profile.mcVersion !== before.mcVersion) || (profile.loader && profile.loader !== (before.loader || 'fabric')))) {
+      throw new Error('Close Minecraft before changing the version or loader of this profile.');
     }
     profiles.save(profile);
     return profileState();
@@ -333,6 +355,7 @@ app.whenReady().then(() => {
   const profileById = (id) => profiles.list().find((p) => p.id === id) || profiles.active();
   const modsDirOf = (id) => path.join(profiles.dir(profileById(id)), 'mods');
   const mcOf = (id) => versions.ofProfile(profileById(id)).mc;
+  const loaderOf = (id) => profileById(id).loader || 'fabric';
   const progress = (p) => send('mods:progress', p);
   /** Mods of the profile Minecraft is running from must not change underneath it. */
   const notWhileRunning = (profileId) => {
@@ -345,13 +368,13 @@ app.whenReady().then(() => {
     const o = opts || {};
     // mods: for the version of the profile they go into; modpacks: any version Onix plays
     const mc = o.type === 'modpack' ? versions.LIST : [versions.isSupported(o.mc) ? o.mc : mcOf(o.profileId)];
-    return modrinth.search({ ...o, mc });
+    return modrinth.search({ ...o, mc, loader: o.type === 'modpack' ? 'fabric' : loaderOf(o.profileId) });
   }));
   ipcMain.handle('modrinth:installed', safe((_e, profileId) => Object.keys(modrinth.cleanManifest(modsDirOf(profileId)))));
   ipcMain.handle('modrinth:install', safe(async (_e, profileId, projectId) => {
     notWhileRunning(profileId);
     if (typeof projectId !== 'string' || !PROJECT_ID.test(projectId)) throw new Error('Unknown project');
-    return modrinth.install(projectId, modsDirOf(profileId), progress, mcOf(profileId));
+    return modrinth.install(projectId, modsDirOf(profileId), progress, mcOf(profileId), loaderOf(profileId));
   }));
   // Resource packs and shaders from Modrinth (shaders bring Iris along)
   const ASSET_KINDS = { resourcepack: 'resourcepacks', shader: 'shaderpacks' };
@@ -364,7 +387,7 @@ app.whenReady().then(() => {
   ipcMain.handle('modrinth:installAsset', safe(async (_e, profileId, kind, projectId) => {
     notWhileRunning(profileId);
     if (typeof projectId !== 'string' || !PROJECT_ID.test(projectId)) throw new Error('Unknown project');
-    return modrinth.installAsset(projectId, kind, assetDir(profileId, kind), modsDirOf(profileId), progress, mcOf(profileId));
+    return modrinth.installAsset(projectId, kind, assetDir(profileId, kind), modsDirOf(profileId), progress, mcOf(profileId), loaderOf(profileId));
   }));
 
   // What else is in a profile: packs, worlds, screenshots, logs
@@ -436,13 +459,13 @@ app.whenReady().then(() => {
     return res.canceled ? null : res.filePaths[0];
   }));
 
-  ipcMain.handle('modrinth:updates', safe((_e, profileId) => modrinth.checkUpdates(modsDirOf(profileId), mcOf(profileId))));
+  ipcMain.handle('modrinth:updates', safe((_e, profileId) => modrinth.checkUpdates(modsDirOf(profileId), mcOf(profileId), loaderOf(profileId))));
   ipcMain.handle('modrinth:update', safe(async (_e, profileId, projectIds) => {
     notWhileRunning(profileId);
     // ask Modrinth again instead of trusting what the page sends
     const wanted = new Set(Array.isArray(projectIds) ? projectIds : []);
-    const updates = (await modrinth.checkUpdates(modsDirOf(profileId), mcOf(profileId))).filter((u) => !wanted.size || wanted.has(u.projectId));
-    return modrinth.applyUpdates(modsDirOf(profileId), updates, progress, mcOf(profileId));
+    const updates = (await modrinth.checkUpdates(modsDirOf(profileId), mcOf(profileId), loaderOf(profileId))).filter((u) => !wanted.size || wanted.has(u.projectId));
+    return modrinth.applyUpdates(modsDirOf(profileId), updates, progress, mcOf(profileId), loaderOf(profileId));
   }));
 
   // Profiles as modpacks: export, import, copy into other launchers
@@ -679,7 +702,7 @@ app.whenReady().then(() => {
         profile.javaPath ? profile.javaPath : s.javaPath && s.javaPath.trim() ? s.javaPath.trim() : ensureJava(GAME_DIR, report, versions.javaMajor(versions.ofProfile(profile).mc)),
       ]);
       log(`Sign-in and Java ready after ${((Date.now() - started) / 1000).toFixed(1)} s`);
-      await game.launch({
+      gameProc = await game.launch({
         fastStart: s.fastStart !== false,
         root: GAME_DIR,
         gameDir: profiles.dir(profile),
@@ -687,6 +710,7 @@ app.whenReady().then(() => {
         javaPath,
         settings: profile,
         world: quick && typeof quick.world === 'string' ? path.basename(quick.world) : null,
+        server: quick && typeof quick.server === 'string' && /^[A-Za-z0-9.\-_]+(:\d{1,5})?$/.test(quick.server) ? quick.server : null,
         report,
         log,
         onStart: () => {
@@ -696,6 +720,7 @@ app.whenReady().then(() => {
         },
         onClose: (code) => {
           running = false;
+          gameProc = null;
           if (playStartedAt) {
             profiles.recordPlay(profile.id, playStartedAt);
             playStartedAt = 0;
@@ -797,6 +822,41 @@ app.whenReady().then(() => {
 
   ipcMain.on('win:minimize', () => win && win.minimize());
   ipcMain.on('win:close', () => win && win.close());
+
+
+  // Stop a running game (asks it to close, forces it after a few seconds)
+  ipcMain.handle('game:stop', safe(() => {
+    if (!gameProc) return false;
+    const proc = gameProc;
+    try { proc.kill(); } catch { /* already gone */ }
+    setTimeout(() => { try { if (proc.exitCode == null) proc.kill('SIGKILL'); } catch { /* gone */ } }, 5000);
+    return true;
+  }));
+
+  // Skins and capes (Mojang profile API) with a local skin library
+  skins.init(path.join(app.getPath('userData'), 'skins'), async () => (await auth.refresh(store, true)).access_token);
+  ipcMain.handle('skins:profile', safe(() => skins.profile()));
+  ipcMain.handle('skins:apply', safe((_e, sha, variant) => skins.apply(String(sha), variant)));
+  ipcMain.handle('skins:variant', safe((_e, variant) => skins.setVariant(variant)));
+  ipcMain.handle('skins:reset', safe(() => skins.reset()));
+  ipcMain.handle('skins:cape', safe((_e, capeId) => skins.setCape(capeId ? String(capeId) : null)));
+  ipcMain.handle('skins:library', safe(() => skins.library()));
+  ipcMain.handle('skins:keep', safe(() => skins.keepCurrent()));
+  ipcMain.handle('skins:remove', safe((_e, sha) => skins.removeFromLibrary(String(sha))));
+  ipcMain.handle('skins:rename', safe((_e, sha, name) => skins.rename(String(sha), name)));
+  ipcMain.handle('skins:import', safe(async () => {
+    const res = await dialog.showOpenDialog(win, { title: 'Add skins', properties: ['openFile', 'multiSelections'], filters: [{ name: 'Skins', extensions: ['png'] }] });
+    return res.canceled ? { added: [], errors: [] } : skins.importFiles(res.filePaths);
+  }));
+  ipcMain.handle('skins:drop', safe((_e, paths) => skins.importFiles((Array.isArray(paths) ? paths : []).filter((p) => /\.png$/i.test(String(p))))));
+
+  // Desktop shortcuts that start a profile (optionally straight into a server or world)
+  ipcMain.handle('shortcuts:create', safe((_e, profileId, spec) => shortcuts.create(profileById(profileId), spec || {}, app.getPath('userData'))));
+  ipcMain.handle('shortcuts:pending', () => {
+    const req = pendingShortcut;
+    pendingShortcut = null;
+    return req && profiles.list().some((p) => p.id === req.id) ? req : null;
+  });
 
   // Launcher updates: checked on every start (lib/updater.js)
   ipcMain.handle('update:get', () => updater.view());
