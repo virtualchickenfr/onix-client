@@ -5,7 +5,7 @@
   "description": "Launcher for Onix Client (Onix on Minecraft 1.21.1, 1.21.4, 1.21.6-1.21.8, 1.21.10 and 1.21.11; every Fabric version playable)",
   "main": "main.js",
   "author": "Onix",
-  "license": "MIT",
+  "license": "LicenseRef-Proprietary",
   "scripts": {
     "start": "electron .",
     "dist": "electron-builder --publish never",

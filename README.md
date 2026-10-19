@@ -533,8 +533,10 @@ To let the importer recognise the module, add its names from other clients to `M
 
 ## License
 
-Onix Client is free and open source under the [MIT License](LICENSE). The Inter font keeps its own SIL Open Font
-License (included next to the font files).
+Onix Client is proprietary: **all rights reserved** (see [LICENSE](LICENSE)). You may download the official builds
+and play with them, and you may read the code here – but copying, modifying, reusing or redistributing the code or
+assets needs written permission. Versions up to 1.0.15 were published under MIT. The fonts (Inter, Pixelify Sans,
+JetBrains Mono) keep their own SIL Open Font License (included next to the font files).
 
 ## Privacy
 

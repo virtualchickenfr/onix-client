@@ -33,7 +33,9 @@
     "SkyRendererMixin",
     "SplashOverlayMixin",
     "ToastManagerMixin",
-    "WorldMixin"
+    "WorldMixin",
+    "SwingDurationMixin",
+    "TotemPopMixin"
   ],
   "injectors": {
     "defaultRequire": 0

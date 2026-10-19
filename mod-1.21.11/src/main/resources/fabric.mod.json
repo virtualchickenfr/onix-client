@@ -10,7 +10,7 @@
   "contact": {
     "sources": "https://github.com/virtualchickenfr/onix-client"
   },
-  "license": "MIT",
+  "license": "LicenseRef-Proprietary",
   "icon": "assets/onix/icon.png",
   "environment": "client",
   "entrypoints": {

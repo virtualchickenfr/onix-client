@@ -101,6 +101,13 @@ public class ModuleManager {
         register(new WeatherChangerModule());
         register(new TimeChangerModule());
         register(new TrailModule());
+        register(new dev.onix.client.module.impl.visual.JumpCirclesModule());
+        register(new dev.onix.client.module.impl.visual.HandAuraModule());
+        register(new dev.onix.client.module.impl.visual.SwingAnimationModule());
+        register(new dev.onix.client.module.impl.visual.WeaponInspectModule());
+        register(new dev.onix.client.module.impl.visual.ColorGradingModule());
+        register(new dev.onix.client.module.impl.visual.CustomGlintModule());
+        register(new dev.onix.client.module.impl.visual.TotemSpiritModule());
         register(new NametagsModule());
         register(new OnixBadgeModule());
         register(new CustomSkyModule());

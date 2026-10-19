@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Onix badge presence, coins, cosmetics shop and gifts.",
   "main": "index.js",
-  "license": "MIT",
+  "license": "LicenseRef-Proprietary",
   "private": true,
   "engines": { "node": ">=18" },
   "scripts": { "start": "node index.js", "test": "node test.js && node test-economy.js" }

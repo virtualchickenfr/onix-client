@@ -24,6 +24,14 @@ public abstract class InGameHudMixin {
     @Unique
     private boolean onix$scoreboardPushed;
 
+    /** Color Grading: drawn first, under everything else of the HUD. */
+    @Inject(method = "render", at = @At("HEAD"))
+    private void onix$colorGrading(CallbackInfo ci, @Local(argsOnly = true) GuiGraphics context) {
+        if (OnixClient.MODULES == null || Minecraft.getInstance().level == null) return;
+        var grading = OnixClient.MODULES.get(dev.onix.client.module.impl.visual.ColorGradingModule.class);
+        if (grading != null && grading.isEnabled()) grading.render(context, context.guiWidth(), context.guiHeight());
+    }
+
     @Inject(method = "renderCrosshair", at = @At("HEAD"), cancellable = true)
     private void onix$crosshair(CallbackInfo ci, @Local(argsOnly = true) GuiGraphics context) {
         CrosshairModule crosshair = (OnixClient.MODULES == null ? null : OnixClient.MODULES.get(CrosshairModule.class));
