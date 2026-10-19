@@ -1,0 +1,20 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "gg.carbon.client.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "AbstractButtonInvoker",
+    "AbstractButtonMixin",
+    "ButtonPlainMixin",
+    "AbstractSliderButtonMixin",
+    "AbstractWidgetInvoker",
+    "MenuSkinGraphicsMixin",
+    "MenuSkinListMixin",
+    "MenuSkinScreenMixin",
+    "MenuSkinTextMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

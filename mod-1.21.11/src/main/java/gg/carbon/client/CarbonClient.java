@@ -21,6 +21,11 @@ public final class CarbonClient {
 		return OnixClient.CONFIG == null ? null : MODULES;
 	}
 
+	/** Vanilla buttons and sliders drawn as Carbon blocks (Design → Carbon Buttons). */
+	public static boolean restyleButtons() {
+		return OnixClient.CONFIG != null && OnixClient.CONFIG.carbonButtons.isOn();
+	}
+
 	public static Config config() {
 		return CONFIG;
 	}
@@ -56,6 +61,14 @@ public final class CarbonClient {
 		public final Flag clickSounds = new Flag() {
 			public boolean on() { return OnixClient.CONFIG.clickSounds.isOn(); }
 			public void set(boolean v) { OnixClient.CONFIG.clickSounds.set(v); }
+		};
+		public final Flag menuBackgrounds = new Flag() {
+			public boolean on() { return OnixClient.CONFIG.menuSkin.isOn(); }
+			public void set(boolean v) { OnixClient.CONFIG.menuSkin.set(v); }
+		};
+		public final Flag buttons = new Flag() {
+			public boolean on() { return OnixClient.CONFIG.carbonButtons.isOn(); }
+			public void set(boolean v) { OnixClient.CONFIG.carbonButtons.set(v); }
 		};
 		public final Choice menuDesign = new Choice();
 		public final Key menuKey = new Key();

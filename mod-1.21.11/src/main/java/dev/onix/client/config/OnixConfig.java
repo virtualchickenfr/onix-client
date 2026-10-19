@@ -55,7 +55,12 @@ public class OnixConfig {
     // Design
     public final BoolSetting lightMode = new BoolSetting("lightMode", "Light Mode", false)
             .describe("Light surfaces and dark text in every Onix menu.");
-    public final ModeSetting buttonStyle = new ModeSetting("buttonStyle", "Button Style", "Rounded", "Square", "Pill");
+    public final ModeSetting buttonStyle = new ModeSetting("buttonShape", "Button Style", "Block", "Rounded", "Square", "Pill")
+            .describe("Block: Carbon's stone buttons with depth, a lift on hover and a light sweep.");
+    public final BoolSetting carbonButtons = new BoolSetting("carbonButtons", "Carbon Buttons Everywhere", true)
+            .describe("Minecraft's own buttons and sliders (options, singleplayer, multiplayer …) as Carbon blocks.");
+    public final BoolSetting menuSkin = new BoolSetting("menuSkin", "Carbon Menu Skin", true)
+            .describe("Minecraft's menus outside a world get Carbon's backdrop, lists, text fields and tooltips.");
     public final ModeSetting menuDesign = new ModeSetting("menuDesign", "Main Menu", "Onix", "Carbon", "Voxel", "Portal", "Classic", "Vanilla")
             .describe("Onix's title screen or one of the Carbon designs (Carbon, Voxel, Portal, Classic).");
     public final BoolSetting menuCharacter = new BoolSetting("menuCharacter", "Character Art", false)
@@ -110,7 +115,7 @@ public class OnixConfig {
     }
 
     public List<Setting<?, ?>> designSettings() {
-        return List.of(menuDesign, menuCharacter, menuStyle, lightMode, buttonStyle, menuScale, titleDesign, menuAnimations, menuParticles, backgroundDim);
+        return List.of(menuDesign, menuCharacter, menuStyle, lightMode, buttonStyle, carbonButtons, menuSkin, menuScale, titleDesign, menuAnimations, menuParticles, backgroundDim);
     }
 
     public List<Setting<?, ?>> loadingSettings() {
@@ -144,7 +149,7 @@ public class OnixConfig {
     private List<Setting<?, ?>> all() {
         return List.of(theme, titleBackground, backgroundSlideshow, slideshowSeconds, backgroundMotion,
                 menuStyle, menuScale, menuAnimations, clickSounds, menuParticles, backgroundDim, tooltips, customMainMenu,
-                onixServer, cosmeticaCape, lightMode, buttonStyle, menuDesign, menuCharacter, titleDesign, loadingScreens, loadingStyle, loadingTips,
+                onixServer, cosmeticaCape, lightMode, buttonStyle, carbonButtons, menuSkin, menuDesign, menuCharacter, titleDesign, loadingScreens, loadingStyle, loadingTips,
                 hideHudInDebug, snapping, snapDistance, editorGrid,
                 notifications, notificationSound, notificationTime, notificationPosition,
                 ruleNotes, rulesOnJoin, rulesSkip, autoSwitchProfiles);

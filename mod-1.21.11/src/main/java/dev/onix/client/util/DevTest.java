@@ -77,6 +77,18 @@ public final class DevTest {
         }
         then(2, () -> mc.setScreen(OnixMenuScreen.forModule(null, OnixClient.MODULES.get(dev.onix.client.module.impl.utility.ShulkerPreviewModule.class))));
         then(40, () -> snap(mc, "06_module_carbon_shulker"));
+        then(2, () -> design("Vanilla"));
+        then(60, () -> snap(mc, "06b_title_vanilla_carbon_buttons"));
+        then(2, () -> mc.setScreen(new net.minecraft.client.gui.screens.options.OptionsScreen(new TitleScreen(), mc.options)));
+        then(40, () -> snap(mc, "06c_vanilla_options"));
+        then(2, () -> mc.setScreen(new net.minecraft.client.gui.screens.options.VideoSettingsScreen(new TitleScreen(), mc, mc.options)));
+        then(40, () -> snap(mc, "06d_vanilla_video_sliders"));
+        then(2, () -> mc.setScreen(new net.minecraft.client.gui.screens.worldselection.SelectWorldScreen(new TitleScreen())));
+        then(60, () -> snap(mc, "06e_vanilla_singleplayer"));
+        then(2, () -> OnixClient.CONFIG.lightMode.set(true));
+        then(30, () -> snap(mc, "06f_vanilla_singleplayer_light"));
+        then(2, () -> OnixClient.CONFIG.lightMode.set(false));
+        then(2, () -> design("Onix"));
         then(2, () -> mc.setScreen(new TitleScreen()));
         then(20, () -> {
             if (java.nio.file.Files.isDirectory(mc.gameDirectory.toPath().resolve("saves").resolve("New World"))) {
@@ -132,6 +144,8 @@ public final class DevTest {
             });
         });
         then(30, () -> snap(mc, "10_inventory_dark_shulker"));
+        then(2, () -> mc.setScreen(new net.minecraft.client.gui.screens.PauseScreen(true)));
+        then(40, () -> snap(mc, "10b_pause_carbon_buttons"));
         then(2, () -> mc.setScreen(null));
         then(2, () -> {
             OnixClient.MODULES.get(dev.onix.client.module.impl.visual.CustomSkyModule.class).setEnabled(true);
