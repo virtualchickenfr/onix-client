@@ -21,3 +21,11 @@ Carbon-only modules.
   branch `devtest-results` (touch `.github/devtest-trigger` to run it).
 - 1.21.11 GUI rendering is deferred: no `RenderSystem.setShaderColor`, no global alpha in GUI; world rendering goes through
   render passes (see `render/SkyRenderer`).
+
+## Other Minecraft versions (ports/)
+- 1.21.10 and 1.21.8 are generated from this folder by `python3 tools/port.py <version>` → `ports/build/mod-<version>` (git-ignored).
+- `ports/<version>/port.json` holds regex rules (renames like Identifier → ResourceLocation), per-file rules, dropped files/mixins;
+  `ports/<version>/overrides/` holds files that differ too much (e.g. button/sky mixins, `dev.onix.compat` input event stand-ins for 1.21.8).
+- Edit code here, then regenerate and compile-check each port; CI builds them (build.yml `mod-ports`) and dev-tests them (devtest.yml, branches devtest-results-<version>).
+- A new port: add ports/<v>/port.json, the version to mc-libs.yml/mc-sources.yml (sources + classpath branches), build.yml, devtest.yml,
+  launcher/package.json extraResources and launcher/lib/versions.js ONIX.

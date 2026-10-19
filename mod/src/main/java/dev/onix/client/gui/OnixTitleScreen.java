@@ -187,23 +187,26 @@ public class OnixTitleScreen extends Screen {
     private void renderOnix(DrawContext ctx, int mx, int my, float alpha) {
         int x = Math.max(28, Math.round(width * 0.075f));
         // keep the list clear of the profile row and the footer at the bottom
-        int top = Math.max(84, Math.min(height / 2 - 18, height - 50 - items.size() * 18 - 14));
+        // rows get tighter on small windows (or large GUI scales) so nothing runs into the footer
+        int step = Math.max(12, Math.min(18, (height - 50 - 84 - 14) / Math.max(1, items.size())));
+        int gap = step >= 16 ? 7 : 4;
+        int top = Math.max(84, Math.min(height / 2 - 18, height - 50 - items.size() * step - 2 * gap));
         wordmark(ctx, x, top - 74, 2.4f, alpha, false);
         Theme.label(ctx, subtitle(), x + 1, top - 36, a(DIM, alpha));
         int y = top;
         for (int i = 0; i < items.size(); i++) {
             Item item = items.get(i);
             if (i == 2 || i == 5) {
-                y += 7;
+                y += gap;
                 ctx.fill(x, y - 4, x + 120, y - 3, Theme.withAlpha(0xFFFFFFFF, (int) (18 * alpha)));
             }
             int w = Math.max(140, Theme.boldWidth(item.label()) + 12);
-            boolean hov = Theme.inside(mx, my, x - 8, y - 4, x + w, y + 14);
+            boolean hov = Theme.inside(mx, my, x - 8, y - (step - 10) / 2, x + w, y + step - (step - 10) / 2);
             float h = hoverAnim("onix:" + item.label(), hov);
             if (h > 0.01f) Theme.round(ctx, x - 8, y + 1, x - 6, y + 9, 1, Theme.fade(Theme.themeAccent(), h * alpha));
             ctx.drawText(textRenderer, Theme.bold(item.label()), x + Math.round(h * 4), y + 1, a(Theme.lerpColor(GREY, WHITE, h), alpha), false);
-            areas.add(new Area(x - 8, y - 4, x + w, y + 14, item.action()));
-            y += 18;
+            areas.add(new Area(x - 8, y - (step - 10) / 2, x + w, y + step - (step - 10) / 2, item.action()));
+            y += step;
         }
     }
 
