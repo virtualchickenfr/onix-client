@@ -1,0 +1,12 @@
+{
+  "minecraft": "1.21.10",
+  "fabric_api": "auto",
+  "depends": "~1.21.10",
+  "rules": [
+    ["\\bnet\\.minecraft\\.resources\\.Identifier\\b", "net.minecraft.resources.ResourceLocation"],
+    ["\\bIdentifier\\b", "ResourceLocation"]
+  ],
+  "file_rules": {},
+  "drop": [],
+  "mixins_drop": []
+}
