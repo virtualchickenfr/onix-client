@@ -154,5 +154,6 @@
       "DrawContextAccess",
       "HungerManagerAccess"
     ]
-  }
+  },
+  "loader": "0.16.14"
 }
