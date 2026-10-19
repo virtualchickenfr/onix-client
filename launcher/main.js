@@ -18,6 +18,7 @@ const updater = require('./lib/updater');
 const content = require('./lib/content');
 const skins = require('./lib/skins');
 const shortcuts = require('./lib/shortcuts');
+const packFolders = require('./lib/packfolders');
 
 const GAME_DIR = path.join(app.getPath('appData'), '.onix');
 const TOTAL_MB = Math.floor(os.totalmem() / 1024 / 1024);
@@ -702,6 +703,7 @@ app.whenReady().then(() => {
         profile.javaPath ? profile.javaPath : s.javaPath && s.javaPath.trim() ? s.javaPath.trim() : ensureJava(GAME_DIR, report, versions.javaMajor(versions.ofProfile(profile).mc)),
       ]);
       log(`Sign-in and Java ready after ${((Date.now() - started) / 1000).toFixed(1)} s`);
+      packFolders.write(profiles.dir(profile), profiles.list().map((p) => profiles.dir(p)), log);
       gameProc = await game.launch({
         fastStart: s.fastStart !== false,
         root: GAME_DIR,

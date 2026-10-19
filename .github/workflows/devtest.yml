@@ -66,6 +66,11 @@ jobs:
           # first start without the accessibility onboarding, small render distance, no menu blur (software OpenGL is slow)
           mkdir -p run
           printf 'onboardAccessibility:false\nmenuBackgroundBlurriness:0\nrenderDistance:4\nsimulationDistance:5\nmaxFps:30\nsoundCategory_master:0.0\nskipMultiplayerWarning:true\n' > run/options.txt
+          # a resource pack outside the profile: the Onix pack-folders list must make it loadable
+          mkdir -p "$PWD/../extra-packs/onix-test-pack" run/config/onix
+          printf '{"pack":{"pack_format":34,"supported_formats":[0,999],"min_format":0,"max_format":999,"description":"Onix test"}}' > "$PWD/../extra-packs/onix-test-pack/pack.mcmeta"
+          echo "$(cd "$PWD/../extra-packs" && pwd)" > run/config/onix/pack-folders.txt
+          echo 'resourcePacks:["vanilla","fabric","file/onix-test-pack"]' >> run/options.txt
           Xvfb :99 -screen 0 1280x720x24 > /dev/null 2>&1 &
           export DISPLAY=:99
           ./gradlew runDevtest --no-daemon --stacktrace > devtest.log 2>&1 &

@@ -4,6 +4,7 @@
   "package": "dev.onix.client.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
+    "ResourcePackManagerMixin",
     "AbstractClientPlayerEntityMixin",
     "BossBarHudMixin",
     "CameraMixin",
