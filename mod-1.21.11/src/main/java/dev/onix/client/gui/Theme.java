@@ -229,11 +229,27 @@ public final class Theme {
 
     // ================================================================== shapes
 
+    /**
+     * Pixel look (Onix menu, like the Onix launcher): shapes get sharp edges with a 1px notch in each corner
+     * instead of round corners, windows a Minecraft-style bevel.
+     */
+    public static boolean pixel = false;
+
     /** Rectangle with (pixel-accurate) rounded corners. */
     public static void round(GuiGraphics ctx, int x1, int y1, int x2, int y2, int radius, int color) {
         int w = x2 - x1;
         int h = y2 - y1;
         if (w <= 0 || h <= 0) return;
+        if (pixel) {
+            if (radius <= 1 || w < 4 || h < 4) {
+                ctx.fill(x1, y1, x2, y2, color);
+            } else {
+                ctx.fill(x1 + 1, y1, x2 - 1, y2, color);
+                ctx.fill(x1, y1 + 1, x1 + 1, y2 - 1, color);
+                ctx.fill(x2 - 1, y1 + 1, x2, y2 - 1, color);
+            }
+            return;
+        }
         int r = Math.min(radius, Math.min(w, h) / 2);
         if (r <= 0) {
             ctx.fill(x1, y1, x2, y2, color);
@@ -263,9 +279,65 @@ public final class Theme {
 
     /** Window: shadow, border, surface and a faint highlight along the top edge. */
     public static void window(GuiGraphics ctx, int x1, int y1, int x2, int y2, int radius) {
+        if (pixel) {
+            bevelWindow(ctx, x1, y1, x2, y2);
+            return;
+        }
         shadow(ctx, x1, y1, x2, y2, radius);
         card(ctx, x1, y1, x2, y2, radius, SURFACE, BORDER_STRONG);
         ctx.fill(x1 + radius, y1 + 1, x2 - radius, y1 + 2, withAlpha(0xFFFFFFFF, 14));
+    }
+
+    /** Minecraft-style window: hard drop shadow, black outline, light top-left and dark bottom-right bevel. */
+    public static void bevelWindow(GuiGraphics ctx, int x1, int y1, int x2, int y2) {
+        ctx.fill(x1 + 4, y2, x2 + 4, y2 + 4, 0x66000000);
+        ctx.fill(x2, y1 + 4, x2 + 4, y2, 0x66000000);
+        ctx.fill(x1 + 1, y1, x2 - 1, y2, 0xFF000000);
+        ctx.fill(x1, y1 + 1, x2, y2 - 1, 0xFF000000);
+        ctx.fill(x1 + 1, y1 + 1, x2 - 1, y2 - 1, SURFACE);
+        ctx.fill(x1 + 1, y1 + 1, x2 - 1, y1 + 2, withAlpha(0xFFFFFFFF, isLight() ? 120 : 34));
+        ctx.fill(x1 + 1, y1 + 2, x1 + 2, y2 - 1, withAlpha(0xFFFFFFFF, isLight() ? 90 : 20));
+        ctx.fill(x1 + 2, y2 - 2, x2 - 1, y2 - 1, withAlpha(0xFF000000, 110));
+        ctx.fill(x2 - 2, y1 + 2, x2 - 1, y2 - 2, withAlpha(0xFF000000, 110));
+    }
+
+    /** Raised bevel on a box (light top/left edge, dark bottom/right edge). */
+    public static void bevel(GuiGraphics ctx, int x1, int y1, int x2, int y2, float strength) {
+        ctx.fill(x1 + 1, y1 + 1, x2 - 1, y1 + 2, withAlpha(0xFFFFFFFF, Math.round((isLight() ? 120 : 26) * strength)));
+        ctx.fill(x1 + 1, y2 - 2, x2 - 1, y2 - 1, withAlpha(0xFF000000, Math.round(90 * strength)));
+    }
+
+    /** Large pixel-font title like the launcher's page heads ("Modules.") – the dot in the accent color. */
+    public static int pixelTitle(GuiGraphics ctx, String s, int x, int y, float scale, int color) {
+        Font f = font();
+        ctx.pose().pushMatrix();
+        ctx.pose().translate(x, y);
+        ctx.pose().scale(scale, scale);
+        ctx.drawString(f, s, 1, 1, withAlpha(0xFF000000, 120), false);
+        ctx.drawString(f, s, 0, 0, color, false);
+        int w = f.width(s);
+        ctx.drawString(f, ".", w + 1, 1, withAlpha(0xFF000000, 120), false);
+        ctx.drawString(f, ".", w, 0, accent(), false);
+        ctx.pose().popMatrix();
+        return x + Math.round((w + f.width(".")) * scale);
+    }
+
+    /** Onix tooltip: dark panel with a 1px border, drawn above everything else. */
+    public static void tooltip(GuiGraphics ctx, java.util.List<String> lines, int mx, int my, int screenW, int screenH) {
+        if (lines.isEmpty()) return;
+        int w = 0;
+        for (String l : lines) w = Math.max(w, width(l));
+        int h = lines.size() * 10 - 1;
+        int x = mx + 10;
+        int y = my - 4;
+        if (x + w + 12 > screenW) x = Math.max(2, mx - w - 16);
+        if (y + h + 12 > screenH) y = Math.max(2, screenH - h - 12);
+        ctx.nextStratum();
+        ctx.fill(x + 2, y + h + 10, x + w + 12, y + h + 12, 0x55000000);
+        ctx.fill(x, y, x + w + 10, y + h + 10, 0xFF000000);
+        ctx.fill(x + 1, y + 1, x + w + 9, y + h + 9, isLight() ? 0xFFF4F4F6 : 0xFF141419);
+        ctx.fill(x + 1, y + 1, x + w + 9, y + 2, withAlpha(accent(), 200));
+        for (int i = 0; i < lines.size(); i++) text(ctx, lines.get(i), x + 5, y + 5 + i * 10, i == 0 ? TEXT : TEXT_2);
     }
 
     /** Glass panel (bloom style) with a soft accent glow. */
@@ -314,6 +386,15 @@ public final class Theme {
     public static void toggle(GuiGraphics ctx, int x, int y, float t) {
         int w = 18;
         int h = 10;
+        if (pixel) {
+            // pixel switch: dark track with a square knob, the track fills with the accent when on
+            ctx.fill(x, y, x + w, y + h, 0xFF000000);
+            ctx.fill(x + 1, y + 1, x + w - 1, y + h - 1, lerpColor(SURFACE_SUNKEN, accent(), t));
+            int k = x + 2 + Math.round((w - 10) * t);
+            ctx.fill(k, y + 2, k + 6, y + h - 2, lerpColor(TEXT_3, onAccent(), t));
+            ctx.fill(k, y + 2, k + 6, y + 3, withAlpha(0xFFFFFFFF, 70));
+            return;
+        }
         round(ctx, x, y, x + w, y + h, 5, lerpColor(SURFACE_4, accent(), t));
         int knob = x + 1 + Math.round((w - 10) * t);
         round(ctx, knob, y + 1, knob + 8, y + h - 1, 4, lerpColor(TEXT_2, onAccent(), t));

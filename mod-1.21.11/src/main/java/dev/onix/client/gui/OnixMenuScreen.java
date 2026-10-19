@@ -365,6 +365,15 @@ public class OnixMenuScreen extends Screen {
 
     @Override
     public void render(GuiGraphics ctx, int rawX, int rawY, float delta) {
+        Theme.pixel = true;
+        try {
+            renderMenu(ctx, rawX, rawY, delta);
+        } finally {
+            Theme.pixel = false;
+        }
+    }
+
+    private void renderMenu(GuiGraphics ctx, int rawX, int rawY, float delta) {
         Theme.refresh();
         long now = System.nanoTime();
         float dt = Math.min(0.1f, (now - lastFrame) / 1_000_000_000f);
@@ -414,9 +423,9 @@ public class OnixMenuScreen extends Screen {
         ctx.pose().popMatrix();
 
         if (tooltip != null && OnixClient.CONFIG.tooltips.isOn()) {
-            List<Component> lines = new ArrayList<>();
-            for (String line : wrap(tooltip, 200, 6)) lines.add(Theme.ui(line));
-            ctx.setComponentTooltipForNextFrame(font, lines, rawX, rawY);
+            List<String> lines = new ArrayList<>();
+            for (String part : tooltip.split("\n")) lines.addAll(wrap(part, 200, 6));
+            Theme.tooltip(ctx, lines, rawX, rawY, width, height);
         }
     }
 
@@ -431,16 +440,17 @@ public class OnixMenuScreen extends Screen {
         hit(x0, y0, x1, y1, () -> {}, () -> {}); // clicks inside the window never close it
 
         // sidebar
-        Theme.round(ctx, x0 + 1, y0 + 1, x0 + SIDEBAR, y1 - 1, 9, Theme.SURFACE_SUNKEN);
-        ctx.fill(x0 + SIDEBAR - 9, y0 + 1, x0 + SIDEBAR, y1 - 1, Theme.SURFACE_SUNKEN);
-        ctx.fill(x0 + SIDEBAR, y0 + 1, x0 + SIDEBAR + 1, y1 - 1, Theme.BORDER);
+        ctx.fill(x0 + 2, y0 + 2, x0 + SIDEBAR, y1 - 2, Theme.SURFACE_SUNKEN);
+        ctx.fill(x0 + SIDEBAR, y0 + 2, x0 + SIDEBAR + 1, y1 - 2, 0xFF000000);
+        ctx.fill(x0 + SIDEBAR + 1, y0 + 2, x0 + SIDEBAR + 2, y1 - 2, Theme.withAlpha(0xFFFFFFFF, Theme.isLight() ? 90 : 14));
         renderSidebar(ctx, mx, my, x0, y0, y1);
 
         // top bar + content
         int cx1 = x0 + SIDEBAR + 20;
         int cx2 = x1 - 20;
         renderTopbar(ctx, mx, my, cx1, y0, cx2, true);
-        ctx.fill(x0 + SIDEBAR + 1, y0 + 50, x1 - 1, y0 + 51, Theme.BORDER);
+        ctx.fill(x0 + SIDEBAR + 2, y0 + 50, x1 - 2, y0 + 51, 0xFF000000);
+        ctx.fill(x0 + SIDEBAR + 2, y0 + 51, x1 - 2, y0 + 52, Theme.withAlpha(0xFFFFFFFF, Theme.isLight() ? 90 : 12));
 
         int[] content = {cx1, y0 + 64, cx2, y1 - 18};
         ctx.pose().pushMatrix();
@@ -451,9 +461,14 @@ public class OnixMenuScreen extends Screen {
 
     private void renderSidebar(GuiGraphics ctx, int mx, int my, int x0, int y0, int y1) {
         int x = x0 + 12;
-        drawTinted(ctx, LOGO, x + 2, y0 + 15, 14, 14, 128, 0xFFFFFFFF, 1f);
-        Theme.textBold(ctx, "Onix", x + 21, y0 + 18, Theme.TEXT);
-        Theme.small(ctx, "Client", x + 23 + Theme.boldWidth("Onix"), y0 + 20, Theme.TEXT_3);
+        drawTinted(ctx, LOGO, x + 2, y0 + 14, 15, 15, 128, Theme.TEXT, 1f);
+        ctx.pose().pushMatrix();
+        ctx.pose().translate(x + 23, y0 + 15);
+        ctx.pose().scale(1.5f, 1.5f);
+        ctx.drawString(font, "ONIX", 1, 1, Theme.withAlpha(0xFF000000, 120), false);
+        ctx.drawString(font, "ONIX", 0, 0, Theme.TEXT, false);
+        ctx.pose().popMatrix();
+        Theme.label(ctx, "Client", x + 24 + Math.round(font.width("ONIX") * 1.5f) + 4, y0 + 21, Theme.TEXT_3);
 
         int y = y0 + 44;
         y = navGroup(ctx, mx, my, "Modules", NAV_MODULES, x, y);
@@ -480,8 +495,12 @@ public class OnixMenuScreen extends Screen {
             boolean active = isActive(nav);
             boolean hov = hovered(mx, my, x - 2, y, x2, y + 17);
             float ht = anim("nav:" + nav.label(), hov || active, 18f);
-            if (ht > 0.01f) Theme.round(ctx, x - 2, y, x2, y + 17, 5, Theme.fade(active ? Theme.SURFACE_3 : Theme.SURFACE_2, Math.max(ht, active ? 1 : 0)));
-            if (active) Theme.round(ctx, x - 2, y + 4, x, y + 13, 1, Theme.accent());
+            if (ht > 0.01f) ctx.fill(x - 2, y, x2, y + 17, Theme.fade(active ? Theme.SURFACE_3 : Theme.SURFACE_2, Math.max(ht, active ? 1 : 0)));
+            if (active) {
+                // like the selected hotbar slot: a light frame around the item
+                Theme.outline(ctx, x - 3, y - 1, x2 + 1, y + 18, Theme.withAlpha(Theme.TEXT, 220));
+                ctx.fill(x - 2, y, x - 1, y + 17, Theme.accent());
+            }
             drawIcon(ctx, nav.icon(), x + 4, y + 4, 9, active ? Theme.accent() : Theme.lerpColor(Theme.TEXT_3, Theme.TEXT_2, ht));
             Theme.text(ctx, nav.label(), x + 19, y + 5, active ? Theme.TEXT : Theme.lerpColor(Theme.TEXT_2, Theme.TEXT, ht));
             String count = navCount(nav);
@@ -521,8 +540,9 @@ public class OnixMenuScreen extends Screen {
             tx += 20;
         }
         int reserved = withSearch ? 250 : 0;
-        Theme.scaled(ctx, Theme.display(Theme.ellipsize(pageTitle(), (int) ((x2 - tx - reserved) / 1.15f))), tx, ty - 1, 1.15f, Theme.TEXT);
-        Theme.small(ctx, Theme.ellipsize(pageSubtitle(), (int) ((x2 - tx - reserved) / 0.75f)), tx, ty + 14, Theme.TEXT_3);
+        String title = font.plainSubstrByWidth(pageTitle(), (int) ((x2 - tx - reserved) / 2f) - 6);
+        Theme.pixelTitle(ctx, title, tx, ty - 5, 2f, Theme.TEXT);
+        Theme.small(ctx, Theme.ellipsize(pageSubtitle(), (int) ((x2 - tx - reserved) / 0.75f)), tx, ty + 15, Theme.TEXT_3);
 
         if (!withSearch) return;
         int sw = 160;
@@ -757,9 +777,10 @@ public class OnixMenuScreen extends Screen {
             int cw = Theme.smallWidth(label) + 16;
             boolean sel = filter == i;
             boolean hov = hovered(mx, my, fx, r[1], fx + cw, r[1] + 15);
-            Theme.card(ctx, fx, r[1], fx + cw, r[1] + 15, Theme.corner(7), sel ? Theme.SURFACE_4 : hov ? Theme.SURFACE_3 : Theme.SURFACE_2,
-                    sel ? Theme.BORDER_STRONG : Theme.BORDER);
-            Theme.small(ctx, label, fx + 8, r[1] + 5, sel ? Theme.TEXT : Theme.TEXT_2);
+            Theme.card(ctx, fx, r[1], fx + cw, r[1] + 15, Theme.corner(7), sel ? Theme.TEXT : hov ? Theme.SURFACE_3 : Theme.SURFACE_2,
+                    sel ? Theme.TEXT : Theme.BORDER);
+            if (!sel) Theme.bevel(ctx, fx, r[1], fx + cw, r[1] + 15, 1f);
+            Theme.small(ctx, label, fx + 8, r[1] + 5, sel ? Theme.SURFACE : Theme.TEXT_2);
             int index = i;
             hit(fx, r[1], fx + cw, r[1] + 15, () -> {
                 filter = index;
@@ -831,6 +852,8 @@ public class OnixMenuScreen extends Screen {
         boolean focused = focusIndex >= 0 && focusIndex < gridList.size() && gridList.get(focusIndex).module() == m;
         if (focused) Theme.round(ctx, x - 2, y - 2, x + w + 2, y + h + 2, Theme.corner(8) + 2, Theme.withAlpha(Theme.accent(), 170));
         Theme.card(ctx, x, y, x + w, y + h, Theme.corner(8), Theme.lerpColor(Theme.SURFACE_2, Theme.SURFACE_3, Math.max(ht, focused ? 0.6f : 0f)), border);
+        Theme.bevel(ctx, x, y, x + w, y + h, 1f);
+        if (on > 0.01f) ctx.fill(x + 1, y + 1, x + 3, y + h - 1, Theme.fade(Theme.accent(), on));
 
         drawIcon(ctx, m.getCategory().getIcon(), x + 11, y + 11, 9, Theme.lerpColor(Theme.TEXT_3, Theme.accent(), on));
         // server-rule note and favorite star, top right
@@ -1243,7 +1266,7 @@ public class OnixMenuScreen extends Screen {
         if (!s.isDefault()) Theme.round(ctx, x + 5, textY + 2, x + 8, textY + 5, 1, Theme.accent());
         if (desc) Theme.small(ctx, Theme.ellipsize(s.getDescription(), (int) (labelMax / 0.75f)), x + 12, y + 20, Theme.TEXT_3);
         boolean nameHov = hovered(mx, my, x + 4, y, x + 12 + Math.max(Theme.width(name), labelMax / 2), y + base);
-        if (nameHov) {
+        if (nameHov && (hasDescription(s) || !s.isDefault())) {
             String tip = hasDescription(s) ? s.getDescription() : s.getName();
             if (!s.isDefault()) tip += "\nModified · right-click to reset";
             tooltip = tip;
