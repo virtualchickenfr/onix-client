@@ -1,7 +1,7 @@
 {
   "minecraft": "1.21.10",
   "fabric_api": "auto",
-  "depends": "~1.21.10",
+  "depends": "1.21.10",
   "rules": [
     [
       "\\bnet\\.minecraft\\.resources\\.Identifier\\b",

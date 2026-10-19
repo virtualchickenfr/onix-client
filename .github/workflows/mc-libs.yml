@@ -22,6 +22,12 @@ jobs:
           - dir: ports/build/mod-1.21.8
             port: '1.21.8'
             java: 25
+          - dir: ports/build/mod-1.21.7
+            port: '1.21.7'
+            java: 25
+          - dir: ports/build/mod-1.21.6
+            port: '1.21.6'
+            java: 25
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
