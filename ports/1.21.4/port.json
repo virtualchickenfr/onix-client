@@ -141,6 +141,12 @@
         "player\\.age \\+ tickDelta",
         "player.age"
       ]
+    ],
+    "src/main/java/dev/onix/client/gui/OnixMenuScreen.java": [
+      [
+        "\\bctx\\.enableScissor\\(",
+        "dev.onix.compat.Scissor.screen(ctx, "
+      ]
     ]
   },
   "drop": [

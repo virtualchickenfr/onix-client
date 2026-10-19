@@ -5,7 +5,14 @@
   "yarn": "auto",
   "depends": "1.21.5",
   "rules": [],
-  "file_rules": {},
+  "file_rules": {
+    "src/main/java/dev/onix/client/gui/OnixMenuScreen.java": [
+      [
+        "\\bctx\\.enableScissor\\(",
+        "dev.onix.compat.Scissor.screen(ctx, "
+      ]
+    ]
+  },
   "drop": [],
   "mixins_drop": [],
   "loader": "0.16.14"
