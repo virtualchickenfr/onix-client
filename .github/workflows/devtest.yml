@@ -1,4 +1,4 @@
-name: Dev test (1.21.11)
+name: Dev test
 # Starts Minecraft 1.21.11 with the mod in a virtual display, walks through the screens (util/DevTest.java),
 # joins a test world and pushes the screenshots and the game log to the branch devtest-results.
 on:
@@ -12,6 +12,15 @@ concurrency:
   cancel-in-progress: true
 jobs:
   devtest:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - dir: mod-1.21.11
+            branch: devtest-results
+          - dir: ports/build/mod-1.21.10
+            port: '1.21.10'
+            branch: devtest-results-1.21.10
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
@@ -22,10 +31,13 @@ jobs:
           java-version: |
             21
             25
+      - name: Generate port
+        if: matrix.port
+        run: python3 tools/port.py ${{ matrix.port }}
       - name: Virtual display and software OpenGL
         run: sudo apt-get update -qq && sudo apt-get install -y -qq xvfb mesa-utils libgl1-mesa-dri x11-apps imagemagick > /dev/null
       - name: Run the dev test
-        working-directory: mod-1.21.11
+        working-directory: ${{ matrix.dir }}
         shell: bash
         env:
           LIBGL_ALWAYS_SOFTWARE: '1'
@@ -55,15 +67,15 @@ jobs:
         run: |
           out=$(mktemp -d)
           mkdir -p "$out/screenshots"
-          cp mod-1.21.11/run/screenshots/*.png "$out/screenshots/" 2>/dev/null || true
-          cp mod-1.21.11/run/logs/latest.log "$out/latest.log" 2>/dev/null || true
-          cp mod-1.21.11/devtest.log "$out/gradle.log" 2>/dev/null || true
-          cp -r mod-1.21.11/run/crash-reports "$out/" 2>/dev/null || true
-          cp -r mod-1.21.11/diag "$out/" 2>/dev/null || true
+          cp ${{ matrix.dir }}/run/screenshots/*.png "$out/screenshots/" 2>/dev/null || true
+          cp ${{ matrix.dir }}/run/logs/latest.log "$out/latest.log" 2>/dev/null || true
+          cp ${{ matrix.dir }}/devtest.log "$out/gradle.log" 2>/dev/null || true
+          cp -r ${{ matrix.dir }}/run/crash-reports "$out/" 2>/dev/null || true
+          cp -r ${{ matrix.dir }}/diag "$out/" 2>/dev/null || true
           cd "$out"
-          git init -q -b devtest-results
+          git init -q -b ${{ matrix.branch }}
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
           git add -A
           git commit -q -m "Dev test of ${GITHUB_SHA}"
-          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" devtest-results
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" ${{ matrix.branch }}

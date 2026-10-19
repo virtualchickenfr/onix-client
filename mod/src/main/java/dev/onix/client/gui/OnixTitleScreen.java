@@ -186,7 +186,8 @@ public class OnixTitleScreen extends Screen {
 
     private void renderOnix(DrawContext ctx, int mx, int my, float alpha) {
         int x = Math.max(28, Math.round(width * 0.075f));
-        int top = height / 2 - 18;
+        // keep the list clear of the profile row and the footer at the bottom
+        int top = Math.max(84, Math.min(height / 2 - 18, height - 50 - items.size() * 18 - 14));
         wordmark(ctx, x, top - 74, 2.4f, alpha, false);
         Theme.label(ctx, subtitle(), x + 1, top - 36, a(DIM, alpha));
         int y = top;

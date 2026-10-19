@@ -12,6 +12,7 @@ ports/<version>/port.json describes the version:
     file_rules    {relative path: [[regex, replacement], ...]} applied to single files
     drop          relative paths (files or folders) removed from the copy
     mixins_drop   mixin class names removed from onix.mixins.json / carbon.mixins.json
+    mixins_add    {mixin config file: [class names]} added (the classes come from overrides/)
 ports/<version>/overrides/ is copied over the result last (same layout as mod-1.21.11).
 """
 import json, os, re, shutil, sys, urllib.request
@@ -71,6 +72,15 @@ def main(version, out=None):
                 if s2 == s:
                     print(f'warning: rule {rx.pattern[:60]!r} matched nothing in {rel}')
                 s = s2
+            # rules can turn two imports into the same one
+            seen, lines = set(), []
+            for line in s.split('\n'):
+                if line.startswith('import '):
+                    if line in seen:
+                        continue
+                    seen.add(line)
+                lines.append(line)
+            s = '\n'.join(lines)
             if s != orig:
                 open(p, 'w', encoding='utf8').write(s)
 
@@ -81,6 +91,7 @@ def main(version, out=None):
             continue
         d = json.load(open(p, encoding='utf8'))
         d['client'] = [m for m in d['client'] if m not in spec.get('mixins_drop', [])]
+        d['client'] += [m for m in spec.get('mixins_add', {}).get(name, []) if m not in d['client']]
         json.dump(d, open(p, 'w', encoding='utf8'), indent=2)
 
     over = os.path.join(spec_dir, 'overrides')
