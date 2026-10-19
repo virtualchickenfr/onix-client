@@ -2,34 +2,87 @@
 
 /* Profiles page and the profile editor. */
 
+let profileSort = 'played';
+try { profileSort = localStorage.getItem('onix.profileSort') || 'played'; } catch { /* storage may be blocked */ }
+
+function sortedProfiles() {
+  const q = ($('#pf-search').value || '').trim().toLowerCase();
+  const list = profileState.profiles.filter((p) => !q || p.name.toLowerCase().includes(q) || mcOfProfile(p).includes(q));
+  const by = {
+    played: (a, b) => (b.lastPlayed || 0) - (a.lastPlayed || 0) || a.name.localeCompare(b.name),
+    name: (a, b) => a.name.localeCompare(b.name),
+    version: (a, b) => mcOfProfile(b).localeCompare(mcOfProfile(a), undefined, { numeric: true }) || a.name.localeCompare(b.name),
+    time: (a, b) => (b.playTimeMs || 0) - (a.playTimeMs || 0),
+    created: (a, b) => (b.createdAt || 0) - (a.createdAt || 0),
+  }[profileSort] || (() => 0);
+  return list.sort(by);
+}
+
 function renderProfiles() {
   const grid = $('#profile-grid');
-  grid.replaceChildren(...profileState.profiles.map((p) => {
+  $('#pf-sort').value = profileSort;
+  const list = sortedProfiles();
+  if (!list.length) {
+    grid.replaceChildren(el('div', { class: 'empty' }, [el('b', { text: 'No profile matches' }), el('span', { text: 'Try another name or version.' })]));
+    return;
+  }
+  grid.replaceChildren(...list.map((p) => {
     const active = p.id === profileState.active;
-    return el('div', { class: `pcard${active ? ' active' : ''}`, style: `--pc:${p.color}` }, [
+    const open = () => openProfile(p.id);
+    const card = el('div', { class: `pcard${active ? ' active' : ''}`, style: `--pc:${p.color}`, tabindex: '0', role: 'button', 'aria-label': `Open ${p.name}` }, [
       el('div', { class: 'pcard-top' }, [
         el('div', { class: 'pcard-icon', text: p.name.charAt(0).toUpperCase() }),
-        el('div', { class: 'pcard-name', text: p.name }),
+        el('div', { class: 'pcard-head' }, [
+          el('div', { class: 'pcard-name', text: p.name }),
+          el('div', { class: 'pcard-sub', text: `Minecraft ${mcOfProfile(p)}` }),
+        ]),
         active ? el('span', { class: 'badge', text: 'Active' }) : null,
-        el('button', { class: 'icon-btn pcard-edit', title: 'Edit profile', 'aria-label': 'Edit profile', onclick: () => openProfileEditor(p) }, [icon('pencil')]),
       ]),
-      el('div', { class: 'meta' }, profileMeta(p).split(' · ').map((m) => el('span', { text: m }))),
+      el('div', { class: 'pcard-stats' }, [
+        el('span', { title: 'Play time' }, [icon('clock'), fmtPlayTime(p.playTimeMs)]),
+        el('span', { title: 'Last played' }, [icon('play'), fmtAgo(p.lastPlayed)]),
+      ]),
       el('div', { class: 'pcard-actions' }, [
-        active ? null : el('button', {
+        el('button', {
           class: 'btn sm primary',
+          onclick: async (e) => {
+            e.stopPropagation();
+            if (!account) return login();
+            if (!active) {
+              profileState = await api.selectProfile(p.id);
+              refreshProfiles();
+            }
+            showView('home');
+            $('#btn-play').click();
+          },
+        }, [icon('play'), 'Play']),
+        active ? null : el('button', {
+          class: 'btn sm',
           text: 'Select',
-          onclick: async () => {
+          onclick: async (e) => {
+            e.stopPropagation();
             profileState = await api.selectProfile(p.id);
             refreshProfiles();
             toast(`${p.name} is now active`);
           },
         }),
-        el('button', { class: 'btn sm', onclick: () => openMods(p.id) }, [icon('puzzle'), 'Mods']),
-        el('button', { class: 'btn sm', onclick: () => openExport(p) }, [icon('send'), 'Export']),
+        el('div', { class: 'spacer' }),
+        el('button', { class: 'icon-btn', title: 'Edit profile', 'aria-label': 'Edit profile', onclick: (e) => { e.stopPropagation(); openProfileEditor(p); } }, [icon('pencil')]),
+        el('button', { class: 'icon-btn', title: 'Open', 'aria-label': 'Open', onclick: (e) => { e.stopPropagation(); open(); } }, [icon('arrow')]),
       ]),
     ]);
+    card.addEventListener('click', open);
+    card.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target === card) open(); });
+    return card;
   }));
 }
+
+$('#pf-search').addEventListener('input', renderProfiles);
+$('#pf-sort').addEventListener('change', () => {
+  profileSort = $('#pf-sort').value;
+  try { localStorage.setItem('onix.profileSort', profileSort); } catch { /* ignore */ }
+  renderProfiles();
+});
 
 let editing = null;
 let editColor = PROFILE_COLORS[0];

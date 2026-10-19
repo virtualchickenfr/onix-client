@@ -3,6 +3,11 @@ const path = require('path');
 const crypto = require('crypto');
 const versions = require('./versions');
 
+const clampInt = (v, min, max) => {
+  const n = Math.round(Number(v) || 0);
+  return n <= 0 ? 0 : Math.max(min, Math.min(max, n));
+};
+
 const COLORS = ['#ececf1', '#8b7cff', '#4c8dff', '#5eead4', '#ff8fc4', '#ffb547', '#ff4d5e'];
 
 /** Launcher profiles: each one has its own game folder (mods, worlds, settings). */
@@ -36,6 +41,16 @@ class Profiles {
       quickJoin: typeof p.quickJoin === 'string' ? p.quickJoin.trim() : '',
       performanceMods: p.performanceMods !== false,
       mcVersion: versions.isSupported(p.mcVersion) ? p.mcVersion : versions.DEFAULT,
+      // extra Java arguments, a Java to use instead of the bundled one, and the game window
+      jvmArgs: typeof p.jvmArgs === 'string' ? p.jvmArgs.slice(0, 2000) : '',
+      javaPath: typeof p.javaPath === 'string' ? p.javaPath.trim().slice(0, 500) : '',
+      width: clampInt(p.width, 0, 7680),
+      height: clampInt(p.height, 0, 4320),
+      fullscreen: p.fullscreen === true,
+      // statistics, kept by the launcher
+      playTimeMs: Math.max(0, Number(p.playTimeMs) || 0),
+      lastPlayed: Number(p.lastPlayed) || 0,
+      createdAt: Number(p.createdAt) || Date.now(),
     };
   }
 
@@ -82,6 +97,27 @@ class Profiles {
     }
     this.store.set('activeProfile', profile.id);
     return profile;
+  }
+
+  /** A full copy of a profile (worlds, mods, settings) under a new name; statistics start over. */
+  duplicate(id) {
+    const base = this.list().find((p) => p.id === id);
+    if (!base) throw new Error('Profile not found');
+    const used = new Set(this.list().map((p) => p.name));
+    let name = `${base.name} (copy)`.slice(0, 24);
+    for (let i = 2; used.has(name); i++) name = `${base.name.slice(0, 18)} (${i})`;
+    const copy = this.save({ ...base, id: undefined, name, playTimeMs: 0, lastPlayed: 0, createdAt: Date.now() });
+    const from = this.dir(base);
+    const to = this.dir(copy);
+    fs.cpSync(from, to, { recursive: true, filter: (src) => !/[\\/](logs|crash-reports)$/.test(src) });
+    return copy;
+  }
+
+  /** Adds a finished session to the play time. */
+  recordPlay(id, startedAt, endedAt = Date.now()) {
+    const p = this.list().find((x) => x.id === id);
+    if (!p) return;
+    this.save({ ...p, playTimeMs: (p.playTimeMs || 0) + Math.max(0, endedAt - startedAt), lastPlayed: endedAt });
   }
 
   remove(id) {

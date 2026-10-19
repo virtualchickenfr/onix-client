@@ -76,6 +76,27 @@ function openModpacks() {
   showTab('browse');
 }
 
+/** Resource packs or shaders from Modrinth for one profile ('resourcepack' or 'shader'). */
+function openAssets(profileId, kind) {
+  mm.mode = kind;
+  mm.profileId = profileId;
+  const p = profileOf(profileId);
+  const shader = kind === 'shader';
+  $('#mm-title').textContent = `${shader ? 'Shaders' : 'Resource Packs'} · ${p.name}`;
+  $('#mm-sub').textContent = shader
+    ? `Shader packs for Minecraft ${mcOfProfile(p)} – Iris is added to the profile with the first one`
+    : `Resource packs for Minecraft ${mcOfProfile(p)} – switch them on in Options › Resource Packs`;
+  $('#mm-dot').style.background = p.color;
+  $('#mm-tabs').hidden = true;
+  $('#mm-query').placeholder = shader ? 'Search shaders…' : 'Search resource packs…';
+  $('#mm-query').value = '';
+  setBusyStatus('');
+  openModal('#mods-modal');
+  showTab('browse');
+}
+
+const isAssetMode = () => mm.mode === 'resourcepack' || mm.mode === 'shader';
+
 function showTab(tab) {
   mm.tab = tab;
   $$('#mm-tabs button').forEach((b) => b.classList.toggle('active', b.dataset.tab === tab));
@@ -93,6 +114,7 @@ $$('#mm-tabs button').forEach((b) => b.addEventListener('click', () => showTab(b
 /** Keeps the Mods page in sync when the dialog changed the active profile's mods. */
 function modsChanged() {
   if (currentView === 'mods' && mm.profileId === profileState.active) renderMods();
+  if (typeof profileViewChanged === 'function') profileViewChanged(mm.profileId);
 }
 
 // ---------------------------------------------------------------- installed
@@ -211,9 +233,13 @@ async function search(reset) {
     if (mm.mode === 'mods') {
       const inst = await api.installedModrinth(mm.profileId);
       mm.installed = new Set(inst.ok ? inst.value : []);
+    } else if (isAssetMode()) {
+      const inst = await api.installedAssets(mm.profileId, mm.mode);
+      mm.installed = new Set(inst.ok ? inst.value : []);
     }
   }
-  const res = await api.searchModrinth({ query: $('#mm-query').value.trim(), type: mm.mode === 'modpacks' ? 'modpack' : 'mod', offset: mm.offset, sort: mm.sort, profileId: mm.profileId });
+  const type = mm.mode === 'modpacks' ? 'modpack' : isAssetMode() ? mm.mode : 'mod';
+  const res = await api.searchModrinth({ query: $('#mm-query').value.trim(), type, offset: mm.offset, sort: mm.sort, profileId: mm.profileId });
   if (seq !== mm.seq) return; // a newer search started meanwhile
   if (!res.ok) {
     body.replaceChildren(el('div', { class: 'empty' }, [
@@ -232,7 +258,7 @@ async function search(reset) {
 function renderHits() {
   const body = $('#mm-body');
   if (!mm.hits.length) {
-    body.replaceChildren(el('div', { class: 'empty' }, [el('b', { text: 'Nothing found' }), el('span', { text: 'Try another word – only Fabric projects for this Minecraft version are shown.' })]));
+    body.replaceChildren(el('div', { class: 'empty' }, [el('b', { text: 'Nothing found' }), el('span', { text: isAssetMode() ? 'Try another word – only packs for this Minecraft version are shown.' : 'Try another word – only Fabric projects for this Minecraft version are shown.' })]));
     return;
   }
   const keep = body.scrollTop;
@@ -260,6 +286,11 @@ function hitAction(h) {
     if (mm.busy.has(h.id)) return el('button', { class: 'btn sm', disabled: true }, [el('span', { class: 'ring' }), 'Installing…']);
     return el('button', { class: 'btn sm primary', onclick: () => installPack(h) }, [icon('plus'), 'New profile']);
   }
+  if (isAssetMode()) {
+    if (mm.busy.has(h.id)) return el('button', { class: 'btn sm', disabled: true }, [el('span', { class: 'ring' }), 'Installing…']);
+    if (mm.installed.has(h.id)) return el('button', { class: 'btn sm', disabled: true }, [icon('check'), 'Installed']);
+    return el('button', { class: 'btn sm primary', onclick: () => installAsset(h) }, [icon('download'), 'Install']);
+  }
   if (h.managed) return el('span', { class: 'tag', text: 'Included' });
   if (mm.busy.has(h.id)) return el('button', { class: 'btn sm', disabled: true }, [el('span', { class: 'ring' }), 'Installing…']);
   if (mm.installed.has(h.id)) return el('button', { class: 'btn sm', disabled: true }, [icon('check'), 'Installed']);
@@ -283,6 +314,27 @@ async function installMod(h) {
     const inst = await api.installedModrinth(mm.profileId);
     if (inst.ok) mm.installed = new Set(inst.value);
     modsChanged();
+  }
+  renderHits();
+}
+
+async function installAsset(h) {
+  const kind = mm.mode;
+  mm.busy.add(h.id);
+  renderHits();
+  const res = await api.installAsset(mm.profileId, kind, h.id);
+  mm.busy.delete(h.id);
+  setBusyStatus('');
+  if (!res.ok) {
+    toast(res.error, true);
+  } else {
+    const { installed, skipped, warnings } = res.value;
+    const iris = installed.some((i) => i.dependency);
+    if (installed.length) toast(`${h.title} installed${iris ? ' (with Iris)' : ''}`);
+    else if (skipped.length) toast(skipped[0]);
+    if (warnings.length) setTimeout(() => toast(warnings[0], true), 2600);
+    mm.installed.add(h.id);
+    if (typeof profileViewChanged === 'function') profileViewChanged(mm.profileId);
   }
   renderHits();
 }

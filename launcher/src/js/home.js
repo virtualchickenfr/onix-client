@@ -51,6 +51,7 @@ function refreshProfiles() {
   renderPicker();
   renderEyebrow();
   if (currentView === 'profiles') renderProfiles();
+  if (currentView === 'profile') renderProfileView();
   if (currentView === 'mods') renderMods();
   if (currentView === 'cosmetics') loadCosmetics();
   loadSky().catch(() => {});
@@ -77,6 +78,7 @@ function updatePlay() {
     $('#launch-pct').textContent = '';
   }
   pickerBtn.disabled = state !== 'idle';
+  if (typeof pvSyncPlay === 'function') pvSyncPlay();
 }
 
 function setProgress(v) {
@@ -93,7 +95,9 @@ playBtn.addEventListener('click', async () => {
   $('#launch-status').textContent = 'Preparing';
   $('#launch-detail').textContent = '';
   setProgress(null);
-  const res = await api.launch();
+  const quick = pendingQuickPlay;
+  pendingQuickPlay = null;
+  const res = await api.launch(undefined, quick);
   if (!res.ok) {
     state = 'idle';
     setProgress(0);

@@ -754,3 +754,90 @@ kbd { display: inline-block; padding: 1px 6px; border-radius: 5px; background: v
 .seg-select { height: auto; min-height: 44px; align-self: stretch; }
 .seg-select.on { border-color: var(--line-3); color: var(--text); }
 .seg-note { grid-column: 1 / -1; font-size: 11.5px; color: var(--text-3); }
+
+/* ==========================================================================
+   Profile page (one profile with its mods, packs, worlds, screenshots, logs, settings)
+   ========================================================================== */
+.pf-toolbar { display: flex; gap: 8px; margin: -8px 0 14px; }
+.pf-toolbar .input { flex: none; }
+.pf-toolbar .pf-search { width: 240px; }
+.pf-toolbar .pf-sort { width: 150px; }
+.pf-sort { width: 130px; }
+.pcard { cursor: pointer; }
+.pcard:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pcard-head { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.pcard-sub { font-size: 12px; color: var(--text-3); }
+.pcard-stats { display: flex; gap: 14px; font-size: 12px; color: var(--text-2); }
+.pcard-stats span { display: inline-flex; align-items: center; gap: 5px; }
+.pcard-stats svg { width: 13px; height: 13px; color: var(--text-3); }
+.pcard-actions .icon-btn svg { width: 15px; height: 15px; }
+
+.pv-head { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+.pv-back svg { width: 18px; height: 18px; }
+.pv-icon { width: 52px; height: 52px; border-radius: 12px; display: grid; place-items: center; font: 700 22px var(--display); color: #0b0b0e; background: var(--pc, var(--accent)); flex: none;
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--pc, var(--accent)) 45%, #000); }
+.pv-title { flex: 1; min-width: 0; }
+.pv-title h2 { font: 700 26px/1.15 var(--display); letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pv-title p { color: var(--text-2); margin-top: 4px; font-size: 13px; }
+.pv-head .btn-row { flex-wrap: wrap; justify-content: flex-end; }
+.pv-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 18px; max-width: 900px; }
+.pv-stat { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-radius: var(--r); background: var(--s1); border: 1px solid var(--line); }
+.pv-stat span { font-size: 11.5px; color: var(--text-3); text-transform: uppercase; letter-spacing: .06em; }
+.pv-stat b { font: 600 16px var(--mono); color: var(--text); }
+.pv-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.pv-tabs { flex-wrap: wrap; }
+.pv-tools { display: flex; gap: 8px; flex: 1; justify-content: flex-end; }
+.pv-body { max-width: 900px; }
+.pv-body .table { max-width: none; }
+
+.pv-worlds { display: grid; gap: 8px; }
+.pv-world { display: flex; align-items: center; gap: 14px; padding: 10px 14px; border-radius: var(--r); background: var(--s1); border: 1px solid var(--line); }
+.pv-world-icon { width: 48px; height: 48px; border-radius: 8px; overflow: hidden; display: grid; place-items: center; background: var(--s3); border: 1px solid var(--line); flex: none; color: var(--text-3); }
+.pv-world-icon img { width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; }
+.pv-world-icon svg { width: 20px; height: 20px; }
+.pv-world .tmain { flex: 1; min-width: 0; }
+.pv-world-actions { display: flex; align-items: center; gap: 6px; }
+
+.pv-shots { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.pv-shot { margin: 0; border-radius: var(--r); overflow: hidden; background: var(--s1); border: 1px solid var(--line); }
+.pv-shot.skeleton { aspect-ratio: 16 / 10; }
+.pv-shot-img { display: grid; place-items: center; width: 100%; aspect-ratio: 16 / 9; background: var(--s3); color: var(--text-3); padding: 0; }
+.pv-shot-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .25s var(--ease); }
+.pv-shot-img:hover img { transform: scale(1.04); }
+.pv-shot figcaption { display: flex; align-items: center; gap: 4px; padding: 6px 6px 6px 10px; font-size: 11.5px; color: var(--text-3); }
+.pv-shot figcaption span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pv-shot figcaption .icon-btn { width: 26px; height: 26px; }
+
+.pv-body.pv-logs { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 10px; max-width: none; height: calc(100vh - 330px); min-height: 260px; }
+.pv-log-list { display: flex; flex-direction: column; gap: 4px; overflow: auto; }
+.pv-log-item { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: var(--r-sm); text-align: left; color: var(--text-2); border: 1px solid transparent; }
+.pv-log-item:hover { background: var(--s2); }
+.pv-log-item.active { background: var(--s2); border-color: var(--line-2); color: var(--text); }
+.pv-log-item.crash svg { color: #ff6b6b; }
+.pv-log-item svg { width: 15px; height: 15px; flex: none; }
+.pv-log-item span { display: flex; flex-direction: column; min-width: 0; }
+.pv-log-item b { font-weight: 500; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pv-log-item em { font-style: normal; font-size: 11px; color: var(--text-3); }
+.pv-log-view { position: relative; min-width: 0; min-height: 0; }
+.pv-log-text { margin: 0; height: 100%; overflow: auto; padding: 12px 14px; border-radius: var(--r); background: #060607; border: 1px solid var(--line); font: 11.5px/1.55 var(--mono); color: #c9c9cf; white-space: pre-wrap; word-break: break-word; }
+.pv-log-text .warn { color: #f5c46a; }
+.pv-log-text .err { color: #ff7a7a; }
+.pv-log-text .muted { color: var(--text-3); }
+.pv-log-copy { position: absolute; top: 8px; right: 14px; }
+
+.pv-settings { display: grid; gap: 12px; }
+.pv-card { display: flex; flex-direction: column; gap: 14px; padding: 16px 18px; border-radius: var(--r); background: var(--s1); border: 1px solid var(--line); }
+.pv-card h4 { font: 700 12px var(--display); text-transform: uppercase; letter-spacing: .08em; color: var(--text-3); }
+.pv-card .hint { margin: 2px 2px 0; }
+.pv-size-row, .pv-java-row { display: flex; align-items: center; gap: 8px; }
+.pv-size-row em { font-style: normal; font-size: 12px; color: var(--text-3); margin-left: 6px; }
+.pv-size-row .input, .pv-num { width: 110px; flex: none; }
+.pv-java-row .input { flex: 1; }
+.pv-args { height: auto; min-height: 70px; padding: 9px 11px; resize: vertical; font: 12px/1.5 var(--mono); }
+.pv-save { display: flex; justify-content: flex-end; }
+
+@media (max-width: 960px) {
+  .pv-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pv-body.pv-logs { grid-template-columns: 1fr; height: auto; }
+  .pv-log-text { max-height: 420px; }
+}

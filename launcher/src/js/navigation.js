@@ -2,14 +2,15 @@
 
 /* Sidebar navigation between pages. */
 
-const TITLES = { home: 'Home', profiles: 'Profiles', mods: 'Mods', cosmetics: 'Cosmetics', import: 'Import', install: 'Install', settings: 'Settings', console: 'Console' };
+const TITLES = { home: 'Home', profiles: 'Profiles', profile: 'Profile', mods: 'Mods', cosmetics: 'Cosmetics', import: 'Import', install: 'Install', settings: 'Settings', console: 'Console' };
 
 function showView(name) {
   currentView = name;
-  $$('.nav-item').forEach((b) => b.classList.toggle('active', b.dataset.view === name));
+  $$('.nav-item').forEach((b) => b.classList.toggle('active', b.dataset.view === (name === 'profile' ? 'profiles' : name)));
   $$('.view').forEach((v) => v.classList.toggle('active', v.id === `view-${name}`));
   closePicker();
   if (name === 'profiles') renderProfiles();
+  if (name === 'profile') renderProfileView();
   if (name === 'mods') renderMods();
   if (name === 'cosmetics') loadCosmetics();
   if (name === 'import' && !importScanned) scanImports();

@@ -223,10 +223,22 @@ async function ensureMods(root, settings, report, log, throttle = true, mc = MC_
 }
 
 /**
+ * Splits the profile's extra Java arguments like a shell would (quotes keep spaces). Memory flags are left to the
+ * RAM slider and nothing but JVM options (starting with -) is passed on.
+ */
+function extraJvmArgs(text) {
+  const out = [];
+  const re = /"([^"]*)"|'([^']*)'|(\S+)/g;
+  let m;
+  while ((m = re.exec(String(text || '')))) out.push(m[1] ?? m[2] ?? m[3]);
+  return out.filter((a) => a.startsWith('-') && !/^-Xm[sx]/i.test(a)).slice(0, 64);
+}
+
+/**
  * Launches Minecraft. root holds shared files (versions, libraries, assets),
  * gameDir is the profile folder (mods, worlds, settings).
  */
-async function launch({ root, gameDir, auth, javaPath, settings, fastStart = true, report, log, onStart, onClose }) {
+async function launch({ root, gameDir, auth, javaPath, settings, world = null, fastStart = true, report, log, onStart, onClose }) {
   const prepStarted = Date.now();
   const mc = versions.ofProfile(settings).mc;
   const VERSION_ID = versions.versionId(mc);
@@ -251,10 +263,16 @@ async function launch({ root, gameDir, auth, javaPath, settings, fastStart = tru
     javaPath,
     version: { number: mc, type: 'release', custom: VERSION_ID },
     memory: { max: `${settings.ramMb}M`, min: `${Math.min(settings.ramMb, 2048)}M` },
-    customArgs: jvmArgs(root, fastStart, mc),
+    customArgs: [...jvmArgs(root, fastStart, mc), ...extraJvmArgs(settings.jvmArgs)],
     overrides: { maxSockets: 24, gameDirectory: gameDir },
   };
-  if (settings.quickJoin && settings.quickJoin.trim()) {
+  if (settings.fullscreen) options.window = { fullscreen: true };
+  else if (settings.width > 0 && settings.height > 0) options.window = { width: settings.width, height: settings.height };
+  if (world && fs.existsSync(path.join(gameDir, 'saves', world, 'level.dat'))) {
+    // straight into a singleplayer world (Quick Play, Minecraft 1.20 and newer)
+    options.quickPlay = { type: 'singleplayer', identifier: world };
+    log(`Opening the world "${world}"`);
+  } else if (settings.quickJoin && settings.quickJoin.trim()) {
     options.quickPlay = { type: 'multiplayer', identifier: settings.quickJoin.trim() };
   }
 
@@ -373,4 +391,5 @@ function toggleMod(root, file) {
   fs.renameSync(src, dest);
 }
 
-module.exports = { prepare, launch, listMods, toggleMod, adoptManagedMods, ensureFabric, findBundledMod, MC_VERSION, LOADER_VERSION, VERSION_ID };
+module.exports = {
+  extraJvmArgs, prepare, launch, listMods, toggleMod, adoptManagedMods, ensureFabric, findBundledMod, MC_VERSION, LOADER_VERSION, VERSION_ID };

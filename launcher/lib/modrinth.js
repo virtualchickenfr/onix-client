@@ -84,8 +84,17 @@ function cleanManifest(modsDir) {
 
 // ------------------------------------------------------------------ search
 
+/** Search types: Fabric mods and modpacks, resource packs (any loader), shaders (Iris). */
+const TYPES = ['mod', 'modpack', 'resourcepack', 'shader'];
+const SHADER_LOADER = 'iris';
+/** Iris runs shader packs on Fabric (it needs Sodium, which the performance pack brings). */
+const IRIS = 'YL57xq9U';
+
 async function search({ query = '', type = 'mod', offset = 0, sort = 'relevance', limit = 20, mc = MC_VERSION } = {}) {
-  const facets = [[`project_type:${type === 'modpack' ? 'modpack' : 'mod'}`], [`categories:${LOADER}`], [].concat(mc).map((v) => `versions:${v}`)];
+  const kind = TYPES.includes(type) ? type : 'mod';
+  const facets = [[`project_type:${kind}`], [].concat(mc).map((v) => `versions:${v}`)];
+  if (kind === 'mod' || kind === 'modpack') facets.push([`categories:${LOADER}`]);
+  if (kind === 'shader') facets.push([`categories:${SHADER_LOADER}`]);
   const index = SORTS.includes(sort) ? sort : 'relevance';
   const res = await api(`/search?query=${encodeURIComponent(query)}&facets=${q(facets)}&index=${index}&offset=${Math.max(0, offset | 0)}&limit=${Math.min(50, limit)}`);
   return {
@@ -98,7 +107,7 @@ async function search({ query = '', type = 'mod', offset = 0, sort = 'relevance'
       author: h.author,
       downloads: h.downloads,
       icon: h.icon_url || null,
-      categories: (h.categories || []).filter((c) => c !== LOADER).slice(0, 3),
+      categories: (h.categories || []).filter((c) => c !== LOADER && c !== SHADER_LOADER && c !== 'minecraft').slice(0, 3),
       clientSide: h.client_side,
       managed: !!MANAGED[h.project_id],
     })),
@@ -276,6 +285,55 @@ async function applyUpdates(modsDir, updates, report = () => {}, mc = MC_VERSION
   return done;
 }
 
+// ------------------------------------------------------------------ resource packs and shaders
+
+/**
+ * Installs a resource pack or shader pack into its folder of the profile (dir), with the same manifest as mods.
+ * Shaders also bring Iris into the mods folder. Returns { installed, skipped, warnings } like install().
+ */
+async function installAsset(projectId, kind, dir, modsDir, report = () => {}, mc = MC_VERSION) {
+  const project = await api(`/project/${encodeURIComponent(projectId)}`);
+  if (!project) throw new Error('This project no longer exists on Modrinth.');
+  if (project.project_type !== kind) throw new Error(`${project.title} is a ${project.project_type}, not a ${kind === 'shader' ? 'shader pack' : 'resource pack'}.`);
+  const loaders = kind === 'shader' ? `&loaders=${q([SHADER_LOADER])}` : '';
+  const list = await api(`/project/${encodeURIComponent(projectId)}/version?game_versions=${q([mc])}${loaders}`);
+  const version = list && list.length ? list.find((v) => v.version_type === 'release') || list[0] : null;
+  if (!version) throw new Error(`${project.title} has no version for Minecraft ${mc}.`);
+  const file = primaryFile(version);
+  const name = safeFileName(file.filename);
+  fs.mkdirSync(dir, { recursive: true });
+  const manifest = cleanManifest(dir);
+  const result = { installed: [], skipped: [], warnings: [] };
+  const current = manifest[projectId];
+  if (current && current.versionId === version.id && fs.existsSync(path.join(dir, current.file))) {
+    result.skipped.push(`${project.title} ${version.version_number} is already installed`);
+  } else {
+    const target = path.join(dir, name);
+    report({ label: `Downloading ${project.title}`, progress: 0 });
+    await download(file.url, target, (p) => report({ label: `Downloading ${project.title}`, progress: p }));
+    try {
+      verify(target, file.hashes);
+    } catch (err) {
+      fs.rmSync(target, { force: true });
+      throw err;
+    }
+    if (current && current.file !== name) fs.rmSync(path.join(dir, current.file), { force: true });
+    manifest[projectId] = { file: name, versionId: version.id, version: version.version_number, title: project.title, icon: project.icon_url || null };
+    writeManifest(dir, manifest);
+    result.installed.push({ title: project.title, version: version.version_number });
+  }
+  if (kind === 'shader') {
+    try {
+      const iris = await install(IRIS, modsDir, report, mc);
+      for (const i of iris.installed) result.installed.push({ ...i, dependency: true });
+      result.warnings.push(...iris.warnings);
+    } catch (err) {
+      result.warnings.push(`Iris (needed for shaders) could not be added: ${err.message}`);
+    }
+  }
+  return result;
+}
+
 /** Newest modpack file (.mrpack) of a Modrinth modpack project for this version. */
 async function modpackFile(projectId, mc = MC_VERSION) {
   const project = await api(`/project/${encodeURIComponent(projectId)}`);
@@ -288,6 +346,6 @@ async function modpackFile(projectId, mc = MC_VERSION) {
 }
 
 module.exports = {
-  search, bestVersion, install, identify, checkUpdates, applyUpdates, modpackFile,
-  readManifest, writeManifest, cleanManifest, verify, sha, safeFileName, MANAGED, MC_VERSION,
+  search, bestVersion, install, installAsset, identify, checkUpdates, applyUpdates, modpackFile,
+  readManifest, writeManifest, cleanManifest, verify, sha, safeFileName, MANAGED, MC_VERSION, TYPES, IRIS,
 };

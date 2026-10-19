@@ -84,4 +84,6 @@ let profileState = { profiles: [], active: null };
 let cosmetics = {};
 let state = 'idle';
 let currentView = 'home';
+/** Set by "Play" on a world: the next start goes straight into it. */
+let pendingQuickPlay = null;
 const logLines = [];

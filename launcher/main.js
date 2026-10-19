@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, dialog, nativeImage } = require('electron');
 const os = require('os');
 const path = require('path');
 const fs = require('fs');
@@ -15,6 +15,7 @@ const installer = require('./lib/install');
 const modrinth = require('./lib/modrinth');
 const packs = require('./lib/packs');
 const updater = require('./lib/updater');
+const content = require('./lib/content');
 
 const GAME_DIR = path.join(app.getPath('appData'), '.onix');
 const TOTAL_MB = Math.floor(os.totalmem() / 1024 / 1024);
@@ -25,6 +26,7 @@ let profiles;
 let running = false;
 /** Launcher profile the running game was started from (its folder must not change underneath it). */
 let runningProfileId = null;
+let playStartedAt = 0;
 const importSources = new Map();
 
 const DEFAULT_SETTINGS = {
@@ -351,6 +353,89 @@ app.whenReady().then(() => {
     if (typeof projectId !== 'string' || !PROJECT_ID.test(projectId)) throw new Error('Unknown project');
     return modrinth.install(projectId, modsDirOf(profileId), progress, mcOf(profileId));
   }));
+  // Resource packs and shaders from Modrinth (shaders bring Iris along)
+  const ASSET_KINDS = { resourcepack: 'resourcepacks', shader: 'shaderpacks' };
+  const assetDir = (profileId, kind) => {
+    const folder = ASSET_KINDS[kind];
+    if (!folder) throw new Error('Unknown kind');
+    return path.join(profiles.dir(profileById(profileId)), folder);
+  };
+  ipcMain.handle('modrinth:installedAssets', safe((_e, profileId, kind) => Object.keys(modrinth.cleanManifest(assetDir(profileId, kind)))));
+  ipcMain.handle('modrinth:installAsset', safe(async (_e, profileId, kind, projectId) => {
+    notWhileRunning(profileId);
+    if (typeof projectId !== 'string' || !PROJECT_ID.test(projectId)) throw new Error('Unknown project');
+    return modrinth.installAsset(projectId, kind, assetDir(profileId, kind), modsDirOf(profileId), progress, mcOf(profileId));
+  }));
+
+  // What else is in a profile: packs, worlds, screenshots, logs
+  const dirOf = (profileId) => profiles.dir(profileById(profileId));
+  const PACK_KINDS = Object.keys(content.KINDS);
+  const packKind = (kind) => {
+    if (!PACK_KINDS.includes(kind)) throw new Error('Unknown kind');
+    return kind;
+  };
+  ipcMain.handle('content:packs', safe((_e, profileId, kind) => content.listPacks(dirOf(profileId), packKind(kind))));
+  ipcMain.handle('content:togglePack', safe((_e, profileId, kind, file) => content.togglePack(dirOf(profileId), packKind(kind), file)));
+  ipcMain.handle('content:removePack', safe(async (_e, profileId, kind, file) => {
+    await shell.trashItem(content.packPath(dirOf(profileId), packKind(kind), file));
+    return true;
+  }));
+  ipcMain.handle('content:addPacks', safe((_e, profileId, kind, paths) => content.addPacks(dirOf(profileId), packKind(kind), Array.isArray(paths) ? paths : [])));
+  ipcMain.handle('content:pickPacks', safe(async (_e, profileId, kind) => {
+    const res = await dialog.showOpenDialog(win, {
+      title: kind === 'shaderpacks' ? 'Add shader packs' : 'Add resource packs',
+      properties: ['openFile', 'multiSelections'],
+      filters: [{ name: 'Packs', extensions: ['zip'] }],
+    });
+    if (res.canceled) return [];
+    return content.addPacks(dirOf(profileId), packKind(kind), res.filePaths);
+  }));
+  ipcMain.handle('content:worlds', safe((_e, profileId) => content.listWorlds(dirOf(profileId))));
+  ipcMain.handle('content:openWorld', safe((_e, profileId, folder) => shell.openPath(content.worldPath(dirOf(profileId), folder))));
+  ipcMain.handle('content:removeWorld', safe(async (_e, profileId, folder) => {
+    if (running && profileById(profileId).id === runningProfileId) throw new Error('Close Minecraft before removing a world.');
+    await shell.trashItem(content.worldPath(dirOf(profileId), folder));
+    return true;
+  }));
+  ipcMain.handle('content:screenshots', safe((_e, profileId, limit) => {
+    const dir = dirOf(profileId);
+    return content.listScreenshots(dir).slice(0, Math.min(200, Number(limit) || 60)).map((s) => {
+      let thumb = null;
+      try {
+        const img = nativeImage.createFromPath(content.screenshotPath(dir, s.file));
+        if (!img.isEmpty()) thumb = img.resize({ width: 360, quality: 'good' }).toDataURL();
+      } catch {
+        thumb = null;
+      }
+      return { ...s, thumb };
+    });
+  }));
+  ipcMain.handle('content:openScreenshot', safe((_e, profileId, file) => shell.openPath(content.screenshotPath(dirOf(profileId), file))));
+  ipcMain.handle('content:showScreenshot', safe((_e, profileId, file) => shell.showItemInFolder(content.screenshotPath(dirOf(profileId), file))));
+  ipcMain.handle('content:removeScreenshot', safe(async (_e, profileId, file) => {
+    await shell.trashItem(content.screenshotPath(dirOf(profileId), file));
+    return true;
+  }));
+  ipcMain.handle('content:logs', safe((_e, profileId) => content.listLogs(dirOf(profileId))));
+  ipcMain.handle('content:readLog', safe((_e, profileId, id) => content.readLog(dirOf(profileId), id)));
+  ipcMain.handle('content:sizes', safe((_e, profileId) => {
+    const dir = dirOf(profileId);
+    return { total: content.sizeOf(dir), saves: content.sizeOf(path.join(dir, 'saves')), mods: content.sizeOf(path.join(dir, 'mods')) };
+  }));
+  ipcMain.handle('profiles:duplicate', safe((_e, id) => {
+    if (running && id === runningProfileId) throw new Error('Close Minecraft before copying the profile it is running from.');
+    const copy = profiles.duplicate(id);
+    return { state: profileState(), id: copy.id };
+  }));
+  ipcMain.handle('java:pick', safe(async () => {
+    const res = await dialog.showOpenDialog(win, {
+      title: 'Choose a Java executable',
+      properties: ['openFile'],
+      filters: process.platform === 'win32' ? [{ name: 'Java', extensions: ['exe'] }] : [],
+    });
+    return res.canceled ? null : res.filePaths[0];
+  }));
+
   ipcMain.handle('modrinth:updates', safe((_e, profileId) => modrinth.checkUpdates(modsDirOf(profileId), mcOf(profileId))));
   ipcMain.handle('modrinth:update', safe(async (_e, profileId, projectIds) => {
     notWhileRunning(profileId);
@@ -521,11 +606,15 @@ app.whenReady().then(() => {
     return game.listMods(dir);
   }));
 
-  ipcMain.handle('folder:open', (_e, which) => {
-    const base = profiles.dir();
+  ipcMain.handle('folder:open', (_e, which, profileId) => {
+    const base = profileId ? profiles.dir(profileById(profileId)) : profiles.dir();
     const dir = {
       mods: path.join(base, 'mods'),
       screenshots: path.join(base, 'screenshots'),
+      resourcepacks: path.join(base, 'resourcepacks'),
+      shaderpacks: path.join(base, 'shaderpacks'),
+      saves: path.join(base, 'saves'),
+      logs: path.join(base, 'logs'),
       profile: base,
     }[which] || GAME_DIR;
     fs.mkdirSync(dir, { recursive: true });
@@ -567,8 +656,9 @@ app.whenReady().then(() => {
     return true;
   });
 
-  ipcMain.handle('game:launch', async () => {
+  ipcMain.handle('game:launch', async (_e, profileId, quick) => {
     if (running) return { ok: false, error: 'Minecraft is already running.' };
+    if (profileId && profiles.list().some((p) => p.id === profileId)) profiles.select(profileId);
     running = true;
     if (preparing) {
       send('game:progress', { label: 'Finishing downloads', progress: 0 });
@@ -586,7 +676,7 @@ app.whenReady().then(() => {
       // sign-in, Java and the game files do not depend on each other – check them at the same time
       const [authorization, javaPath] = await Promise.all([
         auth.refresh(store, s.fastStart !== false),
-        s.javaPath && s.javaPath.trim() ? s.javaPath.trim() : ensureJava(GAME_DIR, report, versions.javaMajor(versions.ofProfile(profile).mc)),
+        profile.javaPath ? profile.javaPath : s.javaPath && s.javaPath.trim() ? s.javaPath.trim() : ensureJava(GAME_DIR, report, versions.javaMajor(versions.ofProfile(profile).mc)),
       ]);
       log(`Sign-in and Java ready after ${((Date.now() - started) / 1000).toFixed(1)} s`);
       await game.launch({
@@ -596,14 +686,21 @@ app.whenReady().then(() => {
         auth: authorization,
         javaPath,
         settings: profile,
+        world: quick && typeof quick.world === 'string' ? path.basename(quick.world) : null,
         report,
         log,
         onStart: () => {
+          playStartedAt = Date.now();
           send('game:state', 'running');
           if (s.closeOnLaunch && win) win.hide();
         },
         onClose: (code) => {
           running = false;
+          if (playStartedAt) {
+            profiles.recordPlay(profile.id, playStartedAt);
+            playStartedAt = 0;
+            send('profiles:changed', profileState());
+          }
           send('game:state', code === 0 ? 'closed' : 'crashed');
           if (win) win.show();
         },
