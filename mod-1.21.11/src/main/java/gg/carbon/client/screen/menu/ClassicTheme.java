@@ -83,17 +83,21 @@ public final class ClassicTheme implements MenuTheme {
 		float fade = c.stage(0.2f, 1.0f);
 		logo.renderLogo(g, (int) w, fade * R2D.alpha());
 
-		float y = h / 4f + 48;
+		// vanilla positions, moved up on short screens so the last row never runs into the version line
+		float step = 26;
+		float block = step * 4 + 10 + 20;
+		float y = Math.max(Math.min(h / 4f + 48, h - 16 - block), 70);
 		float cx = w / 2f;
 		button(c, Entries.SINGLEPLAYER, cx - 100, y, 200, 20, fade);
-		button(c, Entries.MULTIPLAYER, cx - 100, y + 24, 200, 20, fade);
-		button(c, Entries.REALMS, cx - 100, y + 48, 200, 20, fade);
-		button(c, Entries.MODS, cx - 100, y + 72, 200, 20, fade);
-		button(c, Entries.OPTIONS, cx - 100, y + 108, 98, 20, fade);
-		button(c, Entries.QUIT, cx + 2, y + 108, 98, 20, fade);
-		button(c, Entries.LANGUAGE, cx - 124, y + 108, 20, 20, fade);
-		button(c, Entries.ACCESSIBILITY, cx + 104, y + 108, 20, 20, fade);
-		button(c, Entries.DESIGN, cx + 128, y + 108, 20, 20, fade);
+		button(c, Entries.MULTIPLAYER, cx - 100, y + step, 200, 20, fade);
+		button(c, Entries.REALMS, cx - 100, y + step * 2, 200, 20, fade);
+		button(c, Entries.MODS, cx - 100, y + step * 3, 200, 20, fade);
+		float row = y + step * 4 + 10;
+		button(c, Entries.OPTIONS, cx - 100, row, 98, 20, fade);
+		button(c, Entries.QUIT, cx + 2, row, 98, 20, fade);
+		button(c, Entries.LANGUAGE, cx - 126, row, 20, 20, fade);
+		button(c, Entries.ACCESSIBILITY, cx + 106, row, 20, 20, fade);
+		button(c, Entries.DESIGN, cx + 130, row, 20, 20, fade);
 
 		R2D.pushAlpha(fade);
 		Fonts.draw(g, "Minecraft " + net.minecraft.SharedConstants.getCurrentVersion().name() + "  ·  Onix " + CarbonClient.VERSION, 3, h - 8, 0x70E0E0E0, Face.BODY, 0.6f, false);

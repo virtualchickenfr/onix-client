@@ -123,6 +123,8 @@ public class HudEditorScreen extends Screen {
 
     @Override
     public void render(GuiGraphics ctx, int mouseX, int mouseY, float delta) {
+        // the buttons step aside while an element is dragged, so they never cover the element being placed
+        for (var child : children()) if (child instanceof net.minecraft.client.gui.components.AbstractWidget w) w.visible = dragging == null;
         super.render(ctx, mouseX, mouseY, delta);
         if (dragging != null && guideX != null) ctx.fill(guideX, 0, guideX + 1, height, Theme.withAlpha(Theme.accent(), 210));
         if (dragging != null && guideY != null) ctx.fill(0, guideY, width, guideY + 1, Theme.withAlpha(Theme.accent(), 210));
@@ -149,6 +151,9 @@ public class HudEditorScreen extends Screen {
         String hint = enabled().isEmpty()
                 ? "No HUD modules are enabled – turn some on under Modules."
                 : "Drag to move  ·  Scroll to resize  ·  Double-click for settings  ·  Arrows to nudge  ·  Ctrl+Z to undo";
+        if (!enabled().isEmpty() && Theme.width(hint) + 20 > width - 16) hint = "Drag  ·  Scroll: size  ·  Double-click: settings  ·  Ctrl+Z";
+        if (!enabled().isEmpty() && Theme.width(hint) + 20 > width - 16) hint = "Drag to move  ·  Scroll to resize";
+        if (dragging != null) return;
         int hw = Theme.width(hint) + 20;
         int hy = height - 54;
         Theme.shadow(ctx, width / 2 - hw / 2, hy, width / 2 + hw / 2, hy + 18, 7);

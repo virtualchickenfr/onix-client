@@ -372,13 +372,23 @@ public class OnixTitleScreen extends Screen {
         Theme.small(ctx, version, width - 10 - Theme.smallWidth(version), height - 22, a(DIM, t));
         String copy = "Copyright Mojang AB. Do not distribute!";
         Theme.small(ctx, copy, width - 10 - Theme.smallWidth(copy), height - 13, a(DIM, t));
+        int rightEdge = width - 10 - Math.max(Theme.smallWidth(version), Theme.smallWidth(copy)) - 12;
+        int leftEdge = x + 24 + Theme.width(minecraft.getUser().getName())
+                + Theme.smallWidth("Profile " + profile + "  ·  " + Theme.current().name()) + 12;
 
-        // design switcher
+        // design switcher: centered, but never on top of the name on the left or the version on the right
         String[] names = designs();
         int current = OnixClient.CONFIG.titleDesign.index();
         int dotsW = names.length * 10;
-        int dx = width / 2 - dotsW / 2;
+        int groupW = dotsW + 8 + Theme.smallWidth("More designs");
+        int dx = width / 2 - groupW / 2;
         int dy = height - 16;
+        if (dx + groupW > rightEdge) dx = rightEdge - groupW;
+        if (dx < leftEdge) {
+            // not enough room in the footer row: one row higher, centered
+            dx = width / 2 - groupW / 2;
+            dy = height - 40;
+        }
         for (int i = 0; i < names.length; i++) {
             int cx = dx + i * 10 + 5;
             boolean sel = i == current;

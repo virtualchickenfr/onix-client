@@ -374,6 +374,7 @@ public class OnixMenuScreen extends Screen {
     }
 
     private void renderMenu(GuiGraphics ctx, int rawX, int rawY, float delta) {
+        frameNo++;
         Theme.refresh();
         long now = System.nanoTime();
         float dt = Math.min(0.1f, (now - lastFrame) / 1_000_000_000f);
@@ -760,7 +761,19 @@ public class OnixMenuScreen extends Screen {
         }
     }
 
+    private List<ModuleManager.Match> matchesCache;
+    private long matchesFrame = -1;
+    private long frameNo;
+
+    /** The visible modules; worked out once per frame (the title, the grid and keyboard navigation all ask). */
     private List<ModuleManager.Match> currentMatches() {
+        if (matchesCache != null && matchesFrame == frameNo) return matchesCache;
+        matchesCache = computeMatches();
+        matchesFrame = frameNo;
+        return matchesCache;
+    }
+
+    private List<ModuleManager.Match> computeMatches() {
         boolean searching = !search.text().isEmpty();
         List<ModuleManager.Match> list = new ArrayList<>(OnixClient.MODULES.search(searching ? null : category, search.text()));
         if (favoritesOnly && !searching) list.removeIf(m -> !OnixClient.CONFIG.favorites.contains(m.module().getId()));

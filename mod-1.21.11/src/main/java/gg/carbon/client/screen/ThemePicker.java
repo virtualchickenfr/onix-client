@@ -79,9 +79,11 @@ public class ThemePicker extends Screen {
 		W = width / ps;
 		H = height / ps;
 		float aspect = (float) width / height;
-		cardH = Math.min(H * 0.52f, W * 0.5f / aspect);
+		cardTop = Math.max(40, H * 0.15f);
+		// everything under the cards (title, dots, dark/light, buttons) needs about 100 + button height:
+		// on short windows the cards shrink instead of pushing the buttons off the screen
+		cardH = Math.max(60, Math.min(Math.min(H * 0.52f, W * 0.5f / aspect), H - cardTop - 100 - buttonH - 14));
 		cardW = cardH * aspect;
-		cardTop = H * 0.15f;
 		spacing = cardW * 0.88f + 16;
 		buttonY = cardTop + cardH + 100;
 		applyX = W / 2f + 5;
