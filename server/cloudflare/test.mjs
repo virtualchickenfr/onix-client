@@ -148,6 +148,50 @@ assert.strictEqual((await call('POST', '/v1/wallet', { token: fake }))[1].unlimi
 }
 globalThis.fetch = realFetch;
 
+// ---- friends, chat, McReal
+{
+  const C = 'c'.repeat(32);
+  const tc = await login(C, 'Carol');
+  let r = await call('POST', '/v1/friends/add', { token: ta, name: 'bob' });
+  assert.deepStrictEqual([r[0], r[1].state], [200, 'requested']);
+  assert.strictEqual((await call('POST', '/v1/friends/add', { token: ta, name: 'Nobody' }))[0], 404);
+  assert.strictEqual((await call('POST', '/v1/friends/add', { token: ta, name: 'Alice' }))[0], 400, 'not yourself');
+  let fb = (await call('POST', '/v1/friends', { token: tb }))[1];
+  assert.strictEqual(fb.incoming[0].name, 'Alice');
+  assert.strictEqual((await call('POST', '/v1/chat/send', { token: ta, to: B, text: 'hi' }))[0], 403, 'not yet friends');
+  assert.strictEqual((await call('POST', '/v1/friends/accept', { token: ta, uuid: B }))[0], 404, 'cannot accept own request');
+  assert.strictEqual((await call('POST', '/v1/friends/accept', { token: tb, uuid: A }))[0], 200);
+  await call('POST', '/v1/heartbeat', { token: tb, server: 'play.example.net:25565' });
+  await call('POST', '/v1/heartbeat', { token: ta });
+  let fa = (await call('POST', '/v1/friends', { token: ta }))[1];
+  assert.deepStrictEqual([fa.friends[0].name, fa.friends[0].online, fa.friends[0].server], ['Bob', true, 'play.example.net:25565']);
+  await call('POST', '/v1/heartbeat', { token: tb, visible: false, server: 'bad host!' });
+  let bob = (await call('POST', '/v1/friends', { token: ta }))[1].friends[0];
+  assert.deepStrictEqual([bob.online, bob.server], [true, ''], 'online for friends without the badge; invalid server not shared');
+  await call('POST', '/v1/heartbeat', { token: tb, social: false });
+  assert.strictEqual((await call('POST', '/v1/friends', { token: ta }))[1].friends[0].online, false, 'social off');
+  r = await call('POST', '/v1/chat/send', { token: ta, to: B, text: 'hello §cBob\n' });
+  assert.strictEqual(r[1].message.text, 'hello  cBob', 'colour codes and line breaks removed');
+  assert.strictEqual((await call('POST', '/v1/friends', { token: tb }))[1].friends[0].unread, 1);
+  assert.strictEqual((await call('POST', '/v1/chat/inbox', { token: tb, after: 0 }))[1].messages[0].name, 'Alice');
+  const h = (await call('POST', '/v1/chat/history', { token: tb, with: A }))[1];
+  assert.strictEqual(h.messages.length, 1);
+  assert.strictEqual((await call('POST', '/v1/friends', { token: tb }))[1].friends[0].unread, 0, 'read after history');
+  assert.strictEqual((await call('POST', '/v1/chat/history', { token: tc, with: A }))[0], 403);
+  // McReal: one per day, friends only
+  const jpeg = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(200, 7)]).toString('base64');
+  assert.strictEqual((await call('POST', '/v1/mcreal/post', { token: tb, image: jpeg, caption: 'base' }))[0], 200);
+  assert.strictEqual((await call('POST', '/v1/mcreal/post', { token: tb, image: jpeg }))[0], 409);
+  assert.strictEqual((await call('POST', '/v1/mcreal/post', { token: tc, image: Buffer.alloc(200, 1).toString('base64') }))[0], 400, 'not an image');
+  const feed = (await call('POST', '/v1/mcreal/feed', { token: ta }))[1];
+  assert.strictEqual(feed.posts[0].name, 'Bob');
+  assert.strictEqual((await call('POST', '/v1/mcreal/image', { token: ta, uuid: B, day: feed.today }))[1].image, jpeg);
+  assert.strictEqual((await call('POST', '/v1/mcreal/image', { token: tc, uuid: B, day: feed.today }))[0], 403);
+  assert.strictEqual((await call('POST', '/v1/mcreal/feed', { token: tc }))[1].posts.length, 0);
+  assert.strictEqual((await call('POST', '/v1/friends/remove', { token: ta, uuid: B }))[0], 200);
+  assert.strictEqual((await call('POST', '/v1/friends', { token: ta }))[1].friends.length, 0);
+}
+
 assert.strictEqual((await call('GET', '/nope'))[0], 404);
 assert.strictEqual((await call('GET', '/v1/shop'))[1].prices.crown_gold, 150);
 await worker.scheduled({}, env);

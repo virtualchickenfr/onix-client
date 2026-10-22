@@ -272,6 +272,162 @@ async function withAccount(env, db, body, action) {
   return action(s);
 }
 
+// ---------------------------------------------------------------- friends, chat and McReal
+
+const MAX_FRIENDS = 200;
+const MAX_CHAT = 256;
+const MAX_IMAGE_B64 = 700 * 1024;
+const SERVER_RE = /^[A-Za-z0-9.\-_]{1,80}(:\d{1,5})?$/;
+const pair = (x, y) => (x < y ? [x, y] : [y, x]);
+const today = () => new Date(Date.now()).toISOString().slice(0, 10);
+
+function cleanChat(v) {
+  if (typeof v !== 'string') return '';
+  return v.replace(/[\u0000-\u001f\u007f§]/g, ' ').trim().slice(0, MAX_CHAT);
+}
+
+async function areFriends(db, x, y) {
+  const [a, b] = pair(x, y);
+  const row = await db.prepare('SELECT accepted FROM friends WHERE a = ? AND b = ?').bind(a, b).first();
+  return !!(row && row.accepted);
+}
+
+async function friendList(db, s) {
+  const rows = (await db.prepare(
+    `SELECT f.a, f.b, f.requester, f.accepted, f.at,
+            ac.name AS name, st.server AS server, st.updated AS updated
+       FROM friends f
+       JOIN accounts ac ON ac.uuid = CASE WHEN f.a = ?1 THEN f.b ELSE f.a END
+       LEFT JOIN status st ON st.uuid = ac.uuid
+      WHERE f.a = ?1 OR f.b = ?1`).bind(s.uuid).all()).results;
+  const unread = (await db.prepare('SELECT from_uuid, COUNT(*) AS n FROM messages WHERE to_uuid = ? AND read = 0 GROUP BY from_uuid').bind(s.uuid).all()).results;
+  const unreadBy = Object.fromEntries(unread.map((r) => [r.from_uuid, r.n]));
+  const now = Date.now();
+  const friends = [];
+  const incoming = [];
+  const outgoing = [];
+  for (const r of rows) {
+    const uuid = r.a === s.uuid ? r.b : r.a;
+    if (!r.accepted) {
+      (r.requester === s.uuid ? outgoing : incoming).push({ uuid, name: r.name, at: r.at });
+      continue;
+    }
+    const online = !!(r.updated && r.updated > now - ONLINE_TTL_MS);
+    friends.push({
+      uuid, name: r.name, online,
+      server: online && r.server ? r.server : '',
+      unread: unreadBy[uuid] || 0, since: r.at,
+    });
+  }
+  friends.sort((x, y) => Number(y.online) - Number(x.online) || x.name.localeCompare(y.name));
+  return { friends, incoming, outgoing };
+}
+
+async function addFriend(db, s, rawName) {
+  const name = typeof rawName === 'string' ? rawName.trim() : '';
+  if (!NAME_RE.test(name)) return [400, { error: 'Enter a Minecraft name.' }];
+  const other = await db.prepare('SELECT uuid, name FROM accounts WHERE name = ? COLLATE NOCASE').bind(name).first();
+  if (!other) return [404, { error: `${name} has not played with Onix yet.` }];
+  if (other.uuid === s.uuid) return [400, { error: 'That is you.' }];
+  const count = (await db.prepare('SELECT COUNT(*) AS n FROM friends WHERE a = ?1 OR b = ?1').bind(s.uuid).first()).n;
+  if (count >= MAX_FRIENDS) return [400, { error: 'Your friend list is full.' }];
+  const [a, b] = pair(s.uuid, other.uuid);
+  const row = await db.prepare('SELECT requester, accepted FROM friends WHERE a = ? AND b = ?').bind(a, b).first();
+  if (row && row.accepted) return [200, { ok: true, state: 'friends', name: other.name }];
+  if (row && row.requester !== s.uuid) {
+    await db.prepare('UPDATE friends SET accepted = 1, at = ? WHERE a = ? AND b = ?').bind(Date.now(), a, b).run();
+    return [200, { ok: true, state: 'friends', name: other.name }];
+  }
+  if (!row) await db.prepare('INSERT INTO friends (a, b, requester, accepted, at) VALUES (?, ?, ?, 0, ?)').bind(a, b, s.uuid, Date.now()).run();
+  return [200, { ok: true, state: 'requested', name: other.name }];
+}
+
+async function acceptFriend(db, s, rawUuid) {
+  const other = normUuid(rawUuid);
+  if (!other) return [400, { error: 'uuid required' }];
+  const [a, b] = pair(s.uuid, other);
+  const r = await db.prepare('UPDATE friends SET accepted = 1, at = ? WHERE a = ? AND b = ? AND requester <> ? AND accepted = 0').bind(Date.now(), a, b, s.uuid).run();
+  return r.meta.changes ? [200, { ok: true }] : [404, { error: 'No such request.' }];
+}
+
+async function removeFriend(db, s, rawUuid) {
+  const other = normUuid(rawUuid);
+  if (!other) return [400, { error: 'uuid required' }];
+  const [a, b] = pair(s.uuid, other);
+  await db.batch([
+    db.prepare('DELETE FROM friends WHERE a = ? AND b = ?').bind(a, b),
+    db.prepare('DELETE FROM messages WHERE (from_uuid = ?1 AND to_uuid = ?2) OR (from_uuid = ?2 AND to_uuid = ?1)').bind(s.uuid, other),
+  ]);
+  return [200, { ok: true }];
+}
+
+async function sendChat(db, s, rawTo, rawText) {
+  const to = normUuid(rawTo);
+  const text = cleanChat(rawText);
+  if (!to || !text) return [400, { error: 'to and text required' }];
+  if (!(await areFriends(db, s.uuid, to))) return [403, { error: 'You can only write to friends.' }];
+  const msg = { id: randomHex(12), from: s.uuid, to, text, at: Date.now() };
+  await db.prepare('INSERT INTO messages (id, from_uuid, to_uuid, text, at) VALUES (?, ?, ?, ?, ?)').bind(msg.id, msg.from, msg.to, msg.text, msg.at).run();
+  return [200, { ok: true, message: msg }];
+}
+
+async function chatHistory(db, s, rawWith, after) {
+  const other = normUuid(rawWith);
+  if (!other) return [400, { error: 'with required' }];
+  if (!(await areFriends(db, s.uuid, other))) return [403, { error: 'Not a friend.' }];
+  const since = Number(after) > 0 ? Number(after) : 0;
+  const rows = (await db.prepare(
+    `SELECT id, from_uuid AS "from", to_uuid AS "to", text, at FROM messages
+      WHERE ((from_uuid = ?1 AND to_uuid = ?2) OR (from_uuid = ?2 AND to_uuid = ?1)) AND at > ?3
+      ORDER BY at DESC LIMIT 100`).bind(s.uuid, other, since).all()).results.reverse();
+  await db.prepare('UPDATE messages SET read = 1 WHERE to_uuid = ? AND from_uuid = ? AND read = 0').bind(s.uuid, other).run();
+  return [200, { messages: rows }];
+}
+
+/** New messages for this player from anyone (the client shows them as notifications), and marks nothing read. */
+async function inbox(db, s, after) {
+  const since = Number(after) > 0 ? Number(after) : Date.now() - 10 * MINUTE;
+  const rows = (await db.prepare(
+    `SELECT m.id, m.from_uuid AS "from", a.name AS name, m.text, m.at FROM messages m JOIN accounts a ON a.uuid = m.from_uuid
+      WHERE m.to_uuid = ? AND m.read = 0 AND m.at > ? ORDER BY m.at LIMIT 50`).bind(s.uuid, since).all()).results;
+  return [200, { messages: rows }];
+}
+
+async function postMcReal(db, s, body) {
+  const image = typeof body.image === 'string' ? body.image : '';
+  if (!/^[A-Za-z0-9+/=]+$/.test(image) || image.length < 100 || image.length > MAX_IMAGE_B64) return [400, { error: 'image (base64 JPEG/PNG, up to 500 KB) required' }];
+  const head = atob(image.slice(0, 16));
+  const jpeg = head.charCodeAt(0) === 0xff && head.charCodeAt(1) === 0xd8;
+  const png = head.startsWith('\u0089PNG');
+  if (!jpeg && !png) return [400, { error: 'Only JPEG or PNG.' }];
+  const day = today();
+  const exists = await db.prepare('SELECT 1 FROM mcreal WHERE uuid = ? AND day = ?').bind(s.uuid, day).first();
+  if (exists) return [409, { error: 'You already shared your McReal today.' }];
+  await db.prepare('INSERT INTO mcreal (uuid, day, name, caption, image, at) VALUES (?, ?, ?, ?, ?, ?)')
+    .bind(s.uuid, day, s.name, cleanChat(body.caption).slice(0, 100), image, Date.now()).run();
+  return [200, { ok: true, day }];
+}
+
+/** Today's and yesterday's McReals of you and your friends (without the pictures). */
+async function mcrealFeed(db, s) {
+  const d0 = today();
+  const d1 = new Date(Date.now() - 86400e3).toISOString().slice(0, 10);
+  const rows = (await db.prepare(
+    `SELECT uuid, day, name, caption, at FROM mcreal
+      WHERE day IN (?2, ?3) AND (uuid = ?1 OR uuid IN (
+        SELECT CASE WHEN a = ?1 THEN b ELSE a END FROM friends WHERE (a = ?1 OR b = ?1) AND accepted = 1))
+      ORDER BY at DESC LIMIT 100`).bind(s.uuid, d0, d1).all()).results;
+  return [200, { today: d0, posted: rows.some((r) => r.uuid === s.uuid && r.day === d0), posts: rows }];
+}
+
+async function mcrealImage(db, s, rawUuid, day) {
+  const uuid = normUuid(rawUuid);
+  if (!uuid || typeof day !== 'string' || !/^\d{4}-\d\d-\d\d$/.test(day)) return [400, { error: 'uuid and day required' }];
+  if (uuid !== s.uuid && !(await areFriends(db, s.uuid, uuid))) return [403, { error: 'Not a friend.' }];
+  const row = await db.prepare('SELECT image FROM mcreal WHERE uuid = ? AND day = ?').bind(uuid, day).first();
+  return row ? [200, { image: row.image }] : [404, { error: 'not found' }];
+}
+
 const routes = {
   'GET /': async (env, db) => [200, { name: 'onix-presence', online: (await db.prepare('SELECT COUNT(*) AS n FROM online WHERE seen > ?').bind(Date.now() - ONLINE_TTL_MS).first()).n }],
   'GET /v1/hello': async (env) => [200, { name: 'onix-presence', version: 3, verify: verifyOn(env), proof: ['certificate', 'hasJoined'], economy: true, host: 'cloudflare' }],
@@ -330,6 +486,13 @@ const routes = {
     if (!s) return [401, { error: 'invalid token' }];
     if (body.visible === false) await db.prepare('DELETE FROM online WHERE uuid = ?').bind(s.uuid).run();
     else await db.prepare('INSERT OR REPLACE INTO online (uuid, name, seen) VALUES (?, ?, ?)').bind(s.uuid, s.name, Date.now()).run();
+    // online for friends (separate from the public badge) and the server they may join, if shared
+    if (body.social === false) {
+      await db.prepare('DELETE FROM status WHERE uuid = ?').bind(s.uuid).run();
+    } else {
+      const server = typeof body.server === 'string' && SERVER_RE.test(body.server) ? body.server.toLowerCase() : '';
+      await db.prepare('INSERT OR REPLACE INTO status (uuid, server, updated) VALUES (?, ?, ?)').bind(s.uuid, server, Date.now()).run();
+    }
     const wallet = await heartbeat(env, db, s, body.playing === true);
     const n = (await db.prepare('SELECT COUNT(*) AS n FROM online WHERE seen > ?').bind(Date.now() - ONLINE_TTL_MS).first()).n;
     return [200, { ok: true, online: n, wallet }];
@@ -340,6 +503,17 @@ const routes = {
   'POST /v1/shop/buy': (env, db, body) => withAccount(env, db, body, (s) => buy(env, db, s, body.item)),
   'POST /v1/gift': (env, db, body) => withAccount(env, db, body, (s) => gift(env, db, s, body.item, body.to, body.message)),
   'POST /v1/gifts/seen': (env, db, body) => withAccount(env, db, body, (s) => seen(env, db, s, body.ids)),
+
+  'POST /v1/friends': (env, db, body) => withAccount(env, db, body, async (s) => [200, await friendList(db, s)]),
+  'POST /v1/friends/add': (env, db, body) => withAccount(env, db, body, (s) => addFriend(db, s, body.name)),
+  'POST /v1/friends/accept': (env, db, body) => withAccount(env, db, body, (s) => acceptFriend(db, s, body.uuid)),
+  'POST /v1/friends/remove': (env, db, body) => withAccount(env, db, body, (s) => removeFriend(db, s, body.uuid)),
+  'POST /v1/chat/send': (env, db, body) => withAccount(env, db, body, (s) => sendChat(db, s, body.to, body.text)),
+  'POST /v1/chat/history': (env, db, body) => withAccount(env, db, body, (s) => chatHistory(db, s, body.with, body.after)),
+  'POST /v1/chat/inbox': (env, db, body) => withAccount(env, db, body, (s) => inbox(db, s, body.after)),
+  'POST /v1/mcreal/post': (env, db, body) => withAccount(env, db, body, (s) => postMcReal(db, s, body)),
+  'POST /v1/mcreal/feed': (env, db, body) => withAccount(env, db, body, (s) => mcrealFeed(db, s)),
+  'POST /v1/mcreal/image': (env, db, body) => withAccount(env, db, body, (s) => mcrealImage(db, s, body.uuid, body.day)),
 
   'POST /v1/leave': async (env, db, body) => {
     const s = await sessionFor(db, body.token);
@@ -369,7 +543,7 @@ export default {
     let body = {};
     if (request.method === 'POST') {
       const text = await request.text();
-      if (text.length > 64 * 1024) return json(413, { error: 'Body too large' });
+      if (text.length > (url.pathname === '/v1/mcreal/post' ? 768 * 1024 : 64 * 1024)) return json(413, { error: 'Body too large' });
       try {
         body = text ? JSON.parse(text) : {};
       } catch {
@@ -394,6 +568,9 @@ export default {
     await env.DB.batch([
       env.DB.prepare('DELETE FROM challenges WHERE expires < ?').bind(now),
       env.DB.prepare('DELETE FROM online WHERE seen < ?').bind(now - 24 * 60 * 60 * 1000),
+      env.DB.prepare('DELETE FROM status WHERE updated < ?').bind(now - 24 * 60 * 60 * 1000),
+      env.DB.prepare('DELETE FROM messages WHERE at < ?').bind(now - 30 * 24 * 60 * 60 * 1000),
+      env.DB.prepare('DELETE FROM mcreal WHERE at < ?').bind(now - 3 * 24 * 60 * 60 * 1000),
     ]);
   },
 };

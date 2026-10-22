@@ -106,7 +106,11 @@ public final class OnixPresence {
             String name = session.getName();
             String accessToken = session.getAccessToken();
             boolean playing = mc.level != null;
-            submit(() -> heartbeat(url, self, name, accessToken, share, playing));
+            // the server you play on, for friends' "Join" button (never LAN or singleplayer worlds)
+            var current = mc.getCurrentServer();
+            String addr = OnixClient.CONFIG.shareServer.isOn() && OnixClient.CONFIG.socialOn.isOn() && current != null && !current.isLan()
+                    && !mc.isLocalServer() ? current.ip : "";
+            submit(() -> heartbeat(url, self, name, accessToken, share, playing, addr));
             return;
         }
 
@@ -157,7 +161,7 @@ public final class OnixPresence {
 
     // ------------------------------------------------------------------ requests (worker thread)
 
-    private static void heartbeat(String url, UUID self, String name, String accessToken, boolean share, boolean playing) {
+    private static void heartbeat(String url, UUID self, String name, String accessToken, boolean share, boolean playing, String serverAddress) {
         if (self == null) {
             status = "Not signed in";
             return;
@@ -167,6 +171,8 @@ public final class OnixPresence {
         body.addProperty("token", token);
         body.addProperty("visible", share);
         body.addProperty("playing", playing);
+        body.addProperty("social", OnixClient.CONFIG.socialOn.isOn());
+        if (!serverAddress.isEmpty()) body.addProperty("server", serverAddress);
         Response r = post(url + "/v1/heartbeat", body, 6);
         if (r.status == 401) {
             token = null;

@@ -196,6 +196,10 @@ public final class Theme {
         scaled(ctx, ui(s), x, y, 0.75f, color);
     }
 
+    public static void smallCentered(GuiGraphics ctx, String s, int cx, int y, int color) {
+        small(ctx, s, cx - smallWidth(s) / 2, y, color);
+    }
+
     public static void smallBold(GuiGraphics ctx, String s, int x, int y, int color) {
         scaled(ctx, bold(s), x, y, 0.75f, color);
     }

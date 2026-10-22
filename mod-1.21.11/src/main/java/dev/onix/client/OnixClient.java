@@ -81,6 +81,10 @@ public class OnixClient implements ClientModInitializer {
             OnixBadgeModule badge = MODULES.get(OnixBadgeModule.class);
             boolean badgeOn = badge != null && badge.isEnabled();
             OnixPresence.tick(serverUrl(), badgeOn && badge.sharing(), badgeOn, badge == null ? 15 : badge.lookupSeconds());
+            if (CONFIG.socialOn.isOn() && !OnixPresence.server().isEmpty()) {
+                dev.onix.client.social.Social.tick(client.screen instanceof OnixMenuScreen);
+            }
+            dev.onix.client.social.Social.tickShot();
             TpsTracker.tick();
             CombatTracker.tick(client);
             SessionTracker.tick(client);

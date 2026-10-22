@@ -71,10 +71,15 @@ public final class DevTest {
         then(2, () -> design("Onix"));
         then(20, () -> mc.setScreen(new OnixMenuScreen(mc.screen)));
         then(60, () -> snap(mc, "04_menu_hub"));
-        for (OnixMenuScreen.View view : List.of(OnixMenuScreen.View.MODULES, OnixMenuScreen.View.COSMETICS, OnixMenuScreen.View.DESIGN, OnixMenuScreen.View.SETTINGS)) {
+        for (OnixMenuScreen.View view : List.of(OnixMenuScreen.View.MODULES, OnixMenuScreen.View.COSMETICS, OnixMenuScreen.View.DESIGN, OnixMenuScreen.View.SETTINGS,
+                OnixMenuScreen.View.FRIENDS, OnixMenuScreen.View.MCREAL, OnixMenuScreen.View.GAMES)) {
             then(2, () -> mc.setScreen(new OnixMenuScreen(null, view)));
             then(50, () -> snap(mc, "05_menu_" + view.name().toLowerCase(Locale.ROOT)));
         }
+        then(2, () -> mc.setScreen(new dev.onix.client.gui.MiniGameScreen(null, "Blocks")));
+        then(60, () -> snap(mc, "05b_game_blocks"));
+        then(2, () -> mc.setScreen(new dev.onix.client.gui.MiniGameScreen(null, "2048")));
+        then(20, () -> snap(mc, "05c_game_2048"));
         then(2, () -> mc.setScreen(OnixMenuScreen.forModule(null, OnixClient.MODULES.get(dev.onix.client.module.impl.utility.ShulkerPreviewModule.class))));
         then(40, () -> snap(mc, "06_module_carbon_shulker"));
         then(2, () -> design("Vanilla"));

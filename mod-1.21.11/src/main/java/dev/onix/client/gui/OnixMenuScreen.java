@@ -56,7 +56,7 @@ import net.minecraft.sounds.SoundEvents;
  * to the screen, so the menu looks identical at every GUI scale.
  */
 public class OnixMenuScreen extends Screen {
-    public enum View { HUB, MODULES, MODULE, COSMETICS, DESIGN, PROFILES, SETTINGS }
+    public enum View { HUB, MODULES, MODULE, COSMETICS, DESIGN, PROFILES, SETTINGS, FRIENDS, MCREAL, GAMES }
 
     /** Design size of the classic window in virtual pixels. */
     private static final int DW = 620;
@@ -79,6 +79,11 @@ public class OnixMenuScreen extends Screen {
             new Nav("Favorites", "star_empty", View.MODULES, null, true),
             new Nav("Cosmetics", "cosmetics", View.COSMETICS, null, false),
             new Nav("Profiles", "profile", View.PROFILES, null, false),
+    };
+    private static final Nav[] NAV_SOCIAL = {
+            new Nav("Friends", "chat", View.FRIENDS, null, false),
+            new Nav("McReal", "camera", View.MCREAL, null, false),
+            new Nav("Games", "keyboard", View.GAMES, null, false),
     };
     private static final Nav[] NAV_CLIENT = {
             new Nav("Design", "themes", View.DESIGN, null, false),
@@ -146,6 +151,12 @@ public class OnixMenuScreen extends Screen {
     /** Number being typed in after clicking a slider's value. */
     private NumberSetting editingNumber;
     private final Input numberInput = new Input("", 12);
+    private final Input friendName = new Input("Minecraft name", 16);
+    private final Input chatInput = new Input("Message", 256);
+    private final Input mcCaption = new Input("Caption (optional)", 100);
+    private String friendError;
+    private String chatError;
+    private int chatScroll;
     /** Keyboard focus in the module grid (arrow keys), -1 = none. */
     private int focusIndex = -1;
     private List<ModuleManager.Match> gridList = List.of();
@@ -216,6 +227,8 @@ public class OnixMenuScreen extends Screen {
             if (!search.text().isEmpty() && view != View.MODULES) navigate(View.MODULES, null, false, null);
         });
         profileName.onSubmit(this::createProfile);
+        friendName.onSubmit(this::submitFriend);
+        chatInput.onSubmit(this::submitChat);
         cosSearch.onChange(() -> scroll = scrollTarget = 0);
         giftTo.onSubmit(() -> focusOnly(giftMessage));
         giftMessage.onSubmit(() -> {
@@ -256,6 +269,8 @@ public class OnixMenuScreen extends Screen {
     // ================================================================== navigation
 
     private void navigate(View v, Category c, boolean favorites, Module m) {
+        if (v == View.FRIENDS) dev.onix.client.social.Social.refreshFriends();
+        if (v == View.MCREAL) dev.onix.client.social.Social.refreshFeed();
         history.push(new State(view, category, favoritesOnly, module));
         view = v;
         category = c;
@@ -474,6 +489,7 @@ public class OnixMenuScreen extends Screen {
         int y = y0 + 44;
         y = navGroup(ctx, mx, my, "Modules", NAV_MODULES, x, y);
         y = navGroup(ctx, mx, my, "Library", NAV_LIBRARY, x, y + 5);
+        y = navGroup(ctx, mx, my, "Social", NAV_SOCIAL, x, y + 5);
         navGroup(ctx, mx, my, "Client", NAV_CLIENT, x, y + 5);
 
         // account
@@ -618,6 +634,9 @@ public class OnixMenuScreen extends Screen {
             case DESIGN -> "Design";
             case PROFILES -> "Profiles";
             case SETTINGS -> "Settings";
+            case FRIENDS -> "Friends";
+            case MCREAL -> "McReal";
+            case GAMES -> "Games";
             case HUB -> "Onix";
         };
     }
@@ -639,6 +658,9 @@ public class OnixMenuScreen extends Screen {
             case DESIGN -> "Themes, backgrounds, light mode, buttons and loading screens.";
             case PROFILES -> "Save modules, settings and HUD layout as switchable sets.";
             case SETTINGS -> "Interface, HUD editor, notifications, server rules and profiles.";
+            case FRIENDS -> "See who plays, join their server and chat – with everyone who uses Onix.";
+            case MCREAL -> "One screenshot a day, only for your friends. Gone after two days.";
+            case GAMES -> "Little games for queues and loading screens.";
             case HUB -> "";
         };
     }
@@ -757,8 +779,347 @@ public class OnixMenuScreen extends Screen {
             case DESIGN -> renderDesign(ctx, mx, my, r);
             case PROFILES -> renderProfiles(ctx, mx, my, r);
             case SETTINGS -> renderSettingsPage(ctx, mx, my, r);
+            case FRIENDS -> renderFriends(ctx, mx, my, r);
+            case MCREAL -> renderMcReal(ctx, mx, my, r);
+            case GAMES -> renderGames(ctx, mx, my, r);
             default -> {}
         }
+    }
+
+    // ================================================================== social: friends, McReal, games
+
+    private void submitFriend() {
+        String name = friendName.text().trim();
+        if (name.isEmpty()) return;
+        friendError = null;
+        dev.onix.client.social.Social.add(name, err -> {
+            friendError = err;
+            if (err == null) friendName.setText("");
+        });
+    }
+
+    private void submitChat() {
+        String to = dev.onix.client.social.Social.openChat;
+        if (to == null || chatInput.text().isBlank()) return;
+        String text = chatInput.text();
+        chatInput.setText("");
+        chatScroll = 0;
+        dev.onix.client.social.Social.send(to, text, err -> chatError = err);
+    }
+
+    /** A little square with the player's face (or the first letter while the skin loads). */
+    private void face(GuiGraphics ctx, String uuid, String name, int x, int y, int size) {
+        try {
+            java.util.UUID id = java.util.UUID.fromString(uuid.replaceFirst("(\\w{8})(\\w{4})(\\w{4})(\\w{4})(\\w{12})", "$1-$2-$3-$4-$5"));
+            PlayerSkin skin = net.minecraft.client.resources.DefaultPlayerSkin.get(id);
+            PlayerFaceRenderer.draw(ctx, skin, x, y, size);
+        } catch (Exception e) {
+            ctx.fill(x, y, x + size, y + size, Theme.SURFACE_4);
+            Theme.textCentered(ctx, name.isEmpty() ? "?" : name.substring(0, 1).toUpperCase(java.util.Locale.ROOT), x + size / 2, y + (size - 8) / 2, Theme.TEXT);
+        }
+    }
+
+    private int smallButton(GuiGraphics ctx, int mx, int my, int x, int y, String label, boolean primary, Runnable action) {
+        int w = Theme.smallWidth(label) + 14;
+        boolean hov = hovered(mx, my, x, y, x + w, y + 13);
+        Theme.card(ctx, x, y, x + w, y + 13, Theme.corner(5), primary ? (hov ? Theme.lerpColor(Theme.accent(), 0xFFFFFFFF, 0.15f) : Theme.accent())
+                : hov ? Theme.SURFACE_4 : Theme.SURFACE_3, primary ? Theme.accent() : Theme.BORDER_STRONG);
+        Theme.small(ctx, label, x + 7, y + 4, primary ? Theme.onAccent() : Theme.TEXT);
+        hit(x, y, x + w, y + 13, () -> {
+            click();
+            action.run();
+        }, null);
+        return w;
+    }
+
+    private void inputBox(GuiGraphics ctx, int mx, int my, Input input, int x, int y, int x2) {
+        boolean focused = input.focused();
+        Theme.card(ctx, x, y, x2, y + 18, Theme.corner(5), Theme.SURFACE_SUNKEN, focused ? Theme.withAlpha(Theme.accent(), 200)
+                : hovered(mx, my, x, y, x2, y + 18) ? Theme.BORDER_STRONG : Theme.BORDER);
+        input.render(ctx, x + 6, y + 5, x2 - x - 12, Theme.TEXT, Theme.TEXT_3);
+        hit(x, y, x2, y + 18, () -> focusOnly(input), () -> input.setText(""));
+    }
+
+    private void renderFriends(GuiGraphics ctx, int mx, int my, int[] r) {
+        var S = dev.onix.client.social.Social.class;
+        if (!OnixClient.CONFIG.socialOn.isOn()) {
+            int cx = (r[0] + r[2]) / 2;
+            int cy = (r[1] + r[3]) / 2 - 20;
+            drawIcon(ctx, "chat", cx - 8, cy - 8, 16, Theme.TEXT_3);
+            Theme.textCentered(ctx, "Friends & Chat is off", cx, cy + 16, Theme.TEXT_2);
+            button(ctx, mx, my, cx - 50, cy + 32, 100, 18, "Turn on", true, () -> {
+                OnixClient.CONFIG.socialOn.set(true);
+                OnixClient.save();
+                dev.onix.client.social.Social.refreshFriends();
+            });
+            return;
+        }
+        int split = r[0] + (r[2] - r[0]) * 46 / 100;
+        int lx = r[0];
+        int lx2 = split - 6;
+
+        // add a friend
+        int y = r[1];
+        int bw = 44;
+        inputBox(ctx, mx, my, friendName, lx, y, lx2 - bw - 4);
+        button(ctx, mx, my, lx2 - bw, y, bw, 18, "Add", true, this::submitFriend);
+        y += 22;
+        String err = friendError != null ? friendError : dev.onix.client.social.Social.error;
+        if (err != null) {
+            Theme.small(ctx, Theme.ellipsize(err, (int) ((lx2 - lx) / 0.75f)), lx, y, Theme.RED);
+            y += 10;
+        }
+
+        beginClip(ctx, lx - 2, y, lx2 + 2, r[3]);
+        int top = y;
+        int ly = y - (int) Math.round(scroll);
+        // requests
+        var incoming = dev.onix.client.social.Social.incoming;
+        var outgoing = dev.onix.client.social.Social.outgoing;
+        if (!incoming.isEmpty() || !outgoing.isEmpty()) {
+            Theme.label(ctx, "Requests", lx + 2, ly + 2, Theme.TEXT_3);
+            ly += 11;
+            for (var q : incoming) {
+                Theme.card(ctx, lx, ly, lx2, ly + 22, Theme.corner(6), Theme.SURFACE_2, Theme.withAlpha(Theme.accent(), 140));
+                face(ctx, q.uuid(), q.name(), lx + 5, ly + 5, 12);
+                Theme.text(ctx, Theme.ellipsize(q.name(), lx2 - lx - 110), lx + 22, ly + 7, Theme.TEXT);
+                int bx = lx2 - 6;
+                bx -= Theme.smallWidth("Decline") + 14;
+                smallButton(ctx, mx, my, bx, ly + 4, "Decline", false, () -> dev.onix.client.social.Social.remove(q.uuid()));
+                bx -= Theme.smallWidth("Accept") + 18;
+                smallButton(ctx, mx, my, bx, ly + 4, "Accept", true, () -> dev.onix.client.social.Social.accept(q.uuid()));
+                ly += 25;
+            }
+            for (var q : outgoing) {
+                Theme.card(ctx, lx, ly, lx2, ly + 22, Theme.corner(6), Theme.SURFACE_2, Theme.BORDER);
+                face(ctx, q.uuid(), q.name(), lx + 5, ly + 5, 12);
+                Theme.text(ctx, Theme.ellipsize(q.name(), lx2 - lx - 100), lx + 22, ly + 4, Theme.TEXT_2);
+                Theme.small(ctx, "Waiting for an answer", lx + 22, ly + 13, Theme.TEXT_3);
+                smallButton(ctx, mx, my, lx2 - 6 - Theme.smallWidth("Cancel") - 14, ly + 4, "Cancel", false, () -> dev.onix.client.social.Social.remove(q.uuid()));
+                ly += 25;
+            }
+            ly += 4;
+        }
+
+        // friends
+        var friends = dev.onix.client.social.Social.friends;
+        long on = friends.stream().filter(dev.onix.client.social.Social.Friend::online).count();
+        Theme.label(ctx, "Friends  " + on + "/" + friends.size() + " online", lx + 2, ly + 2, Theme.TEXT_3);
+        ly += 11;
+        if (friends.isEmpty()) {
+            Theme.small(ctx, dev.onix.client.social.Social.loaded ? "No friends yet – add someone by their" : "Loading…", lx + 2, ly + 4, Theme.TEXT_3);
+            if (dev.onix.client.social.Social.loaded) Theme.small(ctx, "Minecraft name. They need Onix too.", lx + 2, ly + 13, Theme.TEXT_3);
+            ly += 26;
+        }
+        for (var f : friends) {
+            boolean sel = f.uuid().equals(dev.onix.client.social.Social.openChat);
+            boolean hov = hovered(mx, my, lx, ly, lx2, ly + 26);
+            Theme.card(ctx, lx, ly, lx2, ly + 26, Theme.corner(6), sel ? Theme.SURFACE_3 : hov ? Theme.SURFACE_3 : Theme.SURFACE_2,
+                    sel ? Theme.withAlpha(Theme.TEXT, 200) : Theme.BORDER);
+            face(ctx, f.uuid(), f.name(), lx + 6, ly + 6, 14);
+            ctx.fill(lx + 17, ly + 17, lx + 22, ly + 22, 0xFF000000);
+            ctx.fill(lx + 18, ly + 18, lx + 21, ly + 21, f.online() ? Theme.GREEN : Theme.TEXT_3);
+            int nameMax = lx2 - lx - 30 - (f.online() && !f.server().isEmpty() ? 40 : 0) - (f.unread() > 0 ? 18 : 0);
+            Theme.text(ctx, Theme.ellipsize(f.name(), nameMax), lx + 26, ly + 5, Theme.TEXT);
+            String sub = !f.online() ? "Offline" : f.server().isEmpty() ? "Online" : f.server();
+            Theme.small(ctx, Theme.ellipsize(sub, (int) (nameMax / 0.75f)), lx + 26, ly + 15, f.online() ? Theme.TEXT_2 : Theme.TEXT_3);
+            int rx = lx2 - 6;
+            if (f.online() && !f.server().isEmpty()) {
+                rx -= Theme.smallWidth("Join") + 14;
+                smallButton(ctx, mx, my, rx, ly + 7, "Join", true, () -> dev.onix.client.social.Social.join(f, this));
+                rx -= 4;
+            }
+            if (f.unread() > 0) {
+                String n = String.valueOf(f.unread());
+                int nw = Math.max(11, Theme.smallWidth(n) + 6);
+                ctx.fill(rx - nw, ly + 8, rx, ly + 18, Theme.RED);
+                Theme.small(ctx, n, rx - nw + (nw - Theme.smallWidth(n)) / 2, ly + 11, 0xFFFFFFFF);
+            }
+            String uuid = f.uuid();
+            hit(lx, ly, lx2, ly + 26, () -> {
+                dev.onix.client.social.Social.openChat(uuid);
+                chatScroll = 0;
+                focusOnly(chatInput);
+            }, () -> removeArmed = uuid.equals(removeArmed) ? null : uuid);
+            if (uuid.equals(removeArmed)) {
+                ctx.fill(lx + 1, ly + 1, lx2 - 1, ly + 25, Theme.withAlpha(0xFF000000, 200));
+                Theme.small(ctx, "Remove " + Theme.ellipsize(f.name(), 80) + "?", lx + 8, ly + 10, Theme.TEXT);
+                int bx = lx2 - 6 - Theme.smallWidth("Remove") - 14;
+                smallButton(ctx, mx, my, bx, ly + 7, "Remove", true, () -> {
+                    dev.onix.client.social.Social.remove(uuid);
+                    removeArmed = null;
+                });
+                smallButton(ctx, mx, my, bx - Theme.smallWidth("Keep") - 18, ly + 7, "Keep", false, () -> removeArmed = null);
+            }
+            tooltipIf(hov && removeArmed == null, "Click to chat · right-click to remove");
+            ly += 29;
+        }
+        endClip(ctx);
+        contentHeight = ly + (int) Math.round(scroll) - top;
+        clampScroll(r[3] - top);
+
+        renderChat(ctx, mx, my, split + 6, r[1], r[2], r[3]);
+    }
+
+    private String removeArmed;
+
+    private void renderChat(GuiGraphics ctx, int mx, int my, int x1, int y1, int x2, int y2) {
+        Theme.card(ctx, x1, y1, x2, y2, Theme.corner(8), Theme.SURFACE_SUNKEN, Theme.BORDER);
+        String with = dev.onix.client.social.Social.openChat;
+        var friend = with == null ? null : dev.onix.client.social.Social.friends.stream().filter(f -> f.uuid().equals(with)).findFirst().orElse(null);
+        if (friend == null) {
+            int cx = (x1 + x2) / 2;
+            int cy = (y1 + y2) / 2 - 10;
+            drawIcon(ctx, "chat", cx - 8, cy - 8, 16, Theme.TEXT_3);
+            Theme.textCentered(ctx, "Pick a friend to chat", cx, cy + 14, Theme.TEXT_2);
+            Theme.smallCentered(ctx, "Messages arrive in-game as notifications.", cx, cy + 26, Theme.TEXT_3);
+            return;
+        }
+        // header
+        face(ctx, friend.uuid(), friend.name(), x1 + 8, y1 + 7, 12);
+        Theme.textBold(ctx, Theme.ellipsize(friend.name(), x2 - x1 - 90), x1 + 25, y1 + 9, Theme.TEXT);
+        Theme.small(ctx, friend.online() ? (friend.server().isEmpty() ? "Online" : "On " + friend.server()) : "Offline", x1 + 25, y1 + 19, Theme.TEXT_3);
+        ctx.fill(x1 + 1, y1 + 29, x2 - 1, y1 + 30, Theme.BORDER);
+
+        // messages, newest at the bottom
+        int iy = y2 - 24;
+        int mx1 = x1 + 8;
+        int mx2 = x2 - 8;
+        int maxW = (mx2 - mx1) * 3 / 4;
+        var msgs = dev.onix.client.social.Social.chat(with);
+        String me = minecraft.getUser().getProfileId() == null ? "" : minecraft.getUser().getProfileId().toString().replace("-", "");
+        beginClip(ctx, x1 + 1, y1 + 31, x2 - 1, iy - 2);
+        int by = iy - 6 + chatScroll;
+        for (int i = msgs.size() - 1; i >= 0 && by > y1 + 30; i--) {
+            var m = msgs.get(i);
+            boolean mine = m.from().equals(me);
+            List<String> lines = wrap(m.text(), maxW - 12, 8);
+            int bw = 0;
+            for (String l : lines) bw = Math.max(bw, Theme.width(l));
+            bw += 12;
+            int bh = lines.size() * 10 + 6;
+            int bx = mine ? mx2 - bw : mx1;
+            by -= bh;
+            Theme.card(ctx, bx, by, bx + bw, by + bh, Theme.corner(6), mine ? Theme.accent() : Theme.SURFACE_3, mine ? Theme.accent() : Theme.BORDER);
+            for (int k = 0; k < lines.size(); k++) Theme.text(ctx, lines.get(k), bx + 6, by + 4 + k * 10, mine ? Theme.onAccent() : Theme.TEXT);
+            by -= 4;
+        }
+        endClip(ctx);
+        if (msgs.isEmpty()) Theme.smallCentered(ctx, "Say hi to " + friend.name() + "!", (x1 + x2) / 2, (y1 + iy) / 2, Theme.TEXT_3);
+        wheel(x1, y1 + 30, x2, iy, d -> chatScroll = Math.max(0, chatScroll + d * 20));
+
+        // input
+        int sendW = 42;
+        inputBox(ctx, mx, my, chatInput, x1 + 6, iy, x2 - 10 - sendW);
+        button(ctx, mx, my, x2 - 6 - sendW, iy, sendW, 18, "Send", true, this::submitChat);
+        if (chatError != null) Theme.small(ctx, Theme.ellipsize(chatError, (int) ((x2 - x1 - 20) / 0.75f)), x1 + 8, iy - 10, Theme.RED);
+    }
+
+    private void renderMcReal(GuiGraphics ctx, int mx, int my, int[] r) {
+        int x = r[0];
+        int x2 = r[2];
+        int y = r[1];
+        boolean posted = dev.onix.client.social.Social.postedToday;
+        Theme.card(ctx, x, y, x2, y + 46, Theme.corner(8), Theme.SURFACE_2, posted ? Theme.withAlpha(Theme.GREEN, 160) : Theme.withAlpha(Theme.accent(), 160));
+        Theme.bevel(ctx, x, y, x2, y + 46, 1f);
+        drawIcon(ctx, posted ? "check" : "camera", x + 12, y + 18, 10, posted ? Theme.GREEN : Theme.accent());
+        if (posted) {
+            Theme.textBold(ctx, "Today's McReal is shared", x + 30, y + 13, Theme.TEXT);
+            Theme.small(ctx, "Come back tomorrow for the next one.", x + 30, y + 25, Theme.TEXT_3);
+        } else {
+            Theme.textBold(ctx, "Share today's McReal", x + 30, y + 9, Theme.TEXT);
+            Theme.small(ctx, minecraft.level == null ? "Join a world first – it captures what you see right now." : "Captures what you see right now (without the HUD).",
+                    x + 30, y + 20, Theme.TEXT_3);
+            int bw = 92;
+            inputBox(ctx, mx, my, mcCaption, x + 30, y + 27 - 0, x2 - bw - 16);
+            button(ctx, mx, my, x2 - bw - 8, y + 14, bw, 20, "Take McReal", true, () -> {
+                String caption = mcCaption.text();
+                mcCaption.setText("");
+                onClose();
+                dev.onix.client.social.Social.takeMcReal(caption);
+            });
+        }
+        y += 56;
+        if (dev.onix.client.social.Social.mcrealStatus != null) {
+            Theme.small(ctx, dev.onix.client.social.Social.mcrealStatus, x, y, Theme.RED);
+            y += 12;
+        }
+        var posts = dev.onix.client.social.Social.posts;
+        if (posts.isEmpty()) {
+            int cx = (x + x2) / 2;
+            drawIcon(ctx, "camera", cx - 8, y + 30, 16, Theme.TEXT_3);
+            Theme.textCentered(ctx, "No McReals from your friends yet", cx, y + 54, Theme.TEXT_2);
+            Theme.smallCentered(ctx, "Add friends on the Friends page – their McReals show up here.", cx, y + 66, Theme.TEXT_3);
+            return;
+        }
+        int gap = 8;
+        int cw = (x2 - x - gap) / 2;
+        int ih = cw * 9 / 16;
+        int ch = ih + 30;
+        int top = y;
+        beginClip(ctx, x - 2, top, x2 + 4, r[3]);
+        for (int i = 0; i < posts.size(); i++) {
+            var p = posts.get(i);
+            int px = x + (i % 2) * (cw + gap);
+            int py = top + (i / 2) * (ch + gap) - (int) Math.round(scroll);
+            if (py + ch < top || py > r[3]) continue;
+            Theme.card(ctx, px, py, px + cw, py + ch, Theme.corner(8), Theme.SURFACE_2, Theme.BORDER);
+            int[] size = new int[2];
+            Identifier tex = dev.onix.client.social.Social.image(p, size);
+            int ix1 = px + 4;
+            int iy1 = py + 4;
+            int iw = cw - 8;
+            int ihh = ih - 4;
+            ctx.fill(ix1, iy1, ix1 + iw, iy1 + ihh, 0xFF000000);
+            if (tex != null) {
+                ctx.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, tex, ix1, iy1, 0f, 0f, iw, ihh, size[0], size[1], size[0], size[1]);
+            } else {
+                Theme.smallCentered(ctx, "Loading…", ix1 + iw / 2, iy1 + ihh / 2 - 3, Theme.TEXT_3);
+            }
+            face(ctx, p.uuid(), p.name(), px + 6, py + ih + 6, 10);
+            Theme.textBold(ctx, Theme.ellipsize(p.name(), cw - 70), px + 20, py + ih + 7, Theme.TEXT);
+            String when = ago(p.at());
+            Theme.small(ctx, when, px + cw - 6 - Theme.smallWidth(when), py + ih + 8, Theme.TEXT_3);
+            if (!p.caption().isEmpty()) Theme.small(ctx, Theme.ellipsize(p.caption(), (int) ((cw - 12) / 0.75f)), px + 6, py + ih + 19, Theme.TEXT_2);
+        }
+        endClip(ctx);
+        contentHeight = ((posts.size() + 1) / 2) * (ch + gap);
+        clampScroll(r[3] - top);
+    }
+
+    private static String ago(long at) {
+        long m = Math.max(0, (System.currentTimeMillis() - at) / 60_000);
+        if (m < 1) return "just now";
+        if (m < 60) return m + " min ago";
+        long h = m / 60;
+        return h < 24 ? h + " h ago" : "yesterday";
+    }
+
+    private void renderGames(GuiGraphics ctx, int mx, int my, int[] r) {
+        String[][] games = {
+                {"Blocks", "Stack falling pieces and clear lines.", "all"},
+                {"Snake", "Eat, grow, don't bite yourself.", "move"},
+                {"Pong", "First to 7 against the computer.", "power"},
+                {"2048", "Slide tiles, merge equal numbers.", "plus"},
+        };
+        int gap = 8;
+        int cw = (r[2] - r[0] - gap) / 2;
+        int ch = 64;
+        for (int i = 0; i < games.length; i++) {
+            int x = r[0] + (i % 2) * (cw + gap);
+            int y = r[1] + (i / 2) * (ch + gap);
+            boolean hov = hovered(mx, my, x, y, x + cw, y + ch);
+            Theme.card(ctx, x, y, x + cw, y + ch, Theme.corner(8), hov ? Theme.SURFACE_3 : Theme.SURFACE_2, hov ? Theme.withAlpha(Theme.TEXT, 200) : Theme.BORDER);
+            Theme.bevel(ctx, x, y, x + cw, y + ch, 1f);
+            drawIcon(ctx, games[i][2], x + 12, y + 12, 12, hov ? Theme.accent() : Theme.TEXT_2);
+            Theme.textBold(ctx, games[i][0], x + 32, y + 14, Theme.TEXT);
+            Theme.small(ctx, games[i][1], x + 12, y + 34, Theme.TEXT_3);
+            int best = MiniGameScreen.best(games[i][0]);
+            if (best > 0) Theme.small(ctx, "Best: " + best, x + 12, y + 46, Theme.TEXT_2);
+            String name = games[i][0];
+            hit(x, y, x + cw, y + ch, () -> minecraft.setScreen(new MiniGameScreen(this, name)), null);
+        }
+        Theme.small(ctx, "Arrow keys or WASD · P pauses · Esc goes back", r[0], r[1] + 2 * (ch + gap) + 4, Theme.TEXT_3);
     }
 
     private List<ModuleManager.Match> matchesCache;
@@ -1707,6 +2068,9 @@ public class OnixMenuScreen extends Screen {
         cosSearch.focus(false);
         giftTo.focus(false);
         giftMessage.focus(false);
+        friendName.focus(false);
+        chatInput.focus(false);
+        mcCaption.focus(false);
         if (input != numberInput) numberInput.focus(false);
         unfocusTextInputs();
         input.focus(true);
@@ -1719,6 +2083,7 @@ public class OnixMenuScreen extends Screen {
     private boolean anyInputFocused() {
         if (search.focused() || profileName.focused() || numberInput.focused() || cosSearch.focused() || giftTo.focused() || giftMessage.focused()) return true;
         for (Input in : textInputs.values()) if (in.focused()) return true;
+        if (friendName.focused() || chatInput.focused() || mcCaption.focused()) return true;
         return false;
     }
 
@@ -2757,6 +3122,9 @@ public class OnixMenuScreen extends Screen {
                 search.focus(false);
                 profileName.focus(false);
                 cosSearch.focus(false);
+                friendName.focus(false);
+                chatInput.focus(false);
+                mcCaption.focus(false);
                 unfocusTextInputs();
                 return true;
             }
@@ -2776,7 +3144,8 @@ public class OnixMenuScreen extends Screen {
             return true;
         }
         if (search.keyPressed(keyCode, modifiers) || profileName.keyPressed(keyCode, modifiers) || cosSearch.keyPressed(keyCode, modifiers)
-                || giftTo.keyPressed(keyCode, modifiers) || giftMessage.keyPressed(keyCode, modifiers)) return true;
+                || giftTo.keyPressed(keyCode, modifiers) || giftMessage.keyPressed(keyCode, modifiers)
+                || friendName.keyPressed(keyCode, modifiers) || chatInput.keyPressed(keyCode, modifiers) || mcCaption.keyPressed(keyCode, modifiers)) return true;
         for (Input in : textInputs.values()) if (in.keyPressed(keyCode, modifiers)) return true;
         if (OnixClient.MENU_KEY.matches(onix$k) && !anyInputFocused()) { // Right Shift also types capitals
             onClose();
@@ -2823,7 +3192,8 @@ public class OnixMenuScreen extends Screen {
     public boolean charTyped(net.minecraft.client.input.CharacterEvent onix$c) {
         char chr = (char) onix$c.codepoint(); int modifiers = onix$c.modifiers();
         if (editingNumber != null && numberInput.charTyped(chr)) return true;
-        if (search.charTyped(chr) || profileName.charTyped(chr) || cosSearch.charTyped(chr) || giftTo.charTyped(chr) || giftMessage.charTyped(chr)) return true;
+        if (search.charTyped(chr) || profileName.charTyped(chr) || cosSearch.charTyped(chr) || giftTo.charTyped(chr) || giftMessage.charTyped(chr)
+                || friendName.charTyped(chr) || chatInput.charTyped(chr) || mcCaption.charTyped(chr)) return true;
         for (Input in : textInputs.values()) if (in.charTyped(chr)) return true;
         return super.charTyped(onix$c);
     }

@@ -40,6 +40,10 @@ public class OnixConfig {
     public final BoolSetting menuParticles = new BoolSetting("menuParticles", "Menu Particles", false);
     public final BoolSetting backgroundDim = new BoolSetting("backgroundDim", "Dim Background", true);
     public final BoolSetting tooltips = new BoolSetting("tooltips", "Tooltips", true);
+    public final BoolSetting socialOn = new BoolSetting("socialOn", "Friends & Chat", true)
+            .describe("Friend list, chat with friends and McReal through the Onix server.");
+    public final BoolSetting shareServer = new BoolSetting("shareServer", "Show Friends My Server", true)
+            .describe("Friends see which server you play on and can join you with one click.");
     public final BoolSetting customMainMenu = new BoolSetting("customMainMenu", "Onix Title Screen", true);
 
     // Onix server: badges, coins, cosmetics shop and gifts (see /server in the repository)
@@ -135,7 +139,7 @@ public class OnixConfig {
     }
 
     public List<Setting<?, ?>> networkSettings() {
-        return List.of(onixServer);
+        return List.of(onixServer, socialOn, shareServer);
     }
 
     public List<Setting<?, ?>> serverRuleSettings() {
@@ -149,7 +153,7 @@ public class OnixConfig {
     private List<Setting<?, ?>> all() {
         return List.of(theme, titleBackground, backgroundSlideshow, slideshowSeconds, backgroundMotion,
                 menuStyle, menuScale, menuAnimations, clickSounds, menuParticles, backgroundDim, tooltips, customMainMenu,
-                onixServer, cosmeticaCape, lightMode, buttonStyle, carbonButtons, menuSkin, menuDesign, menuCharacter, titleDesign, loadingScreens, loadingStyle, loadingTips,
+                onixServer, socialOn, shareServer, cosmeticaCape, lightMode, buttonStyle, carbonButtons, menuSkin, menuDesign, menuCharacter, titleDesign, loadingScreens, loadingStyle, loadingTips,
                 hideHudInDebug, snapping, snapDistance, editorGrid,
                 notifications, notificationSound, notificationTime, notificationPosition,
                 ruleNotes, rulesOnJoin, rulesSkip, autoSwitchProfiles);
