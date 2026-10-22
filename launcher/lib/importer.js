@@ -16,6 +16,7 @@ const os = require('os');
 const versions = require('./versions');
 const modrinth = require('./modrinth');
 const { download } = require('./download');
+const nbt = require('./nbt');
 
 const MC_VERSION = versions.DEFAULT;
 const SKIP_MOD_IDS = new Set(['onix', 'fabric-api', 'fabricloader', 'minecraft', 'java', 'sodium']);
@@ -929,6 +930,12 @@ async function exactCopy(source, profileDir, report) {
     }
   }
 
+  // every server you ever saved in Dawn: this profile's list first, then older lists, the shared (auto-sync) list and the
+  // lists of the other Dawn profiles – each address once
+  report({ label: 'Collecting your servers', progress: 0.955 });
+  const serverCount = mergeAllServers(path.join(profileDir, 'servers.dat'), [path.join(profileDir, 'servers.dat'), ...dawnServerFiles(x)]);
+  if (fs.existsSync(path.join(profileDir, 'servers.essential.dat'))) fs.copyFileSync(path.join(profileDir, 'servers.dat'), path.join(profileDir, 'servers.essential.dat'));
+
   // one enabled copy per mod
   report({ label: 'Checking mods', progress: 0.96 });
   const modsDir = path.join(profileDir, 'mods');
@@ -997,12 +1004,47 @@ async function exactCopy(source, profileDir, report) {
     `${mods} mods on, ${off} off – exactly the versions you had`,
     `${countEntries(path.join(profileDir, 'resourcepacks'), (en) => !en.name.startsWith('.'))} resource packs, ${countEntries(path.join(profileDir, 'shaderpacks'), (en) => !en.name.startsWith('.'))} shader packs`,
   ];
+  if (serverCount) out.push(`${serverCount} servers – from all your Dawn profiles, each one once`);
   if (added.length) out.push(`Added what Dawn loads by itself: ${added.join(', ')}`);
   if (notAdded.length) out.push(`Could not download (add them under Mods): ${notAdded.join(', ')}`);
   if (disabledDupes.length) out.push(`Turned off older duplicates: ${disabledDupes.join(', ')}`);
   if (failed.length) out.push(`Could not copy ${failed.length} file${failed.length === 1 ? '' : 's'}: ${failed.slice(0, 3).join(', ')}${failed.length > 3 ? ' …' : ''}`);
   report({ label: 'Done', progress: 1 });
   return out;
+}
+
+/** Server lists of a Dawn profile and of the whole Dawn install, newest first after the profile's own ones. */
+function dawnServerFiles(x) {
+  const lists = (dir) => list(dir).filter((e) => e.isFile() && /^servers.*\.dat$/i.test(e.name) && !/_old$/i.test(e.name)).map((e) => path.join(dir, e.name));
+  const byTime = (files) => files.map((f) => ({ f, t: fs.statSync(f).mtimeMs })).sort((a, b) => b.t - a.t).map((o) => o.f);
+  const own = byTime(x.layers.flatMap(lists));
+  const dawnRoot = path.dirname(path.dirname(x.dawnDir));
+  const others = [];
+  for (const g of list(path.join(dawnRoot, 'auto-sync', 'groups'))) if (g.isDirectory()) others.push(...lists(path.join(dawnRoot, 'auto-sync', 'groups', g.name)));
+  for (const p of list(path.join(dawnRoot, 'profiles'))) {
+    if (!p.isDirectory() || path.join(dawnRoot, 'profiles', p.name) === x.dawnDir) continue;
+    for (const sub of ['private-game-content', '.minecraft', 'minecraft']) others.push(...lists(path.join(dawnRoot, 'profiles', p.name, sub)));
+  }
+  return [...own, ...byTime(others)];
+}
+
+/** Writes target as the merge of the server lists (missing or damaged files are skipped); returns the count. */
+function mergeAllServers(target, files) {
+  const existing = [...new Set(files)].filter((f) => exists(f));
+  if (!existing.length) return 0;
+  const tmp = `${target}.merging`;
+  try {
+    const n = nbt.mergeServers(tmp, existing);
+    if (n === 0) {
+      fs.rmSync(tmp, { force: true });
+      return 0;
+    }
+    fs.renameSync(tmp, target);
+    return n;
+  } catch {
+    fs.rmSync(tmp, { force: true });
+    return 0;
+  }
 }
 
 /** Compares two mod version strings by their numbers (1.10.2 > 1.9). */
@@ -1069,8 +1111,12 @@ async function runImport(source, profileDir, what, report, mc = source.targetVer
     progress('Server list');
     const target = path.join(profileDir, 'servers.dat');
     backup(target);
-    fs.copyFileSync(at('servers.dat'), target);
-    done.push('Server list');
+    // the profile keeps its servers; the imported ones (and the source's older lists) are added, each address once
+    const sourceDir = path.dirname(at('servers.dat'));
+    const extra = list(sourceDir).filter((e) => e.isFile() && /^servers.*\.dat$/i.test(e.name) && !/_old$/i.test(e.name)).map((e) => path.join(sourceDir, e.name));
+    const n = mergeAllServers(target, [target, at('servers.dat'), ...extra]);
+    if (!n) fs.copyFileSync(at('servers.dat'), target);
+    done.push(n ? `${n} servers` : 'Server list');
   }
   if (what.worlds && layers.length) {
     progress('Worlds');
