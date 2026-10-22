@@ -830,7 +830,11 @@ async function plan(source, mc, loader = 'fabric') {
 
 /** Files and folders of a game folder that are machine-specific caches or logs – everything else is copied. */
 const EXACT_SKIP = new Set(['logs', 'crash-reports', '.mixin.out', '.fabric', 'GPUCache', 'debug', 'downloads', 'dawn', 'dawn-log4j2.xml',
-  'debug-profile.json', '.dawn', '.dawn-trash', 'natives', 'versions', 'libraries', 'assets']);
+  'debug-profile.json', '.dawn', '.dawn-trash', 'natives', 'versions', 'libraries', 'assets',
+  // caches that mods rebuild by themselves and that can be many gigabytes (Bobby chunks, Voxy/Distant Horizons LODs)
+  '.bobby', '.voxy', 'Distant_Horizons_server_data', '.cache', 'cache']);
+/** Files the game only reads: shared with Dawn through a hard link instead of a second copy (no extra disk space). */
+const LINKABLE = /^(mods|resourcepacks|shaderpacks|screenshots)[\\/]/;
 const skipTop = (name) => EXACT_SKIP.has(name) || /^hs_err_pid\d+\.log$/.test(name) || /^\.Backup before/.test(name);
 
 function walkFiles(root, rel = '', out = []) {
@@ -873,18 +877,50 @@ async function exactCopy(source, profileDir, report) {
   }
   let done = 0;
   let files = 0;
+  let linked = 0;
   let last = 0;
   const failed = [];
   fs.mkdirSync(profileDir, { recursive: true });
+  // enough room? Packs and mods are linked, not copied – only the rest needs new space (plus 2 GB headroom for the game)
+  let needed = 0;
+  for (const [rel, src] of jobs) {
+    if (LINKABLE.test(rel)) continue;
+    try {
+      needed += fs.statSync(src).size;
+    } catch {
+      // vanished meanwhile
+    }
+  }
+  try {
+    const st = await fs.promises.statfs(profileDir);
+    const free = st.bavail * st.bsize;
+    if (free < needed + 2 * 1024 ** 3) {
+      throw new Error(`Not enough free disk space: the copy needs about ${(needed / 1024 ** 3).toFixed(1)} GB plus 2 GB for the game, `
+        + `but only ${(free / 1024 ** 3).toFixed(1)} GB are free. Free up some space and try again.`);
+    }
+  } catch (e) {
+    if (/Not enough free disk space/.test(e.message)) throw e;
+  }
   for (const [rel, src] of jobs) {
     const dst = path.join(profileDir, rel);
     try {
       await fs.promises.mkdir(path.dirname(dst), { recursive: true });
-      await fs.promises.copyFile(src, dst);
+      let ok = false;
+      if (LINKABLE.test(rel)) {
+        try {
+          await fs.promises.link(src, dst);
+          ok = true;
+          linked++;
+        } catch {
+          // another drive or no permission: a normal copy instead
+        }
+      }
+      if (!ok) await fs.promises.copyFile(src, dst);
       const size = (await fs.promises.stat(dst)).size;
       done += size;
       files++;
     } catch (e) {
+      if (e && e.code === 'ENOSPC') throw new Error('The disk is full. Free up some space and import again – nothing was kept.');
       failed.push(rel);
     }
     if (Date.now() - last > 150) {
@@ -957,7 +993,7 @@ async function exactCopy(source, profileDir, report) {
   const mods = list(modsDir).filter((en) => en.name.endsWith('.jar')).length;
   const off = list(modsDir).filter((en) => en.name.endsWith('.jar.disabled')).length;
   const out = [
-    `${files} files copied (${(done / 1048576).toFixed(0)} MB) – everything 1:1`,
+    `${files} files copied (${(done / 1048576).toFixed(0)} MB) – everything 1:1${linked ? `, ${linked} packs and mods shared with Dawn (no extra disk space)` : ''}`,
     `${mods} mods on, ${off} off – exactly the versions you had`,
     `${countEntries(path.join(profileDir, 'resourcepacks'), (en) => !en.name.startsWith('.'))} resource packs, ${countEntries(path.join(profileDir, 'shaderpacks'), (en) => !en.name.startsWith('.'))} shader packs`,
   ];
