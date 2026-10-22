@@ -638,6 +638,9 @@ async function dawnProfile(dawnDir, root, e) {
     const a = await analyzeGameDir(layers[0], configDirs, { layers, skipFiles, mcVersion });
     if (!hasContent(a)) return null;
     const name = profile.name || e.name;
+    const mem = profile.settings && profile.settings.javaOverrides && profile.settings.javaOverrides.memoryAllocationMiB;
+    a.exact = { dawnDir: dir, layers, skipFiles: [...skipFiles], memoryMb: mem && mem.enabled && Number(mem.value) > 0 ? Number(mem.value) : null,
+      loaderVersion: profile.loader && profile.loader.version || null, loader: profile.loader && profile.loader.kind ? String(profile.loader.kind).toLowerCase() : 'fabric' };
     return { id: `dawn:${e.name}`, client: 'dawn', name: `Dawn · ${name}`, profileName: name,
       label: `Minecraft ${mcVersion || '?'}${profile.loader && profile.loader.kind ? ` · ${profile.loader.kind}` : ''}`, ...a };
   }
@@ -823,6 +826,160 @@ async function plan(source, mc, loader = 'fabric') {
   return out;
 }
 
+// ------------------------------------------------------------------ exact copy (Dawn): everything 1:1
+
+/** Files and folders of a game folder that are machine-specific caches or logs – everything else is copied. */
+const EXACT_SKIP = new Set(['logs', 'crash-reports', '.mixin.out', '.fabric', 'GPUCache', 'debug', 'downloads', 'dawn', 'dawn-log4j2.xml',
+  'debug-profile.json', '.dawn', '.dawn-trash', 'natives', 'versions', 'libraries', 'assets']);
+const skipTop = (name) => EXACT_SKIP.has(name) || /^hs_err_pid\d+\.log$/.test(name) || /^\.Backup before/.test(name);
+
+function walkFiles(root, rel = '', out = []) {
+  for (const e of list(path.join(root, rel))) {
+    const r = rel ? path.join(rel, e.name) : e.name;
+    if (!rel && skipTop(e.name)) continue;
+    if (e.isDirectory()) walkFiles(root, r, out);
+    else if (e.isFile()) out.push(r);
+  }
+  return out;
+}
+
+/**
+ * Copies a Dawn profile 1:1 into profileDir: every mod in the exact version (also Sodium, Iris, Fabric API …, enabled and
+ * disabled as they were), all resource and shader packs, options, key binds, servers, worlds, configs and mod data.
+ * Shared (auto-sync) content first, then the profile's own files on top. Two enabled copies of one mod would stop Fabric,
+ * so the copy the game loaded last time (otherwise the newest) stays enabled and the others are copied disabled.
+ */
+async function exactCopy(source, profileDir, report) {
+  const x = source.exact;
+  if (!x) throw new Error('This source cannot be copied 1:1.');
+  const skipMods = new Set(x.skipFiles || []);
+  const layers = [...x.layers].reverse(); // shared group first, the profile's own content last (it wins)
+  const jobs = new Map(); // target rel → source file
+  for (const layer of layers) {
+    for (const rel of walkFiles(layer)) {
+      const parts = rel.split(path.sep);
+      if (parts[0] === 'mods' && parts.length === 2 && skipMods.has(parts[1])) continue;
+      if (parts[0] === 'mods' && /^onix-client-/i.test(parts[1] || '')) continue;
+      jobs.set(rel, path.join(layer, rel));
+    }
+  }
+  let total = 0;
+  for (const src of jobs.values()) {
+    try {
+      total += fs.statSync(src).size;
+    } catch {
+      // vanished meanwhile
+    }
+  }
+  let done = 0;
+  let files = 0;
+  let last = 0;
+  const failed = [];
+  fs.mkdirSync(profileDir, { recursive: true });
+  for (const [rel, src] of jobs) {
+    const dst = path.join(profileDir, rel);
+    try {
+      await fs.promises.mkdir(path.dirname(dst), { recursive: true });
+      await fs.promises.copyFile(src, dst);
+      const size = (await fs.promises.stat(dst)).size;
+      done += size;
+      files++;
+    } catch (e) {
+      failed.push(rel);
+    }
+    if (Date.now() - last > 150) {
+      last = Date.now();
+      report({ label: `Copying ${files} of ${jobs.size} files (${(done / 1048576).toFixed(0)} of ${(total / 1048576).toFixed(0)} MB)`, progress: total ? (done / total) * 0.95 : 0 });
+    }
+  }
+
+  // one enabled copy per mod
+  report({ label: 'Checking mods', progress: 0.96 });
+  const modsDir = path.join(profileDir, 'mods');
+  // what the game really loaded last time (Fabric lists every mod with its version in latest.log)
+  const loaded = new Map();
+  for (const layer of x.layers) {
+    try {
+      const log = fs.readFileSync(path.join(layer, 'logs', 'latest.log'), 'utf8');
+      for (const m of log.matchAll(/^\t- ([a-z0-9_.-]+) (\S+)\s*$/gm)) loaded.set(m[1], m[2]);
+    } catch {
+      // no log
+    }
+  }
+  const byId = new Map();
+  for (const f of list(modsDir).filter((en) => en.isFile() && en.name.endsWith('.jar')).map((en) => en.name)) {
+    const meta = await readFabricModJson(path.join(modsDir, f));
+    if (!meta || !meta.id) continue;
+    if (!byId.has(meta.id)) byId.set(meta.id, []);
+    byId.get(meta.id).push({ f, version: String(meta.version || ''), mtime: fs.statSync(path.join(modsDir, f)).mtimeMs });
+  }
+  const disabledDupes = [];
+  for (const [id, copies] of byId) {
+    if (copies.length < 2) continue;
+    // the copy the game loaded last time wins, otherwise the newest version (Fabric does the same)
+    const was = loaded.get(id);
+    copies.sort((a, b) => Number(b.version === was) - Number(a.version === was) || compareVersions(b.version, a.version) || b.mtime - a.mtime);
+    for (const c of copies.slice(1)) {
+      fs.renameSync(path.join(modsDir, c.f), path.join(modsDir, `${c.f}.disabled`));
+      disabledDupes.push(`${id} ${c.version}`);
+    }
+  }
+  // mods the launcher added by itself (Dawn loads Lithium and ModernFix without a file in the mods folder):
+  // the same versions come from Modrinth
+  const added = [];
+  const notAdded = [];
+  // mods you turned off since then stay off: they are not downloaded again
+  const offIds = new Set();
+  for (const en of list(modsDir).filter((e2) => e2.name.endsWith('.jar.disabled'))) {
+    const meta = await readFabricModJson(path.join(modsDir, en.name)).catch(() => null);
+    if (meta && meta.id) offIds.add(meta.id);
+  }
+  const builtIn = new Set(['minecraft', 'java', 'fabricloader', 'dawn', 'mixinextras', 'onix']);
+  for (const [id, version] of loaded) {
+    if (builtIn.has(id) || byId.has(id) || offIds.has(id) || /^fabric-/.test(id)) continue;
+    try {
+      const v = await modrinth.exactVersion(id, version, source.mcVersion || versions.DEFAULT);
+      const f = v && (v.files.find((ff) => ff.primary) || v.files[0]);
+      if (!f) {
+        notAdded.push(id);
+        continue;
+      }
+      const target = path.join(modsDir, modrinth.safeFileName(f.filename));
+      report({ label: `Getting ${id} ${v.version_number}`, progress: 0.97 });
+      await download(f.url, target);
+      modrinth.verify(target, f.hashes);
+      added.push(`${id} ${v.version_number}`);
+    } catch {
+      notAdded.push(id);
+    }
+  }
+  flushCache();
+  const mods = list(modsDir).filter((en) => en.name.endsWith('.jar')).length;
+  const off = list(modsDir).filter((en) => en.name.endsWith('.jar.disabled')).length;
+  const out = [
+    `${files} files copied (${(done / 1048576).toFixed(0)} MB) – everything 1:1`,
+    `${mods} mods on, ${off} off – exactly the versions you had`,
+    `${countEntries(path.join(profileDir, 'resourcepacks'), (en) => !en.name.startsWith('.'))} resource packs, ${countEntries(path.join(profileDir, 'shaderpacks'), (en) => !en.name.startsWith('.'))} shader packs`,
+  ];
+  if (added.length) out.push(`Added what Dawn loads by itself: ${added.join(', ')}`);
+  if (notAdded.length) out.push(`Could not download (add them under Mods): ${notAdded.join(', ')}`);
+  if (disabledDupes.length) out.push(`Turned off older duplicates: ${disabledDupes.join(', ')}`);
+  if (failed.length) out.push(`Could not copy ${failed.length} file${failed.length === 1 ? '' : 's'}: ${failed.slice(0, 3).join(', ')}${failed.length > 3 ? ' …' : ''}`);
+  report({ label: 'Done', progress: 1 });
+  return out;
+}
+
+/** Compares two mod version strings by their numbers (1.10.2 > 1.9). */
+function compareVersions(a, b) {
+  const pa = String(a).split(/[^0-9]+/).filter(Boolean).map(Number);
+  const pb = String(b).split(/[^0-9]+/).filter(Boolean).map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const d = (pa[i] || 0) - (pb[i] || 0);
+    if (d) return d;
+  }
+  return 0;
+}
+
 // ------------------------------------------------------------------ Import
 
 function backup(file) {
@@ -997,4 +1154,4 @@ function isNewerThanGame(version, game = MC_VERSION) {
   return false;
 }
 
-module.exports = { plan, classifyMods, setCacheDir, flushCache, mapLimit, isNewerThanGame, detect, analyzeFolder, runImport, matchesVersion, readFabricModJson, MODULE_ALIASES, knownSources, dirs, gameDirOfInstance };
+module.exports = { plan, exactCopy, classifyMods, setCacheDir, flushCache, mapLimit, isNewerThanGame, detect, analyzeFolder, runImport, matchesVersion, readFabricModJson, MODULE_ALIASES, knownSources, dirs, gameDirOfInstance };

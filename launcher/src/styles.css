@@ -1147,3 +1147,8 @@ svg.picon { stroke: none; fill: currentColor; stroke-width: 0; }
 .im-plan-list span { font-size: 11.5px; color: var(--text-2); background: var(--s3); padding: 2px 7px; }
 .im-notfound { grid-column: 1 / -1; font-size: 11.5px; color: var(--text-3); padding: 2px 2px 0; }
 #import-modal #im-form .modal-actions { position: sticky; bottom: -20px; background: var(--s2); padding: 12px 0 0; margin-bottom: -4px; }
+.im-exact { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border: 1px solid var(--accent, #fff); background: var(--s3); cursor: pointer; }
+.im-exact[hidden] { display: none; }
+.im-exact input { margin-top: 3px; }
+.im-exact b { display: block; font-size: 13.5px; }
+.im-exact span { display: block; font-size: 12px; color: var(--text-2); margin-top: 3px; line-height: 1.45; }

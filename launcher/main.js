@@ -797,6 +797,9 @@ app.whenReady().then(() => {
     modules: src.modules,
     lastUsed: src.lastUsed || 0,
     modsTotal: (src.modsAll || []).length + (src.modsOther || []).length,
+    exact: !!src.exact,
+    profileName: src.profileName || null,
+    memoryMb: src.exact ? src.exact.memoryMb : null,
   });
   ipcMain.handle('import:detect', safe(async () => {
     const found = await importer.detect();
@@ -835,6 +838,23 @@ app.whenReady().then(() => {
     if (!source) throw new Error('This source is no longer available. Please scan again.');
     if (running) throw new Error('Close Minecraft first.');
     let profile;
+    // Dawn 1:1: a new profile with the same Minecraft version, memory and every file as it was
+    if (what && what.exact && source.exact) {
+      const mcExact = versions.isSupported(source.mcVersion) ? source.mcVersion : source.targetVersion || versions.DEFAULT;
+      const created = profiles.create((target && target.newName) || source.profileName || source.name, null, { mcVersion: mcExact });
+      const total = require('os').totalmem() / 1048576;
+      const ram = source.exact.memoryMb ? Math.max(1024, Math.min(source.exact.memoryMb, Math.floor(total - 2048))) : created.ramMb;
+      profiles.save({ ...created, ramMb: ram, performanceMods: false, loader: 'fabric' });
+      const dir = profiles.dir(created);
+      try {
+        const done = await importer.exactCopy(source, dir, (p) => send('import:progress', p));
+        prepareProfile(profiles.list().find((p) => p.id === created.id));
+        return { done, profile: created.name, state: profileState() };
+      } catch (err) {
+        profiles.remove(created.id);
+        throw err;
+      }
+    }
     const chosenMc = target && versions.isSupported(target.mc) ? target.mc : source.targetVersion || versions.DEFAULT;
     if (target && target.newName) profile = profiles.create(target.newName, null, { mcVersion: chosenMc });
     else profile = profiles.select(target && target.profileId ? target.profileId : profiles.active().id);

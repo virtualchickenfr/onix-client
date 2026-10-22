@@ -118,6 +118,13 @@ async function search({ query = '', type = 'mod', offset = 0, sort = 'relevance'
   };
 }
 
+/** A project's version with exactly this version number for Fabric on mc (or the newest one when that number is gone). */
+async function exactVersion(projectId, number, mc = MC_VERSION) {
+  const list = await api(`/project/${encodeURIComponent(projectId)}/version?loaders=${q(['fabric'])}&game_versions=${q([mc])}`);
+  if (!list || !list.length) return null;
+  return list.find((v) => v.version_number === number) || list.find((v) => v.version_type === 'release') || list[0];
+}
+
 /** The newest version of a project for Fabric on this Minecraft version (releases first). */
 async function bestVersion(projectId, mc = MC_VERSION, loader = LOADER) {
   const loaders = loader === 'quilt' ? ['quilt', 'fabric'] : [loaderOf(loader)];
@@ -384,7 +391,7 @@ async function modpackFile(projectId, mc = MC_VERSION) {
 const versionById = (id) => api(`/version/${encodeURIComponent(id)}`);
 
 module.exports = {
-  versionById, primaryFile, versionsFor,
+  versionById, primaryFile, versionsFor, exactVersion,
   search, bestVersion, install, installAsset, identify, checkUpdates, applyUpdates, modpackFile,
   readManifest, writeManifest, cleanManifest, verify, sha, safeFileName, MANAGED, MC_VERSION, TYPES, IRIS,
 };

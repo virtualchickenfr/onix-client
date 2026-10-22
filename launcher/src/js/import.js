@@ -140,6 +140,7 @@ function importTarget() {
 async function refreshPlan() {
   const s = importing;
   const box = $('#im-plan');
+  if (!$('#im-exact-row').hidden && $('#im-exact').checked) return;
   if (!s || !(s.modsTotal || s.mods.length)) {
     box.replaceChildren();
     return;
@@ -173,7 +174,7 @@ function openImport(s) {
   $('#im-avatar').style.setProperty('--av', CLIENT_COLORS[s.client] || '#333');
   $('#im-avatar').textContent = s.name.charAt(0);
   $('#im-title').textContent = `Import from ${s.name}`;
-  $('#im-path').textContent = `${s.label}${s.mcVersion ? ` · Minecraft ${s.mcVersion}` : ''}`;
+  $('#im-path').textContent = `${s.label}${s.mcVersion && !s.label.includes(s.mcVersion) ? ` · Minecraft ${s.mcVersion}` : ''}`;
   const modules = Object.entries(s.modules);
   const onModules = modules.filter(([, v]) => v).map(([k]) => MODULE_NAMES[k] || k);
   const modsCount = Math.max(s.mods.length, s.modsTotal || 0);
@@ -202,6 +203,11 @@ function openImport(s) {
   $('#im-mc').replaceChildren(...versionOptions(s.targetVersion));
   $('#im-existing').replaceChildren(...profileState.profiles.map((p) => el('option', { value: p.id, text: `${p.name} · ${mcOfProfile(p)}`, selected: p.id === profileState.active })));
   document.querySelector('input[name=im-target][value=new]').checked = true;
+  // Dawn profiles: an exact copy is the default
+  $('#im-exact-row').hidden = !s.exact;
+  $('#im-exact').checked = !!s.exact;
+  $('#im-exact-sub').textContent = `Every mod in exactly your version (also Sodium, Iris and Fabric API), all resource and shader packs, settings, key binds, servers, worlds and mod settings – Minecraft ${s.mcVersion || ''}${s.memoryMb ? `, ${Math.round(s.memoryMb / 1024)} GB memory` : ''}, just like in Dawn.`;
+  applyExact();
   $('#im-form').hidden = false;
   $('#im-progress').hidden = true;
   $('#im-finish').hidden = true;
@@ -209,6 +215,17 @@ function openImport(s) {
   openModal('#import-modal');
   refreshPlan();
 }
+
+/** With "Copy everything 1:1" on, the choices are not needed: a new profile gets every file as it was. */
+function applyExact() {
+  const on = !$('#im-exact-row').hidden && $('#im-exact').checked;
+  $$('#im-form .im-part, #im-what, #im-plan').forEach((n) => { n.hidden = on; });
+  $('#im-mc').hidden = on;
+  document.querySelector('input[name=im-target][value=existing]').closest('label').hidden = on;
+  if (on) document.querySelector('input[name=im-target][value=new]').checked = true;
+  else refreshPlan();
+}
+$('#im-exact').addEventListener('change', applyExact);
 
 $('#im-new-name').addEventListener('focus', () => { document.querySelector('input[name=im-target][value=new]').checked = true; });
 $('#im-mc').addEventListener('change', () => { document.querySelector('input[name=im-target][value=new]').checked = true; refreshPlan(); });
@@ -219,9 +236,14 @@ $$('input[name=im-target]').forEach((r) => r.addEventListener('change', refreshP
 $('#im-run').addEventListener('click', async () => {
   if (!importing) return;
   const what = {};
-  $$('#im-what input').forEach((i) => { what[i.dataset.key] = i.checked && !i.disabled; });
-  if (!Object.values(what).some(Boolean)) return toast('Select at least one thing to import.', true);
-  what.updateMods = true;
+  const exact = !$('#im-exact-row').hidden && $('#im-exact').checked;
+  if (exact) {
+    what.exact = true;
+  } else {
+    $$('#im-what input').forEach((i) => { what[i.dataset.key] = i.checked && !i.disabled; });
+    if (!Object.values(what).some(Boolean)) return toast('Select at least one thing to import.', true);
+    what.updateMods = true;
+  }
   const target = importTarget();
   $('#im-form').hidden = true;
   $('#im-progress').hidden = false;
