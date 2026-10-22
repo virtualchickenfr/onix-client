@@ -12,13 +12,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(GameRenderer.class)
 public abstract class GameRendererMixin {
+    /** getFov returns a float since 1.21.2 (a Double here crashed the game as soon as zoom was used). */
     @Inject(method = "getFov", at = @At("RETURN"), cancellable = true)
-    private void onix$zoom(Camera camera, float tickDelta, boolean changingFov, CallbackInfoReturnable<Double> cir) {
+    private void onix$zoom(Camera camera, float tickDelta, boolean changingFov, CallbackInfoReturnable<Float> cir) {
         if (OnixClient.MODULES == null) return;
         ZoomModule zoom = OnixClient.MODULES.get(ZoomModule.class);
         if (zoom == null) return;
         double divisor = zoom.fovDivisor();
-        if (divisor != 1.0) cir.setReturnValue(cir.getReturnValue() / divisor);
+        if (divisor != 1.0) cir.setReturnValue((float) (cir.getReturnValue() / divisor));
     }
 
     /** Totem Spirit can hide the big totem that pops up on screen. */
