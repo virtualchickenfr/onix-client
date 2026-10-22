@@ -1508,7 +1508,7 @@ PET_MODELS = ['pet_chicken', 'pet_dragon', 'pet_slime', 'pet_ghost', 'pet_bee', 
 
 SLOTS = [
     ('cape', 'Capes'), ('head', 'Hats & Ears'), ('face', 'Face'), ('neck', 'Neck'), ('back', 'Wings & Back'), ('aura', 'Auras'), ('pet', 'Buddies'),
-    ('nametag', 'Name Styles'), ('tag', 'Tags'),
+    ('nametag', 'Name Styles'),
 ]
 LEGACY_CAPES = [('onyx', 'Onyx'), ('sunrise', 'Sunrise'), ('night', 'Starry Night'), ('sakura', 'Cherry Blossom'), ('ember', 'Ember'), ('egg', 'Fried Egg')]
 pal_name = {p[0]: p[1] for p in PALETTES}
@@ -1544,10 +1544,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import cc0_cosmetics
 cc0_count = cc0_cosmetics.build(MODELS, items, CAPE_DIRS) if __name__ == '__main__' else 0
 
-# name styles and tags for your name tag (tools/nametags.py)
+# name styles for your name tag (tools/nametags.py)
 import nametags
-STAFF_ITEMS = []
-LOOK_KINDS = nametags.build(items, STAFF_ITEMS)
+LOOK_KINDS = nametags.build(items)
 
 # ids the old selection used (cosmetics.json from earlier versions)
 ALIASES = {'comb': 'comb_crimson', 'crown': 'crown_gold', 'tophat': 'tophat_onyx', 'halo': 'halo_gold', 'party': 'party_candy',
@@ -1581,8 +1580,6 @@ catalog = {
     'models': {mid: {k: v for k, v in m.items() if k != 'palettes'} for mid, m in MODELS.items()},
     'aliases': ALIASES,
     'items': items,
-    # tags the server gives to certain accounts (OWNER); the mod knows them to draw them, nobody can pick them
-    'staffItems': STAFF_ITEMS,
 }
 
 if __name__ == '__main__':
@@ -1597,7 +1594,7 @@ if __name__ == '__main__':
     # the server only needs the prices
     with open(os.path.join(ROOT, 'server', 'shop.json'), 'w') as f:
         json.dump({'version': catalog['version'], 'prices': {it['id']: it['price'] for it in items}, 'aliases': ALIASES,
-                   'looks': LOOK_KINDS, 'customMax': nametags.CUSTOM_MAX}, f, separators=(',', ':'))
+                   'looks': LOOK_KINDS}, f, separators=(',', ':'))
     counts = {}
     for it in items:
         counts[it['slot']] = counts.get(it['slot'], 0) + 1

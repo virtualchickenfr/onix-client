@@ -5,11 +5,11 @@
 
 const COS_SLOTS = [
   ['cape', 'Capes'], ['head', 'Head'], ['face', 'Face'], ['neck', 'Neck'], ['back', 'Back & Wings'], ['aura', 'Auras'], ['pet', 'Pets'],
-  ['nametag', 'Name Styles'], ['tag', 'Tags'],
+  ['nametag', 'Name Styles'],
 ];
-const COS_SLOT_NAMES = { cape: 'Cape', head: 'Head', face: 'Face', neck: 'Neck', back: 'Back', aura: 'Aura', pet: 'Pet', nametag: 'Name Style', tag: 'Tag' };
+const COS_SLOT_NAMES = { cape: 'Cape', head: 'Head', face: 'Face', neck: 'Neck', back: 'Back', aura: 'Aura', pet: 'Pet', nametag: 'Name Style' };
 /** Slots drawn as coloured text instead of a model. */
-const TEXT_SLOTS = new Set(['nametag', 'tag']);
+const TEXT_SLOTS = new Set(['nametag']);
 const TIER_COLORS = { common: '#9aa0aa', rare: '#4ea8ff', epic: '#b46cff', legendary: '#ffc23d' };
 const COS_PAGE = 96;
 
@@ -30,7 +30,7 @@ const cos = {
   own: '',
 };
 
-// ---------------------------------------------------------------- name styles and tags (same looks as the mod's NameTags.java)
+// ---------------------------------------------------------------- name styles (same looks as the mod's NameTags.java)
 
 const hexRgb = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
 const rgbCss = ([r, g, b]) => `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;
@@ -79,23 +79,13 @@ function lookRuns(text, look, t) {
   return chars.map((ch, i) => ({ ch, color: rgbCss(lookColor(look, i, chars.length, t)), bold: !!look.bold }));
 }
 
-function tagRuns(item, t) {
-  const text = item.custom ? (cosmetics.tagText || 'TAG') : item.tagText;
-  if (!text) return [];
-  const body = lookRuns(text, item.look, t);
-  if (![...text].some((c) => /[\p{L}\p{N}]/u.test(c))) return body;
-  const br = { color: '#9a9aa6', bold: false };
-  return [{ ch: '[', ...br }, ...body, { ch: ']', ...br }];
-}
-
 function ownName() {
   return (typeof account !== 'undefined' && account && account.name) || 'Player';
 }
 
-/** The whole name tag: tag, then the name in its style. */
-function nameTagRuns(style, tag, t) {
-  const runs = tag ? [...tagRuns(tag, t), { ch: ' ', color: '#fff' }] : [];
-  return runs.concat(style ? lookRuns(ownName(), style.look, t) : [...ownName()].map((ch) => ({ ch, color: '#ffffff' })));
+/** Your name in a style. */
+function nameTagRuns(style, t) {
+  return style ? lookRuns(ownName(), style.look, t) : [...ownName()].map((ch) => ({ ch, color: '#ffffff' }));
 }
 
 /** Draws text runs centred on a canvas, with a Minecraft-like shadow; shrinks to fit. */
@@ -133,10 +123,9 @@ function drawRuns(canvas, runs, size, plate = false) {
   }
 }
 
-/** A name style (on your name) or a tag, for tiles and the shop dialog. */
+/** A name style on your name, for tiles and the shop dialog. */
 function drawLookItem(canvas, item, t) {
-  const runs = item.slot === 'nametag' ? lookRuns(ownName(), item.look, t) : tagRuns(item, t);
-  drawRuns(canvas, runs, canvas.height * 0.6);
+  drawRuns(canvas, lookRuns(ownName(), item.look, t), canvas.height * 0.6);
 }
 
 function drawAnyItem(canvas, item, t) {
@@ -144,40 +133,8 @@ function drawAnyItem(canvas, item, t) {
   else CosRender.draw(canvas, item, t);
 }
 
-function renderTagText() {
-  const box = $('#cos-tagtext');
-  box.hidden = cos.tab !== 'tag';
+function renderSwatches() {
   $('#cos-swatches').hidden = TEXT_SLOTS.has(cos.tab);
-  if (box.hidden) return;
-  const input = $('#cos-tagtext-input');
-  if (document.activeElement !== input) input.value = cosmetics.tagText || '';
-  const ownsCustom = CosRender.catalog.items.some((i) => i.custom && owns(i));
-  const info = $('#cos-tagtext-info');
-  info.classList.remove('err');
-  info.textContent = ownsCustom ? `Your own text for custom tags · max ${OnixNameTags.MAX} characters` : 'Buy a custom tag to show your own text';
-}
-
-async function saveTagText() {
-  const input = $('#cos-tagtext-input');
-  const text = input.value.replace(/\s+/g, ' ').trim();
-  const problem = text ? OnixNameTags.problem(text) : null;
-  const info = $('#cos-tagtext-info');
-  if (problem) {
-    info.textContent = problem;
-    info.classList.add('err');
-    return;
-  }
-  const r = await api.setTagText(text);
-  if (!r.ok) {
-    info.textContent = r.error;
-    info.classList.add('err');
-    return;
-  }
-  cosmetics = r.value;
-  input.blur();
-  renderTagText();
-  $$('.ctile').forEach((t) => paintTile(t));
-  toast(text ? `Tag saved: [${text}]` : 'Tag text removed');
 }
 
 // ---------------------------------------------------------------- coins (Onix server)
@@ -342,7 +299,7 @@ async function loadCosmetics() {
   setupCosmetics();
   cosmetics = await api.getCosmetics();
   const p = activeProfile();
-  $('#cos-sub').textContent = `Name styles & tags are visible to other Onix players · profile "${p ? p.name : ''}"`;
+  $('#cos-sub').textContent = `Name styles are visible to other Onix players · profile "${p ? p.name : ''}"`;
   renderCosmetics();
   startStage();
   loadWallet();
@@ -379,8 +336,6 @@ function setupCosmetics() {
   $('#shop-to').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#shop-message').focus(); });
   $('#shop-message').addEventListener('keydown', (e) => { if (e.key === 'Enter') runShop(); });
   $('#cos-random').addEventListener('click', randomOutfit);
-  $('#cos-tagtext-save').addEventListener('click', saveTagText);
-  $('#cos-tagtext-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') saveTagText(); });
   $('#cos-clear').addEventListener('click', () => saveOutfit({}, 'All cosmetics removed'));
 
   // palette swatches
@@ -429,7 +384,7 @@ function setupCosmetics() {
 }
 
 function renderCosmetics() {
-  renderTagText();
+  renderSwatches();
   renderTabs();
   renderWorn();
   filterCosmetics();
@@ -444,7 +399,7 @@ function renderTabs() {
       cos.tab = id;
       renderTabs();
       filterCosmetics();
-      renderTagText();
+      renderSwatches();
     },
   }, [cosmetics[id] ? el('span', { class: 'dot' }) : null, label, el('small', { text: count.toLocaleString('en') })]);
   $('#cos-tabs').replaceChildren(tab('all', 'All', CosRender.catalog.items.length), ...COS_SLOTS.map(([id, label]) => tab(id, label, counts[id] || 0)));
@@ -604,7 +559,7 @@ function startStage() {
     for (const [slot] of COS_SLOTS) outfit[slot] = cosItem(cosmetics[slot]);
     if (cos.tryOn) outfit[cos.tryOn.slot] = cos.tryOn;
     CosRender.drawOutfit($('#cos-stage'), outfit, ticks, cos.yaw);
-    drawRuns($('#cos-nametag'), outfit.nametag || outfit.tag ? nameTagRuns(outfit.nametag, outfit.tag, ticks) : [], 26, true);
+    drawRuns($('#cos-nametag'), outfit.nametag ? nameTagRuns(outfit.nametag, ticks) : [], 26, true);
     if (cos.hoverTile && cos.hoverTile.isConnected) paintTile(cos.hoverTile, ticks);
     cos.frame = requestAnimationFrame(loop);
   };

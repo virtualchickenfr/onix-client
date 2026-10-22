@@ -54,17 +54,14 @@ public final class CosmeticCatalog {
      */
     public record Look(String type, int[] colors, boolean bold, float speed) {}
 
-    /**
-     * price in coins; 0 = free for everyone. look/tagText/custom are only set for name styles and tags
-     * (custom = a tag with your own text).
-     */
+    /** price in coins; 0 = free for everyone. look is only set for name styles. */
     public record Item(String id, String name, Cosmetics.Slot slot, String pattern, String palette, String model, String texture, Tier tier, int price,
-                       Look look, String tagText, boolean custom, boolean staff) {
+                       Look look) {
         public boolean isCape() {
             return slot == Cosmetics.Slot.CAPE;
         }
 
-        /** A name style or tag: drawn as text, not as a model. */
+        /** A name style: drawn as text, not as a model. */
         public boolean isText() {
             return look != null;
         }
@@ -127,20 +124,15 @@ public final class CosmeticCatalog {
                     m.has("extra") ? m.get("extra").getAsString() : null));
         }
         for (Map.Entry<String, JsonElement> e : root.getAsJsonObject("aliases").entrySet()) ALIASES.put(e.getKey(), e.getValue().getAsString());
-        List<JsonElement> all = new ArrayList<>();
-        root.getAsJsonArray("items").forEach(all::add);
-        if (root.has("staffItems")) root.getAsJsonArray("staffItems").forEach(all::add);
-        for (JsonElement el : all) {
+        for (JsonElement el : root.getAsJsonArray("items")) {
             JsonObject o = el.getAsJsonObject();
             Cosmetics.Slot slot = Cosmetics.Slot.byKey(o.get("slot").getAsString());
             if (slot == null) continue;
-            boolean staff = o.has("staff") && o.get("staff").getAsBoolean();
             Item item = new Item(o.get("id").getAsString(), o.get("name").getAsString(), slot, str(o, "pattern"), str(o, "palette"),
                     str(o, "model"), str(o, "texture"), Tier.valueOf(o.get("tier").getAsString().toUpperCase(Locale.ROOT)),
-                    o.has("price") ? o.get("price").getAsInt() : 0, look(o.getAsJsonObject("look")), str(o, "tagText"),
-                    o.has("custom") && o.get("custom").getAsBoolean(), staff);
+                    o.has("price") ? o.get("price").getAsInt() : 0, look(o.getAsJsonObject("look")));
             ITEMS.put(item.id(), item);
-            if (!staff) BY_SLOT.computeIfAbsent(slot, k -> new ArrayList<>()).add(item); // staff tags are never listed
+            BY_SLOT.computeIfAbsent(slot, k -> new ArrayList<>()).add(item);
         }
     }
 
