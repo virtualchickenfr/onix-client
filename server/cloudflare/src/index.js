@@ -23,6 +23,9 @@ const ITEM_RE = /^[a-z0-9_]{1,64}$/;
 
 const prices = shop.prices || {};
 const aliases = shop.aliases || {};
+/** Name styles and tags: id → 'nametag' | 'tag' | 'custom' (a tag with the player's own text). */
+const lookKinds = shop.looks || {};
+const CUSTOM_MAX = shop.customMax || 12;
 const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 
 const json = (status, body) => new Response(JSON.stringify(body), {
@@ -61,6 +64,57 @@ function ensureSchema(db) {
     }));
   }
   return schemaReady.get(db);
+}
+
+// ---------------------------------------------------------------- name styles and tags (same rules as the mod's NameTags)
+
+const TAG_ALLOWED = /^[\p{L}\p{N} \-_.!?#&+*'★♥✦☀☾❄♪✿⚔☠♛♦♣♠☺✔⚡☁☂☃♫]+$/u;
+const TAG_BLOCKED_PARTS = ['admin', 'owner', 'moderator', 'staff', 'helper', 'developer', 'support', 'mojang', 'microsoft', 'official',
+  'nigg', 'fagg', 'hitler', 'nazi', 'retard', 'fuck', 'cunt', 'whore', 'hurensohn', 'wichser', 'fotze', 'schwuchtel', 'missgeburt', 'spast', 'nutte', 'kys'];
+const TAG_BLOCKED_WORDS = new Set(['mod', 'dev', 'gm', 'op', 'fag', 'hure', 'sex']);
+
+/** Null if the custom tag text is fine, otherwise why not. */
+function tagProblem(text) {
+  if (typeof text !== 'string' || !text.trim()) return 'Type some text for your tag.';
+  if ([...text].length > CUSTOM_MAX) return `At most ${CUSTOM_MAX} characters.`;
+  if (!TAG_ALLOWED.test(text)) return 'Letters, numbers, spaces and a few symbols only.';
+  const lower = text.toLowerCase();
+  const flat = lower.replace(/[^\p{L}\p{N}]/gu, '');
+  if (TAG_BLOCKED_PARTS.some((b) => flat.includes(b))) return 'This tag is not allowed.';
+  if (lower.split(/[^\p{L}\p{N}]+/u).some((w) => TAG_BLOCKED_WORDS.has(w))) return 'This tag is not allowed.';
+  return null;
+}
+
+/**
+ * Stores what name style and tag a player wears, only items they own (unlimited accounts own everything).
+ * Returns an error message for the player, or null.
+ */
+async function saveLook(env, db, s, look) {
+  const mine = async (id) => isUnlimited(env, s.name) || owns(db, s.uuid, id);
+  let style = typeof look.style === 'string' && lookKinds[look.style] === 'nametag' ? look.style : '';
+  let tag = typeof look.tag === 'string' && (lookKinds[look.tag] === 'tag' || lookKinds[look.tag] === 'custom') ? look.tag : '';
+  let text = '';
+  let error = null;
+  if (style && !(await mine(style))) {
+    error = 'You do not own this name style.';
+    style = '';
+  }
+  if (tag && !(await mine(tag))) {
+    error = 'You do not own this tag.';
+    tag = '';
+  }
+  if (tag && lookKinds[tag] === 'custom') {
+    text = typeof look.text === 'string' ? look.text.replace(/\s+/g, ' ').trim() : '';
+    const problem = tagProblem(text);
+    if (problem) {
+      error = `Your tag text: ${problem}`;
+      tag = '';
+      text = '';
+    }
+  }
+  if (!style && !tag) await db.prepare('DELETE FROM looks WHERE uuid = ?').bind(s.uuid).run();
+  else await db.prepare('INSERT OR REPLACE INTO looks (uuid, style, tag, text, updated) VALUES (?, ?, ?, ?, ?)').bind(s.uuid, style, tag, text, Date.now()).run();
+  return error;
 }
 
 // ---------------------------------------------------------------- tokens (signed, nothing to store)
@@ -494,8 +548,9 @@ const routes = {
       await db.prepare('INSERT OR REPLACE INTO status (uuid, server, updated) VALUES (?, ?, ?)').bind(s.uuid, server, Date.now()).run();
     }
     const wallet = await heartbeat(env, db, s, body.playing === true);
+    const lookError = body.look && typeof body.look === 'object' ? await saveLook(env, db, s, body.look) : null;
     const n = (await db.prepare('SELECT COUNT(*) AS n FROM online WHERE seen > ?').bind(Date.now() - ONLINE_TTL_MS).first()).n;
-    return [200, { ok: true, online: n, wallet }];
+    return [200, { ok: true, online: n, wallet, ...(lookError ? { lookError } : {}) }];
   },
 
   'GET /v1/shop': async () => [200, { version: shop.version || 1, prices, aliases }],
@@ -530,7 +585,14 @@ const routes = {
       const rows = await db.prepare(`SELECT uuid FROM online WHERE seen > ? AND uuid IN (${part.map(() => '?').join(',')})`).bind(Date.now() - ONLINE_TTL_MS, ...part).all();
       result.push(...rows.results.map((r) => r.uuid));
     }
-    return [200, { online: result }];
+    // name styles and tags of the ones online
+    const looks = {};
+    for (let i = 0; i < result.length; i += 90) {
+      const part = result.slice(i, i + 90);
+      const rows = await db.prepare(`SELECT uuid, style, tag, text FROM looks WHERE uuid IN (${part.map(() => '?').join(',')})`).bind(...part).all();
+      for (const r of rows.results) looks[r.uuid] = { style: r.style, tag: r.tag, text: r.text };
+    }
+    return [200, { online: result, looks }];
   },
 };
 

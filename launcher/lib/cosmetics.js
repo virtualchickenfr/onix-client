@@ -5,7 +5,8 @@ const path = require('path');
  * Reads and writes config/onix/cosmetics.json in the profile folder (the same file the mod uses).
  * Ids are checked against the shared catalog (src/assets/cosmetics/catalog.json, made by tools/cosmetics.py).
  */
-const SLOTS = ['cape', 'head', 'face', 'neck', 'back', 'aura', 'pet'];
+const SLOTS = ['cape', 'head', 'face', 'neck', 'back', 'aura', 'pet', 'nametag', 'tag'];
+const nametags = require('./nametags');
 let catalog = null;
 
 function loadCatalog() {
@@ -40,7 +41,9 @@ function get(profileDir) {
   if (!raw || typeof raw !== 'object') return {};
   const { slotOf } = loadCatalog();
   const out = {};
+  if (typeof raw.tagText === 'string' && !nametags.problem(raw.tagText)) out.tagText = raw.tagText;
   for (const [key, value] of Object.entries(raw)) {
+    if (key === 'tagText') continue;
     const id = resolve(value);
     if (!id) continue;
     const slot = slotOf.get(id);
@@ -57,6 +60,7 @@ function write(profileDir, data) {
   fs.mkdirSync(path.dirname(file(profileDir)), { recursive: true });
   const ordered = {};
   for (const slot of SLOTS) if (data[slot]) ordered[slot] = data[slot];
+  if (data.tagText) ordered.tagText = data.tagText;
   fs.writeFileSync(file(profileDir), JSON.stringify(ordered, null, 2));
   return ordered;
 }
@@ -78,6 +82,8 @@ function set(profileDir, slot, id) {
 /** Replaces the whole selection, keeping only valid entries. */
 function setAll(profileDir, outfit) {
   const data = {};
+  const old = get(profileDir).tagText;
+  if (old) data.tagText = old;
   if (outfit && typeof outfit === 'object') {
     for (const slot of SLOTS) {
       const id = resolve(outfit[slot]);
@@ -87,4 +93,17 @@ function setAll(profileDir, outfit) {
   return write(profileDir, data);
 }
 
-module.exports = { get, set, setAll, resolve, SLOTS };
+/** The text of custom tags (empty = none); refused with a message if it is not allowed. */
+function setTagText(profileDir, text) {
+  const clean = String(text || '').replace(/\s+/g, ' ').trim();
+  if (clean) {
+    const problem = nametags.problem(clean);
+    if (problem) throw new Error(problem);
+  }
+  const data = get(profileDir);
+  if (clean) data.tagText = clean;
+  else delete data.tagText;
+  return write(profileDir, data);
+}
+
+module.exports = { get, set, setAll, setTagText, resolve, SLOTS };

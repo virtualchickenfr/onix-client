@@ -17,7 +17,8 @@ import java.util.Map;
 /**
  * The current cosmetic selection, one item per slot. Stored in config/onix/cosmetics.json
  * (the launcher writes to it as well). The items themselves come from {@link CosmeticCatalog}.
- * Cosmetics are only visible to yourself.
+ * Model cosmetics are only visible to yourself; name styles and tags are also shown to other Onix players
+ * (see {@link NameTags}). "tagText" holds the text of a custom tag.
  */
 public final class Cosmetics {
     public enum Slot {
@@ -27,7 +28,9 @@ public final class Cosmetics {
         NECK("neck", "Neck"),
         BACK("back", "Back"),
         AURA("aura", "Aura"),
-        PET("pet", "Pet");
+        PET("pet", "Pet"),
+        NAMETAG("nametag", "Name Style"),
+        TAG("tag", "Tag");
 
         public final String key;
         public final String displayName;
@@ -49,7 +52,28 @@ public final class Cosmetics {
     /** Items tried on while hovering in the wardrobe; shown instead of the selection, never saved. */
     private static final Map<Slot, String> PREVIEW = new EnumMap<>(Slot.class);
 
+    /** Your own text for a custom tag (already checked by {@link NameTags#cleanCustom}). */
+    private static String tagText = "";
+    /** Dev test only: show every selected item as if it was owned. */
+    public static boolean testOwnAll;
+
     private Cosmetics() {}
+
+    public static String tagText() {
+        return tagText;
+    }
+
+    /** Sets the custom tag text; returns null when it was saved, or why it was refused. */
+    public static String setTagText(String raw) {
+        String text = raw == null ? "" : raw.trim().replaceAll("\\s+", " ");
+        if (!text.isEmpty()) {
+            String problem = NameTags.problem(text);
+            if (problem != null) return problem;
+        }
+        tagText = text;
+        save();
+        return null;
+    }
 
     private static Path file() {
         return ConfigFiles.dir().resolve("cosmetics.json");
@@ -71,7 +95,7 @@ public final class Cosmetics {
     public static CosmeticCatalog.Item shown(Slot slot) {
         if (PREVIEW.containsKey(slot)) return CosmeticCatalog.item(PREVIEW.get(slot));
         CosmeticCatalog.Item item = CosmeticCatalog.item(SELECTED.get(slot));
-        return OnixWallet.owns(item) ? item : null;
+        return testOwnAll || OnixWallet.owns(item) ? item : null;
     }
 
     /** Passing null as id removes the cosmetic from that slot. */
@@ -121,8 +145,13 @@ public final class Cosmetics {
     public static void load() {
         SELECTED.clear();
         PREVIEW.clear();
+        tagText = "";
         JsonObject json = ConfigFiles.read(file());
         if (json == null) return;
+        if (json.has("tagText") && json.get("tagText").isJsonPrimitive()) {
+            String t = json.remove("tagText").getAsString();
+            tagText = NameTags.problem(t) == null ? t : "";
+        }
         boolean migrated = false;
         for (Map.Entry<String, JsonElement> e : json.entrySet()) {
             if (!e.getValue().isJsonPrimitive()) continue;
@@ -143,6 +172,8 @@ public final class Cosmetics {
             String id = SELECTED.get(slot);
             if (id != null) json.addProperty(slot.key, id);
         }
+        if (!tagText.isEmpty()) json.addProperty("tagText", tagText);
         ConfigFiles.write(file(), json);
+        dev.onix.client.network.OnixPresence.lookChanged();
     }
 }

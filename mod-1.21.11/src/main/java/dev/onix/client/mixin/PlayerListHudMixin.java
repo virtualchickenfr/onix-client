@@ -43,7 +43,8 @@ public abstract class PlayerListHudMixin {
     @Inject(method = "getNameForDisplay", at = @At("RETURN"), cancellable = true)
     private void onix$badge(PlayerInfo entry, CallbackInfoReturnable<Component> cir) {
         if (OnixClient.MODULES == null) return;
+        Component name = dev.onix.client.cosmetics.NameTags.decorate(entry.getProfile().id(), entry.getProfile().name(), cir.getReturnValue());
         OnixBadgeModule badge = OnixClient.MODULES.get(OnixBadgeModule.class);
-        if (badge != null && badge.isEnabled()) cir.setReturnValue(badge.decorateTabName(entry, cir.getReturnValue()));
+        cir.setReturnValue(badge != null && badge.isEnabled() ? badge.decorateTabName(entry, name) : name);
     }
 }

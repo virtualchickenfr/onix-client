@@ -19,3 +19,4 @@ CREATE TABLE IF NOT EXISTS messages (id TEXT PRIMARY KEY, from_uuid TEXT NOT NUL
 CREATE INDEX IF NOT EXISTS messages_pair ON messages (from_uuid, to_uuid, at);
 CREATE INDEX IF NOT EXISTS messages_unread ON messages (to_uuid, read);
 CREATE TABLE IF NOT EXISTS mcreal (uuid TEXT NOT NULL, day TEXT NOT NULL, name TEXT NOT NULL, caption TEXT NOT NULL, image TEXT NOT NULL, at INTEGER NOT NULL, PRIMARY KEY (uuid, day));
+CREATE TABLE IF NOT EXISTS looks (uuid TEXT PRIMARY KEY, style TEXT NOT NULL DEFAULT '', tag TEXT NOT NULL DEFAULT '', text TEXT NOT NULL DEFAULT '', updated INTEGER NOT NULL);

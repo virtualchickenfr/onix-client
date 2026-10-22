@@ -9,3 +9,4 @@ launcher/dist/
 server/data/
 *.args
 ports/build/
+__pycache__/

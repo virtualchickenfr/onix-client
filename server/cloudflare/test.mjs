@@ -7,7 +7,8 @@ import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 
 const here = path.dirname(new URL(import.meta.url).pathname);
-globalThis.__shop = { version: 1, prices: { free_cape: 0, hat_common: 60, wings_epic: 400, crown_gold: 150 }, aliases: { crown: 'crown_gold' } };
+globalThis.__shop = { version: 1, prices: { free_cape: 0, hat_common: 60, wings_epic: 400, crown_gold: 150, name_fire: 5, tag_pro: 5, tag_custom_tag: 5 }, aliases: { crown: 'crown_gold' },
+  looks: { name_fire: 'nametag', tag_pro: 'tag', tag_custom_tag: 'custom' }, customMax: 12 };
 const src = fs.readFileSync(path.join(here, 'src/index.js'), 'utf8').replace("import shop from '../../shop.json';", 'const shop = globalThis.__shop;')
   .replace("import schema from './schema.js';", `import schema from '${path.join(here, 'src/schema.js')}';`);
 const tmp = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'onix-cf-')), 'worker.mjs');
@@ -190,6 +191,29 @@ globalThis.fetch = realFetch;
   assert.strictEqual((await call('POST', '/v1/mcreal/feed', { token: tc }))[1].posts.length, 0);
   assert.strictEqual((await call('POST', '/v1/friends/remove', { token: ta, uuid: B }))[0], 200);
   assert.strictEqual((await call('POST', '/v1/friends', { token: ta }))[1].friends.length, 0);
+}
+
+// name styles and tags: only owned ones are shared, custom text is checked
+{
+  const L = 'c'.repeat(32);
+  const M = 'd'.repeat(32);
+  const tl = await login(L, 'Lena');
+  const tm = await login(M, 'Max');
+  await call('POST', '/v1/heartbeat', { token: tm, playing: true });
+  for (let i = 0; i < 20; i++) { now += 60_000; await call('POST', '/v1/heartbeat', { token: tl, playing: true }); }
+  let [, hb] = await call('POST', '/v1/heartbeat', { token: tl, playing: true, look: { style: 'name_fire', tag: '', text: '' } });
+  assert.ok(hb.lookError, 'not owned yet');
+  for (const item of ['name_fire', 'tag_custom_tag']) assert.strictEqual((await call('POST', '/v1/shop/buy', { token: tl, item }))[0], 200);
+  [, hb] = await call('POST', '/v1/heartbeat', { token: tl, playing: true, look: { style: 'name_fire', tag: 'tag_custom_tag', text: 'Admin' } });
+  assert.match(hb.lookError, /not allowed/);
+  [, hb] = await call('POST', '/v1/heartbeat', { token: tl, playing: true, look: { style: 'name_fire', tag: 'tag_custom_tag', text: '  Chicken  ★ ' } });
+  assert.strictEqual(hb.lookError, undefined);
+  await call('POST', '/v1/heartbeat', { token: tm, playing: true });
+  const [, lk] = await call('POST', '/v1/lookup', { uuids: [L, M] });
+  assert.deepStrictEqual(lk.looks[L], { style: 'name_fire', tag: 'tag_custom_tag', text: 'Chicken ★' });
+  assert.strictEqual(lk.looks[M], undefined);
+  await call('POST', '/v1/heartbeat', { token: tl, playing: true, look: { style: '', tag: '', text: '' } });
+  assert.strictEqual((await call('POST', '/v1/lookup', { uuids: [L] }))[1].looks[L], undefined, 'taken off');
 }
 
 assert.strictEqual((await call('GET', '/nope'))[0], 404);

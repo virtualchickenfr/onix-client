@@ -18,6 +18,10 @@ public abstract class EntityRendererMixin {
     private void onix$decorateNameTag(Entity entity, CallbackInfoReturnable<Component> cir) {
         Component text = cir.getReturnValue();
         if (OnixClient.MODULES == null || text == null) return;
+        // name style and tag (cosmetics) first, so they find the plain name
+        if (entity instanceof net.minecraft.world.entity.player.Player player) {
+            text = dev.onix.client.cosmetics.NameTags.decorate(player.getUUID(), player.getScoreboardName(), text);
+        }
         NametagsModule tags = OnixClient.MODULES.get(NametagsModule.class);
         Component result = tags == null ? text : tags.decorate(entity, text);
         OnixBadgeModule badge = OnixClient.MODULES.get(OnixBadgeModule.class);

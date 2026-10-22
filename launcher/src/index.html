@@ -177,7 +177,7 @@
       <!-- COSMETICS -->
       <section class="view" id="view-cosmetics">
         <div class="page-head">
-          <div><h2>Cosmetics</h2><p id="cos-sub">Only visible to you.</p></div>
+          <div><h2>Cosmetics</h2><p id="cos-sub">Hats, capes and pets only you see – name styles and tags other Onix players see too.</p></div>
           <div class="btn-row">
             <button class="cos-wallet" id="cos-wallet" title="1 coin for every minute you play with Onix"><i class="coin"></i><b id="cos-coins">–</b><span id="cos-wallet-sub">Connecting…</span></button>
             <button class="btn" id="cos-random"><svg><use href="#i-refresh"/></svg>Random Outfit</button>
@@ -187,6 +187,7 @@
         <div class="cosmetics">
           <div class="cos-stage">
             <canvas id="cos-stage" width="440" height="560" title="Drag to turn"></canvas>
+            <canvas class="cos-nametag" id="cos-nametag" width="440" height="40"></canvas>
             <div class="cos-stage-hint">Drag to turn</div>
             <div class="cos-worn" id="cos-worn"></div>
           </div>
@@ -201,6 +202,11 @@
                 <option value="">All tiers</option><option value="common">Common</option><option value="rare">Rare</option>
                 <option value="epic">Epic</option><option value="legendary">Legendary</option>
               </select>
+            </div>
+            <div class="cos-tagtext" id="cos-tagtext" hidden>
+              <input class="input sm" id="cos-tagtext-input" maxlength="12" spellcheck="false" placeholder="Your tag text">
+              <button class="btn sm" id="cos-tagtext-save">Save</button>
+              <span id="cos-tagtext-info">Your own text for custom tags · max 12 characters</span>
             </div>
             <div class="cos-swatches" id="cos-swatches"></div>
             <div class="cos-count" id="cos-count"></div>
@@ -570,6 +576,7 @@
   <script src="js/packs.js"></script>
   <script src="js/profile-view.js"></script>
   <script src="assets/cosmetics/catalog.js"></script>
+  <script src="../lib/nametags.js"></script>
   <script src="js/cosrender.js"></script>
   <script src="js/cosmetics.js"></script>
   <script src="js/import.js"></script>

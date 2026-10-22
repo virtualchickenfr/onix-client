@@ -139,6 +139,9 @@ public class OnixMenuScreen extends Screen {
     private String cosDialogError;
     private final Input giftTo = new Input("Player name", 16);
     private final Input giftMessage = new Input("Message (optional)", 80);
+    /** Text of a custom tag (cosmetics, Tags tab). */
+    private final Input tagInput = new Input("Your tag text", dev.onix.client.cosmetics.NameTags.CUSTOM_MAX);
+    private String tagInputError;
     private final Map<TextSetting, Input> textInputs = new HashMap<>();
 
     private final List<Hit> hits = new ArrayList<>();
@@ -228,10 +231,19 @@ public class OnixMenuScreen extends Screen {
         friendName.onSubmit(this::submitFriend);
         chatInput.onSubmit(this::submitChat);
         cosSearch.onChange(() -> scroll = scrollTarget = 0);
+        tagInput.setText(Cosmetics.tagText());
+        tagInput.onChange(() -> tagInputError = null);
+        tagInput.onSubmit(this::saveTagText);
         giftTo.onSubmit(() -> focusOnly(giftMessage));
         giftMessage.onSubmit(() -> {
             if (cosDialog != null && cosGiftMode) giftCosmetic(cosDialog);
         });
+    }
+
+    /** Shows one cosmetics tab (used by the dev test). */
+    public OnixMenuScreen cosmeticsSlot(Cosmetics.Slot slot) {
+        cosSlot = slot;
+        return this;
     }
 
     /** Opens the menu directly on a module's settings page. */
@@ -2067,6 +2079,7 @@ public class OnixMenuScreen extends Screen {
         cosSearch.focus(false);
         giftTo.focus(false);
         giftMessage.focus(false);
+        tagInput.focus(false);
         friendName.focus(false);
         chatInput.focus(false);
         mcCaption.focus(false);
@@ -2080,7 +2093,7 @@ public class OnixMenuScreen extends Screen {
     }
 
     private boolean anyInputFocused() {
-        if (search.focused() || profileName.focused() || numberInput.focused() || cosSearch.focused() || giftTo.focused() || giftMessage.focused()) return true;
+        if (search.focused() || profileName.focused() || numberInput.focused() || cosSearch.focused() || giftTo.focused() || giftMessage.focused() || tagInput.focused()) return true;
         for (Input in : textInputs.values()) if (in.focused()) return true;
         if (friendName.focused() || chatInput.focused() || mcCaption.focused()) return true;
         return false;
@@ -2310,6 +2323,7 @@ public class OnixMenuScreen extends Screen {
             scissor(ctx, sx(r[0] + 1), sy(r[1] + 32), sx(pv2 - 1), sy(r[3] - 1));
             PlayerPreview.draw(ctx, sx((r[0] + pv2) / 2.0), sy((r[1] + 30 + r[3] - 36) / 2.0), Math.round(size * uiScale * openScale), previewRotation);
             ctx.disableScissor();
+            drawOwnNameTag(ctx, (r[0] + pv2) / 2, r[1] + 34, pv2 - r[0] - 12);
             String hint = "Drag to rotate";
             Theme.small(ctx, hint, (r[0] + pv2) / 2 - Theme.smallWidth(hint) / 2, r[3] - 31, Theme.TEXT_3);
             hit(r[0], r[1] + 32, pv2, r[3] - 24, () -> draggingPreview = true, null);
@@ -2346,6 +2360,8 @@ public class OnixMenuScreen extends Screen {
             int w = chip(ctx, mx, my, cx, y, slot.displayName, on, () -> {
                 cosSlot = slot;
                 cosPalette = null;
+                if (!tagInput.focused()) tagInput.setText(Cosmetics.tagText());
+                tagInputError = null;
                 scroll = scrollTarget = 0;
             });
             if (worn) Theme.round(ctx, cx + w - 5, y + 1, cx + w - 1, y + 5, 2, Theme.accent());
@@ -2375,8 +2391,10 @@ public class OnixMenuScreen extends Screen {
         button(ctx, mx, my, x + sw + 18 + 2 * bw, y, bw, 17, "None", none, () -> Cosmetics.select(cosSlot, null));
         y += 23;
 
+        boolean textSlot = cosSlot == Cosmetics.Slot.NAMETAG || cosSlot == Cosmetics.Slot.TAG;
+        if (cosSlot == Cosmetics.Slot.TAG) y = renderTagTextRow(ctx, mx, my, x, y, right);
         // palette filter
-        List<String> palettes = dev.onix.client.cosmetics.CosmeticCatalog.paletteIds();
+        List<String> palettes = textSlot ? List.of() : dev.onix.client.cosmetics.CosmeticCatalog.paletteIds();
         int px = x;
         int sq = 8;
         for (String pid : palettes) {
@@ -2398,12 +2416,12 @@ public class OnixMenuScreen extends Screen {
             }, null);
             px += sq + 2;
         }
-        y += sq + 7;
+        if (!textSlot) y += sq + 7;
 
         // grid
         boolean cape = cosSlot == Cosmetics.Slot.CAPE;
-        int tw = cape ? 34 : 38;
-        int th = cape ? 46 : 38;
+        int tw = textSlot ? 92 : cape ? 34 : 38;
+        int th = textSlot ? 24 : cape ? 46 : 38;
         int gap = 5;
         int top = y;
         int bottom = r[3] - 12;
@@ -2422,7 +2440,9 @@ public class OnixMenuScreen extends Screen {
             int gy = top + (i / cols) * (th + gap) - (int) Math.round(scroll);
             boolean sel = Cosmetics.isSelected(item);
             boolean hov = tile(ctx, mx, my, gx, gy, tw, th, sel, "cos:" + item.id());
-            if (cape) {
+            if (textSlot) {
+                drawLookPreview(ctx, item, gx + tw / 2, gy + (th - 8) / 2, tw - 12);
+            } else if (cape) {
                 dev.onix.client.cosmetics.CapeRenderer.drawIcon(ctx, item, gx + 2, gy + 3, tw - 4, th - 6, hov ? time : 0f, hov ? (float) Math.sin(time * 0.06f) * 35f : 0f);
             } else {
                 dev.onix.client.cosmetics.CosmeticModels.drawIcon(ctx, item, gx + 3, gy + 3, tw - 6, th - 6, hov ? time : 0f, hov ? (time * 3f) % 360f : 0f);
@@ -2436,9 +2456,11 @@ public class OnixMenuScreen extends Screen {
                 int pw = Theme.smallWidth(price) + 9;
                 ctx.pose().pushMatrix();
                 ctx.pose().translate(0, 0);
-                Theme.round(ctx, gx + 2, gy + th - 10, gx + 2 + pw, gy + th - 2, 3, Theme.withAlpha(0xFF101014, 210));
-                Theme.round(ctx, gx + 4, gy + th - 8, gx + 8, gy + th - 4, 2, 0xFFFFC23D);
-                Theme.small(ctx, price, gx + 10, gy + th - 8, 0xFFFFE7A8);
+                int px0 = textSlot ? gx + tw - 3 - pw : gx + 2;
+                int py0 = textSlot ? gy + th - 9 : gy + th - 10;
+                Theme.round(ctx, px0, py0, px0 + pw, py0 + 8, 3, Theme.withAlpha(0xFF101014, 210));
+                Theme.round(ctx, px0 + 2, py0 + 2, px0 + 6, py0 + 6, 2, 0xFFFFC23D);
+                Theme.small(ctx, price, px0 + 8, py0 + 2, 0xFFFFE7A8);
                 ctx.pose().popMatrix();
             }
             if (hov) hover = item;
@@ -2472,7 +2494,74 @@ public class OnixMenuScreen extends Screen {
             tooltip = hover.name() + "\n" + tier + (hover.palette() != null ? " · " + dev.onix.client.cosmetics.CosmeticCatalog.paletteName(hover.palette()) : "")
                     + (mine ? (hover.price() == 0 ? " · Free" : " · Owned") : " · " + hover.price() + " coins")
                     + (mine ? "\nClick to wear · right-click to gift" : "\nClick to buy · right-click to gift")
-                    + (cape ? "\nNeeds \"Cape\" on in Skin Customization" : "");
+                    + (cape ? "\nNeeds \"Cape\" on in Skin Customization" : "")
+                    + (hover.custom() ? "\nShows your own text – type it above the list" : "")
+                    + (textSlot ? "\nOther Onix players see it too" : "");
+        }
+    }
+
+    // ---------- name styles and tags
+
+    private String ownName() {
+        return minecraft.getUser() == null ? "Player" : minecraft.getUser().getName();
+    }
+
+    /** A component centred at cx, scaled down to fit maxW. */
+    private void drawComponent(GuiGraphics ctx, net.minecraft.network.chat.Component c, int cx, int y, int maxW) {
+        int w = font.width(c);
+        float scale = w > maxW ? maxW / (float) w : 1f;
+        ctx.pose().pushMatrix();
+        ctx.pose().translate(cx, y + (1 - scale) * 4);
+        ctx.pose().scale(scale, scale);
+        ctx.drawString(font, c, -w / 2, 0, 0xFFFFFFFF, true);
+        ctx.pose().popMatrix();
+    }
+
+    /** One name style (on your name) or tag (with your name dimmed next to it). */
+    private void drawLookPreview(GuiGraphics ctx, dev.onix.client.cosmetics.CosmeticCatalog.Item item, int cx, int y, int maxW) {
+        String custom = Cosmetics.tagText().isEmpty() ? "TAG" : Cosmetics.tagText();
+        net.minecraft.network.chat.Component c = item.slot() == Cosmetics.Slot.NAMETAG
+                ? dev.onix.client.cosmetics.NameTags.paint(ownName(), item.look(), net.minecraft.network.chat.Style.EMPTY)
+                : dev.onix.client.cosmetics.NameTags.tag(item, custom);
+        drawComponent(ctx, c, cx, y, maxW);
+    }
+
+    /** Your name tag as others see it, above the player preview. */
+    private void drawOwnNameTag(GuiGraphics ctx, int cx, int y, int maxW) {
+        var look = dev.onix.client.cosmetics.NameTags.lookOf(minecraft.getUser() == null ? null : minecraft.getUser().getProfileId());
+        net.minecraft.network.chat.Component c = look == null ? net.minecraft.network.chat.Component.literal(ownName())
+                : dev.onix.client.cosmetics.NameTags.preview(ownName(), look.style(), look.tag(), look.text());
+        int w = Math.min(maxW, font.width(c));
+        ctx.fill(cx - w / 2 - 2, y - 1, cx + w / 2 + 2, y + 9, 0x40000000);
+        drawComponent(ctx, c, cx, y, maxW);
+    }
+
+    /** The text field for custom tags (Tags tab). Returns the y below it. */
+    private int renderTagTextRow(GuiGraphics ctx, int mx, int my, int x, int y, int right) {
+        int bw = 46;
+        int iw = Math.min(150, right - x - bw - 6);
+        Theme.card(ctx, x, y, x + iw, y + 17, 8, Theme.SURFACE, tagInput.focused() ? Theme.withAlpha(Theme.accent(), 200) : Theme.BORDER_STRONG);
+        tagInput.render(ctx, x + 7, y + 5, iw - 14, Theme.TEXT, Theme.TEXT_3);
+        hit(x, y, x + iw, y + 17, () -> focusOnly(tagInput), () -> tagInput.setText(""));
+        boolean changed = !tagInput.text().trim().replaceAll("\\s+", " ").equals(Cosmetics.tagText());
+        button(ctx, mx, my, x + iw + 6, y, bw, 17, "Save", changed, this::saveTagText);
+        boolean ownsCustom = false;
+        for (var it : Cosmetics.of(Cosmetics.Slot.TAG)) if (it.custom() && dev.onix.client.network.OnixWallet.owns(it)) ownsCustom = true;
+        String info = tagInputError != null ? tagInputError
+                : ownsCustom ? "Your own text for custom tags · max " + dev.onix.client.cosmetics.NameTags.CUSTOM_MAX + " characters"
+                : "Buy a custom tag to show your own text";
+        int ix = x + iw + bw + 14;
+        if (ix + 40 < right) Theme.small(ctx, Theme.ellipsize(info, right - ix), ix, y + 5, tagInputError != null ? Theme.RED : Theme.TEXT_3);
+        return y + 23;
+    }
+
+    private void saveTagText() {
+        String error = Cosmetics.setTagText(tagInput.text());
+        tagInputError = error;
+        if (error == null) {
+            tagInput.setText(Cosmetics.tagText());
+            tagInput.focus(false);
+            Notifications.show("Tag saved", Cosmetics.tagText().isEmpty() ? "Custom tags show \"TAG\" until you type something" : "[" + Cosmetics.tagText() + "]");
         }
     }
 
@@ -2538,7 +2627,9 @@ public class OnixMenuScreen extends Screen {
 
         // icon + title
         Theme.card(ctx, x1 + 10, y1 + 10, x1 + 46, y1 + 46, 6, Theme.SURFACE_2, Theme.BORDER);
-        if (item.isCape()) {
+        if (item.isText()) {
+            drawLookPreview(ctx, item, x1 + 28, y1 + 24, 32);
+        } else if (item.isCape()) {
             float t = (System.currentTimeMillis() % 1_000_000L) / 50f;
             dev.onix.client.cosmetics.CapeRenderer.drawIcon(ctx, item, x1 + 12, y1 + 12, 32, 32, t, (float) Math.sin(t * 0.06f) * 35f);
         } else {
@@ -2973,6 +3064,7 @@ public class OnixMenuScreen extends Screen {
         cosSearch.focus(false);
         giftTo.focus(false);
         giftMessage.focus(false);
+        tagInput.focus(false);
         unfocusTextInputs();
         // clicking anywhere but the number field confirms a typed number
         if (wasEditing && (numberField == null || !Theme.inside(mouseX, mouseY, numberField[0], numberField[1], numberField[2], numberField[3]))) {
@@ -3103,6 +3195,7 @@ public class OnixMenuScreen extends Screen {
             if (anyInputFocused()) {
                 if (search.focused() && !search.text().isEmpty()) search.setText("");
                 if (cosSearch.focused() && !cosSearch.text().isEmpty()) cosSearch.setText("");
+                tagInput.focus(false);
                 search.focus(false);
                 profileName.focus(false);
                 cosSearch.focus(false);
@@ -3129,7 +3222,8 @@ public class OnixMenuScreen extends Screen {
         }
         if (search.keyPressed(keyCode, modifiers) || profileName.keyPressed(keyCode, modifiers) || cosSearch.keyPressed(keyCode, modifiers)
                 || giftTo.keyPressed(keyCode, modifiers) || giftMessage.keyPressed(keyCode, modifiers)
-                || friendName.keyPressed(keyCode, modifiers) || chatInput.keyPressed(keyCode, modifiers) || mcCaption.keyPressed(keyCode, modifiers)) return true;
+                || friendName.keyPressed(keyCode, modifiers) || chatInput.keyPressed(keyCode, modifiers) || mcCaption.keyPressed(keyCode, modifiers)
+                || tagInput.keyPressed(keyCode, modifiers)) return true;
         for (Input in : textInputs.values()) if (in.keyPressed(keyCode, modifiers)) return true;
         if (OnixClient.MENU_KEY.matches(onix$k) && !anyInputFocused()) { // Right Shift also types capitals
             onClose();
@@ -3177,7 +3271,7 @@ public class OnixMenuScreen extends Screen {
         char chr = (char) onix$c.codepoint(); int modifiers = onix$c.modifiers();
         if (editingNumber != null && numberInput.charTyped(chr)) return true;
         if (search.charTyped(chr) || profileName.charTyped(chr) || cosSearch.charTyped(chr) || giftTo.charTyped(chr) || giftMessage.charTyped(chr)
-                || friendName.charTyped(chr) || chatInput.charTyped(chr) || mcCaption.charTyped(chr)) return true;
+                || friendName.charTyped(chr) || chatInput.charTyped(chr) || mcCaption.charTyped(chr) || tagInput.charTyped(chr)) return true;
         for (Input in : textInputs.values()) if (in.charTyped(chr)) return true;
         return super.charTyped(onix$c);
     }

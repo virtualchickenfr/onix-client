@@ -52,6 +52,10 @@ public final class OnixPresence {
     /** Players already asked about → when to ask again. */
     private static final Map<UUID, Long> NEXT_CHECK = new ConcurrentHashMap<>();
     private static final AtomicBoolean BUSY = new AtomicBoolean();
+    /** Name style, tag and custom tag text of Onix players around you (from /v1/lookup). */
+    private static final Map<UUID, String[]> LOOKS = new ConcurrentHashMap<>();
+    /** The look last accepted by the server, so the heartbeat only sends it when it changes. */
+    private static volatile String sentLook;
 
     private static volatile String server = "";
     private static volatile String token;
@@ -74,6 +78,16 @@ public final class OnixPresence {
         return until != null && until > System.currentTimeMillis();
     }
 
+    /** {style id, tag id, custom text} of another player (entries may be null), or null. */
+    public static String[] look(UUID id) {
+        return isOnixUser(id) ? LOOKS.get(id) : null;
+    }
+
+    /** Your name style or tag changed: tell the server within a few seconds instead of at the next minute. */
+    public static void lookChanged() {
+        nextHeartbeat = Math.min(nextHeartbeat, System.currentTimeMillis() + 3000);
+    }
+
     public static String server() {
         return server;
     }
@@ -89,6 +103,8 @@ public final class OnixPresence {
             token = null;
             ONIX_USERS.clear();
             NEXT_CHECK.clear();
+            LOOKS.clear();
+            sentLook = null;
             nextHeartbeat = 0;
             nextLookup = 0;
             announcedConnect = false;
@@ -110,7 +126,8 @@ public final class OnixPresence {
             var current = mc.getCurrentServer();
             String addr = OnixClient.CONFIG.shareServer.isOn() && OnixClient.CONFIG.socialOn.isOn() && current != null && !current.isLan()
                     && !mc.isLocalServer() ? current.ip : "";
-            submit(() -> heartbeat(url, self, name, accessToken, share, playing, addr));
+            JsonObject look = ownLook();
+            submit(() -> heartbeat(url, self, name, accessToken, share, playing, addr, look));
             return;
         }
 
@@ -161,7 +178,18 @@ public final class OnixPresence {
 
     // ------------------------------------------------------------------ requests (worker thread)
 
-    private static void heartbeat(String url, UUID self, String name, String accessToken, boolean share, boolean playing, String serverAddress) {
+    /** Your name style and tag as the server stores them (only what you wear, never what you try on). */
+    private static JsonObject ownLook() {
+        JsonObject o = new JsonObject();
+        var style = dev.onix.client.cosmetics.CosmeticCatalog.item(dev.onix.client.cosmetics.Cosmetics.selected(dev.onix.client.cosmetics.Cosmetics.Slot.NAMETAG));
+        var tag = dev.onix.client.cosmetics.CosmeticCatalog.item(dev.onix.client.cosmetics.Cosmetics.selected(dev.onix.client.cosmetics.Cosmetics.Slot.TAG));
+        o.addProperty("style", style != null && OnixWallet.owns(style) ? style.id() : "");
+        o.addProperty("tag", tag != null && OnixWallet.owns(tag) ? tag.id() : "");
+        o.addProperty("text", tag != null && tag.custom() ? dev.onix.client.cosmetics.Cosmetics.tagText() : "");
+        return o;
+    }
+
+    private static void heartbeat(String url, UUID self, String name, String accessToken, boolean share, boolean playing, String serverAddress, JsonObject look) {
         if (self == null) {
             status = "Not signed in";
             return;
@@ -173,6 +201,8 @@ public final class OnixPresence {
         body.addProperty("playing", playing);
         body.addProperty("social", OnixClient.CONFIG.socialOn.isOn());
         if (!serverAddress.isEmpty()) body.addProperty("server", serverAddress);
+        String lookKey = look.toString();
+        if (!lookKey.equals(sentLook)) body.add("look", look);
         Response r = post(url + "/v1/heartbeat", body, 6);
         if (r.status == 401) {
             token = null;
@@ -182,6 +212,13 @@ public final class OnixPresence {
         if (r.status != 200) {
             status = "Server error " + r.status;
             return;
+        }
+        if (body.has("look")) {
+            sentLook = lookKey;
+            if (r.json != null && r.json.has("lookError")) {
+                String why = r.json.get("lookError").getAsString();
+                Minecraft.getInstance().execute(() -> dev.onix.client.gui.Notifications.show("Name tag not shared", why));
+            }
         }
         int count = r.json != null && r.json.has("online") ? r.json.get("online").getAsInt() : 0;
         status = "Connected · " + count + " online";
@@ -324,11 +361,23 @@ public final class OnixPresence {
         long until = System.currentTimeMillis() + RESULT_TTL_MS;
         java.util.Set<String> online = new java.util.HashSet<>();
         for (JsonElement e : r.json.getAsJsonArray("online")) online.add(e.getAsString());
+        JsonObject looks = r.json.has("looks") && r.json.get("looks").isJsonObject() ? r.json.getAsJsonObject("looks") : new JsonObject();
         for (String raw : uuids) {
             UUID id = UUID.fromString(raw);
-            if (online.contains(raw.replace("-", "").toLowerCase())) ONIX_USERS.put(id, until);
+            String plain = raw.replace("-", "").toLowerCase();
+            if (online.contains(plain)) ONIX_USERS.put(id, until);
             else ONIX_USERS.remove(id);
+            if (looks.has(plain) && looks.get(plain).isJsonObject()) {
+                JsonObject l = looks.getAsJsonObject(plain);
+                LOOKS.put(id, new String[]{text(l, "style"), text(l, "tag"), text(l, "text")});
+            } else {
+                LOOKS.remove(id);
+            }
         }
+    }
+
+    private static String text(JsonObject o, String key) {
+        return o.has(key) && o.get(key).isJsonPrimitive() ? o.get(key).getAsString() : null;
     }
 
     private record Response(int status, JsonObject json) {}

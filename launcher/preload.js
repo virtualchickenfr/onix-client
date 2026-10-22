@@ -54,6 +54,7 @@ contextBridge.exposeInMainWorld('onix', {
   getCosmetics: () => invoke('cosmetics:get'),
   setCosmetic: (slot, id) => invoke('cosmetics:set', slot, id),
   setCosmetics: (outfit) => invoke('cosmetics:setAll', outfit),
+  setTagText: (text) => invoke('cosmetics:setTagText', text),
   wallet: () => invoke('wallet:get'),
   buyCosmetic: (item) => invoke('wallet:buy', item),
   giftCosmetic: (item, to, message) => invoke('wallet:gift', item, to, message),

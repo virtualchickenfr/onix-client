@@ -80,7 +80,10 @@ public class OnixClient implements ClientModInitializer {
             LauncherInbox.tick();
             OnixBadgeModule badge = MODULES.get(OnixBadgeModule.class);
             boolean badgeOn = badge != null && badge.isEnabled();
-            OnixPresence.tick(serverUrl(), badgeOn && badge.sharing(), badgeOn, badge == null ? 15 : badge.lookupSeconds());
+            // others need to find you for your badge and for your name style and tag
+            boolean looksOn = CONFIG.nameTagLooks.isOn();
+            boolean share = badge != null && badge.sharing() && (badgeOn || looksOn);
+            OnixPresence.tick(serverUrl(), share, badgeOn || looksOn, badge == null ? 15 : badge.lookupSeconds());
             if (CONFIG.socialOn.isOn() && !OnixPresence.server().isEmpty()) {
                 dev.onix.client.social.Social.tick(client.screen instanceof OnixMenuScreen);
             }

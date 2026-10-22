@@ -48,10 +48,25 @@ public final class CosmeticCatalog {
         }
     }
 
-    /** price in coins; 0 = free for everyone */
-    public record Item(String id, String name, Cosmetics.Slot slot, String pattern, String palette, String model, String texture, Tier tier, int price) {
+    /**
+     * How a name style or tag colours its letters (see tools/nametags.py): solid, gradient, wave, rainbow, pulse or shine.
+     * speed 1 = normal.
+     */
+    public record Look(String type, int[] colors, boolean bold, float speed) {}
+
+    /**
+     * price in coins; 0 = free for everyone. look/tagText/custom are only set for name styles and tags
+     * (custom = a tag with your own text).
+     */
+    public record Item(String id, String name, Cosmetics.Slot slot, String pattern, String palette, String model, String texture, Tier tier, int price,
+                       Look look, String tagText, boolean custom) {
         public boolean isCape() {
             return slot == Cosmetics.Slot.CAPE;
+        }
+
+        /** A name style or tag: drawn as text, not as a model. */
+        public boolean isText() {
+            return look != null;
         }
     }
 
@@ -118,10 +133,19 @@ public final class CosmeticCatalog {
             if (slot == null) continue;
             Item item = new Item(o.get("id").getAsString(), o.get("name").getAsString(), slot, str(o, "pattern"), str(o, "palette"),
                     str(o, "model"), str(o, "texture"), Tier.valueOf(o.get("tier").getAsString().toUpperCase(Locale.ROOT)),
-                    o.has("price") ? o.get("price").getAsInt() : 0);
+                    o.has("price") ? o.get("price").getAsInt() : 0, look(o.getAsJsonObject("look")), str(o, "tagText"),
+                    o.has("custom") && o.get("custom").getAsBoolean());
             ITEMS.put(item.id(), item);
             BY_SLOT.computeIfAbsent(slot, k -> new ArrayList<>()).add(item);
         }
+    }
+
+    private static Look look(JsonObject o) {
+        if (o == null) return null;
+        JsonArray c = o.getAsJsonArray("colors");
+        int[] colors = new int[c == null ? 0 : c.size()];
+        for (int i = 0; i < colors.length; i++) colors[i] = hex(c.get(i).getAsString());
+        return new Look(o.get("type").getAsString(), colors, o.has("bold") && o.get("bold").getAsBoolean(), o.has("speed") ? o.get("speed").getAsFloat() : 1f);
     }
 
     private static List<Cube> cubes(JsonArray array) {

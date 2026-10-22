@@ -5,8 +5,11 @@
 
 const COS_SLOTS = [
   ['cape', 'Capes'], ['head', 'Head'], ['face', 'Face'], ['neck', 'Neck'], ['back', 'Back & Wings'], ['aura', 'Auras'], ['pet', 'Pets'],
+  ['nametag', 'Name Styles'], ['tag', 'Tags'],
 ];
-const COS_SLOT_NAMES = { cape: 'Cape', head: 'Head', face: 'Face', neck: 'Neck', back: 'Back', aura: 'Aura', pet: 'Pet' };
+const COS_SLOT_NAMES = { cape: 'Cape', head: 'Head', face: 'Face', neck: 'Neck', back: 'Back', aura: 'Aura', pet: 'Pet', nametag: 'Name Style', tag: 'Tag' };
+/** Slots drawn as coloured text instead of a model. */
+const TEXT_SLOTS = new Set(['nametag', 'tag']);
 const TIER_COLORS = { common: '#9aa0aa', rare: '#4ea8ff', epic: '#b46cff', legendary: '#ffc23d' };
 const COS_PAGE = 96;
 
@@ -26,6 +29,156 @@ const cos = {
   ready: false,
   own: '',
 };
+
+// ---------------------------------------------------------------- name styles and tags (same looks as the mod's NameTags.java)
+
+const hexRgb = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+const rgbCss = ([r, g, b]) => `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;
+const mixRgb = (a, b, f) => [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
+
+function lookStops(cols, p, cyclic) {
+  if (cols.length === 1) return cols[0];
+  const segs = cyclic ? cols.length : cols.length - 1;
+  const x = Math.max(0, Math.min(0.9999, p)) * segs;
+  const k = Math.floor(x);
+  return mixRgb(cols[k], cols[(k + 1) % cols.length], x - k);
+}
+
+function hsvRgb(h, s, v) {
+  const ch = (x) => v * (1 - s + s * Math.max(0, Math.min(1, x))) * 255;
+  return [ch(Math.abs(h * 6 - 3) - 1), ch(2 - Math.abs(h * 6 - 2)), ch(2 - Math.abs(h * 6 - 4))];
+}
+
+/** Colour of letter i of n at time t (ticks). */
+function lookColor(look, i, n, t) {
+  const cols = (look.colors || []).map(hexRgb);
+  const speed = look.speed || 1;
+  const white = [255, 255, 255];
+  switch (look.type) {
+    case 'gradient': return cols.length ? lookStops(cols, n <= 1 ? 0 : i / (n - 1), false) : white;
+    case 'wave': {
+      const p = i / Math.max(n, 6) - t * 0.02 * speed;
+      return cols.length ? lookStops(cols, p - Math.floor(p), true) : white;
+    }
+    case 'rainbow': {
+      const h = i * 0.07 - t * 0.012 * speed;
+      return hsvRgb(h - Math.floor(h), 0.62, 1);
+    }
+    case 'pulse': return cols.length < 2 ? cols[0] || white : mixRgb(cols[0], cols[1], 0.5 + 0.5 * Math.sin(t * 0.15 * speed));
+    case 'shine': {
+      const p = ((t * 0.5 * speed) % (n + 10)) - 5;
+      return cols.length < 2 ? cols[0] || white : mixRgb(cols[0], cols[1], Math.max(0, 1 - Math.abs(i - p) / 2.5));
+    }
+    default: return cols[0] || white;
+  }
+}
+
+/** Letters with colours: [{ ch, color, bold }]. */
+function lookRuns(text, look, t) {
+  const chars = [...text];
+  return chars.map((ch, i) => ({ ch, color: rgbCss(lookColor(look, i, chars.length, t)), bold: !!look.bold }));
+}
+
+function tagRuns(item, t) {
+  const text = item.custom ? (cosmetics.tagText || 'TAG') : item.tagText;
+  if (!text) return [];
+  const body = lookRuns(text, item.look, t);
+  if (![...text].some((c) => /[\p{L}\p{N}]/u.test(c))) return body;
+  const br = { color: '#9a9aa6', bold: false };
+  return [{ ch: '[', ...br }, ...body, { ch: ']', ...br }];
+}
+
+function ownName() {
+  return (typeof account !== 'undefined' && account && account.name) || 'Player';
+}
+
+/** The whole name tag: tag, then the name in its style. */
+function nameTagRuns(style, tag, t) {
+  const runs = tag ? [...tagRuns(tag, t), { ch: ' ', color: '#fff' }] : [];
+  return runs.concat(style ? lookRuns(ownName(), style.look, t) : [...ownName()].map((ch) => ({ ch, color: '#ffffff' })));
+}
+
+/** Draws text runs centred on a canvas, with a Minecraft-like shadow; shrinks to fit. */
+function drawRuns(canvas, runs, size, plate = false) {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (!runs.length) return;
+  const family = getComputedStyle(document.body).getPropertyValue('--display') || 'sans-serif';
+  const fontOf = (r, px) => `${r.bold ? 800 : 650} ${px}px ${family}`;
+  const widthAt = (px) => runs.reduce((w, r) => {
+    ctx.font = fontOf(r, px);
+    return w + ctx.measureText(r.ch).width;
+  }, 0);
+  let px = size;
+  let w = widthAt(px);
+  if (w > canvas.width - 12) {
+    px = Math.max(8, px * (canvas.width - 12) / w);
+    w = widthAt(px);
+  }
+  let x = (canvas.width - w) / 2;
+  const y = canvas.height / 2;
+  ctx.textBaseline = 'middle';
+  if (plate) {
+    ctx.fillStyle = 'rgba(0,0,0,.35)';
+    ctx.fillRect(x - px * 0.35, y - px * 0.72, w + px * 0.7, px * 1.44);
+  }
+  const shadow = Math.max(1, px / 9);
+  for (const r of runs) {
+    ctx.font = fontOf(r, px);
+    ctx.fillStyle = 'rgba(0,0,0,.55)';
+    ctx.fillText(r.ch, x + shadow, y + shadow);
+    ctx.fillStyle = r.color;
+    ctx.fillText(r.ch, x, y);
+    x += ctx.measureText(r.ch).width;
+  }
+}
+
+/** A name style (on your name) or a tag, for tiles and the shop dialog. */
+function drawLookItem(canvas, item, t) {
+  const runs = item.slot === 'nametag' ? lookRuns(ownName(), item.look, t) : tagRuns(item, t);
+  drawRuns(canvas, runs, canvas.height * 0.6);
+}
+
+function drawAnyItem(canvas, item, t) {
+  if (TEXT_SLOTS.has(item.slot)) drawLookItem(canvas, item, t);
+  else CosRender.draw(canvas, item, t);
+}
+
+function renderTagText() {
+  const box = $('#cos-tagtext');
+  box.hidden = cos.tab !== 'tag';
+  $('#cos-swatches').hidden = TEXT_SLOTS.has(cos.tab);
+  if (box.hidden) return;
+  const input = $('#cos-tagtext-input');
+  if (document.activeElement !== input) input.value = cosmetics.tagText || '';
+  const ownsCustom = CosRender.catalog.items.some((i) => i.custom && owns(i));
+  const info = $('#cos-tagtext-info');
+  info.classList.remove('err');
+  info.textContent = ownsCustom ? `Your own text for custom tags · max ${OnixNameTags.MAX} characters` : 'Buy a custom tag to show your own text';
+}
+
+async function saveTagText() {
+  const input = $('#cos-tagtext-input');
+  const text = input.value.replace(/\s+/g, ' ').trim();
+  const problem = text ? OnixNameTags.problem(text) : null;
+  const info = $('#cos-tagtext-info');
+  if (problem) {
+    info.textContent = problem;
+    info.classList.add('err');
+    return;
+  }
+  const r = await api.setTagText(text);
+  if (!r.ok) {
+    info.textContent = r.error;
+    info.classList.add('err');
+    return;
+  }
+  cosmetics = r.value;
+  input.blur();
+  renderTagText();
+  $$('.ctile').forEach((t) => paintTile(t));
+  toast(text ? `Tag saved: [${text}]` : 'Tag text removed');
+}
 
 // ---------------------------------------------------------------- coins (Onix server)
 
@@ -109,7 +262,8 @@ function openShop(item, gift = false) {
   $('#shop-tier').textContent = `${item.tier[0].toUpperCase()}${item.tier.slice(1)} · ${COS_SLOT_NAMES[item.slot]}`;
   $('#shop-price').textContent = item.price === 0 ? 'Free for everyone' : `${coinText(item.price)} coins`;
   $('#shop-message').value = '';
-  CosRender.draw($('#shop-canvas'), item, performance.now() / 50);
+  $('#shop-canvas').classList.toggle('nt', TEXT_SLOTS.has(item.slot));
+  drawAnyItem($('#shop-canvas'), item, performance.now() / 50);
   renderShop();
   openModal('#shop-modal');
   if (shop.gift) setTimeout(() => $('#shop-to').focus(), 50);
@@ -188,7 +342,7 @@ async function loadCosmetics() {
   setupCosmetics();
   cosmetics = await api.getCosmetics();
   const p = activeProfile();
-  $('#cos-sub').textContent = `Only visible to you · profile "${p ? p.name : ''}"`;
+  $('#cos-sub').textContent = `Name styles & tags are visible to other Onix players · profile "${p ? p.name : ''}"`;
   renderCosmetics();
   startStage();
   loadWallet();
@@ -225,6 +379,8 @@ function setupCosmetics() {
   $('#shop-to').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#shop-message').focus(); });
   $('#shop-message').addEventListener('keydown', (e) => { if (e.key === 'Enter') runShop(); });
   $('#cos-random').addEventListener('click', randomOutfit);
+  $('#cos-tagtext-save').addEventListener('click', saveTagText);
+  $('#cos-tagtext-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') saveTagText(); });
   $('#cos-clear').addEventListener('click', () => saveOutfit({}, 'All cosmetics removed'));
 
   // palette swatches
@@ -273,6 +429,7 @@ function setupCosmetics() {
 }
 
 function renderCosmetics() {
+  renderTagText();
   renderTabs();
   renderWorn();
   filterCosmetics();
@@ -287,6 +444,7 @@ function renderTabs() {
       cos.tab = id;
       renderTabs();
       filterCosmetics();
+      renderTagText();
     },
   }, [cosmetics[id] ? el('span', { class: 'dot' }) : null, label, el('small', { text: count.toLocaleString('en') })]);
   $('#cos-tabs').replaceChildren(tab('all', 'All', CosRender.catalog.items.length), ...COS_SLOTS.map(([id, label]) => tab(id, label, counts[id] || 0)));
@@ -341,7 +499,8 @@ function appendTiles() {
 
 function makeTile(item) {
   const cape = item.slot === 'cape';
-  const canvas = el('canvas', cape ? { class: 'cape', width: 116, height: 144 } : { width: 144, height: 144 });
+  const canvas = el('canvas', TEXT_SLOTS.has(item.slot) ? { class: 'nt', width: 264, height: 72 }
+    : cape ? { class: 'cape', width: 116, height: 144 } : { width: 144, height: 144 });
   const check = icon('check');
   check.setAttribute('class', 'tick');
   const tile = el('button', {
@@ -373,7 +532,7 @@ function makeTile(item) {
 
 function paintTile(tile, t = 0) {
   const item = cosItem(tile.dataset.id);
-  if (item) CosRender.draw(tile.querySelector('canvas'), item, t);
+  if (item) drawAnyItem(tile.querySelector('canvas'), item, t);
 }
 
 async function choose(slot, id) {
@@ -445,6 +604,7 @@ function startStage() {
     for (const [slot] of COS_SLOTS) outfit[slot] = cosItem(cosmetics[slot]);
     if (cos.tryOn) outfit[cos.tryOn.slot] = cos.tryOn;
     CosRender.drawOutfit($('#cos-stage'), outfit, ticks, cos.yaw);
+    drawRuns($('#cos-nametag'), outfit.nametag || outfit.tag ? nameTagRuns(outfit.nametag, outfit.tag, ticks) : [], 26, true);
     if (cos.hoverTile && cos.hoverTile.isConnected) paintTile(cos.hoverTile, ticks);
     cos.frame = requestAnimationFrame(loop);
   };
