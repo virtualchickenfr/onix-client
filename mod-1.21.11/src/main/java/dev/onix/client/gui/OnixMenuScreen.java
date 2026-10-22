@@ -663,7 +663,7 @@ public class OnixMenuScreen extends Screen {
                 yield list.size() + (list.size() == 1 ? " module" : " modules") + " · " + on + " enabled";
             }
             case MODULE -> module.getDescription();
-            case COSMETICS -> "Earn 1 coin per minute played. Only visible to you.";
+            case COSMETICS -> "Earn 1 coin per minute played. Name styles and tags are seen by other Onix players.";
             case DESIGN -> "Themes, backgrounds, light mode, buttons and loading screens.";
             case PROFILES -> "Save modules, settings and HUD layout as switchable sets.";
             case SETTINGS -> "Interface, HUD editor, notifications, server rules and profiles.";
