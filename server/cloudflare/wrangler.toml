@@ -7,6 +7,8 @@ compatibility_date = "2025-01-01"
 [vars]
 VERIFY = "1"
 UNLIMITED = "Virtualchickenfr,Fuzed_d"
+# OWNER tag and violet badge for these accounts
+OWNERS = "VirtualChickenFR"
 
 [triggers]
 crons = ["17 * * * *"]

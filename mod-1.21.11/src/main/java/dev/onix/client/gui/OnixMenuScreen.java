@@ -2530,7 +2530,7 @@ public class OnixMenuScreen extends Screen {
     private void drawOwnNameTag(GuiGraphics ctx, int cx, int y, int maxW) {
         var look = dev.onix.client.cosmetics.NameTags.lookOf(minecraft.getUser() == null ? null : minecraft.getUser().getProfileId());
         net.minecraft.network.chat.Component c = look == null ? net.minecraft.network.chat.Component.literal(ownName())
-                : dev.onix.client.cosmetics.NameTags.preview(ownName(), look.style(), look.tag(), look.text());
+                : dev.onix.client.cosmetics.NameTags.preview(ownName(), look.style(), look.tag(), look.text(), look.owner());
         int w = Math.min(maxW, font.width(c));
         ctx.fill(cx - w / 2 - 2, y - 1, cx + w / 2 + 2, y + 9, 0x40000000);
         drawComponent(ctx, c, cx, y, maxW);

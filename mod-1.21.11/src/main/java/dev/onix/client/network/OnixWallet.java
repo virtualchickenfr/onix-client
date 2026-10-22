@@ -26,6 +26,8 @@ public final class OnixWallet {
     private static volatile boolean known;
     private static volatile long coins;
     private static volatile boolean unlimited;
+    /** The server says this account is an owner (OWNER tag, violet badge). */
+    private static volatile boolean owner;
     private static volatile int playMinutes;
     private static volatile long nextCoinAt;
     private static volatile Set<String> owned = Set.of();
@@ -62,8 +64,13 @@ public final class OnixWallet {
         return (int) Math.max(0, (nextCoinAt - System.currentTimeMillis()) / 1000);
     }
 
+    public static boolean owner() {
+        return owner;
+    }
+
     public static boolean owns(CosmeticCatalog.Item item) {
-        return item != null && (item.price() == 0 || unlimited || owned.contains(item.id()));
+        if (item == null || item.staff()) return false;
+        return item.price() == 0 || unlimited || owned.contains(item.id());
     }
 
     public static int ownedCount() {
@@ -89,6 +96,7 @@ public final class OnixWallet {
 
     private static void apply(JsonObject w) {
         unlimited = w.has("unlimited") && w.get("unlimited").getAsBoolean();
+        owner = w.has("owner") && w.get("owner").getAsBoolean();
         coins = w.has("coins") && !w.get("coins").isJsonNull() ? w.get("coins").getAsLong() : 0;
         playMinutes = w.has("playMinutes") ? w.get("playMinutes").getAsInt() : 0;
         if (w.has("nextCoinMs")) nextCoinAt = System.currentTimeMillis() + w.get("nextCoinMs").getAsLong();
@@ -204,6 +212,7 @@ public final class OnixWallet {
         if (w.has("owned")) for (JsonElement e : w.getAsJsonArray("owned")) set.add(e.getAsString());
         owned = Set.copyOf(set);
         unlimited = w.has("unlimited") && w.get("unlimited").getAsBoolean();
+        owner = w.has("owner") && w.get("owner").getAsBoolean();
         coins = w.has("coins") ? w.get("coins").getAsLong() : 0;
         known = true;
     }
@@ -216,6 +225,7 @@ public final class OnixWallet {
         JsonObject w = new JsonObject();
         w.addProperty("coins", coins);
         w.addProperty("unlimited", unlimited);
+        w.addProperty("owner", owner);
         JsonArray arr = new JsonArray();
         owned.stream().sorted().forEach(arr::add);
         w.add("owned", arr);

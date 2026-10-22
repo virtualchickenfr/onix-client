@@ -8,7 +8,7 @@ import { DatabaseSync } from 'node:sqlite';
 
 const here = path.dirname(new URL(import.meta.url).pathname);
 globalThis.__shop = { version: 1, prices: { free_cape: 0, hat_common: 60, wings_epic: 400, crown_gold: 150, name_fire: 5, tag_pro: 5, tag_custom_tag: 5 }, aliases: { crown: 'crown_gold' },
-  looks: { name_fire: 'nametag', tag_pro: 'tag', tag_custom_tag: 'custom' }, customMax: 12 };
+  looks: { name_fire: 'nametag', tag_pro: 'tag', tag_custom_tag: 'custom', tag_staff_owner: 'staff' }, customMax: 12 };
 const src = fs.readFileSync(path.join(here, 'src/index.js'), 'utf8').replace("import shop from '../../shop.json';", 'const shop = globalThis.__shop;')
   .replace("import schema from './schema.js';", `import schema from '${path.join(here, 'src/schema.js')}';`);
 const tmp = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'onix-cf-')), 'worker.mjs');
@@ -32,7 +32,7 @@ function d1() {
 
 let now = 1_000_000_000;
 Date.now = () => now;
-const env = { DB: d1(), VERIFY: '0', UNLIMITED: 'Virtualchickenfr,Fuzed_d' };
+const env = { DB: d1(), VERIFY: '0', UNLIMITED: 'Virtualchickenfr,Fuzed_d', OWNERS: 'Lena' };
 async function call(method, p, body, e = env) {
   const res = await worker.fetch(new Request(`https://x${p}`, { method, body: body ? JSON.stringify(body) : undefined }), e);
   return [res.status, await res.json()];
@@ -214,6 +214,13 @@ globalThis.fetch = realFetch;
   assert.strictEqual(lk.looks[M], undefined);
   await call('POST', '/v1/heartbeat', { token: tl, playing: true, look: { style: '', tag: '', text: '' } });
   assert.strictEqual((await call('POST', '/v1/lookup', { uuids: [L] }))[1].looks[L], undefined, 'taken off');
+  // owners (only with VERIFY on) always show the OWNER tag; nobody can wear it otherwise
+  [, hb] = await call('POST', '/v1/heartbeat', { token: tm, playing: true, look: { style: '', tag: 'tag_staff_owner', text: '' } });
+  assert.strictEqual((await call('POST', '/v1/lookup', { uuids: [M] }))[1].looks[M], undefined, 'staff tag cannot be chosen');
+  const venv = { ...env, VERIFY: '1' };
+  const [, lo] = await call('POST', '/v1/lookup', { uuids: [L, M] }, venv);
+  assert.deepStrictEqual(lo.looks[L], { style: '', tag: 'tag_staff_owner', text: '', owner: true });
+  assert.strictEqual(lo.looks[M], undefined);
 }
 
 assert.strictEqual((await call('GET', '/nope'))[0], 404);

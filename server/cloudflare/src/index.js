@@ -156,6 +156,10 @@ function unlimitedNames(env) {
 
 const verifyOn = (env) => String(env.VERIFY == null ? '1' : env.VERIFY) !== '0';
 const isUnlimited = (env, name) => verifyOn(env) && unlimitedNames(env).has(String(name).toLowerCase());
+/** Accounts with the OWNER tag and the violet badge (wrangler.toml OWNERS; only while VERIFY is on). */
+const ownerNames = (env) => new Set(String(env.OWNERS || '').split(',').map((n) => n.trim().toLowerCase()).filter(Boolean));
+const isOwner = (env, name) => verifyOn(env) && ownerNames(env).has(String(name).toLowerCase());
+const STAFF_OWNER_TAG = Object.keys(lookKinds).find((id) => lookKinds[id] === 'staff' && id.endsWith('owner')) || 'tag_staff_owner';
 
 async function account(db, uuid, name) {
   const now = Date.now();
@@ -174,6 +178,7 @@ async function view(env, db, a) {
     coins: unlimited ? null : a.coins,
     unlimited,
     owned,
+    owner: isOwner(env, a.name),
     playMinutes: Math.floor(a.play_ms / MINUTE),
     nextCoinMs: MINUTE - a.pending_ms,
     gifts,
@@ -585,12 +590,21 @@ const routes = {
       const rows = await db.prepare(`SELECT uuid FROM online WHERE seen > ? AND uuid IN (${part.map(() => '?').join(',')})`).bind(Date.now() - ONLINE_TTL_MS, ...part).all();
       result.push(...rows.results.map((r) => r.uuid));
     }
-    // name styles and tags of the ones online
+    // name styles and tags of the ones online; owners always wear the OWNER tag
     const looks = {};
+    const owners = ownerNames(env);
     for (let i = 0; i < result.length; i += 90) {
       const part = result.slice(i, i + 90);
-      const rows = await db.prepare(`SELECT uuid, style, tag, text FROM looks WHERE uuid IN (${part.map(() => '?').join(',')})`).bind(...part).all();
+      const marks = part.map(() => '?').join(',');
+      const rows = await db.prepare(`SELECT uuid, style, tag, text FROM looks WHERE uuid IN (${marks})`).bind(...part).all();
       for (const r of rows.results) looks[r.uuid] = { style: r.style, tag: r.tag, text: r.text };
+      if (owners.size && verifyOn(env)) {
+        const names = await db.prepare(`SELECT uuid, name FROM online WHERE uuid IN (${marks})`).bind(...part).all();
+        for (const r of names.results) {
+          if (!owners.has(String(r.name).toLowerCase())) continue;
+          looks[r.uuid] = { ...(looks[r.uuid] || { style: '' }), tag: STAFF_OWNER_TAG, text: '', owner: true };
+        }
+      }
     }
     return [200, { online: result, looks }];
   },

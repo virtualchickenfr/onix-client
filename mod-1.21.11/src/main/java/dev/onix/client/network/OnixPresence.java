@@ -78,9 +78,15 @@ public final class OnixPresence {
         return until != null && until > System.currentTimeMillis();
     }
 
-    /** {style id, tag id, custom text} of another player (entries may be null), or null. */
+    /** {style id, tag id, custom text, "owner" or null} of another player (entries may be null), or null. */
     public static String[] look(UUID id) {
         return isOnixUser(id) ? LOOKS.get(id) : null;
+    }
+
+    /** True if the server marks this player as an owner of Onix. */
+    public static boolean isOwner(UUID id) {
+        String[] l = look(id);
+        return l != null && "owner".equals(l[3]);
     }
 
     /** Your name style or tag changed: tell the server within a few seconds instead of at the next minute. */
@@ -369,7 +375,8 @@ public final class OnixPresence {
             else ONIX_USERS.remove(id);
             if (looks.has(plain) && looks.get(plain).isJsonObject()) {
                 JsonObject l = looks.getAsJsonObject(plain);
-                LOOKS.put(id, new String[]{text(l, "style"), text(l, "tag"), text(l, "text")});
+                boolean owner = l.has("owner") && l.get("owner").getAsBoolean();
+                LOOKS.put(id, new String[]{text(l, "style"), text(l, "tag"), text(l, "text"), owner ? "owner" : null});
             } else {
                 LOOKS.remove(id);
             }

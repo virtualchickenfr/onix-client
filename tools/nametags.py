@@ -114,13 +114,26 @@ CUSTOM_TAGS = [
     ('Custom Rainbow Tag', look('rainbow', [], bold=True), 'legendary', 1200),
 ]
 
+# given by the server to certain accounts only (wrangler.toml OWNERS), never sold; (text, look, tier)
+STAFF_TAGS = [
+    ('OWNER', look('wave', ['#B46CFF', '#8B84FF', '#D9B8FF'], bold=True), 'legendary'),
+]
+
 # what a custom tag may say (checked again by the mod and the server)
 CUSTOM_MAX = 12
 
 
-def build(items):
-    """Appends the name styles and tags to the catalog's items. Returns {id: 'nametag' | 'tag' | 'custom'} for the server."""
+def build(items, staff_items=None):
+    """
+    Appends the name styles and tags to the catalog's items (staff tags go to staff_items: not listed, not sold).
+    Returns {id: 'nametag' | 'tag' | 'custom' | 'staff'} for the server.
+    """
     kinds = {}
+    for text, lk, tier in STAFF_TAGS:
+        iid = 'tag_staff_' + slug(text)
+        if staff_items is not None:
+            staff_items.append({'id': iid, 'name': f'[{text}] Tag', 'slot': 'tag', 'tier': tier, 'look': lk, 'tagText': text, 'staff': True, 'price': 0})
+        kinds[iid] = 'staff'
     for name, lk, tier in NAME_STYLES:
         iid = 'name_' + slug(name)
         items.append({'id': iid, 'name': f'{name} Name', 'slot': 'nametag', 'tier': tier, 'look': lk, 'tags': ['name', 'nametag', lk['type']]})

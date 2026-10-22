@@ -1546,7 +1546,8 @@ cc0_count = cc0_cosmetics.build(MODELS, items, CAPE_DIRS) if __name__ == '__main
 
 # name styles and tags for your name tag (tools/nametags.py)
 import nametags
-LOOK_KINDS = nametags.build(items)
+STAFF_ITEMS = []
+LOOK_KINDS = nametags.build(items, STAFF_ITEMS)
 
 # ids the old selection used (cosmetics.json from earlier versions)
 ALIASES = {'comb': 'comb_crimson', 'crown': 'crown_gold', 'tophat': 'tophat_onyx', 'halo': 'halo_gold', 'party': 'party_candy',
@@ -1580,6 +1581,8 @@ catalog = {
     'models': {mid: {k: v for k, v in m.items() if k != 'palettes'} for mid, m in MODELS.items()},
     'aliases': ALIASES,
     'items': items,
+    # tags the server gives to certain accounts (OWNER); the mod knows them to draw them, nobody can pick them
+    'staffItems': STAFF_ITEMS,
 }
 
 if __name__ == '__main__':

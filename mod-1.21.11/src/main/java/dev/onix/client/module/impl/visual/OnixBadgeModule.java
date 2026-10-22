@@ -37,12 +37,10 @@ public class OnixBadgeModule extends Module implements ChatPipeline.Processor {
             .describe("Adds the badge to chat lines that start with the name of an Onix player."));
     private final ModeSetting position = add(new ModeSetting("position", "Position", "Before Name", "After Name"));
 
-    {
-        group(GROUP_APPEARANCE);
-    }
-
-    private final ColorSetting color = add(ColorSetting.accent("color", "Badge Color"));
-    private final ColorSetting selfColor = add(ColorSetting.accent("selfColor", "Own Badge Color"));
+    /** Older versions let you pick colours; badges are now grey, and violet for the owners of Onix. */
+    private final ColorSetting color = add(ColorSetting.accent("color", "Badge Color").hidden());
+    private final ColorSetting selfColor = add(ColorSetting.accent("selfColor", "Own Badge Color").hidden());
+    private static final int GREY = 0xFF9A9AA6;
 
     {
         group("Network");
@@ -105,7 +103,8 @@ public class OnixBadgeModule extends Module implements ChatPipeline.Processor {
     }
 
     public MutableComponent badge(UUID id) {
-        int c = (id != null && id.equals(selfId()) ? selfColor : color).color() & 0xFFFFFF;
+        boolean owner = id != null && (id.equals(selfId()) ? dev.onix.client.network.OnixWallet.owner() : OnixPresence.isOwner(id));
+        int c = (owner ? dev.onix.client.cosmetics.NameTags.OWNER_VIOLET : GREY) & 0xFFFFFF;
         return Component.literal(GLYPH).withStyle(s -> s.withFont(new net.minecraft.network.chat.FontDescription.Resource(FONT)).withColor(TextColor.fromRgb(c)).withBold(false).withItalic(false));
     }
 

@@ -29,9 +29,12 @@ public final class NameTags {
             "wichser", "fotze", "schwuchtel", "missgeburt", "spast", "nutte", "kys");
     private static final List<String> BLOCKED_WORDS = List.of("mod", "dev", "gm", "op", "fag", "hure", "sex");
     private static final int BRACKET = 0xFF9A9AA6;
+    /** Brackets and badge of owners. */
+    public static final int OWNER_VIOLET = 0xFFB46CFF;
+    public static final String OWNER_TAG = "tag_staff_owner";
 
-    /** One player's name style, tag and custom tag text; any part may be null. */
-    public record PlayerLook(CosmeticCatalog.Item style, CosmeticCatalog.Item tag, String text) {
+    /** One player's name style, tag and custom tag text; any part may be null. owner = violet brackets. */
+    public record PlayerLook(CosmeticCatalog.Item style, CosmeticCatalog.Item tag, String text, boolean owner) {
         public boolean empty() {
             return style == null && tag == null;
         }
@@ -65,24 +68,27 @@ public final class NameTags {
     public static PlayerLook lookOf(UUID id) {
         if (id == null) return null;
         if (id.equals(self())) {
-            CosmeticCatalog.Item tag = Cosmetics.shown(Cosmetics.Slot.TAG);
+            boolean owner = dev.onix.client.network.OnixWallet.owner();
+            CosmeticCatalog.Item tag = owner ? CosmeticCatalog.item(OWNER_TAG) : Cosmetics.shown(Cosmetics.Slot.TAG);
             String text = tag != null && tag.custom() ? (Cosmetics.tagText().isEmpty() ? "TAG" : Cosmetics.tagText()) : null;
-            PlayerLook look = new PlayerLook(Cosmetics.shown(Cosmetics.Slot.NAMETAG), tag, text);
+            PlayerLook look = new PlayerLook(Cosmetics.shown(Cosmetics.Slot.NAMETAG), tag, text, owner);
             return look.empty() ? null : look;
         }
-        if (!OnixClient.CONFIG.nameTagLooks.isOn()) return null;
         String[] raw = OnixPresence.look(id);
         if (raw == null) return null;
+        boolean owner = "owner".equals(raw[3]);
+        if (!owner && !OnixClient.CONFIG.nameTagLooks.isOn()) return null;
         CosmeticCatalog.Item style = CosmeticCatalog.item(raw[0]);
         if (style != null && style.slot() != Cosmetics.Slot.NAMETAG) style = null;
         CosmeticCatalog.Item tag = CosmeticCatalog.item(raw[1]);
-        if (tag != null && tag.slot() != Cosmetics.Slot.TAG) tag = null;
+        if (tag != null && (tag.slot() != Cosmetics.Slot.TAG || tag.staff() && !owner)) tag = null;
         String text = null;
         if (tag != null && tag.custom()) {
             text = raw[2];
             if (text == null || problem(text) != null) tag = null;
         }
-        PlayerLook look = new PlayerLook(style, tag, text);
+        if (!OnixClient.CONFIG.nameTagLooks.isOn()) style = null; // the owner tag always shows
+        PlayerLook look = new PlayerLook(style, tag, text, owner);
         return look.empty() ? null : look;
     }
 
@@ -167,19 +173,24 @@ public final class NameTags {
 
     /** The tag as shown in front of a name: "[TEXT]" (symbols without brackets), no trailing space. */
     public static MutableComponent tag(CosmeticCatalog.Item tag, String customText) {
+        return tag(tag, customText, false);
+    }
+
+    /** owner = violet brackets (everyone else's are grey). */
+    public static MutableComponent tag(CosmeticCatalog.Item tag, String customText, boolean owner) {
         String text = tag.custom() ? customText : tag.tagText();
         if (text == null || text.isEmpty()) return Component.empty();
         boolean symbol = text.codePoints().noneMatch(Character::isLetterOrDigit);
         MutableComponent body = paint(text, tag.look(), Style.EMPTY);
         if (symbol) return body;
-        Style br = Style.EMPTY.withColor(TextColor.fromRgb(BRACKET & 0xFFFFFF));
+        Style br = Style.EMPTY.withColor(TextColor.fromRgb((owner ? OWNER_VIOLET : BRACKET) & 0xFFFFFF));
         return Component.empty().append(Component.literal("[").withStyle(br)).append(body).append(Component.literal("]").withStyle(br));
     }
 
     /** A preview of a whole look on a name (menus). */
-    public static MutableComponent preview(String name, CosmeticCatalog.Item style, CosmeticCatalog.Item tag, String customText) {
+    public static MutableComponent preview(String name, CosmeticCatalog.Item style, CosmeticCatalog.Item tag, String customText, boolean owner) {
         MutableComponent out = Component.empty();
-        if (tag != null) out.append(tag(tag, customText)).append(" ");
+        if (tag != null) out.append(tag(tag, customText, owner)).append(" ");
         if (style != null) out.append(paint(name, style.look(), Style.EMPTY));
         else out.append(Component.literal(name));
         return out;
@@ -205,7 +216,7 @@ public final class NameTags {
         if (start < 0) {
             // a nickname: only the tag, in front of everything
             if (look.tag() == null) return text;
-            return Component.empty().append(tag(look.tag(), look.text())).append(" ").append(text);
+            return Component.empty().append(tag(look.tag(), look.text(), look.owner())).append(" ").append(text);
         }
         int end = start + name.length();
         MutableComponent out = Component.empty();
@@ -223,7 +234,7 @@ public final class NameTags {
             if (a < start) out.append(Component.literal(s.substring(0, start - a)).withStyle(styles.get(k)));
             if (nameStyle == null) {
                 nameStyle = styles.get(k);
-                if (look.tag() != null) out.append(tag(look.tag(), look.text())).append(Component.literal(" ").withStyle(nameStyle));
+                if (look.tag() != null) out.append(tag(look.tag(), look.text(), look.owner())).append(Component.literal(" ").withStyle(nameStyle));
                 String whole = plain.substring(start, end);
                 out.append(look.style() != null ? paint(whole, look.style().look(), nameStyle) : Component.literal(whole).withStyle(nameStyle));
             }
