@@ -795,6 +795,8 @@ app.whenReady().then(() => {
     targetVersion: src.targetVersion || versions.DEFAULT,
     newerWorlds: !!(src.mcVersion && importer.isNewerThanGame(src.mcVersion, src.targetVersion || versions.DEFAULT)),
     modules: src.modules,
+    lastUsed: src.lastUsed || 0,
+    modsTotal: (src.modsAll || []).length + (src.modsOther || []).length,
   });
   ipcMain.handle('import:detect', safe(async () => {
     const found = await importer.detect();
@@ -809,14 +811,35 @@ app.whenReady().then(() => {
     if (!found.length) throw new Error('No Minecraft data found in this folder.');
     return found.map(summarize);
   }));
+  ipcMain.handle('import:plan', safe(async (_e, sourceId, target) => {
+    const source = importSources.get(sourceId);
+    if (!source) throw new Error('This source is no longer available. Please scan again.');
+    const mc = target && target.profileId ? mcOf(target.profileId) : versions.isSupported(target && target.mc) ? target.mc : source.targetVersion || versions.DEFAULT;
+    const p = await importer.plan(source, mc, target && target.profileId ? loaderOf(target.profileId) : 'fabric');
+    return { mc: p.mc, ready: p.ready.map((m) => m.name), update: p.update.map((u) => ({ name: u.name, to: u.to })), missing: p.missing, offline: p.offline };
+  }));
+  // folders and files dropped on the Import page
+  ipcMain.handle('import:drop', safe(async (_e, paths) => {
+    const found = [];
+    for (const p of (paths || []).map(String)) {
+      if (!fs.existsSync(p) || !fs.statSync(p).isDirectory()) continue;
+      for (const src of await importer.analyzeFolder(p)) {
+        importSources.set(src.id, src);
+        found.push(summarize(src));
+      }
+    }
+    return found;
+  }));
   ipcMain.handle('import:run', safe(async (_e, sourceId, target, what) => {
     const source = importSources.get(sourceId);
     if (!source) throw new Error('This source is no longer available. Please scan again.');
     if (running) throw new Error('Close Minecraft first.');
     let profile;
-    if (target && target.newName) profile = profiles.create(target.newName, null, { mcVersion: source.targetVersion || versions.DEFAULT });
+    const chosenMc = target && versions.isSupported(target.mc) ? target.mc : source.targetVersion || versions.DEFAULT;
+    if (target && target.newName) profile = profiles.create(target.newName, null, { mcVersion: chosenMc });
     else profile = profiles.select(target && target.profileId ? target.profileId : profiles.active().id);
     const mc = versions.ofProfile(profile).mc;
+    if (what && what.mods && what.updateMods !== false) await importer.plan(source, mc, loaderOf(profile.id)).catch(() => null);
     const done = await importer.runImport(source, profiles.dir(profile), what || {}, (p) => send('import:progress', p), mc);
     // download Minecraft, Fabric, Java and the mods now, so the first start of the imported profile is quick
     prepareProfile(profile);

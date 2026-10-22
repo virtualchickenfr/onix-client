@@ -214,13 +214,19 @@
       <!-- IMPORT -->
       <section class="view" id="view-import">
         <div class="page-head">
-          <div><h2>Import</h2><p>Settings, key binds, servers, worlds, packs and mods from other clients.</p></div>
+          <div><h2>Import</h2><p>Settings, key binds, servers, worlds, packs and mods from other clients – mods are updated to your Minecraft version.</p></div>
           <div class="btn-row">
+            <button class="btn" id="btn-import-file"><svg><use href="#i-import"/></svg>Modpack File</button>
             <button class="btn" id="btn-import-folder"><svg><use href="#i-folder"/></svg>Choose Folder</button>
             <button class="btn" id="btn-import-scan"><svg><use href="#i-refresh"/></svg>Scan Again</button>
           </div>
         </div>
+        <div class="im-bar-row">
+          <input class="input sm" id="im-search" placeholder="Filter by client, folder or mod…" spellcheck="false">
+          <span class="im-count" id="im-count"></span>
+        </div>
         <div class="source-grid" id="source-grid"></div>
+        <div class="im-drop" id="im-drop"><b>Drop a folder or a modpack here</b><span>.minecraft, an instance folder, .mrpack, .dawnpack or a CurseForge .zip</span></div>
       </section>
 
       <!-- INSTALL -->
@@ -524,9 +530,10 @@
         <div class="checklist" id="im-what"></div>
         <div class="group-label">Into</div>
         <div class="target">
-          <label class="radio"><input type="radio" name="im-target" value="new" checked><span>New profile</span><input class="input sm" id="im-new-name" maxlength="24" spellcheck="false"></label>
+          <label class="radio"><input type="radio" name="im-target" value="new" checked><span>New profile</span><input class="input sm" id="im-new-name" maxlength="24" spellcheck="false"><select class="input sm im-mc" id="im-mc" title="Minecraft version of the new profile"></select></label>
           <label class="radio"><input type="radio" name="im-target" value="existing"><span>Existing profile</span><select class="input sm" id="im-existing"></select></label>
         </div>
+        <div class="im-plan" id="im-plan"></div>
         <div class="modal-actions">
           <div class="spacer"></div>
           <button class="btn" data-close>Cancel</button>

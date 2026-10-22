@@ -19,7 +19,11 @@ window.addEventListener('dragenter', (e) => {
   e.preventDefault();
   dragDepth++;
   const p = activeProfile();
-  dropZone.querySelector('.drop-target').textContent = `Fabric mods for ${mcOfProfile(p)} go into "${p ? p.name : 'your profile'}"`;
+  const onImport = currentView === 'import';
+  dropZone.querySelector('b').textContent = onImport ? 'Drop to import' : 'Drop to add mods';
+  dropZone.querySelector('.drop-target').textContent = onImport
+    ? 'A .minecraft or instance folder, or a modpack (.mrpack, .dawnpack, .zip)'
+    : `Fabric mods for ${mcOfProfile(p)} go into "${p ? p.name : 'your profile'}" · modpacks become a new profile`;
   dropZone.classList.add('open');
 });
 window.addEventListener('dragleave', (e) => {
@@ -42,8 +46,16 @@ window.addEventListener('drop', async (e) => {
   // modpacks (.dawnpack, .mrpack) become a new profile; everything else goes into the active profile
   const packFiles = all.filter((p) => /\.(dawnpack|mrpack)$/i.test(p));
   for (const p of packFiles) await importPackFile(p);
-  const paths = all.filter((p) => !packFiles.includes(p));
+  let paths = all.filter((p) => !packFiles.includes(p));
   if (!paths.length) return;
+  // on the Import page: folders (and modpack .zip files) are imported, not added as mods
+  if (currentView === 'import') {
+    const zips = paths.filter((p) => /\.zip$/i.test(p));
+    for (const z of zips) await importPackFile(z);
+    paths = paths.filter((p) => !zips.includes(p));
+    if (paths.length) importDropped(paths);
+    return;
+  }
   const res = await api.addMods(paths, profileState.active);
   if (!res.ok) {
     toast(res.error, true);

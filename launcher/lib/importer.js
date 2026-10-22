@@ -14,6 +14,8 @@ const path = require('path');
 const os = require('os');
 
 const versions = require('./versions');
+const modrinth = require('./modrinth');
+const { download } = require('./download');
 
 const MC_VERSION = versions.DEFAULT;
 const SKIP_MOD_IDS = new Set(['onix', 'fabric-api', 'fabricloader', 'minecraft', 'java', 'sodium']);
@@ -28,7 +30,9 @@ function dirs() {
     : plat === 'darwin' ? path.join(home, 'Library', 'Application Support') : path.join(home, '.config');
   const minecraft = plat === 'win32' ? path.join(appData, '.minecraft')
     : plat === 'darwin' ? path.join(appData, 'minecraft') : path.join(home, '.minecraft');
-  const local = plat === 'win32' ? process.env.LOCALAPPDATA || path.join(home, 'AppData', 'Local') : appData;
+  // Linux apps keep their data in ~/.local/share (XDG), Windows in %LOCALAPPDATA%
+  const local = plat === 'win32' ? process.env.LOCALAPPDATA || path.join(home, 'AppData', 'Local')
+    : plat === 'linux' ? process.env.XDG_DATA_HOME || path.join(home, '.local', 'share') : appData;
   return { home, appData, minecraft, local };
 }
 
@@ -46,9 +50,15 @@ function knownSources() {
     { id: 'minecraft', name: 'Minecraft Launcher', gameDirs: [minecraft], config: [] },
     { id: 'prism', name: 'Prism Launcher', instances: [path.join(appData, 'PrismLauncher', 'instances'), path.join(local, 'PrismLauncher', 'instances')] },
     { id: 'multimc', name: 'MultiMC', instances: [path.join(home, 'MultiMC', 'instances'), path.join(appData, 'MultiMC', 'instances')] },
-    { id: 'modrinth', name: 'Modrinth App', instances: [path.join(appData, 'com.modrinth.theseus', 'profiles'), path.join(appData, 'ModrinthApp', 'profiles')] },
+    { id: 'modrinth', name: 'Modrinth App', instances: [path.join(appData, 'com.modrinth.theseus', 'profiles'), path.join(appData, 'ModrinthApp', 'profiles'), path.join(local, 'ModrinthApp', 'profiles'), path.join(local, 'com.modrinth.theseus', 'profiles')] },
     { id: 'curseforge', name: 'CurseForge', instances: [path.join(home, 'curseforge', 'minecraft', 'Instances'), path.join(home, 'Documents', 'Curse', 'Minecraft', 'Instances')] },
-    { id: 'atlauncher', name: 'ATLauncher', instances: [path.join(appData, 'ATLauncher', 'instances')] },
+    { id: 'atlauncher', name: 'ATLauncher', instances: [path.join(appData, 'ATLauncher', 'instances'), path.join(home, 'ATLauncher', 'instances')] },
+    { id: 'polymc', name: 'PolyMC', instances: [path.join(appData, 'PolyMC', 'instances'), path.join(local, 'PolyMC', 'instances')] },
+    { id: 'carbon', name: 'Carbon Launcher', instances: [path.join(appData, 'CarbonLauncher', 'instances')] },
+    { id: 'gdlauncher', name: 'GDLauncher', instances: [path.join(appData, 'gdlauncher_next', 'instances'), path.join(appData, 'gdlauncher_carbon', 'data', 'instances')] },
+    { id: 'norisk', name: 'NoRisk Client', instances: [path.join(appData, 'norisk', 'NoRiskClientV3', 'profiles'), path.join(appData, 'norisk', 'profiles'), path.join(home, '.norisk', 'profiles')] },
+    { id: 'technic', name: 'Technic', instances: [path.join(appData, '.technic', 'modpacks')] },
+    { id: 'tlauncher', name: 'TLauncher', gameDirs: [path.join(appData, '.tlauncher', 'legacy', 'Minecraft', 'game')], config: [path.join(appData, '.tlauncher')] },
   ];
 }
 
@@ -68,9 +78,9 @@ function looksLikeGameDir(dir) {
   return ['options.txt', 'saves', 'servers.dat', 'resourcepacks', 'mods'].some((n) => exists(path.join(dir, n)));
 }
 
-/** Game folder inside an instance (Prism: .minecraft or minecraft, otherwise the folder itself). */
+/** Game folder inside an instance (Prism: .minecraft or minecraft, GDLauncher: instance, otherwise the folder itself). */
 function gameDirOfInstance(dir) {
-  for (const sub of ['.minecraft', 'minecraft', '']) {
+  for (const sub of ['.minecraft', 'minecraft', 'instance', 'game', '']) {
     const p = sub ? path.join(dir, sub) : dir;
     if (isDir(p) && looksLikeGameDir(p)) return p;
   }
@@ -289,7 +299,7 @@ async function analyzeDawnpacks(dirs) {
     for (const jar of await extractPackJars(pack)) {
       const meta = await readFabricModJson(jar);
       const file = path.basename(jar);
-      if (!meta) { other.push({ file, reason: `Not a Fabric mod (from ${packName})` }); continue; }
+      if (!meta) { other.push({ file, reason: `Not a Fabric mod (from ${packName})`, srcPath: jar }); continue; }
       if (SKIP_MOD_IDS.has(meta.id) || meta.environment === 'server') continue;
       fabric.push({ file, id: meta.id, name: meta.name || meta.id, version: meta.version, srcPath: jar, fromPack: packName, mc: meta.depends && meta.depends.minecraft });
     }
@@ -306,7 +316,7 @@ async function analyzeMods(modsDir, skipFiles = new Set()) {
   for (const [i, jar] of jars.entries()) {
     const meta = metas[i];
     if (!meta) {
-      other.push({ file: jar.name, reason: 'Not a Fabric mod (e.g. Forge)' });
+      other.push({ file: jar.name, reason: 'Not a Fabric mod (e.g. Forge)', srcPath: path.join(modsDir, jar.name) });
       continue;
     }
     if (SKIP_MOD_IDS.has(meta.id) || /^onix-client-/.test(jar.name) || /^(dawn|feather|carbon)/i.test(meta.id)) continue;
@@ -582,7 +592,7 @@ async function analyzeGameDir(gameDir, configDirs = [], opts = {}) {
 
 function hasContent(a) {
   return a.options || a.servers || a.worlds || a.resourcepacks || a.shaderpacks || a.screenshots
-    || a.modsCompatible.length || Object.keys(a.modules).length;
+    || a.modsCompatible.length || (a.modsAll || []).length || (a.modsOther || []).length || Object.keys(a.modules).length;
 }
 
 // ------------------------------------------------------------------ Dawn profiles
@@ -665,10 +675,66 @@ async function detect() {
       return hasContent(a) ? [{ id: src.id, client: src.id, name: src.name, label: gameDir ? shortPath(gameDir) : shortPath(configDirs[0]), ...a }] : [];
     })());
   }
-  const results = (await Promise.all(tasks.map((t) => t.catch(() => [])))).flat();
+  let results = (await Promise.all(tasks.map((t) => t.catch(() => [])))).flat();
+  // launchers Onix does not know by name: any folder under AppData / the home folder that looks like a game folder
+  const known = new Set(results.map((r) => r.gameDir && path.resolve(r.gameDir).toLowerCase()).filter(Boolean));
+  const extra = await Promise.all(discoverGameDirs(known).map(async ({ gameDir, owner, label }) => {
+    try {
+      const a = await analyzeGameDir(gameDir, [path.join(gameDir, 'config')]);
+      return hasContent(a) ? [{ id: `found:${gameDir}`, client: 'custom', name: owner, label, ...a }] : [];
+    } catch {
+      return [];
+    }
+  }));
+  results = results.concat(extra.flat());
+  // the one you played last comes first
+  for (const r of results) r.lastUsed = lastUsed(r.gameDir);
+  results.sort((a, b) => (b.lastUsed || 0) - (a.lastUsed || 0));
   flushCache();
   detect.lastMs = Date.now() - started;
   return results;
+}
+
+/** When a game folder was last played: the newest of options.txt, logs/latest.log and the saves. */
+function lastUsed(gameDir) {
+  if (!gameDir) return 0;
+  let t = 0;
+  for (const f of ['options.txt', path.join('logs', 'latest.log'), 'saves', 'servers.dat']) {
+    try {
+      t = Math.max(t, fs.statSync(path.join(gameDir, f)).mtimeMs);
+    } catch {
+      // not there
+    }
+  }
+  return t;
+}
+
+/** Looks a few levels deep under AppData and the home folder for game folders of launchers not listed above. */
+function discoverGameDirs(known) {
+  const { home, appData, local } = dirs();
+  const roots = [...new Set([appData, local, home, path.join(home, 'Documents'), path.join(home, 'Games')])].filter(isDir);
+  const skip = new Set(['node_modules', 'Microsoft', 'Google', 'Mozilla', 'Packages', 'Temp', 'npm', 'npm-cache', 'Code', 'Discord', 'Spotify',
+    'Adobe', 'JetBrains', 'Steam', 'steamapps', 'AppData', 'OneDrive', 'Library', 'Pictures', 'Music', 'Videos', 'Downloads', 'Desktop']);
+  const found = [];
+  let budget = 4000;
+  const walk = (dir, depth, owner) => {
+    if (budget <= 0 || depth > 4) return;
+    for (const e of list(dir)) {
+      if (--budget <= 0) return;
+      if (!e.isDirectory() || skip.has(e.name) || HEAVY_DIRS.has(e.name) && e.name !== '.minecraft') continue;
+      const p = path.join(dir, e.name);
+      const key = path.resolve(p).toLowerCase();
+      if (known.has(key)) continue;
+      if (depth > 0 && looksLikeGameDir(p) && (exists(path.join(p, 'options.txt')) || exists(path.join(p, 'mods')))) {
+        known.add(key);
+        found.push({ gameDir: p, owner: owner || e.name, label: shortPath(p) });
+        continue;
+      }
+      walk(p, depth + 1, owner || e.name.replace(/^\./, ''));
+    }
+  };
+  for (const r of roots) walk(r, 0, null);
+  return found.slice(0, 40);
 }
 
 /** A folder picked by the user (also searched for instances). */
@@ -717,6 +783,44 @@ async function analyzeFolderUncached(folder) {
 function shortPath(p) {
   const home = os.homedir();
   return p && p.startsWith(home) ? `~${p.slice(home.length)}` : p;
+}
+
+// ------------------------------------------------------------------ plan: which mods come along for a Minecraft version
+
+/**
+ * What happens to the mods when they move to Minecraft `mc`: ready (load as they are), update (a version for mc is
+ * downloaded from Modrinth instead), missing (no version for mc anywhere). Cached per source and version.
+ */
+async function plan(source, mc, loader = 'fabric') {
+  source.plans = source.plans || {};
+  if (source.plans[mc]) return source.plans[mc];
+  const { compatible, incompatible } = classifyMods(source, mc);
+  const ready = compatible.map((m) => ({ name: m.name || m.file, file: m.file }));
+  const byFile = new Map();
+  for (const m of source.modsAll || []) if (!compatible.includes(m) && m.srcPath) byFile.set(m.srcPath, m);
+  for (const m of source.modsOther || []) if (m.srcPath) byFile.set(m.srcPath, m);
+  let found = new Map();
+  let offline = false;
+  try {
+    found = await modrinth.versionsFor([...byFile.keys()], mc, loader);
+  } catch {
+    offline = true;
+  }
+  const update = [];
+  const missing = [];
+  const seenProjects = new Set();
+  for (const [file, m] of byFile) {
+    const v = found.get(file);
+    if (v && !seenProjects.has(v.projectId) && !modrinth.MANAGED[v.projectId]) {
+      seenProjects.add(v.projectId);
+      update.push({ name: m.name || m.file, from: m.version || m.file, to: v.version, url: v.url, filename: v.filename, hashes: v.hashes, projectId: v.projectId });
+    } else if (!v) {
+      missing.push({ name: m.name || m.file, reason: offline ? 'Modrinth could not be reached' : `No version for Minecraft ${mc} on Modrinth` });
+    }
+  }
+  const out = { mc, ready, update, missing, offline };
+  source.plans[mc] = out;
+  return out;
 }
 
 // ------------------------------------------------------------------ Import
@@ -810,6 +914,30 @@ async function runImport(source, profileDir, what, report, mc = source.targetVer
     }
     done.push(`${n} mod${n === 1 ? '' : 's'}`);
   }
+  if (what.mods && what.updateMods !== false) {
+    const p = source.plans && source.plans[mc];
+    if (p && p.update.length) {
+      const modsDir = path.join(profileDir, 'mods');
+      fs.mkdirSync(modsDir, { recursive: true });
+      let n = 0;
+      const failed = [];
+      for (const [i, u] of p.update.entries()) {
+        report({ label: `Getting ${u.name} for ${mc} (${i + 1}/${p.update.length})`, progress: (step - 1 + i / p.update.length) / Math.max(1, steps.length) });
+        const target = path.join(modsDir, modrinth.safeFileName(u.filename));
+        if (exists(target)) continue;
+        try {
+          await download(u.url, target);
+          modrinth.verify(target, u.hashes);
+          n++;
+        } catch (e) {
+          fs.rmSync(target, { force: true });
+          failed.push(u.name);
+        }
+      }
+      if (n) done.push(`${n} mod${n === 1 ? '' : 's'} updated to Minecraft ${mc}`);
+      if (failed.length) done.push(`Could not download: ${failed.slice(0, 5).join(', ')}${failed.length > 5 ? ' …' : ''}`);
+    }
+  }
   if (what.modConfigs && at('config')) {
     progress('Mod settings');
     const src = at('config');
@@ -869,4 +997,4 @@ function isNewerThanGame(version, game = MC_VERSION) {
   return false;
 }
 
-module.exports = { classifyMods, setCacheDir, flushCache, mapLimit, isNewerThanGame, detect, analyzeFolder, runImport, matchesVersion, readFabricModJson, MODULE_ALIASES, knownSources, dirs, gameDirOfInstance };
+module.exports = { plan, classifyMods, setCacheDir, flushCache, mapLimit, isNewerThanGame, detect, analyzeFolder, runImport, matchesVersion, readFabricModJson, MODULE_ALIASES, knownSources, dirs, gameDirOfInstance };

@@ -240,6 +240,34 @@ const jarFiles = (modsDir) => (fs.existsSync(modsDir) ? fs.readdirSync(modsDir) 
   .filter((f) => f.endsWith('.jar') || f.endsWith('.jar.disabled'))
   .map((f) => path.join(modsDir, f));
 
+/**
+ * For jar files (any loader, any Minecraft version): the newest version of the same Modrinth project that fits mc and loader.
+ * One request for all files. Returns Map(file → { projectId, versionId, version, url, filename, hashes }).
+ */
+async function versionsFor(files, mc = MC_VERSION, loader = LOADER) {
+  const out = new Map();
+  if (!files.length) return out;
+  const byHash = new Map();
+  for (const f of files) {
+    try {
+      byHash.set(sha(f, 'sha1'), f);
+    } catch {
+      // unreadable file: left out
+    }
+  }
+  const latest = await api('/version_files/update', {
+    method: 'POST',
+    body: { hashes: [...byHash.keys()], algorithm: 'sha1', loaders: loader === 'quilt' ? ['quilt', 'fabric'] : [loaderOf(loader)], game_versions: [mc] },
+  });
+  for (const [hash, version] of Object.entries(latest || {})) {
+    const f = primaryFile(version);
+    const src = byHash.get(hash);
+    if (!f || !src) continue;
+    out.set(src, { projectId: version.project_id, versionId: version.id, version: version.version_number, url: f.url, filename: f.filename, hashes: f.hashes, same: f.hashes.sha1 === hash });
+  }
+  return out;
+}
+
 /** Mods in the folder with a newer Fabric version on Modrinth. */
 async function checkUpdates(modsDir, mc = MC_VERSION, loader = LOADER) {
   const files = jarFiles(modsDir).filter((f) => !/onix-client-/.test(path.basename(f)));
@@ -356,7 +384,7 @@ async function modpackFile(projectId, mc = MC_VERSION) {
 const versionById = (id) => api(`/version/${encodeURIComponent(id)}`);
 
 module.exports = {
-  versionById, primaryFile,
+  versionById, primaryFile, versionsFor,
   search, bestVersion, install, installAsset, identify, checkUpdates, applyUpdates, modpackFile,
   readManifest, writeManifest, cleanManifest, verify, sha, safeFileName, MANAGED, MC_VERSION, TYPES, IRIS,
 };

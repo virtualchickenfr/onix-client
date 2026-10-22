@@ -85,6 +85,8 @@ contextBridge.exposeInMainWorld('onix', {
   detectImports: () => invoke('import:detect'),
   pickImportFolder: () => invoke('import:pick'),
   runImport: (sourceId, target, what) => invoke('import:run', sourceId, target, what),
+  planImport: (sourceId, target) => invoke('import:plan', sourceId, target),
+  dropImport: (paths) => invoke('import:drop', paths),
   onImportProgress: (cb) => ipcRenderer.on('import:progress', (_e, v) => cb(v)),
 
   installInfo: (mc) => invoke('install:bundled', mc),
