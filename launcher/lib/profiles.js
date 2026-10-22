@@ -41,6 +41,8 @@ class Profiles {
       ramMb: Number(p.ramMb) || this.defaults.ramMb,
       quickJoin: typeof p.quickJoin === 'string' ? p.quickJoin.trim() : '',
       performanceMods: p.performanceMods !== false,
+      // free community cosmetics through the Cosmetica mod
+      cosmetica: p.cosmetica !== false,
       mcVersion: versions.isSupported(p.mcVersion) ? p.mcVersion : versions.DEFAULT,
       // Fabric (with Onix) by default; Quilt, NeoForge, Forge and Vanilla run without the Onix mod
       loader: LOADER_IDS.includes(p.loader) ? p.loader : 'fabric',

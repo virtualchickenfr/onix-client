@@ -21,6 +21,8 @@ const MANAGED_MODS = [
   { project: 'ferrite-core', id: 'ferritecore', name: 'FerriteCore', performance: true },
   { project: 'immediatelyfast', id: 'immediatelyfast', name: 'ImmediatelyFast', performance: true },
   { project: 'entityculling', id: 'entityculling', name: 'EntityCulling', performance: true },
+  // free cosmetics (capes, hats, shoulder buddies) from the Cosmetica community – open source, Apache-2.0
+  { project: 'cosmetica', id: 'cosmetica', name: 'Cosmetica', cosmetics: true, optional: true },
 ];
 
 const MANIFEST = '.onix-managed.json';
@@ -179,7 +181,7 @@ async function ensureMods(root, settings, report, log, throttle = true, mc = MC_
   }
   flushCache();
   await Promise.all(MANAGED_MODS.map(async (mod) => {
-    const wanted = (mod.always || (mod.performance && settings.performanceMods)) && !ownIds.has(mod.id);
+    const wanted = (mod.always || (mod.performance && settings.performanceMods) || (mod.cosmetics && settings.cosmetica !== false)) && !ownIds.has(mod.id);
     const old = manifest[mod.project];
     if (!wanted) {
       if (old) {
@@ -215,6 +217,11 @@ async function ensureMods(root, settings, report, log, throttle = true, mc = MC_
       manifest[mod.project] = filename;
       log(`Installed ${mod.name} ${version.version_number}`);
     } catch (err) {
+      // optional mods (Cosmetica) are simply left out on versions they do not support
+      if (mod.optional && /no matching version/.test(err.message)) {
+        log(`${mod.name} is not available for Minecraft ${mc} – starting without it`);
+        return;
+      }
       log(`Could not update ${mod.name}: ${err.message}`);
       if (mod.always && !old) throw err;
     }

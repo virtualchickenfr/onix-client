@@ -2334,6 +2334,27 @@ public class OnixMenuScreen extends Screen {
         int right = r[2];
         int y = r[1];
 
+        // Cosmetica first: thousands of free community cosmetics that every Cosmetica user sees; Onix's own below
+        {
+            boolean has = Cosmetics.cosmeticaInstalled();
+            int ch = 34;
+            Theme.card(ctx, x, y, right, y + ch, Theme.corner(8), Theme.SURFACE_2, Theme.withAlpha(Theme.accent(), 170));
+            Theme.bevel(ctx, x, y, right, y + ch, 1f);
+            drawIcon(ctx, "cosmetics", x + 9, y + 12, 10, Theme.accent());
+            Theme.textBold(ctx, "Cosmetica · free community cosmetics", x + 25, y + 7, Theme.TEXT);
+            Theme.small(ctx, has ? "Capes, hats, shoulder buddies and more – everyone with Cosmetica sees them."
+                    : "Not installed – turn on \"Free community cosmetics\" for this profile in the launcher.", x + 25, y + 19, Theme.TEXT_3);
+            int bw = has ? 92 : 78;
+            button(ctx, mx, my, right - bw - 7, y + 8, bw, 18, has ? "Open Cosmetica" : "cosmetica.cc", true, () -> {
+                if (!has || !dev.onix.client.cosmetics.CosmeticaBridge.openMenu(this)) {
+                    net.minecraft.util.Util.getPlatform().openUri("https://cosmetica.cc");
+                }
+            });
+            y += ch + 8;
+            Theme.label(ctx, "Onix cosmetics", x + 2, y, Theme.TEXT_3);
+            y += 10;
+        }
+
         // slot tabs
         int cx = x;
         for (Cosmetics.Slot slot : COS_SLOTS) {
