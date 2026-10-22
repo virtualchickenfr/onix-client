@@ -48,9 +48,6 @@ public class OnixConfig {
             .describe("Shows the Onix badge on other players and runs your coins, the cosmetics shop and gifts. "
                     + "Empty = the server built into this Onix version.");
 
-    // Cosmetics: when the Cosmetica mod is installed, its cape wins unless you switch this off
-    public final BoolSetting cosmeticaCape = new BoolSetting("cosmeticaCape", "Use Cosmetica Cape", true)
-            .describe("With the Cosmetica mod installed, your Cosmetica cape is shown instead of the Onix cape.");
 
     // Design
     public final BoolSetting lightMode = new BoolSetting("lightMode", "Light Mode", false)
@@ -139,7 +136,7 @@ public class OnixConfig {
     private List<Setting<?, ?>> all() {
         return List.of(theme, titleBackground, backgroundSlideshow, slideshowSeconds, backgroundMotion,
                 menuStyle, menuScale, menuAnimations, clickSounds, menuParticles, backgroundDim, tooltips, customMainMenu,
-                onixServer, cosmeticaCape, lightMode, buttonStyle, titleDesign, loadingScreens, loadingStyle, loadingTips,
+                onixServer, lightMode, buttonStyle, titleDesign, loadingScreens, loadingStyle, loadingTips,
                 hideHudInDebug, snapping, snapDistance, editorGrid,
                 notifications, notificationSound, notificationTime, notificationPosition,
                 ruleNotes, rulesOnJoin, rulesSkip, autoSwitchProfiles);

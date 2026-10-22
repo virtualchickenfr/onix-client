@@ -30,7 +30,7 @@ public class CapeRenderer extends FeatureRenderer<AbstractClientPlayerEntity, Pl
 
     /** True when this renderer draws the cape, so the vanilla cape must stay off. */
     public static boolean drawsCape() {
-        return Cosmetics.shown(Cosmetics.Slot.CAPE) != null && !Cosmetics.capeLeftToCosmetica();
+        return Cosmetics.shown(Cosmetics.Slot.CAPE) != null;
     }
 
     @Override

@@ -50,23 +50,7 @@ public final class Cosmetics {
     /** Items tried on while hovering in the wardrobe; shown instead of the selection, never saved. */
     private static final Map<Slot, String> PREVIEW = new EnumMap<>(Slot.class);
 
-    private static Boolean cosmetica;
-
     private Cosmetics() {}
-
-    /** True if the Cosmetica mod (free cosmetics others with Cosmetica can see) is installed next to Onix. */
-    public static boolean cosmeticaInstalled() {
-        if (cosmetica == null) {
-            cosmetica = FabricLoader.getInstance().getAllMods().stream()
-                    .anyMatch(m -> m.getMetadata().getId().startsWith("cosmetica"));
-        }
-        return cosmetica;
-    }
-
-    /** Onix steps back with its cape so the two mods do not fight over it (a cape being tried on still shows). */
-    public static boolean capeLeftToCosmetica() {
-        return cosmeticaInstalled() && OnixClient.CONFIG != null && OnixClient.CONFIG.cosmeticaCape.isOn() && !PREVIEW.containsKey(Slot.CAPE);
-    }
 
     private static Path file() {
         return ConfigFiles.dir().resolve("cosmetics.json");
@@ -115,7 +99,6 @@ public final class Cosmetics {
     }
 
     public static Identifier capeTexture() {
-        if (capeLeftToCosmetica()) return null;
         CosmeticCatalog.Item item = shown(Slot.CAPE);
         return item == null ? null : CapeTextures.get(item);
     }

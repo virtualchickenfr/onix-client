@@ -2458,24 +2458,9 @@ public class OnixMenuScreen extends Screen {
             Theme.textCentered(ctx, "Nothing matches", (x + right) / 2, top + 30, Theme.TEXT_2);
             Theme.small(ctx, "Try another word or colour", (x + right) / 2 - Theme.smallWidth("Try another word or colour") / 2, top + 44, Theme.TEXT_3);
         }
-        if (cape && Cosmetics.cosmeticaInstalled()) {
-            boolean theirs = OnixClient.CONFIG.cosmeticaCape.isOn();
-            String note = theirs ? "Cosmetica is installed: its cape is shown." : "Cosmetica is installed: the Onix cape is shown.";
-            Theme.small(ctx, note, x, r[3] - 7, Theme.TEXT_3);
-            String label = theirs ? "Use Onix cape" : "Use Cosmetica cape";
-            int lw = Theme.smallWidth(label);
-            boolean hov = hovered(mx, my, right - lw - 2, r[3] - 9, right, r[3] + 1);
-            Theme.small(ctx, label, right - lw, r[3] - 7, hov ? Theme.TEXT : Theme.accent());
-            hit(right - lw - 2, r[3] - 9, right, r[3] + 1, () -> {
-                OnixClient.CONFIG.cosmeticaCape.toggle();
-                OnixClient.save();
-                click();
-            }, null);
-        } else {
-            String footer = items.size() + " of " + Cosmetics.of(cosSlot).size() + " " + cosSlot.displayName.toLowerCase(Locale.ROOT)
-                    + " cosmetics · hover to try on, click to wear";
-            Theme.small(ctx, footer, x, r[3] - 7, Theme.TEXT_3);
-        }
+        String footer = items.size() + " of " + Cosmetics.of(cosSlot).size() + " " + cosSlot.displayName.toLowerCase(Locale.ROOT)
+                + " cosmetics · hover to try on, click to wear";
+        Theme.small(ctx, footer, x, r[3] - 7, Theme.TEXT_3);
 
         if (cosDialog != null) {
             Cosmetics.preview(cosDialog.slot(), cosDialog.id());

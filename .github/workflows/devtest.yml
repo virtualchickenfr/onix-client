@@ -71,11 +71,6 @@ jobs:
           printf '{"pack":{"pack_format":34,"supported_formats":[0,999],"min_format":0,"max_format":999,"description":"Onix test"}}' > "$PWD/../extra-packs/onix-test-pack/pack.mcmeta"
           echo "$(cd "$PWD/../extra-packs" && pwd)" > run/config/onix/pack-folders.txt
           echo 'resourcePacks:["vanilla","fabric","file/onix-test-pack"]' >> run/options.txt
-          # Onix's main cosmetics come from Cosmetica: start the newest version with it to catch conflicts
-          if [ "${{ matrix.dir }}" = "mod-1.21.11" ]; then
-            mkdir -p run/mods
-            curl -sSL -o run/mods/cosmetica-fabric-2.0.1-1.21.11.jar https://cdn.modrinth.com/data/s9hF9QGp/versions/mSZikAB5/cosmetica-fabric-2.0.1-1.21.11.jar
-          fi
           Xvfb :99 -screen 0 1280x720x24 > /dev/null 2>&1 &
           export DISPLAY=:99
           ./gradlew runDevtest --no-daemon --stacktrace > devtest.log 2>&1 &

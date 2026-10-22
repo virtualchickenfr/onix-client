@@ -21,8 +21,6 @@ const MANAGED_MODS = [
   { project: 'ferrite-core', id: 'ferritecore', name: 'FerriteCore', performance: true },
   { project: 'immediatelyfast', id: 'immediatelyfast', name: 'ImmediatelyFast', performance: true },
   { project: 'entityculling', id: 'entityculling', name: 'EntityCulling', performance: true },
-  // free cosmetics (capes, hats, shoulder buddies) from the Cosmetica community – open source, Apache-2.0
-  { project: 'cosmetica', id: 'cosmetica', name: 'Cosmetica', cosmetics: true, optional: true },
 ];
 
 const MANIFEST = '.onix-managed.json';
@@ -170,6 +168,13 @@ async function ensureMods(root, settings, report, log, throttle = true, mc = MC_
 
   // 2. Fabric API and performance mods from Modrinth (all checked at the same time)
   const manifest = readManifest(modsDir);
+  // Cosmetica was installed automatically by 1.0.26 only: take it out again
+  if (manifest.cosmetica) {
+    fs.rmSync(path.join(modsDir, manifest.cosmetica), { force: true });
+    fs.rmSync(path.join(modsDir, `${manifest.cosmetica}.disabled`), { force: true });
+    delete manifest.cosmetica;
+    log('Removed Cosmetica');
+  }
   const managedFiles = new Set(MANAGED_MODS.map((m) => manifest[m.project]).filter(Boolean));
   // mods the player added themselves: never download a second copy of those (two copies stop Fabric)
   const { readFabricModJson, flushCache } = require('./importer');
@@ -181,7 +186,7 @@ async function ensureMods(root, settings, report, log, throttle = true, mc = MC_
   }
   flushCache();
   await Promise.all(MANAGED_MODS.map(async (mod) => {
-    const wanted = (mod.always || (mod.performance && settings.performanceMods) || (mod.cosmetics && settings.cosmeticaOptIn === true)) && !ownIds.has(mod.id);
+    const wanted = (mod.always || (mod.performance && settings.performanceMods)) && !ownIds.has(mod.id);
     const old = manifest[mod.project];
     if (!wanted) {
       if (old) {
