@@ -149,7 +149,7 @@ public final class DevTest {
         then(20, () -> {
             var server = mc.getSingleplayerServer();
             if (server != null) server.execute(() -> server.getCommands().performPrefixedCommand(server.createCommandSourceStack(),
-                    "execute as @p at @s run summon minecraft:villager ^ ^ ^3 {NoAI:1b,Silent:1b}"));
+                    "execute as @p at @s run summon minecraft:villager ~ ~ ~3 {NoAI:1b,Silent:1b}"));
         });
         then(30, () -> {
             if (mc.player != null && mc.level != null) {
