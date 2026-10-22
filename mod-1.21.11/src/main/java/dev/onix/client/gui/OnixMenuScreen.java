@@ -2342,9 +2342,10 @@ public class OnixMenuScreen extends Screen {
             Theme.bevel(ctx, x, y, right, y + ch, 1f);
             drawIcon(ctx, "cosmetics", x + 9, y + 12, 10, Theme.accent());
             Theme.textBold(ctx, "Cosmetica · free community cosmetics", x + 25, y + 7, Theme.TEXT);
-            Theme.small(ctx, has ? "Capes, hats, shoulder buddies and more – everyone with Cosmetica sees them."
-                    : "Not installed – turn on \"Free community cosmetics\" for this profile in the launcher.", x + 25, y + 19, Theme.TEXT_3);
             int bw = has ? 92 : 78;
+            Theme.small(ctx, Theme.ellipsize(has ? "Capes, hats, shoulder buddies and more – everyone with Cosmetica sees them."
+                    : "Not installed – turn on \"Free community cosmetics\" for this profile in the launcher.", (int) ((right - bw - 14 - x - 25) / 0.75f)),
+                    x + 25, y + 19, Theme.TEXT_3);
             button(ctx, mx, my, right - bw - 7, y + 8, bw, 18, has ? "Open Cosmetica" : "cosmetica.cc", true, () -> {
                 if (!has || !dev.onix.client.cosmetics.CosmeticaBridge.openMenu(this)) {
                     net.minecraft.util.Util.getPlatform().openUri("https://cosmetica.cc");
