@@ -194,6 +194,230 @@ async function loadCosmetics() {
   loadWallet();
 }
 
+/** One-time wiring of the page controls. */
+function setupCosmetics() {
+  if (cos.ready) return;
+  cos.ready = true;
+  $('#cos-query').addEventListener('input', (e) => {
+    cos.query = e.target.value;
+    filterCosmetics();
+  });
+  $('#cos-tier').addEventListener('change', (e) => {
+    cos.tier = e.target.value;
+    filterCosmetics();
+  });
+  $('#cos-own').addEventListener('change', (e) => {
+    cos.own = e.target.value;
+    filterCosmetics();
+  });
+  $('#cos-wallet').addEventListener('click', () => {
+    if (/No Onix server/.test(walletError)) showView('settings');
+    else loadWallet();
+  });
+  $('#shop-run').addEventListener('click', runShop);
+  $('#shop-mode').addEventListener('click', () => {
+    shop.gift = !shop.gift;
+    $('#shop-title').textContent = shop.gift ? 'Gift a cosmetic' : 'Buy cosmetic';
+    renderShop();
+    if (shop.gift) $('#shop-to').focus();
+  });
+  $('#shop-to').addEventListener('input', renderShop);
+  $('#shop-to').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#shop-message').focus(); });
+  $('#shop-message').addEventListener('keydown', (e) => { if (e.key === 'Enter') runShop(); });
+  $('#cos-random').addEventListener('click', randomOutfit);
+  $('#cos-clear').addEventListener('click', () => saveOutfit({}, 'All cosmetics removed'));
+
+  // palette swatches
+  $('#cos-swatches').replaceChildren(...Object.entries(CosRender.catalog.palettes).map(([id, p]) => el('button', {
+    class: 'cos-swatch',
+    title: p.name,
+    'data-palette': id,
+    style: `--a:${p.colors[0]};--b:${p.colors[2]}`,
+    onclick: () => {
+      cos.palette = cos.palette === id ? null : id;
+      $$('.cos-swatch').forEach((s) => s.classList.toggle('on', s.dataset.palette === cos.palette));
+      filterCosmetics();
+    },
+  })));
+
+  // the stage turns by dragging
+  const stage = $('#cos-stage');
+  stage.addEventListener('pointerdown', (e) => {
+    cos.dragging = { x: e.clientX, yaw: cos.yaw };
+    stage.setPointerCapture(e.pointerId);
+    stage.classList.add('dragging');
+  });
+  stage.addEventListener('pointermove', (e) => {
+    if (cos.dragging) cos.yaw = cos.dragging.yaw + (e.clientX - cos.dragging.x) * 0.8;
+  });
+  const stop = () => {
+    cos.dragging = null;
+    stage.classList.remove('dragging');
+  };
+  stage.addEventListener('pointerup', stop);
+  stage.addEventListener('pointercancel', stop);
+
+  // tiles draw themselves when they scroll into view; the sentinel loads the next page
+  cos.observer = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      if (entry.target.id === 'cos-more') {
+        appendTiles();
+        continue;
+      }
+      paintTile(entry.target);
+      cos.observer.unobserve(entry.target);
+    }
+  }, { rootMargin: '200px' });
+  cos.observer.observe($('#cos-more'));
+}
+
+function renderCosmetics() {
+  renderTabs();
+  renderWorn();
+  filterCosmetics();
+}
+
+function renderTabs() {
+  const counts = {};
+  for (const item of CosRender.catalog.items) counts[item.slot] = (counts[item.slot] || 0) + 1;
+  const tab = (id, label, count) => el('button', {
+    class: `cos-tab${cos.tab === id ? ' on' : ''}`,
+    onclick: () => {
+      cos.tab = id;
+      renderTabs();
+      filterCosmetics();
+    },
+  }, [cosmetics[id] ? el('span', { class: 'dot' }) : null, label, el('small', { text: count.toLocaleString('en') })]);
+  $('#cos-tabs').replaceChildren(tab('all', 'All', CosRender.catalog.items.length), ...COS_SLOTS.map(([id, label]) => tab(id, label, counts[id] || 0)));
+}
+
+function renderWorn() {
+  const rows = COS_SLOTS.map(([slot]) => [slot, cosItem(cosmetics[slot])]).filter(([, item]) => item);
+  $('#cos-worn').replaceChildren(...(rows.length ? rows.map(([slot, item]) => el('div', { class: 'wrow' }, [
+    el('i', { text: COS_SLOT_NAMES[slot] }),
+    el('b', { text: item.name, title: 'Show in the list', onclick: () => { cos.tab = slot; renderTabs(); filterCosmetics(); } }),
+    el('button', { title: 'Take off', onclick: () => choose(slot, null) }, [icon('x')]),
+  ])) : [el('div', { class: 'empty-worn', text: 'Nothing equipped yet' })]));
+  $('#cos-clear').disabled = !rows.length;
+}
+
+function filterCosmetics() {
+  const words = cos.query.toLowerCase().split(/\s+/).filter(Boolean);
+  cos.list = CosRender.catalog.items.filter((item) => {
+    if (cos.tab !== 'all' && item.slot !== cos.tab) return false;
+    if (cos.tier && item.tier !== cos.tier) return false;
+    if (cos.palette && item.palette !== cos.palette) return false;
+    if (cos.own === 'owned' && !owns(item)) return false;
+    if (cos.own === 'shop' && owns(item)) return false;
+    if (!words.length) return true;
+    const hay = `${item.name} ${item.slot} ${item.tier} ${(item.tags || []).join(' ')}`.toLowerCase();
+    return words.every((w) => hay.includes(w));
+  });
+  cos.shown = 0;
+  $('#cos-grid').replaceChildren();
+  $('#cos-count').textContent = cos.list.length
+    ? `${cos.list.length.toLocaleString('en')} ${cos.list.length === 1 ? 'item' : 'items'}`
+    : '';
+  if (!cos.list.length) {
+    $('#cos-grid').append(el('div', { class: 'empty', style: 'grid-column: 1 / -1' }, [el('b', { text: 'Nothing matches' }), el('span', { text: 'Try another word, tier or colour.' })]));
+  }
+  appendTiles();
+}
+
+function appendTiles() {
+  if (cos.shown >= cos.list.length) {
+    $('#cos-more').textContent = cos.list.length > COS_PAGE ? 'That’s everything' : '';
+    return;
+  }
+  const next = cos.list.slice(cos.shown, cos.shown + COS_PAGE);
+  cos.shown += next.length;
+  $('#cos-grid').append(...next.map(makeTile));
+  $('#cos-more').textContent = cos.shown < cos.list.length ? 'Loading more…' : '';
+  // the sentinel may still be visible: observe again so the next page follows
+  cos.observer.unobserve($('#cos-more'));
+  cos.observer.observe($('#cos-more'));
+}
+
+function makeTile(item) {
+  const cape = item.slot === 'cape';
+  const canvas = el('canvas', cape ? { class: 'cape', width: 116, height: 144 } : { width: 144, height: 144 });
+  const check = icon('check');
+  check.setAttribute('class', 'tick');
+  const tile = el('button', {
+    class: `ctile${cosmetics[item.slot] === item.id ? ' selected' : ''}`,
+    'data-id': item.id,
+    title: `${item.name}\n${item.tier[0].toUpperCase()}${item.tier.slice(1)}${item.palette ? ` · ${CosRender.catalog.palettes[item.palette].name}` : ''}`,
+    style: `--tier:${TIER_COLORS[item.tier] || TIER_COLORS.common}`,
+    onclick: () => (owns(item) ? choose(item.slot, cosmetics[item.slot] === item.id ? null : item.id) : openShop(item)),
+    oncontextmenu: (e) => {
+      e.preventDefault();
+      openShop(item, item.price > 0);
+    },
+    onmouseenter: () => {
+      cos.tryOn = item;
+      cos.hoverTile = tile;
+    },
+    onmouseleave: () => {
+      if (cos.tryOn === item) cos.tryOn = null;
+      if (cos.hoverTile === tile) {
+        cos.hoverTile = null;
+        paintTile(tile);
+      }
+    },
+  }, [canvas, el('span', { text: item.name }), el('i', { class: 'tier' }), check, owns(item) ? null : priceTag(item)]);
+  if (!owns(item)) tile.classList.add('locked');
+  cos.observer.observe(tile);
+  return tile;
+}
+
+function paintTile(tile, t = 0) {
+  const item = cosItem(tile.dataset.id);
+  if (item) CosRender.draw(tile.querySelector('canvas'), item, t);
+}
+
+async function choose(slot, id) {
+  const r = await api.setCosmetic(slot, id);
+  if (!r.ok) {
+    toast(r.error, true);
+    return;
+  }
+  cosmetics = r.value;
+  afterChange();
+}
+
+async function saveOutfit(outfit, message) {
+  const r = await api.setCosmetics(outfit);
+  if (!r.ok) {
+    toast(r.error, true);
+    return;
+  }
+  cosmetics = r.value;
+  afterChange();
+  if (message) toast(message);
+}
+
+function afterChange() {
+  $$('.ctile').forEach((t) => {
+    const item = cosItem(t.dataset.id);
+    t.classList.toggle('selected', !!item && cosmetics[item.slot] === item.id);
+  });
+  renderTabs();
+  renderWorn();
+}
+
+/** A random item for every slot except one or two left empty, so outfits do not get too busy. */
+function randomOutfit() {
+  const pick = (list) => list[Math.floor(Math.random() * list.length)];
+  const outfit = {};
+  for (const [slot] of COS_SLOTS) {
+    const mine = CosRender.catalog.items.filter((i) => i.slot === slot && owns(i));
+    const keep = slot === 'cape' || slot === 'head' || Math.random() < 0.45;
+    if (keep && mine.length) outfit[slot] = pick(mine).id;
+  }
+  saveOutfit(outfit, 'New random outfit from your cosmetics');
+}
+
 // ---------------------------------------------------------------- stage
 
 function startStage() {
