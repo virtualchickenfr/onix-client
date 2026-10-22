@@ -181,7 +181,7 @@ async function ensureMods(root, settings, report, log, throttle = true, mc = MC_
   }
   flushCache();
   await Promise.all(MANAGED_MODS.map(async (mod) => {
-    const wanted = (mod.always || (mod.performance && settings.performanceMods) || (mod.cosmetics && settings.cosmetica !== false)) && !ownIds.has(mod.id);
+    const wanted = (mod.always || (mod.performance && settings.performanceMods) || (mod.cosmetics && settings.cosmeticaOptIn === true)) && !ownIds.has(mod.id);
     const old = manifest[mod.project];
     if (!wanted) {
       if (old) {

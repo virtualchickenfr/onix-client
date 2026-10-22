@@ -143,7 +143,6 @@ function openProfileEditor(profile) {
   showRam();
   $('#pf-server').value = profile ? profile.quickJoin : '';
   $('#pf-perf').checked = profile ? profile.performanceMods : true;
-  $('#pf-cosmetica').checked = profile ? profile.cosmetica !== false : true;
   editVersion = profile ? mcOfProfile(profile) : mcOfProfile(activeProfile());
   editLoader = (profile && profile.loader) || 'fabric';
   renderLoaders();
@@ -177,7 +176,7 @@ $('#btn-new-profile').addEventListener('click', () => openProfileEditor(null));
 $('#pf-save').addEventListener('click', async () => {
   const name = $('#pf-name').value.trim();
   if (!name) return toast('Please enter a name.', true);
-  const values = { name, color: editColor, ramMb: Number($('#pf-ram').value), quickJoin: $('#pf-server').value.trim(), performanceMods: $('#pf-perf').checked, cosmetica: $('#pf-cosmetica').checked, mcVersion: editVersion, loader: editLoader };
+  const values = { name, color: editColor, ramMb: Number($('#pf-ram').value), quickJoin: $('#pf-server').value.trim(), performanceMods: $('#pf-perf').checked, mcVersion: editVersion, loader: editLoader };
   if (editing) {
     if (mcOfProfile(editing) !== editVersion && !confirm(`Switch "${editing.name}" to Minecraft ${editVersion}? Worlds stay, but mods made only for ${mcOfProfile(editing)} will not load.`)) return;
     const res = await api.saveProfile({ ...editing, ...values });

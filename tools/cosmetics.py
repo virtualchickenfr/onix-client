@@ -29,6 +29,12 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = [
     os.path.join(ROOT, 'mod', 'src', 'main', 'resources', 'assets', 'onix', 'cosmetics', 'catalog.json'),
     os.path.join(ROOT, 'launcher', 'src', 'assets', 'cosmetics', 'catalog.json'),
+    os.path.join(ROOT, 'mod-1.21.11', 'src', 'main', 'resources', 'assets', 'onix', 'cosmetics', 'catalog.json'),
+]
+CAPE_DIRS = [
+    os.path.join(ROOT, 'mod', 'src', 'main', 'resources', 'assets', 'onix', 'textures', 'cosmetics', 'capes'),
+    os.path.join(ROOT, 'mod-1.21.11', 'src', 'main', 'resources', 'assets', 'onix', 'textures', 'cosmetics', 'capes'),
+    os.path.join(ROOT, 'launcher', 'src', 'assets', 'capes'),
 ]
 
 # ---------------------------------------------------------------- palettes (base, second, accent, dark)
@@ -1530,6 +1536,12 @@ add_models(WING_MODELS, None)
 add_models(BACK_MODELS, 9)
 add_models(AURA_MODELS, 12)
 add_models(PET_MODELS, 4)
+
+# made from CC0 art by Kenney and JoeEnderman (tools/cc0_cosmetics.py)
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import cc0_cosmetics
+cc0_count = cc0_cosmetics.build(MODELS, items, CAPE_DIRS) if __name__ == '__main__' else 0
 
 # ids the old selection used (cosmetics.json from earlier versions)
 ALIASES = {'comb': 'comb_crimson', 'crown': 'crown_gold', 'tophat': 'tophat_onyx', 'halo': 'halo_gold', 'party': 'party_candy',

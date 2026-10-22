@@ -214,7 +214,12 @@ async function renderCosmetica() {
     : 'Cosmetica is another free cosmetics mod with community-made capes and hats; players who also use it see yours.';
   const action = el('button', { class: 'link', disabled: cosmeticaBusy, onclick: () => setCosmetica(p.id, mod || null) },
     [cosmeticaBusy ? (mod ? 'Removing…' : 'Adding…') : mod ? 'Remove' : 'Add']);
-  box.replaceChildren(el('span', { text: mod ? 'Cosmetica is in this profile' : 'Also use Cosmetica (free)' }), action);
+  // Onix sells its own cosmetics: Cosmetica is not offered, only removable if a profile has it
+  if (!mod) {
+    box.replaceChildren();
+    return;
+  }
+  box.replaceChildren(el('span', { text: 'Cosmetica is in this profile' }), action);
 }
 
 async function setCosmetica(profileId, installed) {
