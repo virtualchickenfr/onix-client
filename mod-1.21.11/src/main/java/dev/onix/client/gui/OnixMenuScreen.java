@@ -79,8 +79,6 @@ public class OnixMenuScreen extends Screen {
             new Nav("Favorites", "star_empty", View.MODULES, null, true),
             new Nav("Cosmetics", "cosmetics", View.COSMETICS, null, false),
             new Nav("Profiles", "profile", View.PROFILES, null, false),
-    };
-    private static final Nav[] NAV_SOCIAL = {
             new Nav("Friends", "chat", View.FRIENDS, null, false),
             new Nav("McReal", "camera", View.MCREAL, null, false),
             new Nav("Games", "keyboard", View.GAMES, null, false),
@@ -489,7 +487,6 @@ public class OnixMenuScreen extends Screen {
         int y = y0 + 44;
         y = navGroup(ctx, mx, my, "Modules", NAV_MODULES, x, y);
         y = navGroup(ctx, mx, my, "Library", NAV_LIBRARY, x, y + 5);
-        y = navGroup(ctx, mx, my, "Social", NAV_SOCIAL, x, y + 5);
         navGroup(ctx, mx, my, "Client", NAV_CLIENT, x, y + 5);
 
         // account
@@ -510,20 +507,20 @@ public class OnixMenuScreen extends Screen {
         int x2 = x + SIDEBAR - 24;
         for (Nav nav : items) {
             boolean active = isActive(nav);
-            boolean hov = hovered(mx, my, x - 2, y, x2, y + 17);
+            boolean hov = hovered(mx, my, x - 2, y, x2, y + 15);
             float ht = anim("nav:" + nav.label(), hov || active, 18f);
-            if (ht > 0.01f) ctx.fill(x - 2, y, x2, y + 17, Theme.fade(active ? Theme.SURFACE_3 : Theme.SURFACE_2, Math.max(ht, active ? 1 : 0)));
+            if (ht > 0.01f) ctx.fill(x - 2, y, x2, y + 15, Theme.fade(active ? Theme.SURFACE_3 : Theme.SURFACE_2, Math.max(ht, active ? 1 : 0)));
             if (active) {
                 // like the selected hotbar slot: a light frame around the item
-                Theme.outline(ctx, x - 3, y - 1, x2 + 1, y + 18, Theme.withAlpha(Theme.TEXT, 220));
-                ctx.fill(x - 2, y, x - 1, y + 17, Theme.accent());
+                Theme.outline(ctx, x - 3, y - 1, x2 + 1, y + 16, Theme.withAlpha(Theme.TEXT, 220));
+                ctx.fill(x - 2, y, x - 1, y + 15, Theme.accent());
             }
-            drawIcon(ctx, nav.icon(), x + 4, y + 4, 9, active ? Theme.accent() : Theme.lerpColor(Theme.TEXT_3, Theme.TEXT_2, ht));
-            Theme.text(ctx, nav.label(), x + 19, y + 5, active ? Theme.TEXT : Theme.lerpColor(Theme.TEXT_2, Theme.TEXT, ht));
+            drawIcon(ctx, nav.icon(), x + 4, y + 3, 9, active ? Theme.accent() : Theme.lerpColor(Theme.TEXT_3, Theme.TEXT_2, ht));
+            Theme.text(ctx, nav.label(), x + 19, y + 4, active ? Theme.TEXT : Theme.lerpColor(Theme.TEXT_2, Theme.TEXT, ht));
             String count = navCount(nav);
-            if (count != null) Theme.small(ctx, count, x2 - 6 - Theme.smallWidth(count), y + 6, Theme.TEXT_3);
-            hit(x - 2, y, x2, y + 17, () -> open(nav), null);
-            y += 18;
+            if (count != null) Theme.small(ctx, count, x2 - 6 - Theme.smallWidth(count), y + 5, Theme.TEXT_3);
+            hit(x - 2, y, x2, y + 15, () -> open(nav), null);
+            y += 16;
         }
         return y;
     }
@@ -907,7 +904,8 @@ public class OnixMenuScreen extends Screen {
         Theme.label(ctx, "Friends  " + on + "/" + friends.size() + " online", lx + 2, ly + 2, Theme.TEXT_3);
         ly += 11;
         if (friends.isEmpty()) {
-            Theme.small(ctx, dev.onix.client.social.Social.loaded ? "No friends yet – add someone by their" : "Loading…", lx + 2, ly + 4, Theme.TEXT_3);
+            Theme.small(ctx, dev.onix.client.social.Social.loaded ? "No friends yet – add someone by their"
+                    : dev.onix.client.social.Social.error != null ? "Offline – friends show up once the Onix server answers." : "Loading…", lx + 2, ly + 4, Theme.TEXT_3);
             if (dev.onix.client.social.Social.loaded) Theme.small(ctx, "Minecraft name. They need Onix too.", lx + 2, ly + 13, Theme.TEXT_3);
             ly += 26;
         }
@@ -1020,9 +1018,10 @@ public class OnixMenuScreen extends Screen {
         int x2 = r[2];
         int y = r[1];
         boolean posted = dev.onix.client.social.Social.postedToday;
-        Theme.card(ctx, x, y, x2, y + 46, Theme.corner(8), Theme.SURFACE_2, posted ? Theme.withAlpha(Theme.GREEN, 160) : Theme.withAlpha(Theme.accent(), 160));
-        Theme.bevel(ctx, x, y, x2, y + 46, 1f);
-        drawIcon(ctx, posted ? "check" : "camera", x + 12, y + 18, 10, posted ? Theme.GREEN : Theme.accent());
+        int cardH = posted ? 46 : 62;
+        Theme.card(ctx, x, y, x2, y + cardH, Theme.corner(8), Theme.SURFACE_2, posted ? Theme.withAlpha(Theme.GREEN, 160) : Theme.withAlpha(Theme.accent(), 160));
+        Theme.bevel(ctx, x, y, x2, y + cardH, 1f);
+        drawIcon(ctx, posted ? "check" : "camera", x + 12, y + (posted ? 18 : 11), 10, posted ? Theme.GREEN : Theme.accent());
         if (posted) {
             Theme.textBold(ctx, "Today's McReal is shared", x + 30, y + 13, Theme.TEXT);
             Theme.small(ctx, "Come back tomorrow for the next one.", x + 30, y + 25, Theme.TEXT_3);
@@ -1031,15 +1030,15 @@ public class OnixMenuScreen extends Screen {
             Theme.small(ctx, minecraft.level == null ? "Join a world first – it captures what you see right now." : "Captures what you see right now (without the HUD).",
                     x + 30, y + 20, Theme.TEXT_3);
             int bw = 92;
-            inputBox(ctx, mx, my, mcCaption, x + 30, y + 27 - 0, x2 - bw - 16);
-            button(ctx, mx, my, x2 - bw - 8, y + 14, bw, 20, "Take McReal", true, () -> {
+            inputBox(ctx, mx, my, mcCaption, x + 30, y + 35, x2 - bw - 16);
+            button(ctx, mx, my, x2 - bw - 8, y + 34, bw, 20, "Take McReal", true, () -> {
                 String caption = mcCaption.text();
                 mcCaption.setText("");
                 onClose();
                 dev.onix.client.social.Social.takeMcReal(caption);
             });
         }
-        y += 56;
+        y += cardH + 10;
         if (dev.onix.client.social.Social.mcrealStatus != null) {
             Theme.small(ctx, dev.onix.client.social.Social.mcrealStatus, x, y, Theme.RED);
             y += 12;
