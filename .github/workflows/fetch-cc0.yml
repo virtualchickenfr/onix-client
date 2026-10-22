@@ -1,0 +1,36 @@
+name: Fetch CC0 assets
+# Downloads the CC0 (public domain) art packs the CC0 cosmetics are made from and pushes them to the branch cc0-assets.
+on:
+  push:
+    paths: ['.github/workflows/fetch-cc0.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download
+        run: |
+          mkdir -p out && cd out
+          curl -fsSL -o kenney-voxel-pack.zip https://opengameart.org/sites/default/files/voxel-pack-updated.zip
+          curl -fsSL -o joeenderman-assorted-1.zip https://opengameart.org/sites/default/files/assorted_textures_1.zip
+          curl -fsSL -o joeenderman-assorted-2.zip https://opengameart.org/sites/default/files/assorted_textures_2.zip
+          for z in *.zip; do mkdir -p "${z%.zip}" && unzip -q -o "$z" -d "${z%.zip}"; done
+          rm -f *.zip
+          cat > SOURCES.md <<'MD'
+          # CC0 art used for Onix cosmetics
+          - Kenney – Voxel Pack (CC0) – https://opengameart.org/content/voxel-pack – https://kenney.nl
+          - JoeEnderman – Assorted Minecraft Style Textures (CC0) – https://opengameart.org/content/assorted-minecraft-style-textures
+          CC0 1.0: https://creativecommons.org/publicdomain/zero/1.0/ – free to use, change and sell, no credit required.
+          MD
+          find . -type f | head -400 > LISTING.txt
+      - name: Push to cc0-assets
+        run: |
+          cd out
+          git init -q -b cc0-assets
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add -A
+          git commit -qm "CC0 art packs"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" cc0-assets
