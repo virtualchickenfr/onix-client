@@ -38,7 +38,7 @@ public abstract class InGameHudMixin {
         if (crosshair == null || !crosshair.isEnabled()) return;
         ci.cancel();
         Minecraft mc = Minecraft.getInstance();
-        if (mc.getDebugOverlay().showDebugScreen()) return;
+        if (dev.onix.client.util.DebugScreen.open()) return;
         if (!mc.options.getCameraType().isFirstPerson() && !crosshair.showInThirdPerson()) return;
         if (mc.screen != null && crosshair.hideInMenus()) return;
         crosshair.render(context, context.guiWidth() / 2, context.guiHeight() / 2);

@@ -25,6 +25,6 @@ public class BossBarModule extends Module {
     }
 
     public boolean hidden() {
-        return hide.isOn() || (hideInDebug.isOn() && mc().getDebugOverlay().showDebugScreen());
+        return hide.isOn() || (hideInDebug.isOn() && dev.onix.client.util.DebugScreen.open());
     }
 }

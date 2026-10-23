@@ -58,6 +58,10 @@
     [
       "if \\(swing != null && swing\\.isEnabled\\(\\) && swing\\.apply\\(matrices, progress, side\\)\\) ci\\.cancel\\(\\);",
       "if (swing != null && swing.active()) { matrices.translate(side * 0.56F, -0.52F + equip * -0.6F, -0.72F); swing.apply(matrices, progress, side); ci.cancel(); }"
+    ],
+    [
+      "\\.isOverlayVisible\\(\\)",
+      ".isF3Visible()"
     ]
   ],
   "file_rules": {

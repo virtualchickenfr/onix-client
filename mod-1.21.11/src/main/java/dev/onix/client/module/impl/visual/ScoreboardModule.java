@@ -27,7 +27,7 @@ public class ScoreboardModule extends Module {
 
     public boolean hidden() {
         if (hide.isOn()) return true;
-        if (hideInDebug.isOn() && mc().getDebugOverlay().showDebugScreen()) return true;
+        if (hideInDebug.isOn() && dev.onix.client.util.DebugScreen.open()) return true;
         return hideInTab.isOn() && mc().options.keyPlayerList.isDown();
     }
 }

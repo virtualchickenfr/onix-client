@@ -271,7 +271,7 @@ public class ModuleManager {
                 }
             }
         }
-        if (client.getDebugOverlay().showDebugScreen() && OnixClient.CONFIG.hideHudInDebug.isOn()) return;
+        if (dev.onix.client.util.DebugScreen.open() && OnixClient.CONFIG.hideHudInDebug.isOn()) return;
         if (client.screen instanceof HudEditorScreen) return;
         StreamerModeModule streamer = get(StreamerModeModule.class);
         for (Module m : modules) {
