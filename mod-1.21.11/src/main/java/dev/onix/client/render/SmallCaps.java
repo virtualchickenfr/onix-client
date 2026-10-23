@@ -11,7 +11,7 @@ public final class SmallCaps {
     /** a–z → small capitals; x has none and stays. */
     private static final int[] SMALL = "ᴀʙᴄᴅᴇꜰɢʜɪᴊᴋʟᴍɴᴏᴘǫʀꜱᴛᴜᴠᴡxʏᴢ".codePoints().toArray();
 
-    /** 0 = off, 1 = small letters only, 2 = capitals too. */
+    /** 0 = off, 1 = small letters only, 2 = capital and small letters (what the module uses). */
     public static volatile int mode;
 
     private SmallCaps() {}
