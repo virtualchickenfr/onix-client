@@ -102,7 +102,7 @@ public class WelcomeScreen extends Screen {
         float s = hov(key + ":sel", selected);
         int border = Theme.lerpColor(Theme.lerpColor(Theme.BORDER, Theme.BORDER_STRONG, t), Theme.accent(), s);
         Theme.card(ctx, x, y, x + w, y + h, Theme.corner(8), Theme.lerpColor(Theme.SURFACE_2, Theme.SURFACE_3, Math.max(t, s * 0.6f)), border);
-        if (s > 0.01f) Theme.round(ctx, x + w - 10, y + 5, x + w - 5, y + 10, 3, Theme.withAlpha(Theme.accent(), Math.round(255 * s)));
+        if (s > 0.01f && h > 20) Theme.round(ctx, x + w - 10, y + 5, x + w - 5, y + 10, 3, Theme.withAlpha(Theme.accent(), Math.round(255 * s)));
         areas.add(new Area(x, y, x + w, y + h, action));
         return t;
     }
@@ -128,7 +128,7 @@ public class WelcomeScreen extends Screen {
         float p = animate ? Anim.easeOut(pageAnim.to(1f, 9f)) : 1f;
 
         int w = Math.min(380, width - 40);
-        int h = Math.min(250, height - 40);
+        int h = Math.min(270, height - 30);
         int x1 = (width - w) / 2;
         int y1 = (height - h) / 2 + Math.round((1 - in) * 14);
         Theme.shadow(ctx, x1, y1, x1 + w, y1 + h, 14);
@@ -174,12 +174,12 @@ public class WelcomeScreen extends Screen {
         // navigation
         int by = y1 + h - 34;
         if (page == 0) {
-            button(ctx, mouseX, mouseY, x1 + w / 2 - 60, by - 10, 120, "Get started", true, () -> go(1));
+            button(ctx, mouseX, mouseY, x1 + w / 2 - 60, by - 26, 120, "Get started", true, () -> go(1));
             String skip = "Skip setup";
             int sw = Theme.smallWidth(skip);
-            boolean sh = in(mouseX, mouseY, x1 + w / 2 - sw / 2 - 4, by + 14, x1 + w / 2 + sw / 2 + 4, by + 24);
-            Theme.small(ctx, skip, x1 + w / 2 - sw / 2, by + 15, sh ? Theme.TEXT : Theme.TEXT_3);
-            areas.add(new Area(x1 + w / 2 - sw / 2 - 4, by + 14, x1 + w / 2 + sw / 2 + 4, by + 24, this::finish));
+            boolean sh = in(mouseX, mouseY, x1 + w / 2 - sw / 2 - 4, by - 2, x1 + w / 2 + sw / 2 + 4, by + 9);
+            Theme.small(ctx, skip, x1 + w / 2 - sw / 2, by, sh ? Theme.TEXT : Theme.TEXT_3);
+            areas.add(new Area(x1 + w / 2 - sw / 2 - 4, by - 2, x1 + w / 2 + sw / 2 + 4, by + 9, this::finish));
         } else if (page == TITLES.length - 1) {
             button(ctx, mouseX, mouseY, x1 + 18, by, 70, "Back", false, () -> go(page - 1));
             button(ctx, mouseX, mouseY, x1 + w - 18 - 110, by, 110, "Start playing", true, this::finish);
@@ -257,15 +257,15 @@ public class WelcomeScreen extends Screen {
                 {"Onix loading screens", "Themed screens while worlds load", config().loadingScreens},
                 {"Friends & chat", "Friend list and messages through the Onix server", config().socialOn},
         };
-        int rh = 22;
+        int rh = 24;
         for (int i = 0; i < rows.length; i++) {
             int ry = y + i * (rh + 3);
             var setting = (dev.onix.client.setting.BoolSetting) rows[i][2];
             float t = hov("row" + i, in(mx, my, x1, ry, x2, ry + rh));
             Theme.card(ctx, x1, ry, x2, ry + rh, Theme.corner(7), Theme.lerpColor(Theme.SURFACE_2, Theme.SURFACE_3, t), Theme.BORDER);
             Theme.text(ctx, (String) rows[i][0], x1 + 8, ry + 4, Theme.TEXT);
-            Theme.small(ctx, (String) rows[i][1], x1 + 8, ry + 13, Theme.TEXT_3);
-            Theme.toggle(ctx, x2 - 30, ry + 6, hov("tg" + i, setting.isOn()));
+            Theme.small(ctx, (String) rows[i][1], x1 + 8, ry + 15, Theme.TEXT_3);
+            Theme.toggle(ctx, x2 - 30, ry + 7, hov("tg" + i, setting.isOn()));
             areas.add(new Area(x1, ry, x2, ry + rh, () -> setting.set(!setting.isOn())));
         }
         int sy = y + rows.length * (rh + 3) + 4;
