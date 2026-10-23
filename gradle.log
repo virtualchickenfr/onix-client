@@ -1,0 +1,597 @@
+Fetching distribution.
+Downloading https://services.gradle.org/distributions/gradle-9.7.1-bin.zip
+..............10%..............20%...............30%..............40%...............50%..............60%...............70%..............80%..............90%...............100%
+
+Welcome to Gradle 9.7.1!
+
+Here are the highlights of this release:
+ - Isolated Projects graduates to incubating
+ - Broader Configuration Cache compatibility
+ - Resilient Sync helps you fix broken builds
+ - More source locations in problem reports
+
+For more details see https://docs.gradle.org/9.7.1/release-notes.html
+
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.7.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :
+Fabric Loom: 1.18.2
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Using of the official minecraft mappings is at your own risk!
+Please make sure to read and understand the following license:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# (c) 2020 Microsoft Corporation. These mappings are provided "as-is" and you bear the risk of using them. You may copy and use the mappings for development purposes, but you may not redistribute the mappings complete and unmodified. Microsoft makes no warranties, express or implied, with respect to the mappings provided here.  Use and modification of this document or the source code (in any form) of Minecraft: Java Edition is governed by the Minecraft End User License Agreement available at https://account.mojang.com/documents/minecraft_eula.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+> Task :compileJava
+Note: /home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/src/main/java/dev/onix/client/OnixClient.java uses or overrides a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+
+> Task :processResources
+> Task :classes
+> Task :generateLog4jConfig
+> Task :generateRemapClasspath
+> Task :generateDLIConfig
+> Task :configureLaunch
+> Task :downloadAssets
+> Task :configureClientLaunch
+
+> Task :runDevtest
+[06:20:49] [main/INFO] (FabricLoader/GameProvider) Loading Minecraft 1.21.10 with Fabric Loader 0.19.3
+[06:20:50] [main/INFO] (FabricLoader) Loading 51 mods:
+	- fabric-api 0.138.4+1.21.10
+	- fabric-api-base 1.0.0+14b92d896f
+	- fabric-api-lookup-api-v1 1.6.106+d17682156f
+	- fabric-biome-api-v1 16.1.0+c2417d4f6f
+	- fabric-block-api-v1 1.1.5+d17682156f
+	- fabric-block-view-api-v2 1.0.34+e4fd1b926f
+	- fabric-client-gametest-api-v1 4.2.13+14b92d896f
+	- fabric-command-api-v2 2.4.0+c0ab2d5d6f
+	- fabric-content-registries-v0 10.2.6+b6a242646f
+	- fabric-convention-tags-v1 2.1.49+7f945d5b6f
+	- fabric-convention-tags-v2 2.17.0+ff7bc77d6f
+	- fabric-crash-report-info-v1 0.3.18+33df5e6e6f
+	- fabric-data-attachment-api-v1 1.8.33+cd3b9e596f
+	- fabric-data-generation-api-v1 23.2.27+d8b85ef16f
+	- fabric-dimensions-v1 4.0.22+38b9cc196f
+	- fabric-entity-events-v1 2.1.13+fde3702c6f
+	- fabric-events-interaction-v0 4.0.36+5ba217126f
+	- fabric-game-rule-api-v1 1.1.1+e47eaae56f
+	- fabric-gametest-api-v1 3.1.21+33df5e6e6f
+	- fabric-item-api-v1 11.5.11+9bce411b6f
+	- fabric-item-group-api-v1 4.2.27+86b3ae576f
+	- fabric-key-binding-api-v1 1.1.1+b3ba9c486f
+	- fabric-lifecycle-events-v1 2.6.9+33df5e6e6f
+	- fabric-loot-api-v2 3.0.67+3f89f5a56f
+	- fabric-loot-api-v3 2.0.14+d17682156f
+	- fabric-message-api-v1 6.1.7+3154c1c86f
+	- fabric-model-loading-api-v1 6.0.5+3ffd6ef06f
+	- fabric-networking-api-v1 5.1.0+b095d8db6f
+	- fabric-object-builder-api-v1 21.1.28+9bce411b6f
+	- fabric-particles-v1 4.2.3+a0ee59a46f
+	- fabric-recipe-api-v1 8.2.0+39709ef06f
+	- fabric-registry-sync-v0 6.1.42+679c8c5c6f
+	- fabric-renderer-api-v1 7.2.3+9be2a36e6f
+	- fabric-renderer-indigo 4.1.4+9be2a36e6f
+	- fabric-rendering-fluids-v1 3.1.38+86b3ae576f
+	- fabric-rendering-v1 16.2.0+bee81f016f
+	- fabric-resource-conditions-api-v1 5.0.28+33df5e6e6f
+	- fabric-resource-loader-v0 3.3.1+d4d4122a6f
+	- fabric-resource-loader-v1 1.0.4+14959b836f
+	- fabric-screen-api-v1 3.1.0+9c82a7986f
+	- fabric-screen-handler-api-v1 1.3.151+d17682156f
+	- fabric-serialization-api-v1 1.0.0+d857c9766f
+	- fabric-sound-api-v1 1.0.45+328a75ba6f
+	- fabric-tag-api-v1 1.2.13+2fa446b26f
+	- fabric-transfer-api-v1 6.0.15+79ec2c126f
+	- fabric-transitive-access-wideners-v1 6.5.3+41eb43436f
+	- fabricloader 0.19.3
+	- java 21
+	- minecraft 1.21.10
+	- mixinextras 0.5.4
+	- onix 1.0.39+1.21.10
+[06:20:50] [main/INFO] (FabricLoader/Mixin) SpongePowered MIXIN Subsystem Version=0.8.7 Source=file:/home/runner/.gradle/caches/modules-2/files-2.1/net.fabricmc/sponge-mixin/0.17.3+mixin.0.8.7/41c4a3984a80f4679e759fb9f495587acc5cdac7/sponge-mixin-0.17.3+mixin.0.8.7.jar Service=Knot/Fabric Env=CLIENT
+[06:20:50] [main/INFO] (FabricLoader/Mixin) Loaded Fabric development mappings for mixin remapper!
+[06:20:50] [main/INFO] (FabricLoader/Mixin) Compatibility level set to JAVA_21
+[06:20:51] [main/INFO] (FabricLoader/MixinExtras|Service) Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.5.4).
+[06:20:52] [Datafixer Bootstrap/INFO] (Minecraft) 278 Datafixer optimizations took 435 milliseconds
+[06:20:58] [Render thread/INFO] (Minecraft) Environment: Environment[sessionHost=https://sessionserver.mojang.com, servicesHost=https://api.minecraftservices.com, profilesHost=https://api.mojang.com, name=PROD]
+[06:20:58] [Render thread/INFO] (Minecraft) Setting user: Player224
+[06:20:59] [Render thread/INFO] (Indigo) [Indigo] Registering Indigo renderer!
+[06:20:59] [Render thread/INFO] (Onix Client) Onix Client 1.0.39+1.21.10 ready – 132 modules, profile 'Default'
+[06:20:59] [Render thread/INFO] (Minecraft) Backend library: LWJGL version 3.3.3-snapshot
+[06:21:02] [Render thread/INFO] (Minecraft) Using optional rendering extensions: GL_ARB_buffer_storage, GL_KHR_debug, GL_ARB_vertex_attrib_binding, GL_ARB_direct_state_access
+[06:21:03] [Download-2/INFO] (Minecraft) Could not authorize you against Realms server: java.lang.RuntimeException: Failed to parse into SignedJWT: FabricMC
+[06:21:03] [Render thread/ERROR] (Minecraft) Error while loading the narrator
+com.mojang.text2speech.Narrator$InitializeException: Failed to load library flite
+	at knot/com.mojang.text2speech.NarratorLinux$FliteLibrary.loadNative(NarratorLinux.java:81) ~[text2speech-1.18.11.jar:?]
+	at knot/com.mojang.text2speech.NarratorLinux.<init>(NarratorLinux.java:18) ~[text2speech-1.18.11.jar:?]
+	at knot/com.mojang.text2speech.Narrator.getNarrator(Narrator.java:41) [text2speech-1.18.11.jar:?]
+	at knot/net.minecraft.client.GameNarrator.<init>(GameNarrator.java:20) [minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at knot/net.minecraft.client.Minecraft.<init>(Minecraft.java:705) [minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at knot/net.minecraft.client.main.Main.main(Main.java:234) [minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514) [fabric-loader-0.19.3.jar:?]
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72) [fabric-loader-0.19.3.jar:?]
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23) [fabric-loader-0.19.3.jar:?]
+	at net.fabricmc.devlaunchinjector.Main.main(Main.java:86) [dev-launch-injector-0.2.1+build.8.jar:?]
+Caused by: java.lang.UnsatisfiedLinkError: Unable to load library 'flite':
+libflite.so: cannot open shared object file: No such file or directory
+libflite.so: cannot open shared object file: No such file or directory
+Native library (linux-x86-64/libflite.so) not found in resource path (/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/build/classes/java/main:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/build/resources/main:/home/runner/.gradle/caches/fabric-loom/1.21.10/loom.mappings.1_21_10.layered+hash.2198-v2/mappings.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.ow2.asm/asm/9.10.1/ada2141c0cc52ee8f5c48cd5fa4ce0e794f22236/asm-9.10.1.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.ow2.asm/asm-analysis/9.10.1/8d49f14d51f632cb1d87c88d1ceaf50db0d8af1b/asm-analysis-9.10.1.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.ow2.asm/asm-commons/9.10.1/4229e4c55fd8e01c23f9fe9884075cc628aacc50/asm-commons-9.10.1.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.ow2.asm/asm-tree/9.10.1/e244332a17564c1d1572449399a842de35881be2/asm-tree-9.10.1.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.ow2.asm/asm-util/9.10.1/7bb9d450e8d4cbf9f9e04096c44bbfe7fba80b15/asm-util-9.10.1.jar:/home/runner/.gradle/caches/modules-2/files-2.1/net.fabricmc/sponge-mixin/0.17.3+mixin.0.8.7/41c4a3984a80f4679e759fb9f495587acc5cdac7/sponge-mixin-0.17.3+mixin.0.8.7.jar:/home/runner/.gradle/caches/modules-2/files-2.1/io.github.llamalad7/mixinextras-fabric/0.5.4/5e167154bcb9942111313a5e186e16cd7265f858/mixinextras-fabric-0.5.4.jar:/home/runner/.gradle/caches/modules-2/files-2.1/net.fabricmc/dev-launch-injector/0.2.1+build.8/da8bef7e6e2f952da707f282bdb46882a0fce5e3/dev-launch-injector-0.2.1+build.8.jar:/home/runner/.gradle/caches/modules-2/files-2.1/net.fabricmc/fabric-log4j-util/1.0.2/ef0b3fb613356feb75a67d54f2fad6f03a006648/fabric-log4j-util-1.0.2.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.core/jackson-annotations/2.13.4/858c6cc78e1f08a885b1613e1d817c829df70a6e/jackson-annotations-2.13.4.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.core/jackson-core/2.13.4/cf934c681294b97ef6d80082faeefbe1edadf56/jackson-core-2.13.4.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.core/jackson-databind/2.13.4.2/325c06bdfeb628cfb80ebaaf1a26cc1eb558a585/jackson-databind-2.13.4.2.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.github.oshi/oshi-core/6.6.5/e1099981fd15dc4236c4499d82aba1276fb43a9a/oshi-core-6.6.5.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.github.stephenc.jcip/jcip-annotations/1.0-1/ef31541dd28ae2cefdd17c7ebf352d93e9058c63/jcip-annotations-1.0-1.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.google.code.gson/gson/2.11.0/527175ca6d81050b53bdd4c457a6d6e017626b0e/gson-2.11.0.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.google.guava/failureaccess/1.0.2/c4a06a64e650562f30b7bf9aaec1bfed43aca12b/failureaccess-1.0.2.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.google.guava/guava/33.3.1-jre/852f8b363da0111e819460021ca693cacca3e8db/guava-33.3.1-jre.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.ibm.icu/icu4j/76.1/215f3a8e936d4069344bd75f2b1368fd58112894/icu4j-76.1.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.microsoft.azure/msal4j/1.17.2/a6211e3d71d0388929babaa0ff0951b30d001852/msal4j-1.17.2.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.mojang/authlib/7.0.61/efee1e6b54e863108576eb3b3ae71144626aaefc/authlib-7.0.61.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.mojang/blocklist/1.0.10/5c685c5ffa94c4cd39496c7184c1d122e515ecef/blocklist-1.0.10.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.mojang/brigadier/1.3.10/d15b53a14cf20fdcaa98f731af5dda654452c010/brigadier-1.3.10.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.mojang/datafixerupper/8.0.16/67d4de6d7f95d89bcf5862995fb854ebaec02a34/datafixerupper-8.0.16.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.mojang/jtracy/1.0.36/20a63d06b621bfeb3cb21ef51b7fa40c0fc22021/jtracy-1.0.36.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.mojang/jtracy/1.0.36/8f2967c139b024bf80024a3eab63e906c3ee2e5b/jtracy-1.0.36-natives-linux.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.mojang/logging/1.5.10/9ab1202793717af9df9c1704d0a02892067001eb/logging-1.5.10.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.mojang/patchy/2.2.10/da05971b07cbb379d002cf7eaec6a2048211fefc/patchy-2.2.10.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.mojang/text2speech/1.18.11/e853a12cdd6ba4f4836e8f4bf3b37844a13482b6/text2speech-1.18.11.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.nimbusds/content-type/2.3/e3aa0be212d7a42839a8f3f506f5b990bcce0222/content-type-2.3.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.nimbusds/lang-tag/1.7/97c73ecd70bc7e8eefb26c5eea84f251a63f1031/lang-tag-1.7.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.nimbusds/nimbus-jose-jwt/9.40/42b1dfa0360e4062951b070bac52dd8d96fd7b38/nimbus-jose-jwt-9.40.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.nimbusds/oauth2-oidc-sdk/11.18/7c7ec4f4066625ff07a711ad856fa04da1ff9de/oauth2-oidc-sdk-11.18.jar:/home/runner/.gradle/caches/modules-2/files-2.1/commons-codec/commons-codec/1.17.1/973638b7149d333563584137ebf13a691bb60579/commons-codec-1.17.1.jar:/home/runner/.gradle/caches/modules-2/files-2.1/commons-io/commons-io/2.17.0/ddcc8433eb019fb48fe25207c0278143f3e1d7e2/commons-io-2.17.0.jar:/home/runner/.gradle/caches/modules-2/files-2.1/commons-logging/commons-logging/1.3.4/b9fc14968d63a8b8a8a2c1885fe3e90564239708/commons-logging-1.3.4.jar:/home/runner/.gradle/caches/modules-2/files-2.1/io.netty/netty-buffer/4.1.118.Final/7022990af1e0d449f9d5322035899745e19735c5/netty-buffer-4.1.118.Final.jar:/home/runner/.gradle/caches/modules-2/files-2.1/io.netty/netty-codec-http/4.1.118.Final/eda08a71294afe78c779b85fd696bc13491507a8/netty-codec-http-4.1.118.Final.jar:/home/runner/.gradle/caches/modules-2/files-2.1/io.netty/netty-codec/4.1.118.Final/307f665c08ce57333121de4f460479fc0c3c94d4/netty-codec-4.1.118.Final.jar:/home/runner/.gradle/caches/modules-2/files-2.1/io.netty/netty-common/4.1.118.Final/4bb0f9899146484fa89f7b9bc27389d5b8e2ecde/netty-common-4.1.118.Final.jar:/home/runner/.gradle/caches/modules-2/files-2.1/io.netty/netty-handler/4.1.118.Final/30ebb05b6b0fb071dbfcf713017c4a767a97bb9b/netty-handler-4.1.118.Final.jar:/home/runner/.gradle/caches/modules-2/files-2.1/io.netty/netty-resolver/4.1.118.Final/28c378c19c1779eca1104b400452627f3ebc4aea/netty-resolver-4.1.118.Final.jar:/home/runner/.gradle/caches/modules-2/files-2.1/io.netty/netty-transport-classes-epoll/4.1.118.Final/376ce95507066f0e755d97c1c8bcd6c33f657617/netty-transport-classes-epoll-4.1.118.Final.jar:/home/runner/.gradle/caches/modules-2/files-2.1/io.netty/netty-transport-native-epoll/4.1.118.Final/82f94d0a9d837f6b6a580379373310ff7288c0f8/netty-transport-native-epoll-4.1.118.Final-linux-aarch_64.jar:/home/runner/.gradle/caches/modules-2/files-2.1/io.netty/netty-transport-native-epoll/4.1.118.Final/7e6b89e3746acb7cf6f0aad993bbd058fc6d912e/netty-transport-native-epoll-4.1.118.Final-linux-x86_64.jar:/home/runner/.gradle/caches/modules-2/files-2.1/io.netty/netty-transport-native-unix-common/4.1.118.Final/9da25a94e6a0edac90da0bc7894e5a54efcb866b/netty-transport-native-unix-common-4.1.118.Final.jar:/home/runner/.gradle/caches/modules-2/files-2.1/io.netty/netty-transport/4.1.118.Final/5a27232e5d08218722d94ca14f0b1b4576e7711c/netty-transport-4.1.118.Final.jar:/home/runner/.gradle/caches/modules-2/files-2.1/it.unimi.dsi/fastutil/8.5.15/1e885b40c9563ab0d3899b871fd0b30e958705dc/fastutil-8.5.15.jar:/home/runner/.gradle/caches/modules-2/files-2.1/net.java.dev.jna/jna-platform/5.15.0/86b502cad57d45da172b5e3231c537b042e296ef/jna-platform-5.15.0.jar:/home/runner/.gradle/caches/modules-2/files-2.1/net.java.dev.jna/jna/5.15.0/1ee1d80ff44f08280188f7c0e740d57207841ac/jna-5.15.0.jar:/home/runner/.gradle/caches/modules-2/files-2.1/net.minidev/accessors-smart/2.5.1/19b820261eb2e7de7d5bde11d1c06e4501dd7e5f/accessors-smart-2.5.1.jar:/home/runner/.gradle/caches/modules-2/files-2.1/net.minidev/json-smart/2.5.1/4c11d2808d009132dfbbf947ebf37de6bf266c8e/json-smart-2.5.1.jar:/home/runner/.gradle/caches/modules-2/files-2.1/net.sf.jopt-simple/jopt-simple/5.0.4/4fdac2fbe92dfad86aa6e9301736f6b4342a3f5c/jopt-simple-5.0.4.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.apache.commons/commons-compress/1.27.1/a19151084758e2fbb6b41eddaa88e7b8ff4e6599/commons-compress-1.27.1.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.apache.commons/commons-lang3/3.17.0/b17d2136f0460dcc0d2016ceefca8723bdf4ee70/commons-lang3-3.17.0.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.apache.httpcomponents/httpclient/4.5.14/1194890e6f56ec29177673f2f12d0b8e627dec98/httpclient-4.5.14.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.apache.httpcomponents/httpcore/4.4.16/51cf043c87253c9f58b539c9f7e44c8894223850/httpcore-4.4.16.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.apache.logging.log4j/log4j-api/2.24.1/7ebeb12c20606373005af4232cd0ecca72613dda/log4j-api-2.24.1.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.apache.logging.log4j/log4j-core/2.24.1/c85285146f28d8c8962384f786e2dff04172fb43/log4j-core-2.24.1.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.apache.logging.log4j/log4j-slf4j2-impl/2.24.1/8e3ddc96464ef7f768823e7e001a52b23de8cd0a/log4j-slf4j2-impl-2.24.1.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.jcraft/jorbis/0.0.17/8872d22b293e8f5d7d56ff92be966e6dc28ebdc6/jorbis-0.0.17.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.joml/joml/1.10.8/fc0a71dad90a2cf41d82a76156a0e700af8e4f8d/joml-1.10.8.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-freetype/3.3.3/a0db6c84a8becc8ca05f9dbfa985edc348a824c7/lwjgl-freetype-3.3.3.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-freetype/3.3.3/149070a5480900347071b7074779531f25a6e3dc/lwjgl-freetype-3.3.3-natives-linux.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-glfw/3.3.3/efa1eb78c5ccd840e9f329717109b5e892d72f8e/lwjgl-glfw-3.3.3.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-glfw/3.3.3/a03684c5e4b1b1dbbe0d29dbbdc27b985b6840f2/lwjgl-glfw-3.3.3-natives-linux.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-jemalloc/3.3.3/b543467b7ff3c6920539a88ee602d34098628be5/lwjgl-jemalloc-3.3.3.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-jemalloc/3.3.3/4f86728bf449b1dd61251c4e0ac01df1389cb51e/lwjgl-jemalloc-3.3.3-natives-linux.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-openal/3.3.3/daada81ceb5fc0c291fbfdd4433cb8d9423577f2/lwjgl-openal-3.3.3.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-openal/3.3.3/3037360cc4595079bea240af250b6d1a527e0905/lwjgl-openal-3.3.3-natives-linux.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-opengl/3.3.3/2f6b0147078396a58979125a4c947664e98293a/lwjgl-opengl-3.3.3.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-opengl/3.3.3/62c70a4b00ca5391882b0f4b787c1588d24f1c86/lwjgl-opengl-3.3.3-natives-linux.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-stb/3.3.3/25dd6161988d7e65f71d5065c99902402ee32746/lwjgl-stb-3.3.3.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-stb/3.3.3/fd1271ccd9d85eff2fa31f3fd543e02ccfaf5041/lwjgl-stb-3.3.3-natives-linux.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-tinyfd/3.3.3/82d755ca94b102e9ca77283b9e2dc46d1b15fbe5/lwjgl-tinyfd-3.3.3.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-tinyfd/3.3.3/d8d58daa0c3e5fd906fee96f5fddbcbc07cc308b/lwjgl-tinyfd-3.3.3-natives-linux.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl/3.3.3/29589b5f87ed335a6c7e7ee6a5775f81f97ecb84/lwjgl-3.3.3.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl/3.3.3/1713758e3660ba66e1e954396fd18126038b33c0/lwjgl-3.3.3-natives-linux.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.lz4/lz4-java/1.8.0/4b986a99445e49ea5fbf5d149c4b63f6ed6c6780/lz4-java-1.8.0.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.slf4j/slf4j-api/2.0.16/172931663a09a1fa515567af5fbef00897d3c04/slf4j-api-2.0.16.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/minecraftMaven/net/minecraft/minecraft-merged-6227aad8ee/1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2/minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:/home/runner/.gradle/caches/modules-2/files-2.1/net.fabricmc/fabric-loader/0.19.3/354dfaa02d0552e11867f85dff7cdbfaf813ba3e/fabric-loader-0.19.3.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-api-e9493de5/0.138.4+1.21.10/fabric-api-e9493de5-0.138.4+1.21.10.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-transfer-api-v1-e9493de5/6.0.15+79ec2c126f/fabric-transfer-api-v1-e9493de5-6.0.15+79ec2c126f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-api-lookup-api-v1-e9493de5/1.6.106+d17682156f/fabric-api-lookup-api-v1-e9493de5-1.6.106+d17682156f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-command-api-v2-e9493de5/2.4.0+c0ab2d5d6f/fabric-command-api-v2-e9493de5-2.4.0+c0ab2d5d6f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-content-registries-v0-e9493de5/10.2.6+b6a242646f/fabric-content-registries-v0-e9493de5-10.2.6+b6a242646f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-data-generation-api-v1-e9493de5/23.2.27+d8b85ef16f/fabric-data-generation-api-v1-e9493de5-23.2.27+d8b85ef16f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-convention-tags-v1-e9493de5/2.1.49+7f945d5b6f/fabric-convention-tags-v1-e9493de5-2.1.49+7f945d5b6f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-convention-tags-v2-e9493de5/2.17.0+ff7bc77d6f/fabric-convention-tags-v2-e9493de5-2.17.0+ff7bc77d6f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-data-attachment-api-v1-e9493de5/1.8.33+cd3b9e596f/fabric-data-attachment-api-v1-e9493de5-1.8.33+cd3b9e596f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-entity-events-v1-e9493de5/2.1.13+fde3702c6f/fabric-entity-events-v1-e9493de5-2.1.13+fde3702c6f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-events-interaction-v0-e9493de5/4.0.36+5ba217126f/fabric-events-interaction-v0-e9493de5-4.0.36+5ba217126f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-gametest-api-v1-e9493de5/3.1.21+33df5e6e6f/fabric-gametest-api-v1-e9493de5-3.1.21+33df5e6e6f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-item-api-v1-e9493de5/11.5.11+9bce411b6f/fabric-item-api-v1-e9493de5-11.5.11+9bce411b6f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-item-group-api-v1-e9493de5/4.2.27+86b3ae576f/fabric-item-group-api-v1-e9493de5-4.2.27+86b3ae576f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-recipe-api-v1-e9493de5/8.2.0+39709ef06f/fabric-recipe-api-v1-e9493de5-8.2.0+39709ef06f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-model-loading-api-v1-e9493de5/6.0.5+3ffd6ef06f/fabric-model-loading-api-v1-e9493de5-6.0.5+3ffd6ef06f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-renderer-indigo-e9493de5/4.1.4+9be2a36e6f/fabric-renderer-indigo-e9493de5-4.1.4+9be2a36e6f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-renderer-api-v1-e9493de5/7.2.3+9be2a36e6f/fabric-renderer-api-v1-e9493de5-7.2.3+9be2a36e6f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-rendering-v1-e9493de5/16.2.0+bee81f016f/fabric-rendering-v1-e9493de5-16.2.0+bee81f016f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-lifecycle-events-v1-e9493de5/2.6.9+33df5e6e6f/fabric-lifecycle-events-v1-e9493de5-2.6.9+33df5e6e6f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-loot-api-v2-e9493de5/3.0.67+3f89f5a56f/fabric-loot-api-v2-e9493de5-3.0.67+3f89f5a56f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-loot-api-v3-e9493de5/2.0.14+d17682156f/fabric-loot-api-v3-e9493de5-2.0.14+d17682156f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-message-api-v1-e9493de5/6.1.7+3154c1c86f/fabric-message-api-v1-e9493de5-6.1.7+3154c1c86f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-particles-v1-e9493de5/4.2.3+a0ee59a46f/fabric-particles-v1-e9493de5-4.2.3+a0ee59a46f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-object-builder-api-v1-e9493de5/21.1.28+9bce411b6f/fabric-object-builder-api-v1-e9493de5-21.1.28+9bce411b6f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-screen-handler-api-v1-e9493de5/1.3.151+d17682156f/fabric-screen-handler-api-v1-e9493de5-1.3.151+d17682156f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-registry-sync-v0-e9493de5/6.1.42+679c8c5c6f/fabric-registry-sync-v0-e9493de5-6.1.42+679c8c5c6f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-networking-api-v1-e9493de5/5.1.0+b095d8db6f/fabric-networking-api-v1-e9493de5-5.1.0+b095d8db6f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-rendering-fluids-v1-e9493de5/3.1.38+86b3ae576f/fabric-rendering-fluids-v1-e9493de5-3.1.38+86b3ae576f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-tag-api-v1-e9493de5/1.2.13+2fa446b26f/fabric-tag-api-v1-e9493de5-1.2.13+2fa446b26f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-resource-loader-v0-e9493de5/3.3.1+d4d4122a6f/fabric-resource-loader-v0-e9493de5-3.3.1+d4d4122a6f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-resource-loader-v1-e9493de5/1.0.4+14959b836f/fabric-resource-loader-v1-e9493de5-1.0.4+14959b836f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-screen-api-v1-e9493de5/3.1.0+9c82a7986f/fabric-screen-api-v1-e9493de5-3.1.0+9c82a7986f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-api-base-e9493de5/1.0.0+14b92d896f/fabric-api-base-e9493de5-1.0.0+14b92d896f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-biome-api-v1-e9493de5/16.1.0+c2417d4f6f/fabric-biome-api-v1-e9493de5-16.1.0+c2417d4f6f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-block-api-v1-e9493de5/1.1.5+d17682156f/fabric-block-api-v1-e9493de5-1.1.5+d17682156f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-block-view-api-v2-e9493de5/1.0.34+e4fd1b926f/fabric-block-view-api-v2-e9493de5-1.0.34+e4fd1b926f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-client-gametest-api-v1-e9493de5/4.2.13+14b92d896f/fabric-client-gametest-api-v1-e9493de5-4.2.13+14b92d896f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-crash-report-info-v1-e9493de5/0.3.18+33df5e6e6f/fabric-crash-report-info-v1-e9493de5-0.3.18+33df5e6e6f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-dimensions-v1-e9493de5/4.0.22+38b9cc196f/fabric-dimensions-v1-e9493de5-4.0.22+38b9cc196f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-game-rule-api-v1-e9493de5/1.1.1+e47eaae56f/fabric-game-rule-api-v1-e9493de5-1.1.1+e47eaae56f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-key-binding-api-v1-e9493de5/1.1.1+b3ba9c486f/fabric-key-binding-api-v1-e9493de5-1.1.1+b3ba9c486f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-resource-conditions-api-v1-e9493de5/5.0.28+33df5e6e6f/fabric-resource-conditions-api-v1-e9493de5-5.0.28+33df5e6e6f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-serialization-api-v1-e9493de5/1.0.0+d857c9766f/fabric-serialization-api-v1-e9493de5-1.0.0+d857c9766f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-sound-api-v1-e9493de5/1.0.45+328a75ba6f/fabric-sound-api-v1-e9493de5-1.0.45+328a75ba6f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-transitive-access-wideners-v1-e9493de5/6.5.3+41eb43436f/fabric-transitive-access-wideners-v1-e9493de5-6.5.3+41eb43436f.jar)
+	at knot/com.sun.jna.NativeLibrary.loadLibrary(NativeLibrary.java:325) ~[jna-5.15.0.jar:?]
+	at knot/com.sun.jna.NativeLibrary.getInstance(NativeLibrary.java:481) ~[jna-5.15.0.jar:?]
+	at knot/com.sun.jna.NativeLibrary.getInstance(NativeLibrary.java:423) ~[jna-5.15.0.jar:?]
+	at knot/com.mojang.text2speech.NarratorLinux$FliteLibrary.loadNative(NarratorLinux.java:79) ~[text2speech-1.18.11.jar:?]
+	... 9 more
+	Suppressed: java.lang.UnsatisfiedLinkError: libflite.so: cannot open shared object file: No such file or directory
+		at knot/com.sun.jna.Native.open(Native Method) ~[jna-5.15.0.jar:?]
+		at knot/com.sun.jna.NativeLibrary.loadLibrary(NativeLibrary.java:213) ~[jna-5.15.0.jar:?]
+		at knot/com.sun.jna.NativeLibrary.getInstance(NativeLibrary.java:481) ~[jna-5.15.0.jar:?]
+		at knot/com.sun.jna.NativeLibrary.getInstance(NativeLibrary.java:423) ~[jna-5.15.0.jar:?]
+		at knot/com.mojang.text2speech.NarratorLinux$FliteLibrary.loadNative(NarratorLinux.java:79) ~[text2speech-1.18.11.jar:?]
+		at knot/com.mojang.text2speech.NarratorLinux.<init>(NarratorLinux.java:18) ~[text2speech-1.18.11.jar:?]
+		at knot/com.mojang.text2speech.Narrator.getNarrator(Narrator.java:41) [text2speech-1.18.11.jar:?]
+		at knot/net.minecraft.client.GameNarrator.<init>(GameNarrator.java:20) [minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+		at knot/net.minecraft.client.Minecraft.<init>(Minecraft.java:705) [minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+		at knot/net.minecraft.client.main.Main.main(Main.java:234) [minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+		at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514) [fabric-loader-0.19.3.jar:?]
+		at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72) [fabric-loader-0.19.3.jar:?]
+		at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23) [fabric-loader-0.19.3.jar:?]
+		at net.fabricmc.devlaunchinjector.Main.main(Main.java:86) [dev-launch-injector-0.2.1+build.8.jar:?]
+	Suppressed: java.lang.UnsatisfiedLinkError: libflite.so: cannot open shared object file: No such file or directory
+		at knot/com.sun.jna.Native.open(Native Method) ~[jna-5.15.0.jar:?]
+		at knot/com.sun.jna.NativeLibrary.loadLibrary(NativeLibrary.java:226) ~[jna-5.15.0.jar:?]
+		at knot/com.sun.jna.NativeLibrary.getInstance(NativeLibrary.java:481) ~[jna-5.15.0.jar:?]
+		at knot/com.sun.jna.NativeLibrary.getInstance(NativeLibrary.java:423) ~[jna-5.15.0.jar:?]
+		at knot/com.mojang.text2speech.NarratorLinux$FliteLibrary.loadNative(NarratorLinux.java:79) ~[text2speech-1.18.11.jar:?]
+		at knot/com.mojang.text2speech.NarratorLinux.<init>(NarratorLinux.java:18) ~[text2speech-1.18.11.jar:?]
+		at knot/com.mojang.text2speech.Narrator.getNarrator(Narrator.java:41) [text2speech-1.18.11.jar:?]
+		at knot/net.minecraft.client.GameNarrator.<init>(GameNarrator.java:20) [minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+		at knot/net.minecraft.client.Minecraft.<init>(Minecraft.java:705) [minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+		at knot/net.minecraft.client.main.Main.main(Main.java:234) [minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+		at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514) [fabric-loader-0.19.3.jar:?]
+		at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72) [fabric-loader-0.19.3.jar:?]
+		at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23) [fabric-loader-0.19.3.jar:?]
+		at net.fabricmc.devlaunchinjector.Main.main(Main.java:86) [dev-launch-injector-0.2.1+build.8.jar:?]
+	Suppressed: java.io.IOException: Native library (linux-x86-64/libflite.so) not found in resource path (/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/build/classes/java/main:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/build/resources/main:/home/runner/.gradle/caches/fabric-loom/1.21.10/loom.mappings.1_21_10.layered+hash.2198-v2/mappings.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.ow2.asm/asm/9.10.1/ada2141c0cc52ee8f5c48cd5fa4ce0e794f22236/asm-9.10.1.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.ow2.asm/asm-analysis/9.10.1/8d49f14d51f632cb1d87c88d1ceaf50db0d8af1b/asm-analysis-9.10.1.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.ow2.asm/asm-commons/9.10.1/4229e4c55fd8e01c23f9fe9884075cc628aacc50/asm-commons-9.10.1.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.ow2.asm/asm-tree/9.10.1/e244332a17564c1d1572449399a842de35881be2/asm-tree-9.10.1.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.ow2.asm/asm-util/9.10.1/7bb9d450e8d4cbf9f9e04096c44bbfe7fba80b15/asm-util-9.10.1.jar:/home/runner/.gradle/caches/modules-2/files-2.1/net.fabricmc/sponge-mixin/0.17.3+mixin.0.8.7/41c4a3984a80f4679e759fb9f495587acc5cdac7/sponge-mixin-0.17.3+mixin.0.8.7.jar:/home/runner/.gradle/caches/modules-2/files-2.1/io.github.llamalad7/mixinextras-fabric/0.5.4/5e167154bcb9942111313a5e186e16cd7265f858/mixinextras-fabric-0.5.4.jar:/home/runner/.gradle/caches/modules-2/files-2.1/net.fabricmc/dev-launch-injector/0.2.1+build.8/da8bef7e6e2f952da707f282bdb46882a0fce5e3/dev-launch-injector-0.2.1+build.8.jar:/home/runner/.gradle/caches/modules-2/files-2.1/net.fabricmc/fabric-log4j-util/1.0.2/ef0b3fb613356feb75a67d54f2fad6f03a006648/fabric-log4j-util-1.0.2.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.core/jackson-annotations/2.13.4/858c6cc78e1f08a885b1613e1d817c829df70a6e/jackson-annotations-2.13.4.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.core/jackson-core/2.13.4/cf934c681294b97ef6d80082faeefbe1edadf56/jackson-core-2.13.4.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.core/jackson-databind/2.13.4.2/325c06bdfeb628cfb80ebaaf1a26cc1eb558a585/jackson-databind-2.13.4.2.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.github.oshi/oshi-core/6.6.5/e1099981fd15dc4236c4499d82aba1276fb43a9a/oshi-core-6.6.5.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.github.stephenc.jcip/jcip-annotations/1.0-1/ef31541dd28ae2cefdd17c7ebf352d93e9058c63/jcip-annotations-1.0-1.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.google.code.gson/gson/2.11.0/527175ca6d81050b53bdd4c457a6d6e017626b0e/gson-2.11.0.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.google.guava/failureaccess/1.0.2/c4a06a64e650562f30b7bf9aaec1bfed43aca12b/failureaccess-1.0.2.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.google.guava/guava/33.3.1-jre/852f8b363da0111e819460021ca693cacca3e8db/guava-33.3.1-jre.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.ibm.icu/icu4j/76.1/215f3a8e936d4069344bd75f2b1368fd58112894/icu4j-76.1.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.microsoft.azure/msal4j/1.17.2/a6211e3d71d0388929babaa0ff0951b30d001852/msal4j-1.17.2.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.mojang/authlib/7.0.61/efee1e6b54e863108576eb3b3ae71144626aaefc/authlib-7.0.61.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.mojang/blocklist/1.0.10/5c685c5ffa94c4cd39496c7184c1d122e515ecef/blocklist-1.0.10.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.mojang/brigadier/1.3.10/d15b53a14cf20fdcaa98f731af5dda654452c010/brigadier-1.3.10.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.mojang/datafixerupper/8.0.16/67d4de6d7f95d89bcf5862995fb854ebaec02a34/datafixerupper-8.0.16.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.mojang/jtracy/1.0.36/20a63d06b621bfeb3cb21ef51b7fa40c0fc22021/jtracy-1.0.36.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.mojang/jtracy/1.0.36/8f2967c139b024bf80024a3eab63e906c3ee2e5b/jtracy-1.0.36-natives-linux.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.mojang/logging/1.5.10/9ab1202793717af9df9c1704d0a02892067001eb/logging-1.5.10.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.mojang/patchy/2.2.10/da05971b07cbb379d002cf7eaec6a2048211fefc/patchy-2.2.10.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.mojang/text2speech/1.18.11/e853a12cdd6ba4f4836e8f4bf3b37844a13482b6/text2speech-1.18.11.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.nimbusds/content-type/2.3/e3aa0be212d7a42839a8f3f506f5b990bcce0222/content-type-2.3.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.nimbusds/lang-tag/1.7/97c73ecd70bc7e8eefb26c5eea84f251a63f1031/lang-tag-1.7.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.nimbusds/nimbus-jose-jwt/9.40/42b1dfa0360e4062951b070bac52dd8d96fd7b38/nimbus-jose-jwt-9.40.jar:/home/runner/.gradle/caches/modules-2/files-2.1/com.nimbusds/oauth2-oidc-sdk/11.18/7c7ec4f4066625ff07a711ad856fa04da1ff9de/oauth2-oidc-sdk-11.18.jar:/home/runner/.gradle/caches/modules-2/files-2.1/commons-codec/commons-codec/1.17.1/973638b7149d333563584137ebf13a691bb60579/commons-codec-1.17.1.jar:/home/runner/.gradle/caches/modules-2/files-2.1/commons-io/commons-io/2.17.0/ddcc8433eb019fb48fe25207c0278143f3e1d7e2/commons-io-2.17.0.jar:/home/runner/.gradle/caches/modules-2/files-2.1/commons-logging/commons-logging/1.3.4/b9fc14968d63a8b8a8a2c1885fe3e90564239708/commons-logging-1.3.4.jar:/home/runner/.gradle/caches/modules-2/files-2.1/io.netty/netty-buffer/4.1.118.Final/7022990af1e0d449f9d5322035899745e19735c5/netty-buffer-4.1.118.Final.jar:/home/runner/.gradle/caches/modules-2/files-2.1/io.netty/netty-codec-http/4.1.118.Final/eda08a71294afe78c779b85fd696bc13491507a8/netty-codec-http-4.1.118.Final.jar:/home/runner/.gradle/caches/modules-2/files-2.1/io.netty/netty-codec/4.1.118.Final/307f665c08ce57333121de4f460479fc0c3c94d4/netty-codec-4.1.118.Final.jar:/home/runner/.gradle/caches/modules-2/files-2.1/io.netty/netty-common/4.1.118.Final/4bb0f9899146484fa89f7b9bc27389d5b8e2ecde/netty-common-4.1.118.Final.jar:/home/runner/.gradle/caches/modules-2/files-2.1/io.netty/netty-handler/4.1.118.Final/30ebb05b6b0fb071dbfcf713017c4a767a97bb9b/netty-handler-4.1.118.Final.jar:/home/runner/.gradle/caches/modules-2/files-2.1/io.netty/netty-resolver/4.1.118.Final/28c378c19c1779eca1104b400452627f3ebc4aea/netty-resolver-4.1.118.Final.jar:/home/runner/.gradle/caches/modules-2/files-2.1/io.netty/netty-transport-classes-epoll/4.1.118.Final/376ce95507066f0e755d97c1c8bcd6c33f657617/netty-transport-classes-epoll-4.1.118.Final.jar:/home/runner/.gradle/caches/modules-2/files-2.1/io.netty/netty-transport-native-epoll/4.1.118.Final/82f94d0a9d837f6b6a580379373310ff7288c0f8/netty-transport-native-epoll-4.1.118.Final-linux-aarch_64.jar:/home/runner/.gradle/caches/modules-2/files-2.1/io.netty/netty-transport-native-epoll/4.1.118.Final/7e6b89e3746acb7cf6f0aad993bbd058fc6d912e/netty-transport-native-epoll-4.1.118.Final-linux-x86_64.jar:/home/runner/.gradle/caches/modules-2/files-2.1/io.netty/netty-transport-native-unix-common/4.1.118.Final/9da25a94e6a0edac90da0bc7894e5a54efcb866b/netty-transport-native-unix-common-4.1.118.Final.jar:/home/runner/.gradle/caches/modules-2/files-2.1/io.netty/netty-transport/4.1.118.Final/5a27232e5d08218722d94ca14f0b1b4576e7711c/netty-transport-4.1.118.Final.jar:/home/runner/.gradle/caches/modules-2/files-2.1/it.unimi.dsi/fastutil/8.5.15/1e885b40c9563ab0d3899b871fd0b30e958705dc/fastutil-8.5.15.jar:/home/runner/.gradle/caches/modules-2/files-2.1/net.java.dev.jna/jna-platform/5.15.0/86b502cad57d45da172b5e3231c537b042e296ef/jna-platform-5.15.0.jar:/home/runner/.gradle/caches/modules-2/files-2.1/net.java.dev.jna/jna/5.15.0/1ee1d80ff44f08280188f7c0e740d57207841ac/jna-5.15.0.jar:/home/runner/.gradle/caches/modules-2/files-2.1/net.minidev/accessors-smart/2.5.1/19b820261eb2e7de7d5bde11d1c06e4501dd7e5f/accessors-smart-2.5.1.jar:/home/runner/.gradle/caches/modules-2/files-2.1/net.minidev/json-smart/2.5.1/4c11d2808d009132dfbbf947ebf37de6bf266c8e/json-smart-2.5.1.jar:/home/runner/.gradle/caches/modules-2/files-2.1/net.sf.jopt-simple/jopt-simple/5.0.4/4fdac2fbe92dfad86aa6e9301736f6b4342a3f5c/jopt-simple-5.0.4.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.apache.commons/commons-compress/1.27.1/a19151084758e2fbb6b41eddaa88e7b8ff4e6599/commons-compress-1.27.1.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.apache.commons/commons-lang3/3.17.0/b17d2136f0460dcc0d2016ceefca8723bdf4ee70/commons-lang3-3.17.0.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.apache.httpcomponents/httpclient/4.5.14/1194890e6f56ec29177673f2f12d0b8e627dec98/httpclient-4.5.14.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.apache.httpcomponents/httpcore/4.4.16/51cf043c87253c9f58b539c9f7e44c8894223850/httpcore-4.4.16.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.apache.logging.log4j/log4j-api/2.24.1/7ebeb12c20606373005af4232cd0ecca72613dda/log4j-api-2.24.1.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.apache.logging.log4j/log4j-core/2.24.1/c85285146f28d8c8962384f786e2dff04172fb43/log4j-core-2.24.1.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.apache.logging.log4j/log4j-slf4j2-impl/2.24.1/8e3ddc96464ef7f768823e7e001a52b23de8cd0a/log4j-slf4j2-impl-2.24.1.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.jcraft/jorbis/0.0.17/8872d22b293e8f5d7d56ff92be966e6dc28ebdc6/jorbis-0.0.17.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.joml/joml/1.10.8/fc0a71dad90a2cf41d82a76156a0e700af8e4f8d/joml-1.10.8.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-freetype/3.3.3/a0db6c84a8becc8ca05f9dbfa985edc348a824c7/lwjgl-freetype-3.3.3.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-freetype/3.3.3/149070a5480900347071b7074779531f25a6e3dc/lwjgl-freetype-3.3.3-natives-linux.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-glfw/3.3.3/efa1eb78c5ccd840e9f329717109b5e892d72f8e/lwjgl-glfw-3.3.3.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-glfw/3.3.3/a03684c5e4b1b1dbbe0d29dbbdc27b985b6840f2/lwjgl-glfw-3.3.3-natives-linux.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-jemalloc/3.3.3/b543467b7ff3c6920539a88ee602d34098628be5/lwjgl-jemalloc-3.3.3.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-jemalloc/3.3.3/4f86728bf449b1dd61251c4e0ac01df1389cb51e/lwjgl-jemalloc-3.3.3-natives-linux.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-openal/3.3.3/daada81ceb5fc0c291fbfdd4433cb8d9423577f2/lwjgl-openal-3.3.3.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-openal/3.3.3/3037360cc4595079bea240af250b6d1a527e0905/lwjgl-openal-3.3.3-natives-linux.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-opengl/3.3.3/2f6b0147078396a58979125a4c947664e98293a/lwjgl-opengl-3.3.3.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-opengl/3.3.3/62c70a4b00ca5391882b0f4b787c1588d24f1c86/lwjgl-opengl-3.3.3-natives-linux.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-stb/3.3.3/25dd6161988d7e65f71d5065c99902402ee32746/lwjgl-stb-3.3.3.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-stb/3.3.3/fd1271ccd9d85eff2fa31f3fd543e02ccfaf5041/lwjgl-stb-3.3.3-natives-linux.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-tinyfd/3.3.3/82d755ca94b102e9ca77283b9e2dc46d1b15fbe5/lwjgl-tinyfd-3.3.3.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-tinyfd/3.3.3/d8d58daa0c3e5fd906fee96f5fddbcbc07cc308b/lwjgl-tinyfd-3.3.3-natives-linux.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl/3.3.3/29589b5f87ed335a6c7e7ee6a5775f81f97ecb84/lwjgl-3.3.3.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl/3.3.3/1713758e3660ba66e1e954396fd18126038b33c0/lwjgl-3.3.3-natives-linux.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.lz4/lz4-java/1.8.0/4b986a99445e49ea5fbf5d149c4b63f6ed6c6780/lz4-java-1.8.0.jar:/home/runner/.gradle/caches/modules-2/files-2.1/org.slf4j/slf4j-api/2.0.16/172931663a09a1fa515567af5fbef00897d3c04/slf4j-api-2.0.16.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/minecraftMaven/net/minecraft/minecraft-merged-6227aad8ee/1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2/minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:/home/runner/.gradle/caches/modules-2/files-2.1/net.fabricmc/fabric-loader/0.19.3/354dfaa02d0552e11867f85dff7cdbfaf813ba3e/fabric-loader-0.19.3.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-api-e9493de5/0.138.4+1.21.10/fabric-api-e9493de5-0.138.4+1.21.10.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-transfer-api-v1-e9493de5/6.0.15+79ec2c126f/fabric-transfer-api-v1-e9493de5-6.0.15+79ec2c126f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-api-lookup-api-v1-e9493de5/1.6.106+d17682156f/fabric-api-lookup-api-v1-e9493de5-1.6.106+d17682156f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-command-api-v2-e9493de5/2.4.0+c0ab2d5d6f/fabric-command-api-v2-e9493de5-2.4.0+c0ab2d5d6f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-content-registries-v0-e9493de5/10.2.6+b6a242646f/fabric-content-registries-v0-e9493de5-10.2.6+b6a242646f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-data-generation-api-v1-e9493de5/23.2.27+d8b85ef16f/fabric-data-generation-api-v1-e9493de5-23.2.27+d8b85ef16f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-convention-tags-v1-e9493de5/2.1.49+7f945d5b6f/fabric-convention-tags-v1-e9493de5-2.1.49+7f945d5b6f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-convention-tags-v2-e9493de5/2.17.0+ff7bc77d6f/fabric-convention-tags-v2-e9493de5-2.17.0+ff7bc77d6f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-data-attachment-api-v1-e9493de5/1.8.33+cd3b9e596f/fabric-data-attachment-api-v1-e9493de5-1.8.33+cd3b9e596f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-entity-events-v1-e9493de5/2.1.13+fde3702c6f/fabric-entity-events-v1-e9493de5-2.1.13+fde3702c6f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-events-interaction-v0-e9493de5/4.0.36+5ba217126f/fabric-events-interaction-v0-e9493de5-4.0.36+5ba217126f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-gametest-api-v1-e9493de5/3.1.21+33df5e6e6f/fabric-gametest-api-v1-e9493de5-3.1.21+33df5e6e6f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-item-api-v1-e9493de5/11.5.11+9bce411b6f/fabric-item-api-v1-e9493de5-11.5.11+9bce411b6f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-item-group-api-v1-e9493de5/4.2.27+86b3ae576f/fabric-item-group-api-v1-e9493de5-4.2.27+86b3ae576f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-recipe-api-v1-e9493de5/8.2.0+39709ef06f/fabric-recipe-api-v1-e9493de5-8.2.0+39709ef06f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-model-loading-api-v1-e9493de5/6.0.5+3ffd6ef06f/fabric-model-loading-api-v1-e9493de5-6.0.5+3ffd6ef06f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-renderer-indigo-e9493de5/4.1.4+9be2a36e6f/fabric-renderer-indigo-e9493de5-4.1.4+9be2a36e6f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-renderer-api-v1-e9493de5/7.2.3+9be2a36e6f/fabric-renderer-api-v1-e9493de5-7.2.3+9be2a36e6f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-rendering-v1-e9493de5/16.2.0+bee81f016f/fabric-rendering-v1-e9493de5-16.2.0+bee81f016f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-lifecycle-events-v1-e9493de5/2.6.9+33df5e6e6f/fabric-lifecycle-events-v1-e9493de5-2.6.9+33df5e6e6f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-loot-api-v2-e9493de5/3.0.67+3f89f5a56f/fabric-loot-api-v2-e9493de5-3.0.67+3f89f5a56f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-loot-api-v3-e9493de5/2.0.14+d17682156f/fabric-loot-api-v3-e9493de5-2.0.14+d17682156f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-message-api-v1-e9493de5/6.1.7+3154c1c86f/fabric-message-api-v1-e9493de5-6.1.7+3154c1c86f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-particles-v1-e9493de5/4.2.3+a0ee59a46f/fabric-particles-v1-e9493de5-4.2.3+a0ee59a46f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-object-builder-api-v1-e9493de5/21.1.28+9bce411b6f/fabric-object-builder-api-v1-e9493de5-21.1.28+9bce411b6f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-screen-handler-api-v1-e9493de5/1.3.151+d17682156f/fabric-screen-handler-api-v1-e9493de5-1.3.151+d17682156f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-registry-sync-v0-e9493de5/6.1.42+679c8c5c6f/fabric-registry-sync-v0-e9493de5-6.1.42+679c8c5c6f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-networking-api-v1-e9493de5/5.1.0+b095d8db6f/fabric-networking-api-v1-e9493de5-5.1.0+b095d8db6f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-rendering-fluids-v1-e9493de5/3.1.38+86b3ae576f/fabric-rendering-fluids-v1-e9493de5-3.1.38+86b3ae576f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-tag-api-v1-e9493de5/1.2.13+2fa446b26f/fabric-tag-api-v1-e9493de5-1.2.13+2fa446b26f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-resource-loader-v0-e9493de5/3.3.1+d4d4122a6f/fabric-resource-loader-v0-e9493de5-3.3.1+d4d4122a6f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-resource-loader-v1-e9493de5/1.0.4+14959b836f/fabric-resource-loader-v1-e9493de5-1.0.4+14959b836f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-screen-api-v1-e9493de5/3.1.0+9c82a7986f/fabric-screen-api-v1-e9493de5-3.1.0+9c82a7986f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-api-base-e9493de5/1.0.0+14b92d896f/fabric-api-base-e9493de5-1.0.0+14b92d896f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-biome-api-v1-e9493de5/16.1.0+c2417d4f6f/fabric-biome-api-v1-e9493de5-16.1.0+c2417d4f6f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-block-api-v1-e9493de5/1.1.5+d17682156f/fabric-block-api-v1-e9493de5-1.1.5+d17682156f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-block-view-api-v2-e9493de5/1.0.34+e4fd1b926f/fabric-block-view-api-v2-e9493de5-1.0.34+e4fd1b926f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-client-gametest-api-v1-e9493de5/4.2.13+14b92d896f/fabric-client-gametest-api-v1-e9493de5-4.2.13+14b92d896f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-crash-report-info-v1-e9493de5/0.3.18+33df5e6e6f/fabric-crash-report-info-v1-e9493de5-0.3.18+33df5e6e6f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-dimensions-v1-e9493de5/4.0.22+38b9cc196f/fabric-dimensions-v1-e9493de5-4.0.22+38b9cc196f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-game-rule-api-v1-e9493de5/1.1.1+e47eaae56f/fabric-game-rule-api-v1-e9493de5-1.1.1+e47eaae56f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-key-binding-api-v1-e9493de5/1.1.1+b3ba9c486f/fabric-key-binding-api-v1-e9493de5-1.1.1+b3ba9c486f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-resource-conditions-api-v1-e9493de5/5.0.28+33df5e6e6f/fabric-resource-conditions-api-v1-e9493de5-5.0.28+33df5e6e6f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-serialization-api-v1-e9493de5/1.0.0+d857c9766f/fabric-serialization-api-v1-e9493de5-1.0.0+d857c9766f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-sound-api-v1-e9493de5/1.0.45+328a75ba6f/fabric-sound-api-v1-e9493de5-1.0.45+328a75ba6f.jar:/home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/.gradle/loom-cache/remapped_mods/remapped/net/fabricmc/fabric-api/fabric-transitive-access-wideners-v1-e9493de5/6.5.3+41eb43436f/fabric-transitive-access-wideners-v1-e9493de5-6.5.3+41eb43436f.jar)
+		at knot/com.sun.jna.Native.extractFromResourcePath(Native.java:1141) ~[jna-5.15.0.jar:?]
+		at knot/com.sun.jna.NativeLibrary.loadLibrary(NativeLibrary.java:297) ~[jna-5.15.0.jar:?]
+		at knot/com.sun.jna.NativeLibrary.getInstance(NativeLibrary.java:481) ~[jna-5.15.0.jar:?]
+		at knot/com.sun.jna.NativeLibrary.getInstance(NativeLibrary.java:423) ~[jna-5.15.0.jar:?]
+		at knot/com.mojang.text2speech.NarratorLinux$FliteLibrary.loadNative(NarratorLinux.java:79) ~[text2speech-1.18.11.jar:?]
+		at knot/com.mojang.text2speech.NarratorLinux.<init>(NarratorLinux.java:18) ~[text2speech-1.18.11.jar:?]
+		at knot/com.mojang.text2speech.Narrator.getNarrator(Narrator.java:41) [text2speech-1.18.11.jar:?]
+		at knot/net.minecraft.client.GameNarrator.<init>(GameNarrator.java:20) [minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+		at knot/net.minecraft.client.Minecraft.<init>(Minecraft.java:705) [minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+		at knot/net.minecraft.client.main.Main.main(Main.java:234) [minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+		at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514) [fabric-loader-0.19.3.jar:?]
+		at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72) [fabric-loader-0.19.3.jar:?]
+		at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23) [fabric-loader-0.19.3.jar:?]
+		at net.fabricmc.devlaunchinjector.Main.main(Main.java:86) [dev-launch-injector-0.2.1+build.8.jar:?]
+[06:21:03] [Render thread/INFO] (Minecraft) Reloading ResourceManager: vanilla, fabric, fabric-api, fabric-api-base, fabric-api-lookup-api-v1, fabric-biome-api-v1, fabric-block-api-v1, fabric-block-view-api-v2, fabric-client-gametest-api-v1, fabric-command-api-v2, fabric-content-registries-v0, fabric-convention-tags-v1, fabric-convention-tags-v2, fabric-crash-report-info-v1, fabric-data-attachment-api-v1, fabric-data-generation-api-v1, fabric-dimensions-v1, fabric-entity-events-v1, fabric-events-interaction-v0, fabric-game-rule-api-v1, fabric-gametest-api-v1, fabric-item-api-v1, fabric-item-group-api-v1, fabric-key-binding-api-v1, fabric-lifecycle-events-v1, fabric-loot-api-v2, fabric-loot-api-v3, fabric-message-api-v1, fabric-model-loading-api-v1, fabric-networking-api-v1, fabric-object-builder-api-v1, fabric-particles-v1, fabric-recipe-api-v1, fabric-registry-sync-v0, fabric-renderer-api-v1, fabric-renderer-indigo, fabric-rendering-fluids-v1, fabric-rendering-v1, fabric-resource-conditions-api-v1, fabric-resource-loader-v0, fabric-resource-loader-v1, fabric-screen-api-v1, fabric-screen-handler-api-v1, fabric-serialization-api-v1, fabric-sound-api-v1, fabric-tag-api-v1, fabric-transfer-api-v1, fabric-transitive-access-wideners-v1, fabricloader, onix, file/onix-test-pack
+[06:21:03] [Render thread/ERROR] (ModNioResourcePack) Invalid path in mod resource-pack onix: onix:font/INTER_LICENSE.txt, ignoring
+[06:21:04] [Worker-Main-1/INFO] (Minecraft) Found unifont_all_no_pua-16.0.03.hex, loading
+[06:21:04] [Worker-Main-3/INFO] (Minecraft) Found unifont_pua-16.0.03.hex, loading
+[06:21:04] [Worker-Main-1/INFO] (Minecraft) Found unifont_jp_patch-16.0.03.hex, loading
+[06:21:05] [Download-2/ERROR] (Minecraft) Failed to retrieve profile key pair
+com.mojang.authlib.exceptions.MinecraftClientHttpException: Status: 401
+	at knot/com.mojang.authlib.minecraft.client.MinecraftClient.readInputStream(MinecraftClient.java:103) ~[authlib-7.0.61.jar:?]
+	at knot/com.mojang.authlib.minecraft.client.MinecraftClient.post(MinecraftClient.java:64) ~[authlib-7.0.61.jar:?]
+	at knot/com.mojang.authlib.yggdrasil.YggdrasilUserApiService.getKeyPair(YggdrasilUserApiService.java:61) ~[authlib-7.0.61.jar:?]
+	at knot/net.minecraft.client.multiplayer.AccountProfileKeyPairManager.fetchProfileKeyPair(AccountProfileKeyPairManager.java:129) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at knot/net.minecraft.client.multiplayer.AccountProfileKeyPairManager.method_44291(AccountProfileKeyPairManager.java:77) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(CompletableFuture.java:1768) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[?:?]
+	at java.base/java.lang.Thread.run(Thread.java:1583) [?:?]
+[06:21:05] [Download-2/ERROR] (Minecraft) Failed to retrieve profile key pair
+com.mojang.authlib.exceptions.MinecraftClientHttpException: Status: 401
+	at knot/com.mojang.authlib.minecraft.client.MinecraftClient.readInputStream(MinecraftClient.java:103) ~[authlib-7.0.61.jar:?]
+	at knot/com.mojang.authlib.minecraft.client.MinecraftClient.post(MinecraftClient.java:64) ~[authlib-7.0.61.jar:?]
+	at knot/com.mojang.authlib.yggdrasil.YggdrasilUserApiService.getKeyPair(YggdrasilUserApiService.java:61) ~[authlib-7.0.61.jar:?]
+	at knot/net.minecraft.client.multiplayer.AccountProfileKeyPairManager.fetchProfileKeyPair(AccountProfileKeyPairManager.java:129) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at knot/net.minecraft.client.multiplayer.AccountProfileKeyPairManager.method_44291(AccountProfileKeyPairManager.java:77) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(CompletableFuture.java:1768) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[?:?]
+	at java.base/java.lang.Thread.run(Thread.java:1583) [?:?]
+[06:21:05] [Download-2/ERROR] (Minecraft) Failed to retrieve profile key pair
+com.mojang.authlib.exceptions.MinecraftClientHttpException: Status: 401
+	at knot/com.mojang.authlib.minecraft.client.MinecraftClient.readInputStream(MinecraftClient.java:103) ~[authlib-7.0.61.jar:?]
+	at knot/com.mojang.authlib.minecraft.client.MinecraftClient.post(MinecraftClient.java:64) ~[authlib-7.0.61.jar:?]
+	at knot/com.mojang.authlib.yggdrasil.YggdrasilUserApiService.getKeyPair(YggdrasilUserApiService.java:61) ~[authlib-7.0.61.jar:?]
+	at knot/net.minecraft.client.multiplayer.AccountProfileKeyPairManager.fetchProfileKeyPair(AccountProfileKeyPairManager.java:129) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at knot/net.minecraft.client.multiplayer.AccountProfileKeyPairManager.method_44291(AccountProfileKeyPairManager.java:77) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(CompletableFuture.java:1768) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[?:?]
+	at java.base/java.lang.Thread.run(Thread.java:1583) [?:?]
+ALSA lib confmisc.c:855:(parse_card) cannot find card '0'
+ALSA lib conf.c:5208:(_snd_config_evaluate) function snd_func_card_inum returned error: No such file or directory
+ALSA lib confmisc.c:422:(snd_func_concat) error evaluating strings
+ALSA lib conf.c:5208:(_snd_config_evaluate) function snd_func_concat returned error: No such file or directory
+ALSA lib confmisc.c:1342:(snd_func_refer) error evaluating name
+ALSA lib conf.c:5208:(_snd_config_evaluate) function snd_func_refer returned error: No such file or directory
+ALSA lib conf.c:5731:(snd_config_expand) Evaluate error: No such file or directory
+ALSA lib pcm.c:2721:(snd_pcm_open_noupdate) Unknown PCM default
+ALSA lib confmisc.c:855:(parse_card) cannot find card '0'
+ALSA lib conf.c:5208:(_snd_config_evaluate) function snd_func_card_inum returned error: No such file or directory
+ALSA lib confmisc.c:422:(snd_func_concat) error evaluating strings
+ALSA lib conf.c:5208:(_snd_config_evaluate) function snd_func_concat returned error: No such file or directory
+ALSA lib confmisc.c:1342:(snd_func_refer) error evaluating name
+ALSA lib conf.c:5208:(_snd_config_evaluate) function snd_func_refer returned error: No such file or directory
+ALSA lib conf.c:5731:(snd_config_expand) Evaluate error: No such file or directory
+ALSA lib pcm.c:2721:(snd_pcm_open_noupdate) Unknown PCM default
+[06:21:06] [Render thread/ERROR] (Minecraft) Error starting SoundSystem. Turning off sounds & music
+java.lang.IllegalStateException: Failed to open OpenAL device
+	at knot/com.mojang.blaze3d.audio.Library.openDeviceOrFallback(Library.java:297) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at knot/com.mojang.blaze3d.audio.Library.init(Library.java:154) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at knot/net.minecraft.client.sounds.SoundEngine.loadLibrary(SoundEngine.java:118) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at knot/net.minecraft.client.sounds.SoundEngine.reload(SoundEngine.java:108) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at knot/net.minecraft.client.sounds.SoundManager.apply(SoundManager.java:122) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at knot/net.minecraft.client.sounds.SoundManager.apply(SoundManager.java:41) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at knot/net.minecraft.server.packs.resources.SimplePreparableReloadListener.method_18790(SimplePreparableReloadListener.java:15) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at java.base/java.util.concurrent.CompletableFuture$UniAccept.tryFire(CompletableFuture.java:718) ~[?:?]
+	at java.base/java.util.concurrent.CompletableFuture$Completion.run(CompletableFuture.java:482) ~[?:?]
+	at knot/net.minecraft.server.packs.resources.SimpleReloadInstance.method_67574(SimpleReloadInstance.java:60) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at knot/net.minecraft.util.thread.BlockableEventLoop.doRunTask(BlockableEventLoop.java:168) [minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at knot/net.minecraft.util.thread.ReentrantBlockableEventLoop.doRunTask(ReentrantBlockableEventLoop.java:23) [minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at knot/net.minecraft.util.thread.BlockableEventLoop.pollTask(BlockableEventLoop.java:142) [minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at knot/net.minecraft.util.thread.BlockableEventLoop.runAllTasks(BlockableEventLoop.java:123) [minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at knot/net.minecraft.client.Minecraft.runTick(Minecraft.java:1340) [minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at knot/net.minecraft.client.Minecraft.run(Minecraft.java:969) [minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at knot/net.minecraft.client.main.Main.main(Main.java:250) [minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:514) [fabric-loader-0.19.3.jar:?]
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72) [fabric-loader-0.19.3.jar:?]
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23) [fabric-loader-0.19.3.jar:?]
+	at net.fabricmc.devlaunchinjector.Main.main(Main.java:86) [dev-launch-injector-0.2.1+build.8.jar:?]
+[06:21:06] [Render thread/INFO] (Minecraft) Created: 512x256x0 minecraft:textures/atlas/particles.png-atlas
+[06:21:06] [Render thread/INFO] (Minecraft) Created: 128x64x0 minecraft:textures/atlas/decorated_pot.png-atlas
+[06:21:06] [Render thread/INFO] (Minecraft) Created: 2048x1024x0 minecraft:textures/atlas/armor_trims.png-atlas
+[06:21:06] [Render thread/INFO] (Minecraft) Created: 512x256x0 minecraft:textures/atlas/paintings.png-atlas
+[06:21:06] [Render thread/INFO] (Minecraft) Created: 512x512x0 minecraft:textures/atlas/shield_patterns.png-atlas
+[06:21:06] [Render thread/INFO] (Minecraft) Created: 1024x512x4 minecraft:textures/atlas/blocks.png-atlas
+[06:21:06] [Render thread/INFO] (Minecraft) Created: 512x256x0 minecraft:textures/atlas/chest.png-atlas
+[06:21:06] [Render thread/INFO] (Minecraft) Created: 512x512x0 minecraft:textures/atlas/banner_patterns.png-atlas
+[06:21:06] [Render thread/INFO] (Minecraft) Created: 512x256x0 minecraft:textures/atlas/beds.png-atlas
+[06:21:06] [Render thread/INFO] (Minecraft) Created: 1024x512x0 minecraft:textures/atlas/gui.png-atlas
+[06:21:06] [Render thread/INFO] (Minecraft) Created: 64x64x0 minecraft:textures/atlas/map_decorations.png-atlas
+[06:21:06] [Render thread/INFO] (Minecraft) Created: 256x256x0 minecraft:textures/atlas/signs.png-atlas
+[06:21:06] [Render thread/INFO] (Minecraft) Created: 512x256x0 minecraft:textures/atlas/shulker_boxes.png-atlas
+[06:21:09] [Render thread/INFO] (Onix Client) [devtest] step 0 done
+[06:21:10] [Render thread/INFO] (Onix Client) [devtest] step 1 done
+[06:21:12] [Render thread/INFO] (Onix Client) [devtest] step 2 done
+[06:21:12] [Render thread/INFO] (Onix Client) [devtest] step 3 done
+[06:21:12] [IO-Worker-1/INFO] (Onix Client) [devtest] Saved screenshot as 00a_intro_welcome.png
+[06:21:14] [Render thread/INFO] (Onix Client) [devtest] step 4 done
+[06:21:14] [Render thread/INFO] (Onix Client) [devtest] tick 200, step 5/95, screen WelcomeScreen, overlay false, fps 36
+[06:21:14] [IO-Worker-1/INFO] (Onix Client) [devtest] Saved screenshot as 00b_intro_theme.png
+[06:21:14] [Render thread/INFO] (Onix Client) [devtest] step 5 done
+[06:21:15] [Render thread/INFO] (Onix Client) [devtest] step 6 done
+[06:21:15] [IO-Worker-1/INFO] (Onix Client) [devtest] Saved screenshot as 00c_intro_menu.png
+[06:21:15] [Render thread/INFO] (Onix Client) [devtest] step 7 done
+[06:21:17] [Render thread/INFO] (Onix Client) [devtest] step 8 done
+[06:21:17] [IO-Worker-1/INFO] (Onix Client) [devtest] Saved screenshot as 00d_intro_basics.png
+[06:21:17] [Render thread/INFO] (Onix Client) [devtest] step 9 done
+[06:21:19] [Render thread/INFO] (Onix Client) [devtest] step 10 done
+[06:21:19] [IO-Worker-1/INFO] (Onix Client) [devtest] Saved screenshot as 00e_intro_done.png
+[06:21:19] [Render thread/INFO] (Onix Client) [devtest] step 11 done
+[06:21:19] [Render thread/INFO] (Onix Client) [devtest] step 12 done
+[06:21:23] [Render thread/INFO] (Onix Client) [devtest] step 13 done
+[06:21:23] [IO-Worker-1/INFO] (Onix Client) [devtest] Saved screenshot as 01_title_onix.png
+[06:21:23] [Render thread/INFO] (Onix Client) [devtest] step 14 done
+[06:21:24] [Render thread/INFO] (Onix Client) [devtest] tick 400, step 15/95, screen CarbonMainMenu, overlay false, fps 55
+[06:21:24] [Download-2/ERROR] (Minecraft) Failed to retrieve profile key pair
+com.mojang.authlib.exceptions.MinecraftClientHttpException: Status: 401
+	at knot/com.mojang.authlib.minecraft.client.MinecraftClient.readInputStream(MinecraftClient.java:103) ~[authlib-7.0.61.jar:?]
+	at knot/com.mojang.authlib.minecraft.client.MinecraftClient.post(MinecraftClient.java:64) ~[authlib-7.0.61.jar:?]
+	at knot/com.mojang.authlib.yggdrasil.YggdrasilUserApiService.getKeyPair(YggdrasilUserApiService.java:61) ~[authlib-7.0.61.jar:?]
+	at knot/net.minecraft.client.multiplayer.AccountProfileKeyPairManager.fetchProfileKeyPair(AccountProfileKeyPairManager.java:129) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at knot/net.minecraft.client.multiplayer.AccountProfileKeyPairManager.method_44291(AccountProfileKeyPairManager.java:77) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(CompletableFuture.java:1768) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[?:?]
+	at java.base/java.lang.Thread.run(Thread.java:1583) [?:?]
+[06:21:28] [Render thread/INFO] (Onix Client) [devtest] step 15 done
+[06:21:28] [IO-Worker-1/INFO] (Onix Client) [devtest] Saved screenshot as 02_title_carbon.png
+[06:21:28] [Render thread/INFO] (Onix Client) [devtest] step 16 done
+[06:21:32] [Render thread/INFO] (Onix Client) [devtest] step 17 done
+[06:21:33] [IO-Worker-1/INFO] (Onix Client) [devtest] Saved screenshot as 02_title_voxel.png
+[06:21:33] [Render thread/INFO] (Onix Client) [devtest] step 18 done
+[06:21:34] [Render thread/INFO] (Onix Client) [devtest] tick 600, step 19/95, screen CarbonMainMenu, overlay false, fps 52
+[06:21:37] [Render thread/INFO] (Onix Client) [devtest] step 19 done
+[06:21:37] [IO-Worker-1/INFO] (Onix Client) [devtest] Saved screenshot as 02_title_portal.png
+[06:21:37] [Render thread/INFO] (Onix Client) [devtest] step 20 done
+[06:21:42] [Render thread/INFO] (Onix Client) [devtest] step 21 done
+[06:21:42] [Render thread/INFO] (Onix Client) [devtest] step 22 done
+[06:21:42] [IO-Worker-1/INFO] (Onix Client) [devtest] Saved screenshot as 02_title_classic.png
+[06:21:44] [Render thread/INFO] (Onix Client) [devtest] tick 800, step 23/95, screen CarbonMainMenu, overlay false, fps 60
+[06:21:44] [Download-2/ERROR] (Minecraft) Failed to retrieve profile key pair
+com.mojang.authlib.exceptions.MinecraftClientHttpException: Status: 401
+	at knot/com.mojang.authlib.minecraft.client.MinecraftClient.readInputStream(MinecraftClient.java:103) ~[authlib-7.0.61.jar:?]
+	at knot/com.mojang.authlib.minecraft.client.MinecraftClient.post(MinecraftClient.java:64) ~[authlib-7.0.61.jar:?]
+	at knot/com.mojang.authlib.yggdrasil.YggdrasilUserApiService.getKeyPair(YggdrasilUserApiService.java:61) ~[authlib-7.0.61.jar:?]
+	at knot/net.minecraft.client.multiplayer.AccountProfileKeyPairManager.fetchProfileKeyPair(AccountProfileKeyPairManager.java:129) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at knot/net.minecraft.client.multiplayer.AccountProfileKeyPairManager.method_44291(AccountProfileKeyPairManager.java:77) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(CompletableFuture.java:1768) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[?:?]
+	at java.base/java.lang.Thread.run(Thread.java:1583) [?:?]
+[06:21:45] [Render thread/INFO] (Onix Client) [devtest] step 23 done
+[06:21:45] [Render thread/INFO] (Onix Client) [devtest] step 24 done
+[06:21:45] [IO-Worker-1/INFO] (Onix Client) [devtest] Saved screenshot as 02_title_classic_light.png
+[06:21:45] [Render thread/INFO] (Onix Client) [devtest] step 25 done
+[06:21:46] [Render thread/INFO] (Onix Client) [devtest] step 26 done
+[06:21:49] [Render thread/INFO] (Onix Client) [devtest] step 27 done
+[06:21:49] [IO-Worker-1/INFO] (Onix Client) [devtest] Saved screenshot as 03_picker.png
+[06:21:49] [Render thread/INFO] (Onix Client) [devtest] step 28 done
+[06:21:51] [Render thread/INFO] (Onix Client) [devtest] step 29 done
+[06:21:51] [IO-Worker-1/INFO] (Onix Client) [devtest] Saved screenshot as 03_picker_next.png
+[06:21:51] [Render thread/INFO] (Onix Client) [devtest] step 30 done
+[06:21:52] [Render thread/INFO] (Onix Client) [devtest] step 31 done
+[06:21:53] [Download-2/ERROR] (Minecraft) Failed to retrieve profile key pair
+com.mojang.authlib.exceptions.MinecraftClientHttpException: Status: 401
+	at knot/com.mojang.authlib.minecraft.client.MinecraftClient.readInputStream(MinecraftClient.java:103) ~[authlib-7.0.61.jar:?]
+	at knot/com.mojang.authlib.minecraft.client.MinecraftClient.post(MinecraftClient.java:64) ~[authlib-7.0.61.jar:?]
+	at knot/com.mojang.authlib.yggdrasil.YggdrasilUserApiService.getKeyPair(YggdrasilUserApiService.java:61) ~[authlib-7.0.61.jar:?]
+	at knot/net.minecraft.client.multiplayer.AccountProfileKeyPairManager.fetchProfileKeyPair(AccountProfileKeyPairManager.java:129) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at knot/net.minecraft.client.multiplayer.AccountProfileKeyPairManager.method_44291(AccountProfileKeyPairManager.java:77) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(CompletableFuture.java:1768) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[?:?]
+	at java.base/java.lang.Thread.run(Thread.java:1583) [?:?]
+[06:21:54] [Render thread/INFO] (Onix Client) [devtest] tick 1000, step 32/95, screen OnixMenuScreen, overlay false, fps 49
+[06:21:55] [Render thread/INFO] (Onix Client) [devtest] step 32 done
+[06:21:55] [IO-Worker-1/INFO] (Onix Client) [devtest] Saved screenshot as 04_menu_hub.png
+[06:21:56] [Render thread/INFO] (Onix Client) [devtest] step 33 done
+[06:21:58] [Render thread/INFO] (Onix Client) [devtest] step 34 done
+[06:21:58] [IO-Worker-1/INFO] (Onix Client) [devtest] Saved screenshot as 05_menu_modules.png
+[06:21:58] [Render thread/INFO] (Onix Client) [devtest] step 35 done
+[06:21:58] [Render thread/INFO] (Onix Client) Loaded 1931 cosmetics
+[06:22:01] [Render thread/INFO] (Onix Client) [devtest] step 36 done
+[06:22:01] [IO-Worker-1/INFO] (Onix Client) [devtest] Saved screenshot as 05_menu_cosmetics.png
+[06:22:01] [Render thread/INFO] (Onix Client) [devtest] step 37 done
+[06:22:02] [Download-2/ERROR] (Minecraft) Failed to retrieve profile key pair
+com.mojang.authlib.exceptions.MinecraftClientHttpException: Status: 401
+	at knot/com.mojang.authlib.minecraft.client.MinecraftClient.readInputStream(MinecraftClient.java:103) ~[authlib-7.0.61.jar:?]
+	at knot/com.mojang.authlib.minecraft.client.MinecraftClient.post(MinecraftClient.java:64) ~[authlib-7.0.61.jar:?]
+	at knot/com.mojang.authlib.yggdrasil.YggdrasilUserApiService.getKeyPair(YggdrasilUserApiService.java:61) ~[authlib-7.0.61.jar:?]
+	at knot/net.minecraft.client.multiplayer.AccountProfileKeyPairManager.fetchProfileKeyPair(AccountProfileKeyPairManager.java:129) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at knot/net.minecraft.client.multiplayer.AccountProfileKeyPairManager.method_44291(AccountProfileKeyPairManager.java:77) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(CompletableFuture.java:1768) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[?:?]
+	at java.base/java.lang.Thread.run(Thread.java:1583) [?:?]
+[06:22:04] [Render thread/INFO] (Onix Client) [devtest] step 38 done
+[06:22:04] [IO-Worker-1/INFO] (Onix Client) [devtest] Saved screenshot as 05_menu_design.png
+[06:22:04] [Render thread/INFO] (Onix Client) [devtest] tick 1200, step 39/95, screen OnixMenuScreen, overlay false, fps 30
+[06:22:04] [Render thread/INFO] (Onix Client) [devtest] step 39 done
+[06:22:04] [Download-2/ERROR] (Minecraft) Failed to retrieve profile key pair
+com.mojang.authlib.exceptions.MinecraftClientHttpException: Status: 401
+	at knot/com.mojang.authlib.minecraft.client.MinecraftClient.readInputStream(MinecraftClient.java:103) ~[authlib-7.0.61.jar:?]
+	at knot/com.mojang.authlib.minecraft.client.MinecraftClient.post(MinecraftClient.java:64) ~[authlib-7.0.61.jar:?]
+	at knot/com.mojang.authlib.yggdrasil.YggdrasilUserApiService.getKeyPair(YggdrasilUserApiService.java:61) ~[authlib-7.0.61.jar:?]
+	at knot/net.minecraft.client.multiplayer.AccountProfileKeyPairManager.fetchProfileKeyPair(AccountProfileKeyPairManager.java:129) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at knot/net.minecraft.client.multiplayer.AccountProfileKeyPairManager.method_44291(AccountProfileKeyPairManager.java:77) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(CompletableFuture.java:1768) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[?:?]
+	at java.base/java.lang.Thread.run(Thread.java:1583) [?:?]
+[06:22:06] [Render thread/INFO] (Onix Client) [devtest] step 40 done
+[06:22:06] [IO-Worker-1/INFO] (Onix Client) [devtest] Saved screenshot as 05_menu_settings.png
+[06:22:06] [Render thread/INFO] (Onix Client) [devtest] step 41 done
+[06:22:09] [Render thread/INFO] (Onix Client) [devtest] step 42 done
+[06:22:09] [Download-2/ERROR] (Minecraft) Failed to retrieve profile key pair
+com.mojang.authlib.exceptions.MinecraftClientHttpException: Status: 401
+	at knot/com.mojang.authlib.minecraft.client.MinecraftClient.readInputStream(MinecraftClient.java:103) ~[authlib-7.0.61.jar:?]
+	at knot/com.mojang.authlib.minecraft.client.MinecraftClient.post(MinecraftClient.java:64) ~[authlib-7.0.61.jar:?]
+	at knot/com.mojang.authlib.yggdrasil.YggdrasilUserApiService.getKeyPair(YggdrasilUserApiService.java:61) ~[authlib-7.0.61.jar:?]
+	at knot/net.minecraft.client.multiplayer.AccountProfileKeyPairManager.fetchProfileKeyPair(AccountProfileKeyPairManager.java:129) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at knot/net.minecraft.client.multiplayer.AccountProfileKeyPairManager.method_44291(AccountProfileKeyPairManager.java:77) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(CompletableFuture.java:1768) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[?:?]
+	at java.base/java.lang.Thread.run(Thread.java:1583) [?:?]
+[06:22:09] [IO-Worker-1/INFO] (Onix Client) [devtest] Saved screenshot as 05_menu_friends.png
+[06:22:09] [Render thread/INFO] (Onix Client) [devtest] step 43 done
+[06:22:12] [Render thread/INFO] (Onix Client) [devtest] step 44 done
+[06:22:12] [IO-Worker-1/INFO] (Onix Client) [devtest] Saved screenshot as 05_menu_mcreal.png
+[06:22:12] [Render thread/INFO] (Onix Client) [devtest] step 45 done
+[06:22:14] [Render thread/INFO] (Onix Client) [devtest] tick 1400, step 46/95, screen OnixMenuScreen, overlay false, fps 30
+[06:22:14] [Render thread/INFO] (Onix Client) [devtest] step 46 done
+[06:22:14] [IO-Worker-1/INFO] (Onix Client) [devtest] Saved screenshot as 05_menu_games.png
+[06:22:14] [Render thread/INFO] (Onix Client) [devtest] step 47 done
+[06:22:18] [Render thread/INFO] (Onix Client) [devtest] step 48 done
+[06:22:18] [IO-Worker-1/INFO] (Onix Client) [devtest] Saved screenshot as 05b_game_blocks.png
+[06:22:18] [Render thread/INFO] (Onix Client) [devtest] step 49 done
+[06:22:19] [Render thread/INFO] (Onix Client) [devtest] step 50 done
+[06:22:19] [IO-Worker-1/INFO] (Onix Client) [devtest] Saved screenshot as 05c_game_2048.png
+[06:22:19] [Render thread/INFO] (Onix Client) [devtest] step 51 done
+[06:22:20] [Download-2/ERROR] (Minecraft) Failed to retrieve profile key pair
+com.mojang.authlib.exceptions.MinecraftClientHttpException: Status: 401
+	at knot/com.mojang.authlib.minecraft.client.MinecraftClient.readInputStream(MinecraftClient.java:103) ~[authlib-7.0.61.jar:?]
+	at knot/com.mojang.authlib.minecraft.client.MinecraftClient.post(MinecraftClient.java:64) ~[authlib-7.0.61.jar:?]
+	at knot/com.mojang.authlib.yggdrasil.YggdrasilUserApiService.getKeyPair(YggdrasilUserApiService.java:61) ~[authlib-7.0.61.jar:?]
+	at knot/net.minecraft.client.multiplayer.AccountProfileKeyPairManager.fetchProfileKeyPair(AccountProfileKeyPairManager.java:129) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at knot/net.minecraft.client.multiplayer.AccountProfileKeyPairManager.method_44291(AccountProfileKeyPairManager.java:77) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(CompletableFuture.java:1768) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[?:?]
+	at java.base/java.lang.Thread.run(Thread.java:1583) [?:?]
+[06:22:21] [Render thread/INFO] (Onix Client) [devtest] step 52 done
+[06:22:21] [IO-Worker-1/INFO] (Onix Client) [devtest] Saved screenshot as 06_module_carbon_shulker.png
+[06:22:21] [Render thread/INFO] (Onix Client) [devtest] step 53 done
+[06:22:21] [IO-Worker-1/INFO] (Minecraft) Could not authorize you against Realms server: java.lang.RuntimeException: Failed to parse into SignedJWT: FabricMC
+[06:22:21] [Render thread/ERROR] (Minecraft) ########## GL ERROR ##########
+[06:22:21] [Render thread/ERROR] (Minecraft) @ Render
+[06:22:21] [Render thread/ERROR] (Minecraft) 65547: X11: Standard cursor shape unavailable
+[06:22:24] [Render thread/INFO] (Onix Client) [devtest] tick 1600, step 54/95, screen TitleScreen, overlay false, fps 30
+[06:22:24] [Download-2/ERROR] (Minecraft) Failed to retrieve profile key pair
+com.mojang.authlib.exceptions.MinecraftClientHttpException: Status: 401
+	at knot/com.mojang.authlib.minecraft.client.MinecraftClient.readInputStream(MinecraftClient.java:103) ~[authlib-7.0.61.jar:?]
+	at knot/com.mojang.authlib.minecraft.client.MinecraftClient.post(MinecraftClient.java:64) ~[authlib-7.0.61.jar:?]
+	at knot/com.mojang.authlib.yggdrasil.YggdrasilUserApiService.getKeyPair(YggdrasilUserApiService.java:61) ~[authlib-7.0.61.jar:?]
+	at knot/net.minecraft.client.multiplayer.AccountProfileKeyPairManager.fetchProfileKeyPair(AccountProfileKeyPairManager.java:129) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at knot/net.minecraft.client.multiplayer.AccountProfileKeyPairManager.method_44291(AccountProfileKeyPairManager.java:77) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(CompletableFuture.java:1768) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[?:?]
+	at java.base/java.lang.Thread.run(Thread.java:1583) [?:?]
+[06:22:24] [Render thread/INFO] (Onix Client) [devtest] step 54 done
+[06:22:24] [IO-Worker-1/INFO] (Onix Client) [devtest] Saved screenshot as 06b_title_vanilla_carbon_buttons.png
+[06:22:24] [Render thread/INFO] (Onix Client) [devtest] step 55 done
+[06:22:26] [Render thread/INFO] (Onix Client) [devtest] step 56 done
+[06:22:26] [IO-Worker-1/INFO] (Onix Client) [devtest] Saved screenshot as 06c_vanilla_options.png
+[06:22:26] [Render thread/INFO] (Onix Client) [devtest] step 57 done
+[06:22:29] [Render thread/INFO] (Onix Client) [devtest] step 58 done
+[06:22:29] [IO-Worker-1/INFO] (Onix Client) [devtest] Saved screenshot as 06d_vanilla_video_sliders.png
+[06:22:30] [Render thread/INFO] (Minecraft) Loaded 1461 recipes
+[06:22:30] [Render thread/INFO] (Minecraft) Loaded 1574 advancements
+[06:22:30] [Render thread/INFO] (Onix Client) [devtest] step 59 done
+[06:22:33] [Render thread/INFO] (Onix Client) [devtest] step 60 done
+[06:22:33] [IO-Worker-1/INFO] (Onix Client) [devtest] Saved screenshot as 06e_vanilla_singleplayer.png
+[06:22:33] [Render thread/INFO] (Onix Client) [devtest] step 61 done
+[06:22:35] [Render thread/INFO] (Onix Client) [devtest] step 62 done
+[06:22:35] [IO-Worker-1/INFO] (Onix Client) [devtest] Saved screenshot as 06f_vanilla_singleplayer_light.png
+[06:22:35] [Render thread/INFO] (Onix Client) [devtest] step 63 done
+[06:22:35] [Render thread/INFO] (Onix Client) [devtest] tick 1800, step 64/95, screen CreateWorldScreen, overlay false, fps 30
+[06:22:35] [Render thread/INFO] (Onix Client) [devtest] step 64 done
+[06:22:35] [Render thread/INFO] (Onix Client) [devtest] step 65 done
+[06:22:37] [Render thread/INFO] (Minecraft) Loaded 1461 recipes
+[06:22:37] [Render thread/INFO] (Minecraft) Loaded 1574 advancements
+[06:22:37] [Render thread/INFO] (Onix Client) [devtest] step 66 done
+[06:22:37] [Render thread/INFO] (Onix Client) [devtest] accepting dialog button 'create new world'
+[06:22:37] [Render thread/INFO] (BiomeModificationImpl) Applied 0 biome modifications to 0 of 65 new biomes in 2.118 ms
+[06:22:37] [Server thread/INFO] (Minecraft) Starting integrated minecraft server version 1.21.10
+[06:22:37] [Server thread/INFO] (Minecraft) Generating keypair
+[06:22:37] [Server thread/INFO] (Minecraft) Selecting global world spawn...
+[06:22:38] [Server thread/INFO] (Minecraft) Loading 0 persistent chunks...
+[06:22:38] [Server thread/INFO] (Minecraft) Preparing spawn area: 16%
+[06:22:39] [Server thread/INFO] (Minecraft) Loading 47 chunks for player spawn...
+[06:22:39] [Server thread/INFO] (Minecraft) Preparing spawn area: 16%
+[06:22:39] [Server thread/INFO] (Minecraft) Preparing spawn area: 16%
+[06:22:39] [Server thread/INFO] (Minecraft) Preparing spawn area: 16%
+[06:22:39] [Server thread/INFO] (Minecraft) Preparing spawn area: 57%
+[06:22:40] [Server thread/INFO] (Minecraft) Time elapsed: 2223 ms
+[06:22:40] [Server thread/INFO] (Minecraft) Player224[local:E:e35e8cb8] logged in with entity id 1 at (-4.5, 56.0, -9.5)
+[06:22:40] [Server thread/INFO] (Minecraft) Player224 joined the game
+[06:22:40] [Server thread/INFO] (Minecraft) Changing view distance to 4, from 10
+[06:22:40] [Server thread/INFO] (Minecraft) Changing simulation distance to 5, from 0
+[06:22:40] [Render thread/INFO] (Minecraft) Resizing Dynamic Transforms UBO, capacity limit of 2 reached during a single frame. New capacity will be 4.
+[06:22:40] [Render thread/INFO] (Minecraft) Resizing Dynamic Transforms UBO, capacity limit of 4 reached during a single frame. New capacity will be 8.
+[06:22:41] [Render thread/INFO] (Minecraft) Loaded 2 advancements
+[06:22:41] [Render thread/INFO] (Minecraft) Resizing Dynamic Transforms UBO, capacity limit of 8 reached during a single frame. New capacity will be 16.
+[06:22:41] [Render thread/INFO] (Minecraft) Resizing Dynamic Transforms UBO, capacity limit of 16 reached during a single frame. New capacity will be 32.
+[06:22:42] [Render thread/INFO] (Onix Client) [devtest] step 67 done
+[06:22:42] [Render thread/INFO] (Onix Client) [devtest] step 68 done
+[06:22:42] [Render thread/INFO] (Minecraft) Resizing Dynamic Transforms UBO, capacity limit of 32 reached during a single frame. New capacity will be 64.
+[06:22:44] [Download-2/ERROR] (Minecraft) Failed to retrieve profile key pair
+com.mojang.authlib.exceptions.MinecraftClientHttpException: Status: 401
+	at knot/com.mojang.authlib.minecraft.client.MinecraftClient.readInputStream(MinecraftClient.java:103) ~[authlib-7.0.61.jar:?]
+	at knot/com.mojang.authlib.minecraft.client.MinecraftClient.post(MinecraftClient.java:64) ~[authlib-7.0.61.jar:?]
+	at knot/com.mojang.authlib.yggdrasil.YggdrasilUserApiService.getKeyPair(YggdrasilUserApiService.java:61) ~[authlib-7.0.61.jar:?]
+	at knot/net.minecraft.client.multiplayer.AccountProfileKeyPairManager.fetchProfileKeyPair(AccountProfileKeyPairManager.java:129) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at knot/net.minecraft.client.multiplayer.AccountProfileKeyPairManager.method_44291(AccountProfileKeyPairManager.java:77) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(CompletableFuture.java:1768) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[?:?]
+	at java.base/java.lang.Thread.run(Thread.java:1583) [?:?]
+[06:22:46] [Render thread/INFO] (Onix Client) [devtest] tick 2000, step 69/95, screen none, overlay false, fps 30
+[06:22:52] [Render thread/INFO] (Onix Client) [devtest] step 69 done
+[06:22:52] [IO-Worker-2/INFO] (Onix Client) [devtest] Saved screenshot as 07_hud.png
+[06:22:52] [Render thread/INFO] (Onix Client) [devtest] step 70 done
+[06:22:53] [Render thread/INFO] (Onix Client) [devtest] step 71 done
+[06:22:53] [IO-Worker-2/INFO] (Onix Client) [devtest] Saved screenshot as 07b_small_caps.png
+[06:22:53] [Render thread/INFO] (Onix Client) [devtest] step 72 done
+[06:22:53] [Render thread/INFO] (Onix Client) [devtest] step 73 done
+[06:22:55] [Render thread/INFO] (Onix Client) [devtest] step 74 done
+[06:22:55] [IO-Worker-2/INFO] (Onix Client) [devtest] Saved screenshot as 08_hud_editor.png
+[06:22:55] [Render thread/INFO] (Onix Client) [devtest] step 75 done
+[06:22:56] [Download-2/ERROR] (Minecraft) Failed to retrieve profile key pair
+com.mojang.authlib.exceptions.MinecraftClientHttpException: Status: 401
+	at knot/com.mojang.authlib.minecraft.client.MinecraftClient.readInputStream(MinecraftClient.java:103) ~[authlib-7.0.61.jar:?]
+	at knot/com.mojang.authlib.minecraft.client.MinecraftClient.post(MinecraftClient.java:64) ~[authlib-7.0.61.jar:?]
+	at knot/com.mojang.authlib.yggdrasil.YggdrasilUserApiService.getKeyPair(YggdrasilUserApiService.java:61) ~[authlib-7.0.61.jar:?]
+	at knot/net.minecraft.client.multiplayer.AccountProfileKeyPairManager.fetchProfileKeyPair(AccountProfileKeyPairManager.java:129) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at knot/net.minecraft.client.multiplayer.AccountProfileKeyPairManager.method_44291(AccountProfileKeyPairManager.java:77) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(CompletableFuture.java:1768) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[?:?]
+	at java.base/java.lang.Thread.run(Thread.java:1583) [?:?]
+[06:22:56] [Render thread/INFO] (Onix Client) [devtest] tick 2200, step 76/95, screen OnixMenuScreen, overlay false, fps 27
+[06:22:57] [Render thread/INFO] (Onix Client) [devtest] step 76 done
+[06:22:57] [IO-Worker-2/INFO] (Onix Client) [devtest] Saved screenshot as 09_menu_ingame.png
+[06:22:58] [Render thread/INFO] (Onix Client) [devtest] step 77 done
+[06:23:00] [Render thread/INFO] (Onix Client) [devtest] step 78 done
+[06:23:00] [IO-Worker-2/INFO] (Onix Client) [devtest] Saved screenshot as 09c_menu_name_styles.png
+[06:23:00] [Render thread/INFO] (Onix Client) [devtest] step 79 done
+[06:23:01] [Download-2/ERROR] (Minecraft) Failed to retrieve profile key pair
+com.mojang.authlib.exceptions.MinecraftClientHttpException: Status: 401
+	at knot/com.mojang.authlib.minecraft.client.MinecraftClient.readInputStream(MinecraftClient.java:103) ~[authlib-7.0.61.jar:?]
+	at knot/com.mojang.authlib.minecraft.client.MinecraftClient.post(MinecraftClient.java:64) ~[authlib-7.0.61.jar:?]
+	at knot/com.mojang.authlib.yggdrasil.YggdrasilUserApiService.getKeyPair(YggdrasilUserApiService.java:61) ~[authlib-7.0.61.jar:?]
+	at knot/net.minecraft.client.multiplayer.AccountProfileKeyPairManager.fetchProfileKeyPair(AccountProfileKeyPairManager.java:129) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at knot/net.minecraft.client.multiplayer.AccountProfileKeyPairManager.method_44291(AccountProfileKeyPairManager.java:77) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(CompletableFuture.java:1768) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[?:?]
+	at java.base/java.lang.Thread.run(Thread.java:1583) [?:?]
+[06:23:02] [Render thread/INFO] (Onix Client) [devtest] step 80 done
+[06:23:02] [IO-Worker-2/INFO] (Onix Client) [devtest] Saved screenshot as 09d_own_nametag.png
+[06:23:02] [Render thread/INFO] (Onix Client) [devtest] step 81 done
+[06:23:03] [Render thread/INFO] (Onix Client) [devtest] step 82 done
+[06:23:03] [Render thread/INFO] (Onix Client) [devtest] step 83 done
+[06:23:03] [Render thread/INFO] (Onix Client) [devtest] step 84 done
+[06:23:03] [IO-Worker-2/INFO] (Onix Client) [devtest] Saved screenshot as 09e_jump_circle.png
+[06:23:04] [Render thread/INFO] (Onix Client) [devtest] step 85 done
+[06:23:04] [Render thread/INFO] (Onix Client) [devtest] step 86 done
+[06:23:04] [Render thread/INFO] (Minecraft) Loaded 18 advancements
+[06:23:04] [Download-2/ERROR] (Minecraft) Failed to retrieve profile key pair
+com.mojang.authlib.exceptions.MinecraftClientHttpException: Status: 401
+	at knot/com.mojang.authlib.minecraft.client.MinecraftClient.readInputStream(MinecraftClient.java:103) ~[authlib-7.0.61.jar:?]
+	at knot/com.mojang.authlib.minecraft.client.MinecraftClient.post(MinecraftClient.java:64) ~[authlib-7.0.61.jar:?]
+	at knot/com.mojang.authlib.yggdrasil.YggdrasilUserApiService.getKeyPair(YggdrasilUserApiService.java:61) ~[authlib-7.0.61.jar:?]
+	at knot/net.minecraft.client.multiplayer.AccountProfileKeyPairManager.fetchProfileKeyPair(AccountProfileKeyPairManager.java:129) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at knot/net.minecraft.client.multiplayer.AccountProfileKeyPairManager.method_44291(AccountProfileKeyPairManager.java:77) ~[minecraft-merged-6227aad8ee-1.21.10-loom.mappings.1_21_10.layered+hash.2198-v2.jar:?]
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(CompletableFuture.java:1768) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[?:?]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[?:?]
+	at java.base/java.lang.Thread.run(Thread.java:1583) [?:?]
+[06:23:05] [Render thread/INFO] (Onix Client) [devtest] step 87 done
+[06:23:06] [Render thread/INFO] (Onix Client) [devtest] tick 2400, step 88/95, screen InventoryScreen, overlay false, fps 26
+[06:23:06] [Render thread/INFO] (Onix Client) [devtest] step 88 done
+[06:23:06] [IO-Worker-2/INFO] (Onix Client) [devtest] Saved screenshot as 10_inventory_dark_shulker.png
+[06:23:06] [Render thread/INFO] (Onix Client) [devtest] step 89 done
+[06:23:07] [Server thread/INFO] (Minecraft) Saving and pausing game...
+[06:23:07] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[New World]'/minecraft:overworld
+[06:23:07] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[New World]'/minecraft:the_nether
+[06:23:07] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[New World]'/minecraft:the_end
+[06:23:09] [Render thread/INFO] (Onix Client) [devtest] step 90 done
+[06:23:09] [IO-Worker-4/INFO] (Onix Client) [devtest] Saved screenshot as 10b_pause_carbon_buttons.png
+[06:23:09] [Render thread/INFO] (Onix Client) [devtest] step 91 done
+[06:23:09] [Render thread/INFO] (Onix Client) [devtest] step 92 done
+[06:23:12] [Render thread/INFO] (Onix Client) [devtest] step 93 done
+[06:23:12] [IO-Worker-4/INFO] (Onix Client) [devtest] Saved screenshot as 11_custom_sky.png
+[06:23:13] [Render thread/INFO] (Onix Client) [devtest] finished
+[06:23:13] [Render thread/INFO] (Onix Client) [devtest] step 94 done
+[06:23:13] [Render thread/INFO] (Minecraft) Stopping!
+[06:23:13] [Server thread/INFO] (Minecraft) Player224 lost connection: Disconnected
+[06:23:13] [Server thread/INFO] (Minecraft) Player224 left the game
+[06:23:13] [Server thread/INFO] (Minecraft) Stopping singleplayer server as player logged out
+[06:23:13] [Server thread/INFO] (Minecraft) Stopping server
+[06:23:13] [Server thread/INFO] (Minecraft) Saving players
+[06:23:13] [Server thread/INFO] (Minecraft) Saving worlds
+[06:23:13] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[New World]'/minecraft:overworld
+[06:23:14] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[New World]'/minecraft:the_nether
+[06:23:14] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[New World]'/minecraft:the_end
+[06:23:14] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (New World): All chunks are saved
+[06:23:14] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[06:23:14] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+[06:23:14] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage: All dimensions are saved
+
+[Incubating] Problems report is available at: file:///home/runner/work/onix-client/onix-client/ports/build/mod-1.21.10/build/reports/problems/problems-report.html
+
+BUILD SUCCESSFUL in 3m 47s
+7 actionable tasks: 7 executed
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.7.1/userguide/configuration_cache_enabling.html
