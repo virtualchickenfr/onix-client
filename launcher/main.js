@@ -587,7 +587,6 @@ app.whenReady().then(() => {
   ipcMain.handle('cosmetics:get', () => cosmetics.get(profiles.dir()));
   ipcMain.handle('cosmetics:set', safe(async (_e, slot, id) => cosmetics.set(profiles.dir(), slot, id)));
   ipcMain.handle('cosmetics:setAll', safe(async (_e, outfit) => cosmetics.setAll(profiles.dir(), outfit)));
-  ipcMain.handle('cosmetics:setTagText', safe(async (_e, text) => cosmetics.setTagText(profiles.dir(), text)));
 
   // Coins, shop and gifts (Onix server, signed in with the active account)
   const onixServer = () => settings().onixServer || onixnet.DEFAULT_SERVER;

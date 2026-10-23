@@ -69,7 +69,7 @@ public final class OnixWallet {
     }
 
     public static boolean owns(CosmeticCatalog.Item item) {
-        if (item == null || item.staff()) return false;
+        if (item == null) return false;
         return item.price() == 0 || unlimited || owned.contains(item.id());
     }
 

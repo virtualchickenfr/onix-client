@@ -52,7 +52,7 @@ public final class OnixPresence {
     /** Players already asked about → when to ask again. */
     private static final Map<UUID, Long> NEXT_CHECK = new ConcurrentHashMap<>();
     private static final AtomicBoolean BUSY = new AtomicBoolean();
-    /** Name style, tag and custom tag text of Onix players around you (from /v1/lookup). */
+    /** Name style and owner mark of Onix players around you (from /v1/lookup). */
     private static final Map<UUID, String[]> LOOKS = new ConcurrentHashMap<>();
     /** The look last accepted by the server, so the heartbeat only sends it when it changes. */
     private static volatile String sentLook;
@@ -78,7 +78,7 @@ public final class OnixPresence {
         return until != null && until > System.currentTimeMillis();
     }
 
-    /** {style id, tag id, custom text, "owner" or null} of another player (entries may be null), or null. */
+    /** {style id, "owner" or null} of another player (entries may be null), or null. */
     public static String[] look(UUID id) {
         return isOnixUser(id) ? LOOKS.get(id) : null;
     }
@@ -86,7 +86,7 @@ public final class OnixPresence {
     /** True if the server marks this player as an owner of Onix. */
     public static boolean isOwner(UUID id) {
         String[] l = look(id);
-        return l != null && "owner".equals(l[3]);
+        return l != null && "owner".equals(l[1]);
     }
 
     /** Your name style or tag changed: tell the server within a few seconds instead of at the next minute. */
@@ -184,14 +184,11 @@ public final class OnixPresence {
 
     // ------------------------------------------------------------------ requests (worker thread)
 
-    /** Your name style and tag as the server stores them (only what you wear, never what you try on). */
+    /** Your name style as the server stores it (only what you wear, never what you try on). */
     private static JsonObject ownLook() {
         JsonObject o = new JsonObject();
         var style = dev.onix.client.cosmetics.CosmeticCatalog.item(dev.onix.client.cosmetics.Cosmetics.selected(dev.onix.client.cosmetics.Cosmetics.Slot.NAMETAG));
-        var tag = dev.onix.client.cosmetics.CosmeticCatalog.item(dev.onix.client.cosmetics.Cosmetics.selected(dev.onix.client.cosmetics.Cosmetics.Slot.TAG));
         o.addProperty("style", style != null && OnixWallet.owns(style) ? style.id() : "");
-        o.addProperty("tag", tag != null && OnixWallet.owns(tag) ? tag.id() : "");
-        o.addProperty("text", tag != null && tag.custom() ? dev.onix.client.cosmetics.Cosmetics.tagText() : "");
         return o;
     }
 
@@ -223,7 +220,7 @@ public final class OnixPresence {
             sentLook = lookKey;
             if (r.json != null && r.json.has("lookError")) {
                 String why = r.json.get("lookError").getAsString();
-                Minecraft.getInstance().execute(() -> dev.onix.client.gui.Notifications.show("Name tag not shared", why));
+                Minecraft.getInstance().execute(() -> dev.onix.client.gui.Notifications.show("Name style not shared", why));
             }
         }
         int count = r.json != null && r.json.has("online") ? r.json.get("online").getAsInt() : 0;
@@ -376,7 +373,7 @@ public final class OnixPresence {
             if (looks.has(plain) && looks.get(plain).isJsonObject()) {
                 JsonObject l = looks.getAsJsonObject(plain);
                 boolean owner = l.has("owner") && l.get("owner").getAsBoolean();
-                LOOKS.put(id, new String[]{text(l, "style"), text(l, "tag"), text(l, "text"), owner ? "owner" : null});
+                LOOKS.put(id, new String[]{text(l, "style"), owner ? "owner" : null});
             } else {
                 LOOKS.remove(id);
             }

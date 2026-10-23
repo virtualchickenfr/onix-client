@@ -139,9 +139,6 @@ public class OnixMenuScreen extends Screen {
     private String cosDialogError;
     private final Input giftTo = new Input("Player name", 16);
     private final Input giftMessage = new Input("Message (optional)", 80);
-    /** Text of a custom tag (cosmetics, Tags tab). */
-    private final Input tagInput = new Input("Your tag text", dev.onix.client.cosmetics.NameTags.CUSTOM_MAX);
-    private String tagInputError;
     private final Map<TextSetting, Input> textInputs = new HashMap<>();
 
     private final List<Hit> hits = new ArrayList<>();
@@ -231,9 +228,6 @@ public class OnixMenuScreen extends Screen {
         friendName.onSubmit(this::submitFriend);
         chatInput.onSubmit(this::submitChat);
         cosSearch.onChange(() -> scroll = scrollTarget = 0);
-        tagInput.setText(Cosmetics.tagText());
-        tagInput.onChange(() -> tagInputError = null);
-        tagInput.onSubmit(this::saveTagText);
         giftTo.onSubmit(() -> focusOnly(giftMessage));
         giftMessage.onSubmit(() -> {
             if (cosDialog != null && cosGiftMode) giftCosmetic(cosDialog);
@@ -2079,7 +2073,6 @@ public class OnixMenuScreen extends Screen {
         cosSearch.focus(false);
         giftTo.focus(false);
         giftMessage.focus(false);
-        tagInput.focus(false);
         friendName.focus(false);
         chatInput.focus(false);
         mcCaption.focus(false);
@@ -2093,7 +2086,7 @@ public class OnixMenuScreen extends Screen {
     }
 
     private boolean anyInputFocused() {
-        if (search.focused() || profileName.focused() || numberInput.focused() || cosSearch.focused() || giftTo.focused() || giftMessage.focused() || tagInput.focused()) return true;
+        if (search.focused() || profileName.focused() || numberInput.focused() || cosSearch.focused() || giftTo.focused() || giftMessage.focused()) return true;
         for (Input in : textInputs.values()) if (in.focused()) return true;
         if (friendName.focused() || chatInput.focused() || mcCaption.focused()) return true;
         return false;
@@ -2360,8 +2353,6 @@ public class OnixMenuScreen extends Screen {
             int w = chip(ctx, mx, my, cx, y, slot.displayName, on, () -> {
                 cosSlot = slot;
                 cosPalette = null;
-                if (!tagInput.focused()) tagInput.setText(Cosmetics.tagText());
-                tagInputError = null;
                 scroll = scrollTarget = 0;
             });
             if (worn) Theme.round(ctx, cx + w - 5, y + 1, cx + w - 1, y + 5, 2, Theme.accent());
@@ -2391,8 +2382,7 @@ public class OnixMenuScreen extends Screen {
         button(ctx, mx, my, x + sw + 18 + 2 * bw, y, bw, 17, "None", none, () -> Cosmetics.select(cosSlot, null));
         y += 23;
 
-        boolean textSlot = cosSlot == Cosmetics.Slot.NAMETAG || cosSlot == Cosmetics.Slot.TAG;
-        if (cosSlot == Cosmetics.Slot.TAG) y = renderTagTextRow(ctx, mx, my, x, y, right);
+        boolean textSlot = cosSlot == Cosmetics.Slot.NAMETAG;
         // palette filter
         List<String> palettes = textSlot ? List.of() : dev.onix.client.cosmetics.CosmeticCatalog.paletteIds();
         int px = x;
@@ -2495,12 +2485,11 @@ public class OnixMenuScreen extends Screen {
                     + (mine ? (hover.price() == 0 ? " · Free" : " · Owned") : " · " + hover.price() + " coins")
                     + (mine ? "\nClick to wear · right-click to gift" : "\nClick to buy · right-click to gift")
                     + (cape ? "\nNeeds \"Cape\" on in Skin Customization" : "")
-                    + (hover.custom() ? "\nShows your own text – type it above the list" : "")
                     + (textSlot ? "\nOther Onix players see it too" : "");
         }
     }
 
-    // ---------- name styles and tags
+    // ---------- name styles
 
     private String ownName() {
         return minecraft.getUser() == null ? "Player" : minecraft.getUser().getName();
@@ -2517,52 +2506,19 @@ public class OnixMenuScreen extends Screen {
         ctx.pose().popMatrix();
     }
 
-    /** One name style (on your name) or tag (with your name dimmed next to it). */
+    /** One name style, on your name. */
     private void drawLookPreview(GuiGraphics ctx, dev.onix.client.cosmetics.CosmeticCatalog.Item item, int cx, int y, int maxW) {
-        String custom = Cosmetics.tagText().isEmpty() ? "TAG" : Cosmetics.tagText();
-        net.minecraft.network.chat.Component c = item.slot() == Cosmetics.Slot.NAMETAG
-                ? dev.onix.client.cosmetics.NameTags.paint(ownName(), item.look(), net.minecraft.network.chat.Style.EMPTY)
-                : dev.onix.client.cosmetics.NameTags.tag(item, custom);
+        net.minecraft.network.chat.Component c = dev.onix.client.cosmetics.NameTags.paint(ownName(), item.look(), net.minecraft.network.chat.Style.EMPTY);
         drawComponent(ctx, c, cx, y, maxW);
     }
 
     /** Your name tag as others see it, above the player preview. */
     private void drawOwnNameTag(GuiGraphics ctx, int cx, int y, int maxW) {
-        var look = dev.onix.client.cosmetics.NameTags.lookOf(minecraft.getUser() == null ? null : minecraft.getUser().getProfileId());
-        net.minecraft.network.chat.Component c = look == null ? net.minecraft.network.chat.Component.literal(ownName())
-                : dev.onix.client.cosmetics.NameTags.preview(ownName(), look.style(), look.tag(), look.text(), look.owner());
+        var style = dev.onix.client.cosmetics.NameTags.styleOf(minecraft.getUser() == null ? null : minecraft.getUser().getProfileId());
+        net.minecraft.network.chat.Component c = dev.onix.client.cosmetics.NameTags.preview(ownName(), style);
         int w = Math.min(maxW, font.width(c));
         ctx.fill(cx - w / 2 - 2, y - 1, cx + w / 2 + 2, y + 9, 0x40000000);
         drawComponent(ctx, c, cx, y, maxW);
-    }
-
-    /** The text field for custom tags (Tags tab). Returns the y below it. */
-    private int renderTagTextRow(GuiGraphics ctx, int mx, int my, int x, int y, int right) {
-        int bw = 46;
-        int iw = Math.min(150, right - x - bw - 6);
-        Theme.card(ctx, x, y, x + iw, y + 17, 8, Theme.SURFACE, tagInput.focused() ? Theme.withAlpha(Theme.accent(), 200) : Theme.BORDER_STRONG);
-        tagInput.render(ctx, x + 7, y + 5, iw - 14, Theme.TEXT, Theme.TEXT_3);
-        hit(x, y, x + iw, y + 17, () -> focusOnly(tagInput), () -> tagInput.setText(""));
-        boolean changed = !tagInput.text().trim().replaceAll("\\s+", " ").equals(Cosmetics.tagText());
-        button(ctx, mx, my, x + iw + 6, y, bw, 17, "Save", changed, this::saveTagText);
-        boolean ownsCustom = false;
-        for (var it : Cosmetics.of(Cosmetics.Slot.TAG)) if (it.custom() && dev.onix.client.network.OnixWallet.owns(it)) ownsCustom = true;
-        String info = tagInputError != null ? tagInputError
-                : ownsCustom ? "Your own text for custom tags · max " + dev.onix.client.cosmetics.NameTags.CUSTOM_MAX + " characters"
-                : "Buy a custom tag to show your own text";
-        int ix = x + iw + bw + 14;
-        if (ix + 40 < right) Theme.small(ctx, Theme.ellipsize(info, right - ix), ix, y + 5, tagInputError != null ? Theme.RED : Theme.TEXT_3);
-        return y + 23;
-    }
-
-    private void saveTagText() {
-        String error = Cosmetics.setTagText(tagInput.text());
-        tagInputError = error;
-        if (error == null) {
-            tagInput.setText(Cosmetics.tagText());
-            tagInput.focus(false);
-            Notifications.show("Tag saved", Cosmetics.tagText().isEmpty() ? "Custom tags show \"TAG\" until you type something" : "[" + Cosmetics.tagText() + "]");
-        }
     }
 
     // ---------- coins, buying and gifts
@@ -3064,7 +3020,6 @@ public class OnixMenuScreen extends Screen {
         cosSearch.focus(false);
         giftTo.focus(false);
         giftMessage.focus(false);
-        tagInput.focus(false);
         unfocusTextInputs();
         // clicking anywhere but the number field confirms a typed number
         if (wasEditing && (numberField == null || !Theme.inside(mouseX, mouseY, numberField[0], numberField[1], numberField[2], numberField[3]))) {
@@ -3195,8 +3150,7 @@ public class OnixMenuScreen extends Screen {
             if (anyInputFocused()) {
                 if (search.focused() && !search.text().isEmpty()) search.setText("");
                 if (cosSearch.focused() && !cosSearch.text().isEmpty()) cosSearch.setText("");
-                tagInput.focus(false);
-                search.focus(false);
+                        search.focus(false);
                 profileName.focus(false);
                 cosSearch.focus(false);
                 friendName.focus(false);
@@ -3222,8 +3176,7 @@ public class OnixMenuScreen extends Screen {
         }
         if (search.keyPressed(keyCode, modifiers) || profileName.keyPressed(keyCode, modifiers) || cosSearch.keyPressed(keyCode, modifiers)
                 || giftTo.keyPressed(keyCode, modifiers) || giftMessage.keyPressed(keyCode, modifiers)
-                || friendName.keyPressed(keyCode, modifiers) || chatInput.keyPressed(keyCode, modifiers) || mcCaption.keyPressed(keyCode, modifiers)
-                || tagInput.keyPressed(keyCode, modifiers)) return true;
+                || friendName.keyPressed(keyCode, modifiers) || chatInput.keyPressed(keyCode, modifiers) || mcCaption.keyPressed(keyCode, modifiers)) return true;
         for (Input in : textInputs.values()) if (in.keyPressed(keyCode, modifiers)) return true;
         if (OnixClient.MENU_KEY.matches(onix$k) && !anyInputFocused()) { // Right Shift also types capitals
             onClose();
@@ -3271,7 +3224,7 @@ public class OnixMenuScreen extends Screen {
         char chr = (char) onix$c.codepoint(); int modifiers = onix$c.modifiers();
         if (editingNumber != null && numberInput.charTyped(chr)) return true;
         if (search.charTyped(chr) || profileName.charTyped(chr) || cosSearch.charTyped(chr) || giftTo.charTyped(chr) || giftMessage.charTyped(chr)
-                || friendName.charTyped(chr) || chatInput.charTyped(chr) || mcCaption.charTyped(chr) || tagInput.charTyped(chr)) return true;
+                || friendName.charTyped(chr) || chatInput.charTyped(chr) || mcCaption.charTyped(chr)) return true;
         for (Input in : textInputs.values()) if (in.charTyped(chr)) return true;
         return super.charTyped(onix$c);
     }

@@ -121,16 +121,12 @@ public final class DevTest {
         then(40, () -> snap(mc, "08_hud_editor"));
         then(2, () -> mc.setScreen(new OnixMenuScreen(null)));
         then(40, () -> snap(mc, "09_menu_ingame"));
-        // name styles and tags: the menu tabs and your own name tag in third person
+        // name styles: the menu tab and your own name tag in third person
         then(2, () -> {
             dev.onix.client.cosmetics.Cosmetics.testOwnAll = true;
-            dev.onix.client.cosmetics.Cosmetics.setTagText("Chicken");
             dev.onix.client.cosmetics.Cosmetics.select(dev.onix.client.cosmetics.Cosmetics.Slot.NAMETAG, "name_aurora");
-            dev.onix.client.cosmetics.Cosmetics.select(dev.onix.client.cosmetics.Cosmetics.Slot.TAG, "tag_custom_rainbow_tag");
-            mc.setScreen(new OnixMenuScreen(null, OnixMenuScreen.View.COSMETICS).cosmeticsSlot(dev.onix.client.cosmetics.Cosmetics.Slot.TAG));
+            mc.setScreen(new OnixMenuScreen(null, OnixMenuScreen.View.COSMETICS).cosmeticsSlot(dev.onix.client.cosmetics.Cosmetics.Slot.NAMETAG));
         });
-        then(50, () -> snap(mc, "09b_menu_tags"));
-        then(2, () -> mc.setScreen(new OnixMenuScreen(null, OnixMenuScreen.View.COSMETICS).cosmeticsSlot(dev.onix.client.cosmetics.Cosmetics.Slot.NAMETAG)));
         then(50, () -> snap(mc, "09c_menu_name_styles"));
         then(2, () -> {
             mc.setScreen(null);
@@ -139,10 +135,19 @@ public final class DevTest {
         });
         then(40, () -> snap(mc, "09d_own_nametag"));
         then(2, () -> {
-            mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
             dev.onix.client.cosmetics.Cosmetics.select(dev.onix.client.cosmetics.Cosmetics.Slot.NAMETAG, null);
-            dev.onix.client.cosmetics.Cosmetics.select(dev.onix.client.cosmetics.Cosmetics.Slot.TAG, null);
             dev.onix.client.cosmetics.Cosmetics.testOwnAll = false;
+            // jump circles: jump and look at the ground from behind
+            OnixClient.MODULES.get(dev.onix.client.module.impl.visual.JumpCirclesModule.class).setEnabled(true);
+            mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_BACK);
+            if (mc.player != null) mc.player.setXRot(35f);
+        });
+        then(10, () -> mc.options.keyJump.setDown(true));
+        then(2, () -> mc.options.keyJump.setDown(false));
+        then(4, () -> snap(mc, "09e_jump_circle"));
+        then(2, () -> {
+            mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
+            OnixClient.MODULES.get(dev.onix.client.module.impl.visual.JumpCirclesModule.class).setEnabled(false);
         });
         then(2, () -> {
             OnixClient.MODULES.get(dev.onix.client.module.impl.visual.DarkModeModule.class).setEnabled(true);
