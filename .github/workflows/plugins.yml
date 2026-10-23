@@ -1,0 +1,30 @@
+name: Server plugins
+# Builds the Chicken SMP server plugins in plugins/ (Paper) and keeps the jars as run artifacts.
+on:
+  push:
+    paths: ['plugins/**', '.github/workflows/plugins.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        plugin: [ChickenSMPSpawn]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.14.3'
+      - name: Build
+        working-directory: plugins/${{ matrix.plugin }}
+        run: gradle build --no-daemon --stacktrace
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.plugin }}
+          path: plugins/${{ matrix.plugin }}/build/libs/*.jar

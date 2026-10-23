@@ -1,0 +1,34 @@
+name: ChickenSMPSpawn
+version: '${version}'
+main: net.chickensmp.spawn.SpawnPlugin
+api-version: '1.21'
+author: VirtualChickenFR
+description: Clean spawn teleport for the Chicken SMP
+commands:
+  spawn:
+    description: Teleports you to spawn
+    usage: /spawn [player]
+  setspawn:
+    description: Sets the spawn to your position
+    usage: /setspawn
+    permission: chickensmp.spawn.set
+  spawnreload:
+    description: Reloads the spawn config
+    usage: /spawnreload
+    permission: chickensmp.spawn.reload
+permissions:
+  chickensmp.spawn.use:
+    description: Use /spawn
+    default: true
+  chickensmp.spawn.others:
+    description: Send other players to spawn
+    default: op
+  chickensmp.spawn.set:
+    description: Use /setspawn
+    default: op
+  chickensmp.spawn.reload:
+    description: Use /spawnreload
+    default: op
+  chickensmp.spawn.instant:
+    description: No waiting time and no cooldown for /spawn
+    default: op

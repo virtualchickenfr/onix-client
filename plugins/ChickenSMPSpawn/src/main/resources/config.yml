@@ -1,0 +1,60 @@
+# ChickenSMPSpawn – set the spawn in game with /setspawn (it is saved below).
+spawn:
+  world: ''
+  x: 0.5
+  y: 64.0
+  z: 0.5
+  yaw: 0.0
+  pitch: 0.0
+
+teleport:
+  # seconds to wait before /spawn teleports (0 = at once)
+  delay: 3
+  # moving a whole block or taking damage stops the teleport
+  cancel-on-move: true
+  cancel-on-damage: true
+  # seconds before /spawn can be used again
+  cooldown: 5
+  # no /spawn for this many seconds after hitting or being hit by a player
+  combat-block: 10
+
+# where players arrive automatically
+join:
+  first-join: true      # new players start at spawn
+  every-join: false     # everyone starts at spawn after joining
+respawn:
+  # after death without a bed or respawn anchor
+  to-spawn: true
+void:
+  # falling into the void in the spawn world brings you back to spawn
+  rescue: true
+  # how far below the world's bottom (in blocks) before the rescue happens
+  below-min-height: 10
+
+effects:
+  sound: entity.enderman.teleport
+  volume: 0.8
+  pitch: 1.2
+  particles: true
+  title: true
+
+# MiniMessage format: https://docs.advntr.dev/minimessage/format.html
+messages:
+  prefix: '<gradient:#FFD84D:#FFB13D><b>ChickenSMP</b></gradient> <dark_gray>»</dark_gray> '
+  countdown-actionbar: '<gray>Teleport zum Spawn in <gradient:#FFD84D:#FFB13D><b><seconds></b></gradient><gray>… <dark_gray>(nicht bewegen)'
+  teleported: '<gray>Du bist jetzt am <gradient:#FFD84D:#FFB13D>Spawn</gradient><gray>.'
+  title: '<gradient:#FFD84D:#FFB13D><b>SPAWN</b></gradient>'
+  subtitle: '<gray>Willkommen zurück!'
+  cancelled-move: '<red>Teleport abgebrochen – du hast dich bewegt.'
+  cancelled-damage: '<red>Teleport abgebrochen – du hast Schaden bekommen.'
+  already-waiting: '<gray>Du wirst gleich teleportiert…'
+  cooldown: '<red>Warte noch <white><seconds>s</white>, bevor du /spawn wieder benutzt.'
+  in-combat: '<red>Du bist im Kampf! Warte noch <white><seconds>s</white>.'
+  no-spawn: '<red>Es ist noch kein Spawn gesetzt. Ein Admin kann ihn mit <white>/setspawn</white> setzen.'
+  spawn-set: '<gray>Spawn gesetzt auf <white><x> <y> <z></white> in <white><world></white>.'
+  sent-other: '<gray><white><player></white> wurde zum Spawn teleportiert.'
+  player-not-found: '<red>Spieler <white><player></white> ist nicht online.'
+  no-permission: '<red>Dazu hast du keine Rechte.'
+  only-players: '<red>Nur Spieler können das benutzen.'
+  reloaded: '<gray>Config neu geladen.'
+  void-rescue: '<gray>Puh, das war knapp! Zurück am <gradient:#FFD84D:#FFB13D>Spawn</gradient><gray>.'
