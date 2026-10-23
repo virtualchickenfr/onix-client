@@ -16,6 +16,12 @@ public abstract class MinecraftClientMixin {
     /** Replaces the vanilla title screen with the Onix one. */
     @Inject(method = "setScreen", at = @At("HEAD"), cancellable = true)
     private void onix$titleScreen(Screen screen, CallbackInfo ci) {
+        if (screen instanceof TitleScreen && dev.onix.client.gui.WelcomeScreen.shouldShow()) {
+            // the very first start: the setup tour comes before the title screen
+            ci.cancel();
+            ((Minecraft) (Object) this).setScreen(new dev.onix.client.gui.WelcomeScreen());
+            return;
+        }
         if (screen instanceof TitleScreen && OnixClient.CONFIG != null && OnixClient.CONFIG.customMainMenu.isOn()) {
             String design = OnixClient.CONFIG.menuDesign.get();
             if (design.equals("Vanilla")) return;

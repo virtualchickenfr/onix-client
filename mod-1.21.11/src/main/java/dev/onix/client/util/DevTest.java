@@ -52,8 +52,20 @@ public final class DevTest {
     }
 
     private static void build(Minecraft mc) {
-        until(() -> mc.getOverlay() == null && (mc.screen instanceof OnixTitleScreen || mc.screen instanceof CarbonMainMenu || mc.screen instanceof TitleScreen));
+        until(() -> mc.getOverlay() == null && (mc.screen instanceof OnixTitleScreen || mc.screen instanceof CarbonMainMenu || mc.screen instanceof TitleScreen
+                || mc.screen instanceof dev.onix.client.gui.WelcomeScreen));
         then(20, () -> mc.options.pauseOnLostFocus = false);
+        // first start: the setup tour
+        then(40, () -> snap(mc, "00a_intro_welcome"));
+        then(2, () -> { if (mc.screen != null) mc.screen.keyPressed(new KeyEvent(com.mojang.blaze3d.platform.InputConstants.KEY_RIGHT, 0, 0)); });
+        then(30, () -> snap(mc, "00b_intro_theme"));
+        then(2, () -> { if (mc.screen != null) mc.screen.keyPressed(new KeyEvent(com.mojang.blaze3d.platform.InputConstants.KEY_RIGHT, 0, 0)); });
+        then(30, () -> snap(mc, "00c_intro_menu"));
+        then(2, () -> { if (mc.screen != null) mc.screen.keyPressed(new KeyEvent(com.mojang.blaze3d.platform.InputConstants.KEY_RIGHT, 0, 0)); });
+        then(30, () -> snap(mc, "00d_intro_basics"));
+        then(2, () -> { if (mc.screen != null) mc.screen.keyPressed(new KeyEvent(com.mojang.blaze3d.platform.InputConstants.KEY_RIGHT, 0, 0)); });
+        then(30, () -> snap(mc, "00e_intro_done"));
+        then(2, () -> { if (mc.screen != null) mc.screen.keyPressed(new KeyEvent(com.mojang.blaze3d.platform.InputConstants.KEY_RIGHT, 0, 0)); });
         then(2, () -> design("Onix"));
         then(80, () -> snap(mc, "01_title_onix"));
         for (String id : List.of("Carbon", "Voxel", "Portal", "Classic")) {
@@ -117,6 +129,9 @@ public final class DevTest {
             }
         });
         then(200, () -> snap(mc, "07_hud"));
+        then(2, () -> OnixClient.MODULES.get(dev.onix.client.module.impl.visual.SmallCapsModule.class).setEnabled(true));
+        then(20, () -> snap(mc, "07b_small_caps"));
+        then(2, () -> OnixClient.MODULES.get(dev.onix.client.module.impl.visual.SmallCapsModule.class).setEnabled(false));
         then(2, () -> mc.setScreen(new HudEditorScreen(null)));
         then(40, () -> snap(mc, "08_hud_editor"));
         then(2, () -> mc.setScreen(new OnixMenuScreen(null)));

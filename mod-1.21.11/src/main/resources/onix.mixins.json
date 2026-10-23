@@ -36,7 +36,8 @@
     "ToastManagerMixin",
     "WorldMixin",
     "SwingDurationMixin",
-    "TotemPopMixin"
+    "TotemPopMixin",
+    "FontSetMixin"
   ],
   "injectors": {
     "defaultRequire": 0

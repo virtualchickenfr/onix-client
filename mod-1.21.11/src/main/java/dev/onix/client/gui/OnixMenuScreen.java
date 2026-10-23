@@ -168,6 +168,12 @@ public class OnixMenuScreen extends Screen {
     private int[] clip;
     private final Map<Object, Anim> anims = new HashMap<>();
     private final Anim open = new Anim(0);
+    /** onClose was called: the menu animates out, then really closes. */
+    private boolean closing;
+    /** Smoothly following position of the sidebar's selection highlight (NaN = jump there). */
+    private float navSelY = Float.NaN;
+    private float navSelTarget = Float.NaN;
+    private float frameDt;
     private final Anim viewAnim = new Anim(1);
     private final MenuParticles particles = new MenuParticles();
 
@@ -346,6 +352,11 @@ public class OnixMenuScreen extends Screen {
 
     @Override
     public void onClose() {
+        // a short fade and shrink out instead of vanishing at once
+        if (!closing && OnixClient.CONFIG.menuAnimations.isOn() && open.get() > 0.2f) {
+            closing = true;
+            return;
+        }
         Cosmetics.clearPreview();
         themeEditor.flush();
         OnixClient.save();
@@ -398,7 +409,12 @@ public class OnixMenuScreen extends Screen {
         long now = System.nanoTime();
         float dt = Math.min(0.1f, (now - lastFrame) / 1_000_000_000f);
         lastFrame = now;
-        float t = Anim.easeOut(open.to(1f, 10f));
+        frameDt = dt;
+        float t = Anim.easeOut(open.to(closing ? 0f : 1f, closing ? 16f : 10f));
+        if (closing && open.get() < 0.05f) {
+            onClose();
+            return;
+        }
         float vt = Anim.easeOut(viewAnim.to(1f, 12f));
         scroll += (scrollTarget - scroll) * Math.min(1, dt * 18);
         hits.clear();
@@ -491,6 +507,17 @@ public class OnixMenuScreen extends Screen {
         Theme.label(ctx, "Client", x + 24 + Math.round(font.width("ONIX") * 1.5f) + 4, y0 + 21, Theme.TEXT_3);
 
         int y = y0 + 44;
+        // the selection highlight glides from item to item (target from the last frame's layout)
+        int x2s = x + SIDEBAR - 24;
+        if (!Float.isNaN(navSelTarget)) {
+            if (Float.isNaN(navSelY) || !OnixClient.CONFIG.menuAnimations.isOn()) navSelY = navSelTarget;
+            else navSelY += (navSelTarget - navSelY) * Math.min(1f, frameDt * 16f);
+            int sy = Math.round(navSelY);
+            ctx.fill(x - 2, sy, x2s, sy + 15, Theme.SURFACE_3);
+            Theme.outline(ctx, x - 3, sy - 1, x2s + 1, sy + 16, Theme.withAlpha(Theme.TEXT, 220));
+            ctx.fill(x - 2, sy, x - 1, sy + 15, Theme.accent());
+        }
+        navSelTarget = Float.NaN;
         y = navGroup(ctx, mx, my, "Modules", NAV_MODULES, x, y);
         y = navGroup(ctx, mx, my, "Library", NAV_LIBRARY, x, y + 5);
         navGroup(ctx, mx, my, "Client", NAV_CLIENT, x, y + 5);
@@ -515,12 +542,8 @@ public class OnixMenuScreen extends Screen {
             boolean active = isActive(nav);
             boolean hov = hovered(mx, my, x - 2, y, x2, y + 15);
             float ht = anim("nav:" + nav.label(), hov || active, 18f);
-            if (ht > 0.01f) ctx.fill(x - 2, y, x2, y + 15, Theme.fade(active ? Theme.SURFACE_3 : Theme.SURFACE_2, Math.max(ht, active ? 1 : 0)));
-            if (active) {
-                // like the selected hotbar slot: a light frame around the item
-                Theme.outline(ctx, x - 3, y - 1, x2 + 1, y + 16, Theme.withAlpha(Theme.TEXT, 220));
-                ctx.fill(x - 2, y, x - 1, y + 15, Theme.accent());
-            }
+            if (ht > 0.01f && !active) ctx.fill(x - 2, y, x2, y + 15, Theme.fade(Theme.SURFACE_2, ht));
+            if (active) navSelTarget = y; // drawn by renderSidebar, gliding (like the selected hotbar slot)
             drawIcon(ctx, nav.icon(), x + 4, y + 3, 9, active ? Theme.accent() : Theme.lerpColor(Theme.TEXT_3, Theme.TEXT_2, ht));
             Theme.text(ctx, nav.label(), x + 19, y + 4, active ? Theme.TEXT : Theme.lerpColor(Theme.TEXT_2, Theme.TEXT, ht));
             String count = navCount(nav);
@@ -2993,6 +3016,7 @@ public class OnixMenuScreen extends Screen {
     @Override
     public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent onix$e, boolean onix$dbl) {
         double rawX = onix$e.x(); double rawY = onix$e.y(); int button = onix$e.button();
+        if (closing) return true;
         double mouseX = vx(rawX);
         double mouseY = vy(rawY);
         // waiting for a key: the middle and side mouse buttons can be bound too
@@ -3108,6 +3132,7 @@ public class OnixMenuScreen extends Screen {
     @Override
     public boolean keyPressed(net.minecraft.client.input.KeyEvent onix$k) {
         int keyCode = onix$k.key(); int scanCode = onix$k.scancode(); int modifiers = onix$k.modifiers();
+        if (closing) return true;
         if (listening != null) {
             if (keyCode == GLFW.GLFW_KEY_BACKSPACE || keyCode == GLFW.GLFW_KEY_DELETE) listening.set(KeybindSetting.NONE);
             else if (keyCode != GLFW.GLFW_KEY_ESCAPE) listening.set(keyCode);
