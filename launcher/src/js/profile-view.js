@@ -444,7 +444,7 @@ function renderPvSettings() {
   tools();
   const field = (label, control, hint) => el('label', { class: 'field' }, [el('span', { text: label }), control, hint ? el('small', { class: 'hint', text: hint }) : null]);
   const ram = el('input', { type: 'range', min: '1024', step: '512' });
-  ram.max = String(Math.max(2048, Math.floor((info.totalMemMb || 8192) / 512) * 512 - 1024));
+  ram.max = String(Math.min(8192, Math.max(2048, Math.floor((info.totalMemMb || 8192) / 512) * 512 - 1024)));
   ram.value = String(p.ramMb);
   const ramOut = el('output', { text: gb(p.ramMb) });
   ram.addEventListener('input', () => { ramOut.textContent = gb(Number(ram.value)); });

@@ -138,7 +138,7 @@ function openProfileEditor(profile) {
   editColor = profile ? profile.color : PROFILE_COLORS[profileState.profiles.length % PROFILE_COLORS.length];
   renderSwatches();
   const ram = $('#pf-ram');
-  ram.max = String(Math.max(2048, Math.floor(info.totalMemMb / 512) * 512 - 1024));
+  ram.max = String(Math.min(8192, Math.max(2048, Math.floor(info.totalMemMb / 512) * 512 - 1024)));
   ram.value = String(profile ? profile.ramMb : Math.min(4096, Number(ram.max)));
   showRam();
   $('#pf-server').value = profile ? profile.quickJoin : '';

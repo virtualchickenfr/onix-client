@@ -844,7 +844,8 @@ app.whenReady().then(() => {
       const mcExact = versions.isSupported(source.mcVersion) ? source.mcVersion : source.targetVersion || versions.DEFAULT;
       const created = profiles.create((target && target.newName) || source.profileName || source.name, null, { mcVersion: mcExact });
       const total = require('os').totalmem() / 1048576;
-      const ram = source.exact.memoryMb ? Math.max(1024, Math.min(source.exact.memoryMb, Math.floor(total - 2048))) : created.ramMb;
+      // Dawn's own setting, but at most 8 GB (more makes Minecraft stutter) and never more than the PC can spare
+      const ram = source.exact.memoryMb ? Math.max(1024, Math.min(source.exact.memoryMb, 8192, Math.floor(total - 2048))) : created.ramMb;
       profiles.save({ ...created, ramMb: ram, performanceMods: false, loader: 'fabric' });
       const dir = profiles.dir(created);
       try {

@@ -5,6 +5,9 @@ const McHandler = require('minecraft-launcher-core/components/handler');
 const { download, fetchJson } = require('./download');
 const modrinth = require('./modrinth');
 
+/** Most memory a game gets, whatever the profile says (see the launch code). */
+const MAX_USEFUL_RAM_MB = 8192;
+
 const versions = require('./versions');
 
 // the default version; everything below takes the profile's version
@@ -288,13 +291,18 @@ async function launch({ root, gameDir, auth, javaPath, settings, world = null, s
     log(`${loader} ready (${VERSION_ID_RUN || 'vanilla'}) after ${((Date.now() - prepStarted) / 1000).toFixed(1)} s`);
   }
 
+  // More than 8 GB does not help Minecraft and makes it stutter: the garbage collector then has huge heaps to
+  // sweep, and Windows starts swapping the rest of the PC out. Profiles with more (often from imports) use 8 GB.
+  const ramMb = Math.min(settings.ramMb, MAX_USEFUL_RAM_MB);
+  if (ramMb < settings.ramMb) log(`Memory: ${Math.round(settings.ramMb / 1024)} GB set, using ${MAX_USEFUL_RAM_MB / 1024} GB (more makes Minecraft stutter)`);
+
   const launcher = new Client();
   const options = {
     root,
     authorization: auth,
     javaPath,
     version: VERSION_ID_RUN ? { number: mc, type: 'release', custom: VERSION_ID_RUN } : { number: mc, type: 'release' },
-    memory: { max: `${settings.ramMb}M`, min: `${Math.min(settings.ramMb, 2048)}M` },
+    memory: { max: `${ramMb}M`, min: `${Math.min(ramMb, 2048)}M` },
     customArgs: [...jvmArgs(root, fastStart, mc), ...extraJvmArgs(settings.jvmArgs)],
     overrides: { maxSockets: 24, gameDirectory: gameDir },
   };
