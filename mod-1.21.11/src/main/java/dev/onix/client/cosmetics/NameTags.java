@@ -4,8 +4,10 @@ import dev.onix.client.OnixClient;
 import dev.onix.client.network.OnixPresence;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -13,30 +15,81 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
 
 /**
- * Name styles: colours the player's name above the head and in the tab list. Your own comes from {@link Cosmetics};
- * other players' from the Onix server ({@link OnixPresence#look}), which only hands out what they own. The looks are
- * the same as in the launcher (src/js/cosmetics.js) and tools/nametags.py.
+ * Name styles and tags: colours the player's name and puts a tag in front of it, above the head and in the tab list.
+ * Your own come from {@link Cosmetics}; other players' from the Onix server ({@link OnixPresence#look}), which only
+ * hands out what they own. The looks are the same as in the launcher (src/js/cosmetics.js) and tools/nametags.py.
  */
 public final class NameTags {
-    /** The badge of owners (everyone else's is grey). */
+    /** What a custom tag may contain (the server checks the same). */
+    public static final int CUSTOM_MAX = 12;
+    private static final Pattern ALLOWED = Pattern.compile("[\\p{L}\\p{N} \\-_.!?#&+*'★♥✦☀☾❄♪✿⚔☠♛♦♣♠☺✔⚡☁☂☃♫]+");
+    /** Tags that would pretend to be staff, or that insult people. Compared without spaces, dots and case. */
+    private static final List<String> BLOCKED_PARTS = List.of("admin", "owner", "moderator", "staff", "helper", "developer", "support",
+            "mojang", "microsoft", "official", "nigg", "fagg", "hitler", "nazi", "retard", "fuck", "cunt", "whore", "hurensohn",
+            "wichser", "fotze", "schwuchtel", "missgeburt", "spast", "nutte", "kys");
+    private static final List<String> BLOCKED_WORDS = List.of("mod", "dev", "gm", "op", "fag", "hure", "sex");
+    private static final int BRACKET = 0xFF9A9AA6;
+    /** Brackets and badge of owners. */
     public static final int OWNER_VIOLET = 0xFFB46CFF;
+    public static final String OWNER_TAG = "tag_staff_owner";
+
+    /** One player's name style, tag and custom tag text; any part may be null. owner = violet brackets. */
+    public record PlayerLook(CosmeticCatalog.Item style, CosmeticCatalog.Item tag, String text, boolean owner) {
+        public boolean empty() {
+            return style == null && tag == null;
+        }
+    }
 
     private NameTags() {}
+
+    // ---------------------------------------------------------------- custom text
+
+    /** Null if the text may be used as a custom tag, otherwise why not. */
+    public static String problem(String text) {
+        if (text == null || text.isBlank()) return "Type some text for your tag.";
+        if (text.length() > CUSTOM_MAX) return "At most " + CUSTOM_MAX + " characters.";
+        if (!ALLOWED.matcher(text).matches()) return "Letters, numbers, spaces and a few symbols only.";
+        String flat = text.toLowerCase(Locale.ROOT).replaceAll("[^\\p{L}\\p{N}]", "");
+        for (String bad : BLOCKED_PARTS) if (flat.contains(bad)) return "This tag is not allowed.";
+        for (String word : text.toLowerCase(Locale.ROOT).split("[^\\p{L}\\p{N}]+")) {
+            if (BLOCKED_WORDS.contains(word)) return "This tag is not allowed.";
+        }
+        return null;
+    }
+
+    // ---------------------------------------------------------------- whose look
 
     private static UUID self() {
         Minecraft mc = Minecraft.getInstance();
         return mc.getUser() == null ? null : mc.getUser().getProfileId();
     }
 
-    /** The name style of a player (yours includes what you try on), or null. */
-    public static CosmeticCatalog.Item styleOf(UUID id) {
+    /** The look of a player: yours from your selection (including what you try on), others' from the Onix server. */
+    public static PlayerLook lookOf(UUID id) {
         if (id == null) return null;
-        if (id.equals(self())) return Cosmetics.shown(Cosmetics.Slot.NAMETAG);
-        if (!OnixClient.CONFIG.nameTagLooks.isOn()) return null;
+        if (id.equals(self())) {
+            boolean owner = dev.onix.client.network.OnixWallet.owner();
+            CosmeticCatalog.Item tag = owner ? CosmeticCatalog.item(OWNER_TAG) : Cosmetics.shown(Cosmetics.Slot.TAG);
+            String text = tag != null && tag.custom() ? (Cosmetics.tagText().isEmpty() ? "TAG" : Cosmetics.tagText()) : null;
+            PlayerLook look = new PlayerLook(Cosmetics.shown(Cosmetics.Slot.NAMETAG), tag, text, owner);
+            return look.empty() ? null : look;
+        }
         String[] raw = OnixPresence.look(id);
         if (raw == null) return null;
+        boolean owner = "owner".equals(raw[3]);
+        if (!owner && !OnixClient.CONFIG.nameTagLooks.isOn()) return null;
         CosmeticCatalog.Item style = CosmeticCatalog.item(raw[0]);
-        return style != null && style.slot() == Cosmetics.Slot.NAMETAG ? style : null;
+        if (style != null && style.slot() != Cosmetics.Slot.NAMETAG) style = null;
+        CosmeticCatalog.Item tag = CosmeticCatalog.item(raw[1]);
+        if (tag != null && (tag.slot() != Cosmetics.Slot.TAG || tag.staff() && !owner)) tag = null;
+        String text = null;
+        if (tag != null && tag.custom()) {
+            text = raw[2];
+            if (text == null || problem(text) != null) tag = null;
+        }
+        if (!OnixClient.CONFIG.nameTagLooks.isOn()) style = null; // the owner tag always shows
+        PlayerLook look = new PlayerLook(style, tag, text, owner);
+        return look.empty() ? null : look;
     }
 
     // ---------------------------------------------------------------- drawing
@@ -118,33 +171,57 @@ public final class NameTags {
         return out;
     }
 
-    /** A name in a style (menus). */
-    public static MutableComponent preview(String name, CosmeticCatalog.Item style) {
-        return style != null ? paint(name, style.look(), Style.EMPTY) : Component.literal(name);
+    /** The tag as shown in front of a name: "[TEXT]" (symbols without brackets), no trailing space. */
+    public static MutableComponent tag(CosmeticCatalog.Item tag, String customText) {
+        return tag(tag, customText, false);
+    }
+
+    /** owner = violet brackets (everyone else's are grey). */
+    public static MutableComponent tag(CosmeticCatalog.Item tag, String customText, boolean owner) {
+        String text = tag.custom() ? customText : tag.tagText();
+        if (text == null || text.isEmpty()) return Component.empty();
+        boolean symbol = text.codePoints().noneMatch(Character::isLetterOrDigit);
+        MutableComponent body = paint(text, tag.look(), Style.EMPTY);
+        if (symbol) return body;
+        Style br = Style.EMPTY.withColor(TextColor.fromRgb((owner ? OWNER_VIOLET : BRACKET) & 0xFFFFFF));
+        return Component.empty().append(Component.literal("[").withStyle(br)).append(body).append(Component.literal("]").withStyle(br));
+    }
+
+    /** A preview of a whole look on a name (menus). */
+    public static MutableComponent preview(String name, CosmeticCatalog.Item style, CosmeticCatalog.Item tag, String customText, boolean owner) {
+        MutableComponent out = Component.empty();
+        if (tag != null) out.append(tag(tag, customText, owner)).append(" ");
+        if (style != null) out.append(paint(name, style.look(), Style.EMPTY));
+        else out.append(Component.literal(name));
+        return out;
     }
 
     /**
-     * Applies a player's name style to a name as the game shows it (it may hold a team prefix or a rank): only the
-     * player's name inside it is coloured, everything else keeps its style.
+     * Applies a player's look to a name as the game shows it (it may hold a team prefix or a rank): the player's
+     * name inside it gets the name style, the tag goes right in front of it. Everything else keeps its style.
      */
     public static Component decorate(UUID id, String name, Component text) {
         if (text == null || name == null || name.isEmpty()) return text;
-        CosmeticCatalog.Item style = styleOf(id);
-        if (style == null) return text;
+        PlayerLook look = lookOf(id);
+        if (look == null) return text;
         List<String> parts = new ArrayList<>();
         List<Style> styles = new ArrayList<>();
-        text.visit((st, s) -> {
+        text.visit((style, s) -> {
             parts.add(s);
-            styles.add(st);
+            styles.add(style);
             return Optional.empty();
         }, Style.EMPTY);
         String plain = String.join("", parts);
         int start = plain.indexOf(name);
-        if (start < 0) return text; // a nickname
+        if (start < 0) {
+            // a nickname: only the tag, in front of everything
+            if (look.tag() == null) return text;
+            return Component.empty().append(tag(look.tag(), look.text(), look.owner())).append(" ").append(text);
+        }
         int end = start + name.length();
         MutableComponent out = Component.empty();
         int pos = 0;
-        boolean done = false;
+        Style nameStyle = null;
         for (int k = 0; k < parts.size(); k++) {
             String s = parts.get(k);
             int a = pos;
@@ -155,9 +232,11 @@ public final class NameTags {
                 continue;
             }
             if (a < start) out.append(Component.literal(s.substring(0, start - a)).withStyle(styles.get(k)));
-            if (!done) {
-                done = true;
-                out.append(paint(plain.substring(start, end), style.look(), styles.get(k)));
+            if (nameStyle == null) {
+                nameStyle = styles.get(k);
+                if (look.tag() != null) out.append(tag(look.tag(), look.text(), look.owner())).append(Component.literal(" ").withStyle(nameStyle));
+                String whole = plain.substring(start, end);
+                out.append(look.style() != null ? paint(whole, look.style().look(), nameStyle) : Component.literal(whole).withStyle(nameStyle));
             }
             if (b > end) out.append(Component.literal(s.substring(end - a)).withStyle(styles.get(k)));
         }

@@ -32,57 +32,6 @@ public final class FxDraw {
         }
     }
 
-    /**
-     * A flat ring whose front faces up, for rings on the ground seen from above (the lightning render type culls
-     * back faces, so {@link #ring} – which faces down – disappears there).
-     */
-    public static void ringUp(PoseStack matrices, VertexConsumer vc, double x, double y, double z,
-                              float inner, float outer, int innerColor, int outerColor, int segments) {
-        Matrix4f m = matrices.last().pose();
-        float fx = (float) x, fy = (float) y, fz = (float) z;
-        for (int i = 0; i < segments; i++) {
-            double a0 = Math.PI * 2 * i / segments;
-            double a1 = Math.PI * 2 * (i + 1) / segments;
-            float c0 = (float) Math.cos(a0), s0 = (float) Math.sin(a0);
-            float c1 = (float) Math.cos(a1), s1 = (float) Math.sin(a1);
-            vc.addVertex(m, fx + c0 * inner, fy, fz + s0 * inner).setColor(innerColor);
-            vc.addVertex(m, fx + c1 * inner, fy, fz + s1 * inner).setColor(innerColor);
-            vc.addVertex(m, fx + c1 * outer, fy, fz + s1 * outer).setColor(outerColor);
-            vc.addVertex(m, fx + c0 * outer, fy, fz + s0 * outer).setColor(outerColor);
-        }
-    }
-
-    /** Both sides of a flat ring (with a culling render type only the side facing the camera is drawn). */
-    public static void ringBoth(PoseStack matrices, VertexConsumer vc, double x, double y, double z,
-                                float inner, float outer, int innerColor, int outerColor, int segments) {
-        ringUp(matrices, vc, x, y, z, inner, outer, innerColor, outerColor, segments);
-        ring(matrices, vc, x, y, z, inner, outer, innerColor, outerColor, segments);
-    }
-
-    /**
-     * An upright band around a vertical axis from y (colour top) to y + height (colour bottom; height may be negative),
-     * both sides – like the glowing trail under a ring.
-     */
-    public static void band(PoseStack matrices, VertexConsumer vc, double x, double y, double z, float radius, float height,
-                            int topColor, int bottomColor, int segments) {
-        Matrix4f m = matrices.last().pose();
-        float fx = (float) x, fy = (float) y, fz = (float) z;
-        for (int i = 0; i < segments; i++) {
-            double a0 = Math.PI * 2 * i / segments;
-            double a1 = Math.PI * 2 * (i + 1) / segments;
-            float x0 = fx + (float) Math.cos(a0) * radius, z0 = fz + (float) Math.sin(a0) * radius;
-            float x1 = fx + (float) Math.cos(a1) * radius, z1 = fz + (float) Math.sin(a1) * radius;
-            vc.addVertex(m, x0, fy, z0).setColor(topColor);
-            vc.addVertex(m, x1, fy, z1).setColor(topColor);
-            vc.addVertex(m, x1, fy + height, z1).setColor(bottomColor);
-            vc.addVertex(m, x0, fy + height, z0).setColor(bottomColor);
-            vc.addVertex(m, x0, fy, z0).setColor(topColor);
-            vc.addVertex(m, x0, fy + height, z0).setColor(bottomColor);
-            vc.addVertex(m, x1, fy + height, z1).setColor(bottomColor);
-            vc.addVertex(m, x1, fy, z1).setColor(topColor);
-        }
-    }
-
     /** A camera-facing square centred on (x, y, z) in the current pose, fading from the centre colour to the edge colour. */
     public static void glow(PoseStack matrices, VertexConsumer vc, float x, float y, float z, float size, int center, int edge) {
         glow(matrices.last().pose(), vc, x, y, z, size, center, edge);

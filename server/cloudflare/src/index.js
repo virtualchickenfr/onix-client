@@ -23,8 +23,9 @@ const ITEM_RE = /^[a-z0-9_]{1,64}$/;
 
 const prices = shop.prices || {};
 const aliases = shop.aliases || {};
-/** Name styles: id → 'nametag'. */
+/** Name styles and tags: id → 'nametag' | 'tag' | 'custom' (a tag with the player's own text). */
 const lookKinds = shop.looks || {};
+const CUSTOM_MAX = shop.customMax || 12;
 const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 
 const json = (status, body) => new Response(JSON.stringify(body), {
@@ -65,35 +66,54 @@ function ensureSchema(db) {
   return schemaReady.get(db);
 }
 
-// ---------------------------------------------------------------- name styles
+// ---------------------------------------------------------------- name styles and tags (same rules as the mod's NameTags)
 
-/** Tags (1.0.31-1.0.32) were removed again: what they cost, so everyone who bought one gets the coins back. */
-const REMOVED_TAG_PRICES = {"tag_sym_2605":60,"tag_sym_2665":60,"tag_sym_2726":60,"tag_sym_2600":60,"tag_sym_263e":60,"tag_sym_2744":60,"tag_sym_266a":60,"tag_sym_273f":60,"tag_sym_2694":150,"tag_sym_2620":150,"tag_sym_265b":400,"tag_gg":60,"tag_w":60,"tag_afk":60,"tag_noob":60,"tag_pvp":60,"tag_builder":60,"tag_miner":60,"tag_chicken":150,"tag_pro":150,"tag_sweat":150,"tag_boss":150,"tag_chill":150,"tag_king":400,"tag_queen":400,"tag_og":400,"tag_onix":400,"tag_tryhard":400,"tag_legend":1000,"tag_goat":1000,"tag_custom_tag":300,"tag_custom_gradient_tag":600,"tag_custom_gold_tag":800,"tag_custom_rainbow_tag":1200};
+const TAG_ALLOWED = /^[\p{L}\p{N} \-_.!?#&+*'★♥✦☀☾❄♪✿⚔☠♛♦♣♠☺✔⚡☁☂☃♫]+$/u;
+const TAG_BLOCKED_PARTS = ['admin', 'owner', 'moderator', 'staff', 'helper', 'developer', 'support', 'mojang', 'microsoft', 'official',
+  'nigg', 'fagg', 'hitler', 'nazi', 'retard', 'fuck', 'cunt', 'whore', 'hurensohn', 'wichser', 'fotze', 'schwuchtel', 'missgeburt', 'spast', 'nutte', 'kys'];
+const TAG_BLOCKED_WORDS = new Set(['mod', 'dev', 'gm', 'op', 'fag', 'hure', 'sex']);
 
-/** Gives back the coins of removed tags this account bought (once: the items are deleted). */
-async function refundTags(db, uuid) {
-  const rows = (await db.prepare("SELECT item FROM owned WHERE uuid = ? AND item LIKE 'tag\\_%' ESCAPE '\\'").bind(uuid).all()).results;
-  for (const { item } of rows) {
-    const r = await db.prepare('DELETE FROM owned WHERE uuid = ? AND item = ?').bind(uuid, item).run();
-    if (r.meta.changes === 1 && REMOVED_TAG_PRICES[item]) {
-      await db.prepare('UPDATE accounts SET coins = coins + ? WHERE uuid = ?').bind(REMOVED_TAG_PRICES[item], uuid).run();
-    }
-  }
+/** Null if the custom tag text is fine, otherwise why not. */
+function tagProblem(text) {
+  if (typeof text !== 'string' || !text.trim()) return 'Type some text for your tag.';
+  if ([...text].length > CUSTOM_MAX) return `At most ${CUSTOM_MAX} characters.`;
+  if (!TAG_ALLOWED.test(text)) return 'Letters, numbers, spaces and a few symbols only.';
+  const lower = text.toLowerCase();
+  const flat = lower.replace(/[^\p{L}\p{N}]/gu, '');
+  if (TAG_BLOCKED_PARTS.some((b) => flat.includes(b))) return 'This tag is not allowed.';
+  if (lower.split(/[^\p{L}\p{N}]+/u).some((w) => TAG_BLOCKED_WORDS.has(w))) return 'This tag is not allowed.';
+  return null;
 }
 
 /**
- * Stores which name style a player wears, only one they own (unlimited accounts own everything).
+ * Stores what name style and tag a player wears, only items they own (unlimited accounts own everything).
  * Returns an error message for the player, or null.
  */
 async function saveLook(env, db, s, look) {
+  const mine = async (id) => isUnlimited(env, s.name) || owns(db, s.uuid, id);
   let style = typeof look.style === 'string' && lookKinds[look.style] === 'nametag' ? look.style : '';
+  let tag = typeof look.tag === 'string' && (lookKinds[look.tag] === 'tag' || lookKinds[look.tag] === 'custom') ? look.tag : '';
+  let text = '';
   let error = null;
-  if (style && !(isUnlimited(env, s.name) || (await owns(db, s.uuid, style)))) {
+  if (style && !(await mine(style))) {
     error = 'You do not own this name style.';
     style = '';
   }
-  if (!style) await db.prepare('DELETE FROM looks WHERE uuid = ?').bind(s.uuid).run();
-  else await db.prepare('INSERT OR REPLACE INTO looks (uuid, style, tag, text, updated) VALUES (?, ?, ?, ?, ?)').bind(s.uuid, style, '', '', Date.now()).run();
+  if (tag && !(await mine(tag))) {
+    error = 'You do not own this tag.';
+    tag = '';
+  }
+  if (tag && lookKinds[tag] === 'custom') {
+    text = typeof look.text === 'string' ? look.text.replace(/\s+/g, ' ').trim() : '';
+    const problem = tagProblem(text);
+    if (problem) {
+      error = `Your tag text: ${problem}`;
+      tag = '';
+      text = '';
+    }
+  }
+  if (!style && !tag) await db.prepare('DELETE FROM looks WHERE uuid = ?').bind(s.uuid).run();
+  else await db.prepare('INSERT OR REPLACE INTO looks (uuid, style, tag, text, updated) VALUES (?, ?, ?, ?, ?)').bind(s.uuid, style, tag, text, Date.now()).run();
   return error;
 }
 
@@ -136,9 +156,10 @@ function unlimitedNames(env) {
 
 const verifyOn = (env) => String(env.VERIFY == null ? '1' : env.VERIFY) !== '0';
 const isUnlimited = (env, name) => verifyOn(env) && unlimitedNames(env).has(String(name).toLowerCase());
-/** Accounts with the violet badge (wrangler.toml OWNERS; only while VERIFY is on). */
+/** Accounts with the OWNER tag and the violet badge (wrangler.toml OWNERS; only while VERIFY is on). */
 const ownerNames = (env) => new Set(String(env.OWNERS || '').split(',').map((n) => n.trim().toLowerCase()).filter(Boolean));
 const isOwner = (env, name) => verifyOn(env) && ownerNames(env).has(String(name).toLowerCase());
+const STAFF_OWNER_TAG = Object.keys(lookKinds).find((id) => lookKinds[id] === 'staff' && id.endsWith('owner')) || 'tag_staff_owner';
 
 async function account(db, uuid, name) {
   const now = Date.now();
@@ -170,7 +191,6 @@ async function owns(db, uuid, id) {
 }
 
 async function heartbeat(env, db, s, playing) {
-  await refundTags(db, s.uuid);
   const a = await account(db, s.uuid, s.name);
   const now = Date.now();
   if (playing) {
@@ -570,19 +590,19 @@ const routes = {
       const rows = await db.prepare(`SELECT uuid FROM online WHERE seen > ? AND uuid IN (${part.map(() => '?').join(',')})`).bind(Date.now() - ONLINE_TTL_MS, ...part).all();
       result.push(...rows.results.map((r) => r.uuid));
     }
-    // name styles of the ones online; owners are marked (violet badge)
+    // name styles and tags of the ones online; owners always wear the OWNER tag
     const looks = {};
     const owners = ownerNames(env);
     for (let i = 0; i < result.length; i += 90) {
       const part = result.slice(i, i + 90);
       const marks = part.map(() => '?').join(',');
       const rows = await db.prepare(`SELECT uuid, style, tag, text FROM looks WHERE uuid IN (${marks})`).bind(...part).all();
-      for (const r of rows.results) looks[r.uuid] = { style: r.style };
+      for (const r of rows.results) looks[r.uuid] = { style: r.style, tag: r.tag, text: r.text };
       if (owners.size && verifyOn(env)) {
         const names = await db.prepare(`SELECT uuid, name FROM online WHERE uuid IN (${marks})`).bind(...part).all();
         for (const r of names.results) {
           if (!owners.has(String(r.name).toLowerCase())) continue;
-          looks[r.uuid] = { ...(looks[r.uuid] || { style: '' }), owner: true };
+          looks[r.uuid] = { ...(looks[r.uuid] || { style: '' }), tag: STAFF_OWNER_TAG, text: '', owner: true };
         }
       }
     }

@@ -121,12 +121,16 @@ public final class DevTest {
         then(40, () -> snap(mc, "08_hud_editor"));
         then(2, () -> mc.setScreen(new OnixMenuScreen(null)));
         then(40, () -> snap(mc, "09_menu_ingame"));
-        // name styles: the menu tab and your own name tag in third person
+        // name styles and tags: the menu tabs and your own name tag in third person
         then(2, () -> {
             dev.onix.client.cosmetics.Cosmetics.testOwnAll = true;
+            dev.onix.client.cosmetics.Cosmetics.setTagText("Chicken");
             dev.onix.client.cosmetics.Cosmetics.select(dev.onix.client.cosmetics.Cosmetics.Slot.NAMETAG, "name_aurora");
-            mc.setScreen(new OnixMenuScreen(null, OnixMenuScreen.View.COSMETICS).cosmeticsSlot(dev.onix.client.cosmetics.Cosmetics.Slot.NAMETAG));
+            dev.onix.client.cosmetics.Cosmetics.select(dev.onix.client.cosmetics.Cosmetics.Slot.TAG, "tag_custom_rainbow_tag");
+            mc.setScreen(new OnixMenuScreen(null, OnixMenuScreen.View.COSMETICS).cosmeticsSlot(dev.onix.client.cosmetics.Cosmetics.Slot.TAG));
         });
+        then(50, () -> snap(mc, "09b_menu_tags"));
+        then(2, () -> mc.setScreen(new OnixMenuScreen(null, OnixMenuScreen.View.COSMETICS).cosmeticsSlot(dev.onix.client.cosmetics.Cosmetics.Slot.NAMETAG)));
         then(50, () -> snap(mc, "09c_menu_name_styles"));
         then(2, () -> {
             mc.setScreen(null);
@@ -135,41 +139,10 @@ public final class DevTest {
         });
         then(40, () -> snap(mc, "09d_own_nametag"));
         then(2, () -> {
-            dev.onix.client.cosmetics.Cosmetics.select(dev.onix.client.cosmetics.Cosmetics.Slot.NAMETAG, null);
-            dev.onix.client.cosmetics.Cosmetics.testOwnAll = false;
-            // jump circles: jump and look at the ground from behind
-            OnixClient.MODULES.get(dev.onix.client.module.impl.visual.JumpCirclesModule.class).setEnabled(true);
-            mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_BACK);
-            if (mc.player != null) mc.player.setXRot(35f);
-        });
-        then(10, () -> mc.options.keyJump.setDown(true));
-        then(2, () -> mc.options.keyJump.setDown(false));
-        then(4, () -> snap(mc, "09e_jump_circle"));
-        // target render: a villager in front of you that you "hit"
-        then(20, () -> {
-            var server = mc.getSingleplayerServer();
-            if (server != null) server.execute(() -> server.getCommands().performPrefixedCommand(server.createCommandSourceStack(),
-                    "execute as @p at @s run summon minecraft:villager ~ ~ ~3 {NoAI:1b,Silent:1b}"));
-        });
-        then(30, () -> {
-            if (mc.player != null && mc.level != null) {
-                net.minecraft.world.entity.Entity near = null;
-                for (var e : mc.level.entitiesForRendering()) {
-                    if (e.getType() == net.minecraft.world.entity.EntityType.VILLAGER && (near == null || e.distanceTo(mc.player) < near.distanceTo(mc.player))) near = e;
-                }
-                if (near != null) CombatTracker.onAttack(near);
-                OnixClient.LOGGER.info("[devtest] target render on {}", near);
-            }
-            OnixClient.MODULES.get(dev.onix.client.module.impl.visual.TargetRenderModule.class).setEnabled(true);
-            if (mc.player != null) mc.player.setXRot(15f);
-        });
-        then(25, () -> snap(mc, "09f_target_render"));
-        then(2, () -> {
             mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
-            OnixClient.MODULES.get(dev.onix.client.module.impl.visual.TargetRenderModule.class).setEnabled(false);
-            OnixClient.MODULES.get(dev.onix.client.module.impl.visual.JumpCirclesModule.class).setEnabled(false);
-            var server = mc.getSingleplayerServer();
-            if (server != null) server.execute(() -> server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), "kill @e[type=minecraft:villager]"));
+            dev.onix.client.cosmetics.Cosmetics.select(dev.onix.client.cosmetics.Cosmetics.Slot.NAMETAG, null);
+            dev.onix.client.cosmetics.Cosmetics.select(dev.onix.client.cosmetics.Cosmetics.Slot.TAG, null);
+            dev.onix.client.cosmetics.Cosmetics.testOwnAll = false;
         });
         then(2, () -> {
             OnixClient.MODULES.get(dev.onix.client.module.impl.visual.DarkModeModule.class).setEnabled(true);
