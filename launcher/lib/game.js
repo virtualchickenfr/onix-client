@@ -296,10 +296,14 @@ async function launch({ root, gameDir, auth, javaPath, settings, world = null, s
   const ramMb = Math.min(settings.ramMb, MAX_USEFUL_RAM_MB);
   if (ramMb < settings.ramMb) log(`Memory: ${Math.round(settings.ramMb / 1024)} GB set, using ${MAX_USEFUL_RAM_MB / 1024} GB (more makes Minecraft stutter)`);
 
+  const { demo = false, offline = false, ...authorization } = auth;
+  if (demo) log('Demo account: Minecraft starts in Mojang\'s demo mode (one world, five in-game days, no servers)');
+  if (offline) log('Microsoft is not reachable: playing offline – singleplayer and LAN work, online servers will not let you in');
+
   const launcher = new Client();
   const options = {
     root,
-    authorization: auth,
+    authorization,
     javaPath,
     version: VERSION_ID_RUN ? { number: mc, type: 'release', custom: VERSION_ID_RUN } : { number: mc, type: 'release' },
     memory: { max: `${ramMb}M`, min: `${Math.min(ramMb, 2048)}M` },
@@ -308,7 +312,9 @@ async function launch({ root, gameDir, auth, javaPath, settings, world = null, s
   };
   if (settings.fullscreen) options.window = { fullscreen: true };
   else if (settings.width > 0 && settings.height > 0) options.window = { width: settings.width, height: settings.height };
-  if (world && fs.existsSync(path.join(gameDir, 'saves', world, 'level.dat'))) {
+  if (demo) {
+    options.customLaunchArgs = ['--demo'];
+  } else if (world && fs.existsSync(path.join(gameDir, 'saves', world, 'level.dat'))) {
     // straight into a singleplayer world (Quick Play, Minecraft 1.20 and newer)
     options.quickPlay = { type: 'singleplayer', identifier: world };
     log(`Opening the world "${world}"`);

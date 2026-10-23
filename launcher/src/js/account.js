@@ -44,7 +44,7 @@ function renderAccount() {
       avatar(account),
       el('div', { class: 'account-text' }, [
         el('div', { class: 'account-name', text: account.name }),
-        el('div', { class: 'account-sub', text: n > 1 ? `${n} accounts signed in` : 'Signed in' }),
+        el('div', { class: 'account-sub', text: account.demo ? 'Demo – no Minecraft on this account' : n > 1 ? `${n} accounts signed in` : 'Signed in' }),
       ]),
       icon('chevron-down'),
     ]);
@@ -63,7 +63,7 @@ function renderAccountPop(pop) {
   ]);
   const rows = accounts.map((a) => el('div', { class: `pop-item account-row${a.active ? ' active' : ''}`, onclick: () => switchAccount(a) }, [
     avatar(a, 40),
-    el('span', { class: 't' }, [el('b', { text: a.name }), el('span', { text: a.active ? 'Active' : ago(a.lastUsed) })]),
+    el('span', { class: 't' }, [el('b', { text: a.name }), el('span', { text: `${a.demo ? 'Demo · ' : ''}${a.active ? 'Active' : ago(a.lastUsed)}` })]),
     a.active ? icon('check') : null,
     el('button', { class: 'remove', title: `Remove ${a.name} from this launcher`, onclick: (e) => { e.stopPropagation(); removeAccount(a); } }, [icon('x')]),
   ]));
@@ -115,7 +115,7 @@ async function removeAccount(a) {
 
 async function login() {
   const res = await api.login();
-  if (res.ok) toast(`Welcome, ${res.value.name}`);
+  if (res.ok) toast(res.value.demo ? 'This Microsoft account has no Minecraft – it plays the free demo' : `Welcome, ${res.value.name}`);
   else toast(res.error, true);
   await loadAccounts();
 }

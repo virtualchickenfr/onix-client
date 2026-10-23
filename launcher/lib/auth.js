@@ -8,6 +8,8 @@ const authManager = new Auth('select_account');
  * Microsoft → Xbox → Minecraft round trips (several seconds) on every launch.
  */
 const SESSION_MAX_AGE = 6 * 60 * 60 * 1000;
+/** Offline play: an account whose ownership Microsoft confirmed within this time may start without internet. */
+const OFFLINE_MAX_AGE = 30 * 24 * 60 * 60 * 1000;
 
 function encrypt(text) {
   if (safeStorage.isEncryptionAvailable()) {
@@ -48,7 +50,7 @@ function active(store) {
   return list.find((a) => a.uuid === store.get('activeAccount')) || list[0] || null;
 }
 
-const publicInfo = (a, activeUuid) => ({ name: a.name, uuid: a.uuid, active: a.uuid === activeUuid, lastUsed: a.lastUsed || a.addedAt || 0 });
+const publicInfo = (a, activeUuid) => ({ name: a.name, uuid: a.uuid, active: a.uuid === activeUuid, lastUsed: a.lastUsed || a.addedAt || 0, demo: !!a.demo });
 
 /** All accounts that have signed in on this launcher; the active one first. */
 function list(store) {
@@ -61,7 +63,7 @@ function list(store) {
 
 function current(store) {
   const a = active(store);
-  return a ? { name: a.name, uuid: a.uuid } : null;
+  return a ? { name: a.name, uuid: a.uuid, demo: !!a.demo } : null;
 }
 
 /** Stores (or updates) an account after Microsoft returned a session. */
@@ -86,7 +88,10 @@ async function minecraftFrom(xbox) {
   return minecraft;
 }
 
-/** Opens the Microsoft sign-in window and adds the account (or refreshes it if it is already saved). */
+/**
+ * Opens the Microsoft sign-in window and adds the account (or refreshes it if it is already saved).
+ * A Microsoft account without Minecraft: Java Edition is added as a demo account (Mojang's free demo).
+ */
 async function login(store) {
   const xbox = await authManager.launch('electron', {
     width: 520,
@@ -94,10 +99,44 @@ async function login(store) {
     resizable: false,
     title: 'Sign in with Microsoft',
   });
-  const minecraft = await minecraftFrom(xbox);
+  let minecraft = null;
+  let failure = null;
+  try {
+    minecraft = await minecraftFrom(xbox);
+  } catch (e) {
+    failure = e;
+  }
+  if (!minecraft) {
+    if (isNetworkError(failure)) throw failure;
+    const entry = rememberDemo(store, xbox);
+    store.set('activeAccount', entry.uuid);
+    return { name: entry.name, uuid: entry.uuid, demo: true };
+  }
   const entry = remember(store, xbox, minecraft);
   store.set('activeAccount', entry.uuid);
   return { name: entry.name, uuid: entry.uuid };
+}
+
+/** A Microsoft account that does not own the game: plays Mojang's demo (one world, five in-game days, no servers). */
+function rememberDemo(store, xbox) {
+  const list = accounts(store);
+  const key = `demo-${require('crypto').createHash('sha256').update(String(xbox.save())).digest('hex').slice(0, 8)}`;
+  let entry = list.find((a) => a.demo && a.demoKey === key);
+  if (!entry) {
+    const uuid = require('crypto').randomUUID().replace(/-/g, '');
+    entry = { uuid, name: 'Demo', demo: true, demoKey: key, addedAt: Date.now() };
+    list.push(entry);
+  }
+  entry.refresh = encrypt(xbox.save());
+  save(store, list);
+  return entry;
+}
+
+/** True for "no internet / Microsoft not reachable", false for a real answer such as "does not own the game". */
+function isNetworkError(e) {
+  if (!e) return false;
+  const text = `${e.code || ''} ${e.message || e} ${e.cause ? `${e.cause.code || ''} ${e.cause.message || ''}` : ''}`;
+  return /ENOTFOUND|EAI_AGAIN|ECONNREFUSED|ECONNRESET|ETIMEDOUT|ENETUNREACH|EHOSTUNREACH|fetch failed|network|socket|getaddrinfo|timed? ?out/i.test(text);
 }
 
 /** Makes a saved account the active one. No sign-in window – its saved token is used at launch. */
@@ -162,7 +201,27 @@ async function refresh(store, reuse = true) {
   const stored = list.find((a) => a.uuid === entry.uuid);
   stored.lastUsed = Date.now();
   save(store, list);
-  return (reuse && freshSession(entry)) || renew(store, entry);
+  if (entry.demo) return demoSession(entry);
+  const fresh = reuse && freshSession(entry);
+  if (fresh) return fresh;
+  try {
+    return await renew(store, entry);
+  } catch (e) {
+    // no internet: an account Microsoft confirmed recently may still play offline (singleplayer and LAN)
+    if (isNetworkError(e) && entry.sessionAt && Date.now() - entry.sessionAt < OFFLINE_MAX_AGE) {
+      return { ...offlineSession(entry), offline: true };
+    }
+    throw e;
+  }
+}
+
+/** Credentials for playing without Microsoft: the account's real name and id, but no token (servers refuse it). */
+function offlineSession(entry) {
+  return { access_token: '0', client_token: '0', uuid: entry.uuid, name: entry.name, user_properties: '{}', meta: { type: 'msa' } };
+}
+
+function demoSession(entry) {
+  return { ...offlineSession(entry), demo: true };
 }
 
 /**
@@ -171,7 +230,7 @@ async function refresh(store, reuse = true) {
  */
 function prefetch(store) {
   const entry = active(store);
-  if (!entry || freshSession(entry)) return Promise.resolve(false);
+  if (!entry || entry.demo || freshSession(entry)) return Promise.resolve(false);
   return renew(store, entry).then(() => true, () => false);
 }
 
