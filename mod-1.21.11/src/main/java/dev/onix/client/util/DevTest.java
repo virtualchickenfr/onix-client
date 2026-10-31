@@ -181,6 +181,19 @@ public final class DevTest {
                     dev.onix.client.music.Lyrics.problem(LYRICS_PROBE));
         });
         then(2, () -> OnixClient.MODULES.get(dev.onix.client.module.impl.hud.SongLyricsModule.class).setEnabled(false));
+        // TNT timer: a lit TNT a few blocks ahead
+        then(2, () -> {
+            OnixClient.MODULES.get(dev.onix.client.module.impl.visual.TntTimerModule.class).setEnabled(true);
+            var server = mc.getSingleplayerServer();
+            if (server != null) server.execute(() -> server.getCommands().performPrefixedCommand(server.createCommandSourceStack(),
+                    "execute as @p at @s run summon minecraft:tnt ~ ~ ~5 {fuse:120}"));
+        });
+        then(30, () -> snap(mc, "09h_tnt_timer"));
+        then(2, () -> {
+            OnixClient.MODULES.get(dev.onix.client.module.impl.visual.TntTimerModule.class).setEnabled(false);
+            var server = mc.getSingleplayerServer();
+            if (server != null) server.execute(() -> server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), "kill @e[type=minecraft:tnt]"));
+        });
         then(2, () -> {
             mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
             OnixClient.MODULES.get(dev.onix.client.module.impl.visual.JumpCirclesModule.class).setEnabled(false);

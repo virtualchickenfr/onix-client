@@ -62,6 +62,10 @@
     [
       "\\.isOverlayVisible\\(\\)",
       ".isF3Visible()"
+    ],
+    [
+      "\\bnet\\.minecraft\\.world\\.entity\\.vehicle\\.minecart\\.MinecartTNT\\b",
+      "net.minecraft.world.entity.vehicle.MinecartTNT"
     ]
   ],
   "file_rules": {
