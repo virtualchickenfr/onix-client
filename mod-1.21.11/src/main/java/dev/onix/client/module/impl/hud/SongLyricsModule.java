@@ -236,12 +236,16 @@ public class SongLyricsModule extends HudModule {
         Player p = mc().player;
         Font f = mc().font;
         side = -side;
-        float yaw = p.getYRot() + side * (20 + random.nextInt(30));
-        float pitch = -5 + random.nextInt(30);
+        float yaw = p.getYRot() + side * (12 + random.nextInt(22));
         Vec3 eye = p.getEyePosition();
-        Vec3 dir = Vec3.directionFromRotation(pitch, yaw);
         double dist = worldDistance.get();
+        // a wall or the floor ahead, a bit to the side; if nothing is in reach, aim lower at the floor
+        Vec3 dir = Vec3.directionFromRotation(-4 + random.nextInt(24), yaw);
         BlockHitResult hit = mc().level.clip(new ClipContext(eye, eye.add(dir.scale(dist)), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, p));
+        if (hit.getType() != HitResult.Type.BLOCK) {
+            dir = Vec3.directionFromRotation(22 + random.nextInt(18), yaw);
+            hit = mc().level.clip(new ClipContext(eye, eye.add(dir.scale(dist)), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, p));
+        }
         Vec3 flat = new Vec3(dir.x, 0, dir.z).normalize();
         Vec3 origin;
         Vec3 normal;
@@ -255,7 +259,9 @@ public class SongLyricsModule extends HudModule {
             normal = dir.scale(-1);
             up = new Vec3(0, 1, 0);
             normal = new Vec3(normal.x, 0, normal.z).normalize();
-            origin = eye.add(dir.scale(dist * 0.8));
+            dir = Vec3.directionFromRotation(0, yaw);
+            normal = new Vec3(-dir.x, 0, -dir.z).normalize();
+            origin = eye.add(dir.scale(Math.min(dist, 6)));
         }
         Vec3 right = up.cross(normal).normalize();
         float scale = 0.09f * worldSize.getFloat();
