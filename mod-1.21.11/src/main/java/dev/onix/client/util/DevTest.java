@@ -23,6 +23,8 @@ import net.minecraft.client.input.KeyEvent;
  * Walks through Onix's and Carbon's screens, joins a test world and saves screenshots to run/screenshots.
  */
 public final class DevTest {
+    private static final dev.onix.client.music.NowPlaying.Track LYRICS_PROBE = new dev.onix.client.music.NowPlaying.Track(
+            "Spotify.exe", "Blinding Lights", "The Weeknd", "After Hours", 200_040, 0, System.currentTimeMillis(), true);
     private DevTest() {}
 
     public static final boolean ENABLED = Boolean.getBoolean("onix.devtest");
@@ -54,7 +56,11 @@ public final class DevTest {
     private static void build(Minecraft mc) {
         until(() -> mc.getOverlay() == null && (mc.screen instanceof OnixTitleScreen || mc.screen instanceof CarbonMainMenu || mc.screen instanceof TitleScreen
                 || mc.screen instanceof dev.onix.client.gui.WelcomeScreen));
-        then(20, () -> mc.options.pauseOnLostFocus = false);
+        then(20, () -> {
+            mc.options.pauseOnLostFocus = false;
+            // the lyrics lookup over the real internet (LRCLIB), checked again further down
+            dev.onix.client.music.Lyrics.of(LYRICS_PROBE);
+        });
         // first start: the setup tour
         then(40, () -> snap(mc, "00a_intro_welcome"));
         then(2, () -> { if (mc.screen != null) mc.screen.keyPressed(new KeyEvent(com.mojang.blaze3d.platform.InputConstants.KEY_RIGHT, 0, 0)); });
@@ -169,6 +175,11 @@ public final class DevTest {
             lyrics.testWorldLine();
         });
         then(40, () -> snap(mc, "09g_song_lyrics_world"));
+        then(1, () -> {
+            var lines = dev.onix.client.music.Lyrics.of(LYRICS_PROBE);
+            OnixClient.LOGGER.info("[devtest] lyrics probe: {} ({})", lines == null ? "still loading" : lines.size() + " lines",
+                    dev.onix.client.music.Lyrics.problem(LYRICS_PROBE));
+        });
         then(2, () -> OnixClient.MODULES.get(dev.onix.client.module.impl.hud.SongLyricsModule.class).setEnabled(false));
         then(2, () -> {
             mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);

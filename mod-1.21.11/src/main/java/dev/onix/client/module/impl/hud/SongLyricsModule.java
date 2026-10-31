@@ -139,7 +139,8 @@ public class SongLyricsModule extends HudModule {
             if (lines == null || lines.isEmpty()) {
                 noLyrics = true;
                 current = t.title() + (t.artist().isBlank() ? "" : " · " + t.artist());
-                next = lines == null ? "Loading lyrics…" : "No synced lyrics";
+                String problem = Lyrics.problem(t);
+                next = lines == null ? "Loading lyrics…" : problem != null && !problem.isEmpty() ? problem : "No synced lyrics";
                 words = List.of(current);
             } else {
                 int i = Lyrics.lineAt(lines, ms);

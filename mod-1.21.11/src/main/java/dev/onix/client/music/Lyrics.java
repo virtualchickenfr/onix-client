@@ -32,7 +32,12 @@ public final class Lyrics {
     /** Result per song; empty list = no synced lyrics found. */
     private static final Map<String, List<Line>> CACHE = new ConcurrentHashMap<>();
     private static final Map<String, Boolean> LOADING = new ConcurrentHashMap<>();
-    private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(6)).build();
+    private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(8))
+            .version(HttpClient.Version.HTTP_1_1).followRedirects(HttpClient.Redirect.NORMAL).build();
+    /** Why the last song has no lyrics ("" = none found), for the bar. */
+    private static final Map<String, String> PROBLEM = new ConcurrentHashMap<>();
+    /** Songs whose request failed (network): asked again after this time. */
+    private static final Map<String, Long> RETRY_AT = new ConcurrentHashMap<>();
     private static final Pattern TIME = Pattern.compile("\\[(\\d+):(\\d+(?:[.,]\\d+)?)]");
 
     private Lyrics() {}
@@ -41,14 +46,24 @@ public final class Lyrics {
     public static List<Line> of(NowPlaying.Track t) {
         String key = t.key();
         List<Line> cached = CACHE.get(key);
-        if (cached != null) return cached;
+        if (cached != null) {
+            Long retry = RETRY_AT.get(key);
+            if (retry == null || System.currentTimeMillis() < retry) return cached;
+            CACHE.remove(key);
+            RETRY_AT.remove(key);
+        }
         if (LOADING.putIfAbsent(key, true) == null) {
             Thread th = new Thread(() -> {
                 try {
-                    CACHE.put(key, fetch(t));
+                    List<Line> lines = fetch(t);
+                    CACHE.put(key, lines);
+                    PROBLEM.put(key, "");
+                    OnixClient.LOGGER.info("Lyrics for {}: {}", key, lines.isEmpty() ? "none with timing on LRCLIB" : lines.size() + " lines");
                 } catch (Exception e) {
                     OnixClient.LOGGER.warn("Lyrics for {} failed: {}", key, e.toString());
+                    PROBLEM.put(key, "Lyrics server not reachable");
                     CACHE.put(key, List.of());
+                    RETRY_AT.put(key, System.currentTimeMillis() + 20_000);
                 } finally {
                     LOADING.remove(key);
                 }
@@ -76,32 +91,55 @@ public final class Lyrics {
         return found;
     }
 
+    /** Why there are no lyrics for this song ("" or null = simply none found). */
+    public static String problem(NowPlaying.Track t) {
+        return PROBLEM.get(t.key());
+    }
+
+    /**
+     * Tries several ways, from exact to loose: the exact song (title, artist, album, length), then a search by title
+     * and artist, then a search with a cleaned title ("Song - Remastered 2011 (feat. X)" → "Song"), then free text.
+     */
     private static List<Line> fetch(NowPlaying.Track t) throws Exception {
         String artist = firstArtist(t.artist());
-        String q = "?track_name=" + enc(t.title()) + "&artist_name=" + enc(artist)
-                + (t.album().isBlank() ? "" : "&album_name=" + enc(t.album()))
-                + (t.durationMs() > 0 ? "&duration=" + Math.round(t.durationMs() / 1000.0) : "");
-        JsonElement got = get("https://lrclib.net/api/get" + q);
-        String synced = got != null && got.isJsonObject() ? syncedOf(got.getAsJsonObject()) : null;
-        if (synced == null) {
-            // looser search: same title and artist, any album, closest length
-            JsonElement found = get("https://lrclib.net/api/search?track_name=" + enc(t.title()) + "&artist_name=" + enc(artist));
-            if (found != null && found.isJsonArray()) {
-                JsonArray arr = found.getAsJsonArray();
-                long best = Long.MAX_VALUE;
-                for (JsonElement e : arr) {
-                    JsonObject o = e.getAsJsonObject();
-                    String s = syncedOf(o);
-                    if (s == null) continue;
-                    long diff = o.has("duration") && t.durationMs() > 0 ? Math.abs(Math.round(o.get("duration").getAsDouble() * 1000) - t.durationMs()) : 0;
-                    if (diff < best) {
-                        best = diff;
-                        synced = s;
-                    }
-                }
+        String title = t.title();
+        String clean = cleanTitle(title);
+        long seconds = Math.round(t.durationMs() / 1000.0);
+        String synced = null;
+        JsonElement got = get("https://lrclib.net/api/get?track_name=" + enc(title) + "&artist_name=" + enc(artist)
+                + (t.album().isBlank() ? "" : "&album_name=" + enc(t.album())) + (seconds > 0 ? "&duration=" + seconds : ""));
+        if (got != null && got.isJsonObject()) synced = syncedOf(got.getAsJsonObject());
+        if (synced == null) synced = best(get("https://lrclib.net/api/search?track_name=" + enc(title) + "&artist_name=" + enc(artist)), t);
+        if (synced == null && !clean.equals(title)) synced = best(get("https://lrclib.net/api/search?track_name=" + enc(clean) + "&artist_name=" + enc(artist)), t);
+        if (synced == null) synced = best(get("https://lrclib.net/api/search?q=" + enc(clean + " " + artist)), t);
+        return synced == null ? List.of() : parse(synced, t.durationMs());
+    }
+
+    /** The synced lyrics of the search result closest in length (within 15 s when the length is known). */
+    private static String best(JsonElement found, NowPlaying.Track t) {
+        if (found == null || !found.isJsonArray()) return null;
+        String bestLyrics = null;
+        long best = Long.MAX_VALUE;
+        for (JsonElement e : found.getAsJsonArray()) {
+            if (!e.isJsonObject()) continue;
+            JsonObject o = e.getAsJsonObject();
+            String s = syncedOf(o);
+            if (s == null) continue;
+            long diff = o.has("duration") && !o.get("duration").isJsonNull() && t.durationMs() > 0
+                    ? Math.abs(Math.round(o.get("duration").getAsDouble() * 1000) - t.durationMs()) : 0;
+            if (t.durationMs() > 0 && diff > 15_000) continue;
+            if (diff < best) {
+                best = diff;
+                bestLyrics = s;
             }
         }
-        return synced == null ? List.of() : parse(synced, t.durationMs());
+        return bestLyrics;
+    }
+
+    private static String cleanTitle(String title) {
+        String s = title.replaceAll("(?i)\\s*[(\\[](feat|ft|with|prod)\\.?[^)\\]]*[)\\]]", "");
+        s = s.replaceAll("(?i)\\s+-\\s+.*(remaster|version|edit|mix|live|mono|stereo|from|radio|acoustic|sped|slowed).*$", "");
+        return s.trim().isEmpty() ? title : s.trim();
     }
 
     private static String syncedOf(JsonObject o) {
@@ -111,10 +149,12 @@ public final class Lyrics {
     }
 
     private static JsonElement get(String url) throws Exception {
-        HttpRequest req = HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(10))
-                .header("User-Agent", "OnixClient/" + OnixClient.VERSION + " (https://github.com/virtualchickenfr/onix-client)").GET().build();
-        HttpResponse<String> res = HTTP.send(req, HttpResponse.BodyHandlers.ofString());
-        if (res.statusCode() != 200) return null;
+        HttpRequest req = HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(12))
+                .header("User-Agent", "OnixClient/" + OnixClient.VERSION + " (https://github.com/virtualchickenfr/onix-client)")
+                .header("Accept", "application/json").GET().build();
+        HttpResponse<String> res = HTTP.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (res.statusCode() == 404) return null;
+        if (res.statusCode() != 200) throw new java.io.IOException("LRCLIB answered " + res.statusCode());
         return JsonParser.parseString(res.body());
     }
 
