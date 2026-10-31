@@ -160,6 +160,16 @@ public final class DevTest {
         then(10, () -> mc.options.keyJump.setDown(true));
         then(2, () -> mc.options.keyJump.setDown(false));
         then(4, () -> snap(mc, "09e_jump_circle"));
+        // song lyrics in the world (a sample line, no music needed)
+        then(2, () -> {
+            mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
+            if (mc.player != null) mc.player.setXRot(20f);
+            var lyrics = OnixClient.MODULES.get(dev.onix.client.module.impl.hud.SongLyricsModule.class);
+            lyrics.setEnabled(true);
+            lyrics.testWorldLine();
+        });
+        then(40, () -> snap(mc, "09g_song_lyrics_world"));
+        then(2, () -> OnixClient.MODULES.get(dev.onix.client.module.impl.hud.SongLyricsModule.class).setEnabled(false));
         then(2, () -> {
             mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
             OnixClient.MODULES.get(dev.onix.client.module.impl.visual.JumpCirclesModule.class).setEnabled(false);

@@ -103,6 +103,7 @@ public class ModuleManager {
         register(new TrailModule());
         register(new dev.onix.client.module.impl.visual.JumpCirclesModule());
         register(new dev.onix.client.module.impl.visual.SmallCapsModule());
+        register(new dev.onix.client.module.impl.hud.SongLyricsModule());
         register(new dev.onix.client.module.impl.visual.HandAuraModule());
         register(new dev.onix.client.module.impl.visual.SwingAnimationModule());
         register(new dev.onix.client.module.impl.visual.WeaponInspectModule());
