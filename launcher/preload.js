@@ -62,6 +62,7 @@ contextBridge.exposeInMainWorld('onix', {
   listMods: (profileId) => invoke('mods:list', profileId),
   toggleMod: (file, profileId) => invoke('mods:toggle', file, profileId),
   addMods: (paths, profileId) => invoke('mods:add', paths, profileId),
+  pickModFiles: () => invoke('mods:pickFiles'),
   removeMod: (profileId, file) => invoke('mods:remove', profileId, file),
   searchModrinth: (opts) => invoke('modrinth:search', opts),
   installedModrinth: (profileId) => invoke('modrinth:installed', profileId),

@@ -32,3 +32,4 @@ async function renderMods() {
   }));
 }
 $('#btn-mods-folder').addEventListener('click', () => api.openFolder('mods'));
+$('#btn-mods-files').addEventListener('click', async () => addModFiles(await api.pickModFiles()));

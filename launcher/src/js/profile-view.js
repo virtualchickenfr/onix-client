@@ -237,13 +237,14 @@ async function renderPvMods(seq) {
   tools(
     el('button', { class: 'btn sm', onclick: () => api.openFolder('mods', id) }, [icon('folder'), 'Folder']),
     el('button', { class: 'btn sm', onclick: () => openMods(id, 'installed') }, [icon('refresh'), 'Updates']),
+    el('button', { class: 'btn sm', title: 'Add your own mod files (.jar)', onclick: async () => addModFiles(await api.pickModFiles(), id) }, [icon('plus'), 'Add Files']),
     el('button', { class: 'btn sm primary', onclick: () => openMods(id, 'browse') }, [icon('search'), 'Browse Modrinth']),
   );
   const mods = await api.listMods(id);
   if (stale(seq)) return;
   const body = $('#pv-body');
   if (!mods.length) {
-    body.replaceChildren(emptyBlock('No mods yet', 'Onix, Fabric API and the performance pack are added on the first start.',
+    body.replaceChildren(emptyBlock('No mods yet', 'Onix, Fabric API and the performance pack are added on the first start. Add your own .jar files with "Add Files" or drop them here.',
       el('button', { class: 'btn sm primary', text: 'Browse Modrinth', onclick: () => openMods(id, 'browse') })));
     return;
   }

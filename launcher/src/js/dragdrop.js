@@ -56,17 +56,26 @@ window.addEventListener('drop', async (e) => {
     if (paths.length) importDropped(paths);
     return;
   }
-  const res = await api.addMods(paths, profileState.active);
+  // dropped onto a profile's page: into that profile, otherwise into the active one
+  await addModFiles(paths, currentView === 'profile' && pv.id ? pv.id : profileState.active);
+});
+
+/** Adds .jar files (dropped or picked with "Add Files") to the active profile and tells what happened. */
+async function addModFiles(paths, profileId = profileState.active) {
+  if (!paths || !paths.length) return;
+  const res = await api.addMods(paths, profileId);
   if (!res.ok) {
     toast(res.error, true);
     return;
   }
   const { added, skipped, profile } = res.value;
   if (added.length) {
-    toast(`${plural(added.length, 'mod', 'mods')} added to "${profile}"${skipped.length ? ` · ${skipped.length} skipped` : ''}`);
-    if (currentView === 'mods') renderMods(); else showView('mods');
+    toast(`${plural(added.length, 'mod', 'mods')} added to "${profile}"${skipped.length ? ` · ${skipped.length} skipped: ${skipped[0]}` : ''}`);
+    if (currentView === 'profile') profileViewChanged(profileId);
+    else if (currentView === 'mods') renderMods();
+    else showView('mods');
   } else {
     toast(skipped[0] || 'Nothing to add', true);
   }
   skipped.forEach((line) => console.warn('Skipped mod:', line));
-});
+}

@@ -647,6 +647,15 @@ app.whenReady().then(() => {
     }
     return { added, skipped, profile: profileById(profileId).name };
   }));
+  // "Add Files" on the Mods page: pick .jar files, then they go through mods:add like dropped files
+  ipcMain.handle('mods:pickFiles', async () => {
+    const res = await dialog.showOpenDialog(win, {
+      title: 'Add mods',
+      properties: ['openFile', 'multiSelections'],
+      filters: [{ name: 'Fabric mods', extensions: ['jar'] }],
+    });
+    return res.canceled ? [] : res.filePaths;
+  });
   ipcMain.handle('mods:toggle', safe((_e, file, profileId) => {
     notWhileRunning(profileId);
     const dir = profiles.dir(profileById(profileId));
