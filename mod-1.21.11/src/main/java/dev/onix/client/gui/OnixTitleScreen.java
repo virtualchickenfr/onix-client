@@ -48,6 +48,21 @@ public class OnixTitleScreen extends Screen {
     private double dragStartX = Double.NaN;
     private boolean dragged;
 
+    // ---- Cinematic design
+    /** The "press any key" splash shows once per game start. */
+    private static boolean entered;
+    private static long enteredAt;
+    private final List<Item> cineItems = new ArrayList<>();
+    private net.minecraft.client.gui.components.PlayerSkinWidget skinWidget;
+    private long shownAt;
+    private Runnable pending;
+    private long pendingAt;
+    private float hoverY = Float.NaN;
+    private float hoverW;
+    private final List<float[]> sparks = new ArrayList<>();
+    private final java.util.Random random = new java.util.Random();
+    private boolean dragOnSkin;
+
     public OnixTitleScreen() {
         super(Component.literal(OnixClient.NAME));
     }
@@ -63,6 +78,54 @@ public class OnixTitleScreen extends Screen {
         items.add(new Item("Profiles", "profile", () -> minecraft.setScreen(new OnixMenuScreen(this, OnixMenuScreen.View.PROFILES)), false));
         items.add(new Item("Options", "settings", () -> minecraft.setScreen(new OptionsScreen(this, minecraft.options)), false));
         items.add(new Item("Quit Game", "power", () -> minecraft.stop(), false));
+        cineItems.clear();
+        cineItems.add(new Item("Singleplayer", "world", () -> minecraft.setScreen(new SelectWorldScreen(this)), true));
+        cineItems.add(new Item("Multiplayer", "server", () -> minecraft.setScreen(new JoinMultiplayerScreen(this)), true));
+        cineItems.add(new Item("Minecraft Settings", "settings", () -> minecraft.setScreen(new OptionsScreen(this, minecraft.options)), false));
+        cineItems.add(new Item("Client", "all", () -> minecraft.setScreen(new OnixMenuScreen(this)), false));
+        cineItems.add(new Item("Quit Game", "power", () -> minecraft.stop(), false));
+
+        // 1.1.6: everyone gets the cinematic title screen and the glass menus once
+        if (OnixClient.CONFIG != null && !OnixClient.CONFIG.cinematicSet.isOn()) {
+            OnixClient.CONFIG.cinematicSet.set(true);
+            OnixClient.CONFIG.titleDesign.set("Cinematic");
+            OnixClient.CONFIG.menuGlass.set(true);
+            OnixClient.CONFIG.save();
+        }
+        // the player in the menu (drag to turn); clicking under it opens the wardrobe
+        skinWidget = new net.minecraft.client.gui.components.PlayerSkinWidget(80, 150, minecraft.getEntityModels(),
+                minecraft.getSkinManager().createLookup(minecraft.getGameProfile(), false));
+        skinWidget.visible = false;
+        addRenderableWidget(skinWidget);
+        shownAt = System.currentTimeMillis();
+        pending = null;
+    }
+
+    private boolean cinematic() {
+        return "Cinematic".equals(design());
+    }
+
+    /** Fades to black, then runs the action (cinematic cut). */
+    private void go(Runnable action) {
+        if (pending != null) return;
+        if (OnixClient.CONFIG != null && !OnixClient.CONFIG.menuAnimations.isOn()) {
+            action.run();
+            return;
+        }
+        pending = action;
+        pendingAt = System.currentTimeMillis();
+    }
+
+    private void enter() {
+        if (entered) return;
+        entered = true;
+        enteredAt = System.currentTimeMillis();
+        minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.AMETHYST_BLOCK_CHIME, 0.7f, 1.0f));
+        for (int i = 0; i < 70; i++) {
+            double ang = random.nextDouble() * Math.PI * 2;
+            float sp = 40 + random.nextFloat() * 160;
+            sparks.add(new float[]{width / 2f, height / 2f - 10, (float) Math.cos(ang) * sp, (float) Math.sin(ang) * sp, 0.6f + random.nextFloat() * 0.8f, 0});
+        }
     }
 
     @Override
@@ -97,9 +160,27 @@ public class OnixTitleScreen extends Screen {
     public void renderBackground(GuiGraphics ctx, int mouseX, int mouseY, float delta) {
         Theme.refresh();
         float time = (System.nanoTime() - startNanos) / 1_000_000_000f;
-        TitleBackgrounds.draw(ctx, width, height, mouseX, mouseY, time);
+        if (cinematic()) {
+            // slow camera drift (Ken Burns) with a little mouse parallax
+            float zoom = 1.06f + 0.035f * (float) Math.sin(time * 0.045f);
+            float px = (float) Math.sin(time * 0.031f) * width * 0.012f + (mouseX - width / 2f) * -0.012f;
+            float py = (float) Math.cos(time * 0.027f) * height * 0.010f + (mouseY - height / 2f) * -0.012f;
+            ctx.pose().pushMatrix();
+            ctx.pose().translate(width / 2f + px, height / 2f + py);
+            ctx.pose().scale(zoom, zoom);
+            ctx.pose().translate(-width / 2f, -height / 2f);
+            TitleBackgrounds.draw(ctx, width, height, mouseX, mouseY, time);
+            ctx.pose().popMatrix();
+        } else {
+            TitleBackgrounds.draw(ctx, width, height, mouseX, mouseY, time);
+        }
         ctx.fillGradient(0, 0, width, height, Theme.withAlpha(Theme.current().sky(), 26), Theme.withAlpha(Theme.current().sky(), 0));
         switch (design()) {
+            case "Cinematic" -> {
+                // dark grade, vignette and a soft light behind the menu
+                ctx.fill(0, 0, width, height, entered ? 0x8C030305 : 0xE6020203);
+                vignette(ctx);
+            }
             case "Onix", "Split" -> {
                 // darken the left side for readability
                 int fade = Math.max(300, width / 2);
@@ -123,6 +204,11 @@ public class OnixTitleScreen extends Screen {
             minecraft.setScreen(new net.minecraft.client.gui.screens.TitleScreen());
             return;
         }
+        if (cinematic()) {
+            renderCinematic(ctx, mouseX, mouseY, delta);
+            return;
+        }
+        if (skinWidget != null) skinWidget.visible = false;
         super.render(ctx, mouseX, mouseY, delta);
         areas.clear();
         float t = Anim.easeOut(intro.to(1f, 4f));
@@ -420,14 +506,234 @@ public class OnixTitleScreen extends Screen {
                 () -> minecraft.setScreen(new gg.carbon.client.screen.ThemePicker(this))));
     }
 
+
+    // ================================================================== Cinematic
+
+    private static float clamp01(float v) {
+        return Math.max(0f, Math.min(1f, v));
+    }
+
+    private static float smooth(float t) {
+        t = clamp01(t);
+        return t * t * (3 - 2 * t);
+    }
+
+    private void vignette(GuiGraphics ctx) {
+        int steps = 16;
+        for (int i = 0; i < steps; i++) {
+            float f = 1 - i / (float) steps;
+            int a = Math.round(150 * f * f);
+            int bandX = Math.max(1, width / 5 / steps);
+            int bandY = Math.max(1, height / 4 / steps);
+            ctx.fill(i * bandX, 0, (i + 1) * bandX, height, a << 24);
+            ctx.fill(width - (i + 1) * bandX, 0, width - i * bandX, height, a << 24);
+            ctx.fill(0, i * bandY, width, (i + 1) * bandY, a << 24);
+            ctx.fill(0, height - (i + 1) * bandY, width, height - i * bandY, a << 24);
+        }
+    }
+
+    private void logo(GuiGraphics ctx, float cx, float cy, float size, float alpha, float spin) {
+        if (alpha <= 0.01f) return;
+        ctx.pose().pushMatrix();
+        ctx.pose().translate(cx, cy);
+        ctx.pose().rotate(spin);
+        int s = Math.round(size);
+        // soft glow
+        for (int g = 3; g >= 1; g--) {
+            int gs = Math.round(size * (1 + g * 0.14f));
+            ctx.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, LOGO, -gs / 2, -gs / 2, 0f, 0f, gs, gs, 128, 128, 128, 128,
+                    net.minecraft.util.ARGB.colorFromFloat(alpha * 0.10f, 1f, 1f, 1f));
+        }
+        ctx.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, LOGO, -s / 2, -s / 2, 0f, 0f, s, s, 128, 128, 128, 128,
+                net.minecraft.util.ARGB.colorFromFloat(alpha, 1f, 1f, 1f));
+        ctx.pose().popMatrix();
+    }
+
+    private void centered(GuiGraphics ctx, Component c, float cx, int y, float scale, int color) {
+        int w = Math.round(font.width(c) * scale);
+        Theme.scaled(ctx, c, Math.round(cx - w / 2f), y, scale, color);
+    }
+
+    private void renderCinematic(GuiGraphics ctx, int mouseX, int mouseY, float delta) {
+        long now = System.currentTimeMillis();
+        float time = (now % 1_000_000L) / 1000f;
+        float dt = Math.min(0.05f, Math.max(0.001f, delta / 20f));
+        areas.clear();
+        float cx = width / 2f;
+
+        if (!entered) {
+            // ---- splash: logo breathing in the dark, "press any key"
+            float in = smooth((now - shownAt) / 1400f);
+            float breathe = 1 + 0.03f * (float) Math.sin(time * 2.2f);
+            logo(ctx, cx, height / 2f - 14, 46 * breathe, in, (float) Math.sin(time * 0.6f) * 0.05f);
+            centered(ctx, Theme.display("Onix Client"), cx, height / 2 + 22, 1.3f, a(WHITE, in));
+            float blink = 0.35f + 0.65f * (0.5f + 0.5f * (float) Math.sin(time * 3f));
+            centered(ctx, Theme.ui("Press any key to enter"), cx, height / 2 + 42, 1f, a(GREY, in * blink));
+            if (skinWidget != null) skinWidget.visible = false;
+            renderFade(ctx, now);
+            return;
+        }
+
+        float since = (now - enteredAt) / 1000f;
+        // ---- burst of sparks when entering
+        if (!sparks.isEmpty()) {
+            for (int i = sparks.size() - 1; i >= 0; i--) {
+                float[] p = sparks.get(i);
+                p[5] += dt;
+                if (p[5] > p[4]) {
+                    sparks.remove(i);
+                    continue;
+                }
+                p[0] += p[2] * dt;
+                p[1] += p[3] * dt;
+                p[2] *= 0.94f;
+                p[3] *= 0.94f;
+                float life = 1 - p[5] / p[4];
+                int sz = life > 0.5f ? 2 : 1;
+                ctx.fill(Math.round(p[0]), Math.round(p[1]), Math.round(p[0]) + sz, Math.round(p[1]) + sz, a(WHITE, life));
+            }
+        }
+
+        boolean skinOn = width >= 420;
+        float menuX = skinOn ? width * 0.42f : cx;
+        // ---- logo flies from the centre to its place above the menu
+        float move = smooth(since / 0.9f);
+        float logoY = height / 2f - 14 + (height / 2f - 86 - (height / 2f - 14)) * move;
+        float logoX = cx + (menuX - cx) * move;
+        float logoSize = 46 + (30 - 46) * move;
+        float spin = (1 - move) * (float) Math.PI * 2 + (float) Math.sin(time * 0.5f) * 0.04f;
+        logo(ctx, logoX, logoY, logoSize, 1f, spin);
+        float titleA = smooth((since - 0.5f) / 0.5f);
+        centered(ctx, Theme.display("Onix Client"), menuX, Math.round(logoY + 20), 1.15f, a(WHITE, titleA));
+
+        // ---- menu items: plain text, a soft glass bar glides to the hovered one
+        int step = 18;
+        int top = Math.round(height / 2f - 40);
+        int hovered = -1;
+        for (int i = 0; i < cineItems.size(); i++) {
+            int y = top + i * step + (i >= 2 ? 6 : 0);
+            int w = Math.max(110, Theme.boldWidth(cineItems.get(i).label()) + 30);
+            if (Theme.inside(mouseX, mouseY, Math.round(menuX - w / 2f), y - 4, Math.round(menuX + w / 2f), y + 12)) hovered = i;
+        }
+        if (hovered >= 0) {
+            int y = top + hovered * step + (hovered >= 2 ? 6 : 0);
+            float w = Math.max(110, Theme.boldWidth(cineItems.get(hovered).label()) + 30);
+            if (Float.isNaN(hoverY)) {
+                hoverY = y;
+                hoverW = w;
+            }
+            hoverY += (y - hoverY) * Math.min(1f, dt * 16f);
+            hoverW += (w - hoverW) * Math.min(1f, dt * 16f);
+        } else {
+            hoverY = Float.NaN;
+        }
+        if (!Float.isNaN(hoverY)) {
+            int hy = Math.round(hoverY);
+            int hw = Math.round(hoverW);
+            Theme.round(ctx, Math.round(menuX - hw / 2f), hy - 4, Math.round(menuX + hw / 2f), hy + 12, 5, 0x22FFFFFF);
+            ctx.fill(Math.round(menuX - hw / 2f) + 5, hy - 4, Math.round(menuX + hw / 2f) - 5, hy - 3, 0x30FFFFFF);
+        }
+        for (int i = 0; i < cineItems.size(); i++) {
+            Item item = cineItems.get(i);
+            float ia = smooth((since - 0.55f - i * 0.07f) / 0.4f);
+            if (ia <= 0.01f) continue;
+            int y = top + i * step + (i >= 2 ? 6 : 0) + Math.round((1 - ia) * 8);
+            boolean hov = i == hovered;
+            float h = hoverAnim("cine:" + item.label(), hov);
+            int color = Theme.lerpColor(i < 2 ? 0xFFDADAE0 : GREY, WHITE, h);
+            int tw = Theme.boldWidth(item.label());
+            ctx.drawString(font, Theme.bold(item.label()), Math.round(menuX - tw / 2f), y, a(color, ia), false);
+            int w = Math.max(110, tw + 30);
+            Runnable action = item.action();
+            areas.add(new Area(Math.round(menuX - w / 2f), y - 4, Math.round(menuX + w / 2f), y + 12, () -> go(action)));
+        }
+
+        // ---- the player on the right, slides in; the wardrobe pill under it
+        float skinA = smooth((since - 0.8f) / 0.7f);
+        if (skinWidget != null) {
+            int sh = Math.max(110, Math.min(240, Math.round(height * 0.52f)));
+            int sw = Math.round(sh * 0.55f);
+            float sxC = width * 0.76f;
+            float bob = (float) Math.sin(time * 1.4f) * 2.5f;
+            int sx = Math.round(sxC - sw / 2f + (1 - skinA) * 50);
+            int sy = Math.round(height / 2f - sh / 2f - 6 + bob);
+            skinWidget.setRectangle(sw, sh, sx, sy);
+            skinWidget.visible = skinOn && skinA > 0.02f;
+            if (skinWidget.visible) {
+                // light pool behind the player
+                for (int r = 5; r >= 1; r--) {
+                    int rr = Math.round(sw * 0.35f * r);
+                    Theme.round(ctx, Math.round(sxC - rr), Math.round(height / 2f - rr * 0.9f), Math.round(sxC + rr), Math.round(height / 2f + rr * 0.9f),
+                            rr, Theme.withAlpha(Theme.themeAccent(), Math.round(10 * skinA)));
+                }
+                String name = minecraft.getUser().getName();
+                centered(ctx, Theme.bold(name), sxC, sy - 14, 1f, a(WHITE, skinA));
+                // shadow on the "floor"
+                Theme.round(ctx, Math.round(sxC - sw * 0.38f), sy + sh - 4, Math.round(sxC + sw * 0.38f), sy + sh + 2, 3, a(0x55000000, skinA));
+                // wardrobe pill
+                String label = "Wardrobe";
+                int pw = Theme.boldWidth(label) + 30;
+                int px = Math.round(sxC - pw / 2f);
+                int py = sy + sh + 10;
+                boolean hov = Theme.inside(mouseX, mouseY, px, py, px + pw, py + 18);
+                float h = hoverAnim("cine:wardrobe", hov);
+                glassPill(ctx, px, py, px + pw, py + 18, skinA, h);
+                drawIcon(ctx, "cosmetics", px + 8, py + 5, 8, a(WHITE, skinA));
+                ctx.drawString(font, Theme.bold(label), px + 20, py + 5, a(Theme.lerpColor(0xFFDADAE0, WHITE, h), skinA), false);
+                areas.add(new Area(px, py, px + pw, py + 18,
+                        () -> go(() -> minecraft.setScreen(new OnixMenuScreen(this, OnixMenuScreen.View.COSMETICS)))));
+            }
+        }
+        super.render(ctx, mouseX, mouseY, delta); // the skin widget (Screen.render draws the background first)
+
+        // ---- letterbox bars ease in, footer
+        float bars = smooth(since / 1.2f);
+        int bh = Math.round(height * 0.045f * bars);
+        if (bh > 0) {
+            ctx.fill(0, 0, width, bh, 0xFF000000);
+            ctx.fill(0, height - bh, width, height, 0xFF000000);
+        }
+        renderFooter(ctx, mouseX, mouseY, smooth((since - 1f) / 0.6f));
+        renderFade(ctx, now);
+    }
+
+    /** Dark liquid glass: see-through black, light top edge, a little shine when hovered. */
+    private void glassPill(GuiGraphics ctx, int x1, int y1, int x2, int y2, float alpha, float hover) {
+        int r = (y2 - y1) / 2;
+        Theme.round(ctx, x1, y1, x2, y2, r, a(0x40FFFFFF, alpha * (0.6f + 0.4f * hover)));
+        Theme.round(ctx, x1 + 1, y1 + 1, x2 - 1, y2 - 1, r - 1, a(Theme.lerpColor(0xB00A0A0E, 0xB0202028, hover), alpha));
+        ctx.fill(x1 + r, y1 + 1, x2 - r, y1 + 2, a(0x55FFFFFF, alpha));
+    }
+
+    /** Black fade: in when the screen opens, out before a cut to the next screen. */
+    private void renderFade(GuiGraphics ctx, long now) {
+        float fade = 1 - smooth((now - shownAt) / 450f);
+        if (pending != null) {
+            float out = smooth((now - pendingAt) / 260f);
+            fade = Math.max(fade, out);
+            if (out >= 1f) {
+                Runnable action = pending;
+                pending = null;
+                action.run();
+            }
+        }
+        if (fade > 0.01f) ctx.fill(0, 0, width, height, Theme.withAlpha(0xFF000000, Math.round(255 * fade)));
+    }
+
     // ================================================================== input
 
     @Override
     public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent onix$e, boolean onix$dbl) {
         double mouseX = onix$e.x(); double mouseY = onix$e.y(); int button = onix$e.button();
+        if (cinematic() && !entered) {
+            enter();
+            dragStartX = Double.NaN;
+            return true;
+        }
         if (button == 0) {
-            dragStartX = mouseX;
-            dragged = false;
+            dragOnSkin = skinWidget != null && skinWidget.visible && skinWidget.isMouseOver(mouseX, mouseY);
+            dragStartX = dragOnSkin ? Double.NaN : mouseX;
+            dragged = dragOnSkin;
         }
         return super.mouseClicked(onix$e, onix$dbl);
     }
@@ -465,6 +771,10 @@ public class OnixTitleScreen extends Screen {
     @Override
     public boolean keyPressed(net.minecraft.client.input.KeyEvent onix$k) {
         int keyCode = onix$k.key(); int scanCode = onix$k.scancode(); int modifiers = onix$k.modifiers();
+        if (cinematic() && !entered) {
+            enter();
+            return true;
+        }
         if (keyCode == GLFW.GLFW_KEY_LEFT) {
             switchDesign(-1);
             return true;

@@ -395,11 +395,22 @@ public class OnixMenuScreen extends Screen {
 
     @Override
     public void render(GuiGraphics ctx, int rawX, int rawY, float delta) {
-        Theme.pixel = true;
+        boolean glass = OnixClient.CONFIG.menuGlass.isOn() && !OnixClient.CONFIG.lightMode.isOn() && minecraft.level != null;
+        Theme.pixel = !glass;
+        Theme.glass = glass;
+        if (glass) {
+            try {
+                ctx.blurBeforeThisStratum(); // the world behind the glass
+            } catch (IllegalStateException alreadyBlurred) {
+                // something else blurred this frame already
+            }
+        }
         try {
             renderMenu(ctx, rawX, rawY, delta);
         } finally {
             Theme.pixel = false;
+            Theme.glass = false;
+            Theme.refresh();
         }
     }
 
@@ -476,7 +487,8 @@ public class OnixMenuScreen extends Screen {
         hit(x0, y0, x1, y1, () -> {}, () -> {}); // clicks inside the window never close it
 
         // sidebar
-        ctx.fill(x0 + 2, y0 + 2, x0 + SIDEBAR, y1 - 2, Theme.SURFACE_SUNKEN);
+        if (Theme.glass) Theme.round(ctx, x0 + 4, y0 + 4, x0 + SIDEBAR, y1 - 4, 9, Theme.SURFACE_SUNKEN);
+        else ctx.fill(x0 + 2, y0 + 2, x0 + SIDEBAR, y1 - 2, Theme.SURFACE_SUNKEN);
         ctx.fill(x0 + SIDEBAR, y0 + 2, x0 + SIDEBAR + 1, y1 - 2, 0xFF000000);
         ctx.fill(x0 + SIDEBAR + 1, y0 + 2, x0 + SIDEBAR + 2, y1 - 2, Theme.withAlpha(0xFFFFFFFF, Theme.isLight() ? 90 : 14));
         renderSidebar(ctx, mx, my, x0, y0, y1);

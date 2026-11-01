@@ -32,6 +32,8 @@ public class OnixConfig {
             .describe("Slow drift and a little parallax when you move the mouse.");
 
     // Interface
+    public final BoolSetting menuGlass = new BoolSetting("menuGlass", "Liquid Glass", true)
+            .describe("In-game menus as dark frosted glass: the world blurs behind see-through panels with light edges.");
     public final ModeSetting menuStyle = new ModeSetting("menuStyle", "Menu Style", "Classic", "Bloom")
             .describe("Classic opens straight into the module list. Bloom starts with a flower of categories.");
     public final ModeSetting menuScale = new ModeSetting("menuScale", "Menu Size", "Normal", "Small", "Large");
@@ -49,6 +51,8 @@ public class OnixConfig {
     public final BoolSetting customMainMenu = new BoolSetting("customMainMenu", "Onix Title Screen", true);
     /** The first-start tour (WelcomeScreen) was finished or skipped. */
     public final BoolSetting introDone = new BoolSetting("introDone", "Setup Done", false).hidden();
+    /** 1.1.6 switched everyone once to the cinematic title screen and the glass menus. */
+    public final BoolSetting cinematicSet = new BoolSetting("cinematicSet", "Cinematic Set", false).hidden();
 
     // Onix server: badges, coins, cosmetics shop and gifts (see /server in the repository)
     public final TextSetting onixServer = new TextSetting("onixServer", "Onix Server", "", 200)
@@ -71,7 +75,7 @@ public class OnixConfig {
     public final BoolSetting menuCharacter = new BoolSetting("menuCharacter", "Character Art", false)
             .describe("Carbon design: show the character artwork next to the menu.")
             .visibleIf(() -> menuDesign.is("Carbon"));
-    public final ModeSetting titleDesign = new ModeSetting("titleDesign", "Title Screen Design", "Onix", "Centered", "Split", "Minimal", "Cards")
+    public final ModeSetting titleDesign = new ModeSetting("titleDesign", "Title Screen Design", "Cinematic", "Onix", "Centered", "Split", "Minimal", "Cards")
             .describe("Also switch on the title screen with the arrow keys, by dragging or with the dots at the bottom.");
 
     // Loading screens
@@ -120,7 +124,7 @@ public class OnixConfig {
     }
 
     public List<Setting<?, ?>> designSettings() {
-        return List.of(menuDesign, menuCharacter, menuStyle, lightMode, buttonStyle, carbonButtons, menuSkin, menuScale, titleDesign, menuAnimations, menuParticles, backgroundDim);
+        return List.of(menuDesign, menuCharacter, menuStyle, menuGlass, lightMode, buttonStyle, carbonButtons, menuSkin, menuScale, titleDesign, menuAnimations, menuParticles, backgroundDim);
     }
 
     public List<Setting<?, ?>> loadingSettings() {
@@ -157,7 +161,7 @@ public class OnixConfig {
                 onixServer, socialOn, shareServer, nameTagLooks, lightMode, buttonStyle, carbonButtons, menuSkin, menuDesign, menuCharacter, titleDesign, loadingScreens, loadingStyle, loadingTips,
                 hideHudInDebug, snapping, snapDistance, editorGrid,
                 notifications, notificationSound, notificationTime, notificationPosition,
-                ruleNotes, rulesOnJoin, rulesSkip, autoSwitchProfiles, introDone);
+                ruleNotes, rulesOnJoin, rulesSkip, autoSwitchProfiles, introDone, cinematicSet, menuGlass);
     }
 
     public float menuScaleFactor() {

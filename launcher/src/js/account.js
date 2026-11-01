@@ -27,6 +27,7 @@ async function loadAccounts() {
   accounts = await api.accounts();
   account = accounts.find((a) => a.active) || null;
   renderAccount();
+  if (typeof renderHomeStage === 'function') renderHomeStage();
 }
 
 function renderAccount() {

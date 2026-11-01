@@ -11,6 +11,13 @@ async function initSettings() {
   renderBackgrounds();
   applyBackground(currentBackground);
   await loadSky();
+  const clean = $('#set-clean');
+  clean.checked = s.launcherStyle !== 'blocks';
+  applyLayout(clean.checked);
+  clean.addEventListener('change', () => {
+    applyLayout(clean.checked);
+    api.setSettings({ launcherStyle: clean.checked ? 'clean' : 'blocks' });
+  });
   const hide = $('#set-hide');
   hide.checked = s.closeOnLaunch;
   hide.addEventListener('change', () => api.setSettings({ closeOnLaunch: hide.checked }));
@@ -41,4 +48,13 @@ async function initSettings() {
   });
   $('#game-dir').textContent = info.gameDir;
   $$('[data-folder]').forEach((b) => b.addEventListener('click', () => api.openFolder(b.dataset.folder)));
+}
+
+/** Clean layout (default) or the blocky hotbar look. */
+function applyLayout(clean) {
+  document.body.classList.toggle('clean', clean);
+  $$('.nav-item').forEach((b) => { if (b.dataset.name) b.title = b.dataset.name; });
+  if (typeof renderHomeStage === 'function') renderHomeStage();
+  if (typeof homeWorld === 'function') homeWorld(currentView === 'home');
+  if (typeof hotbarSync === 'function') hotbarSync(currentView === 'profile' || currentView === 'mods' ? 'profiles' : currentView);
 }

@@ -86,6 +86,12 @@
           <div class="particles" id="particles" aria-hidden="true"></div>
           <canvas class="world" id="world"></canvas>
           <div class="home-inner" id="home-inner">
+            <div class="home-stage" id="home-stage" aria-hidden="true">
+              <div class="home-glow"></div>
+              <div class="home-name" id="home-name"></div>
+              <img class="home-skin" id="home-skin" alt="">
+              <div class="home-floor"></div>
+            </div>
             <p class="eyebrow" id="eyebrow">Minecraft 1.21.1</p>
             <h1 class="logo" aria-label="Onix"><span class="ch" style="--i:0">O</span><span class="ch" style="--i:1">N</span><span class="ch" style="--i:2">I</span><span class="ch" style="--i:3">X</span></h1>
             <div class="logo-sub">CLIENT</div>
@@ -288,6 +294,10 @@
           More options (brightness, rotation, fog) are in the Custom Sky module in game.</p>
         <div class="group-label">Launcher</div>
         <div class="group">
+          <div class="row">
+            <div class="row-text"><b>Clean layout</b><span>Rounded, quiet look with the pages on a slim bar at the side and your skin on the home page. Off: the blocky Minecraft look with the hotbar.</span></div>
+            <label class="switch"><input type="checkbox" id="set-clean"><i></i></label>
+          </div>
           <div class="row">
             <div class="row-text"><b>Hide while playing</b><span>Comes back as soon as Minecraft closes.</span></div>
             <label class="switch"><input type="checkbox" id="set-hide"><i></i></label>

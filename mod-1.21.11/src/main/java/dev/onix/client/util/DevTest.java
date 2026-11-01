@@ -75,6 +75,10 @@ public final class DevTest {
         then(2, () -> { if (mc.screen != null) mc.screen.keyPressed(new KeyEvent(com.mojang.blaze3d.platform.InputConstants.KEY_RIGHT, 0, 0)); });
         then(2, () -> design("Onix"));
         then(80, () -> snap(mc, "01_title_onix"));
+        // cinematic title: the splash, the burst when entering, then the menu with the player
+        then(2, () -> { if (mc.screen != null) mc.screen.keyPressed(new KeyEvent(com.mojang.blaze3d.platform.InputConstants.KEY_SPACE, 0, 0)); });
+        then(12, () -> snap(mc, "01a_cinematic_enter"));
+        then(60, () -> snap(mc, "01b_cinematic_menu"));
         for (String id : List.of("Carbon", "Voxel", "Portal", "Classic")) {
             then(2, () -> design(id));
             then(90, () -> snap(mc, "02_title_" + id.toLowerCase(Locale.ROOT)));
@@ -143,6 +147,8 @@ public final class DevTest {
         then(40, () -> snap(mc, "08_hud_editor"));
         then(2, () -> mc.setScreen(new OnixMenuScreen(null)));
         then(40, () -> snap(mc, "09_menu_ingame"));
+        then(2, () -> mc.setScreen(new OnixMenuScreen(null, OnixMenuScreen.View.MODULES)));
+        then(40, () -> snap(mc, "09a_menu_ingame_glass_modules"));
         // name styles: the menu tab and your own name tag in third person
         then(2, () -> {
             dev.onix.client.cosmetics.Cosmetics.testOwnAll = true;

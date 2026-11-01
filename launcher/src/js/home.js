@@ -190,7 +190,7 @@ function homeWorld(on) {
       bottomSpace: 150,
     });
   }
-  if (on && state !== 'running') homeIsland.start(); else homeIsland.stop();
+  if (on && state !== 'running' && !document.body.classList.contains('clean')) homeIsland.start(); else homeIsland.stop();
 }
 requestAnimationFrame(() => homeWorld(currentView === 'home'));
 
@@ -217,3 +217,21 @@ api.onState((s) => {
   $('#btn-stop').hidden = s !== 'running';
   homeWorld(currentView === 'home');
 });
+
+/** Clean layout: your skin in the middle of the home page, name above it. */
+function renderHomeStage() {
+  const img = $('#home-skin');
+  const name = $('#home-name');
+  if (!img) return;
+  const a = typeof account !== 'undefined' ? account : null;
+  name.textContent = a ? a.name : '';
+  const id = a ? (a.uuid || a.name) : 'MHF_Steve';
+  const src = `https://mc-heads.net/body/${encodeURIComponent(id)}/300`;
+  if (img.dataset.src !== src) {
+    img.dataset.src = src;
+    img.classList.remove('loaded');
+    img.onload = () => img.classList.add('loaded');
+    img.onerror = () => img.classList.remove('loaded');
+    img.src = src;
+  }
+}
