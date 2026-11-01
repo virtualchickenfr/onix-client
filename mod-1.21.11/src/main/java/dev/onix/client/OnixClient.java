@@ -60,6 +60,15 @@ public class OnixClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         CONFIG = OnixConfig.load();
+        // 1.1.8: everyone gets the cinematic Onix main menu once (they can switch back under Design)
+        if (!CONFIG.cinematicSet2.isOn()) {
+            CONFIG.cinematicSet2.set(true);
+            CONFIG.cinematicSet.set(true);
+            CONFIG.customMainMenu.set(true);
+            CONFIG.menuDesign.set("Onix");
+            CONFIG.titleDesign.set("Cinematic");
+            CONFIG.save();
+        }
         MODULES = new ModuleManager();
         MODULES.registerDefaults();
         PROFILES = new ProfileManager(MODULES, CONFIG);

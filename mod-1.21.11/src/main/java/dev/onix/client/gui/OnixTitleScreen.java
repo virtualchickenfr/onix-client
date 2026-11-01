@@ -161,26 +161,12 @@ public class OnixTitleScreen extends Screen {
         Theme.refresh();
         float time = (System.nanoTime() - startNanos) / 1_000_000_000f;
         if (cinematic()) {
-            // slow camera drift (Ken Burns) with a little mouse parallax
-            float zoom = 1.06f + 0.035f * (float) Math.sin(time * 0.045f);
-            float px = (float) Math.sin(time * 0.031f) * width * 0.012f + (mouseX - width / 2f) * -0.012f;
-            float py = (float) Math.cos(time * 0.027f) * height * 0.010f + (mouseY - height / 2f) * -0.012f;
-            ctx.pose().pushMatrix();
-            ctx.pose().translate(width / 2f + px, height / 2f + py);
-            ctx.pose().scale(zoom, zoom);
-            ctx.pose().translate(-width / 2f, -height / 2f);
-            TitleBackgrounds.draw(ctx, width, height, mouseX, mouseY, time);
-            ctx.pose().popMatrix();
-        } else {
-            TitleBackgrounds.draw(ctx, width, height, mouseX, mouseY, time);
+            renderCinematicBackground(ctx, mouseX, mouseY, time);
+            return;
         }
+        TitleBackgrounds.draw(ctx, width, height, mouseX, mouseY, time);
         ctx.fillGradient(0, 0, width, height, Theme.withAlpha(Theme.current().sky(), 26), Theme.withAlpha(Theme.current().sky(), 0));
         switch (design()) {
-            case "Cinematic" -> {
-                // dark grade, vignette and a soft light behind the menu
-                ctx.fill(0, 0, width, height, entered ? 0x8C030305 : 0xE6020203);
-                vignette(ctx);
-            }
             case "Onix", "Split" -> {
                 // darken the left side for readability
                 int fade = Math.max(300, width / 2);
@@ -518,6 +504,40 @@ public class OnixTitleScreen extends Screen {
         return t * t * (3 - 2 * t);
     }
 
+    /** Own background: deep grey gradient with slow drifting light, like a studio set. */
+    private void renderCinematicBackground(GuiGraphics ctx, int mouseX, int mouseY, float time) {
+        ctx.fillGradient(0, 0, width, height, 0xFF17171B, 0xFF050506);
+        float bright = entered ? 1f : 0.35f;
+        float px = (mouseX - width / 2f) * -0.02f;
+        float py = (mouseY - height / 2f) * -0.02f;
+        // a big soft light from the top right, a smaller one bottom left, both drifting slowly
+        light(ctx, width * (0.78f + 0.04f * (float) Math.sin(time * 0.07f)) + px, height * (0.12f + 0.05f * (float) Math.cos(time * 0.05f)) + py,
+                width * 0.55f, 0xFFFFFFFF, 2.6f * bright);
+        light(ctx, width * (0.18f + 0.05f * (float) Math.cos(time * 0.06f)) + px * 0.5f, height * (0.95f + 0.03f * (float) Math.sin(time * 0.08f)) + py * 0.5f,
+                width * 0.4f, Theme.themeAccent(), 2.0f * bright);
+        // light curtain: soft vertical bands swaying on the right
+        for (int i = 0; i < 5; i++) {
+            float x = width * (0.62f + i * 0.08f) + (float) Math.sin(time * 0.3f + i * 1.7f) * 14 + px;
+            int a = Math.round((4 + 2 * (float) Math.sin(time * 0.5f + i)) * bright);
+            for (int k = 0; k < 6; k++) {
+                int w = 6 + k * 7;
+                ctx.fillGradient(Math.round(x - w / 2f), 0, Math.round(x + w / 2f), height, Theme.withAlpha(0xFFFFFFFF, Math.max(0, a)), 0x00FFFFFF);
+            }
+        }
+        vignette(ctx);
+        if (OnixClient.CONFIG == null || OnixClient.CONFIG.menuParticles.isOn()) particles.render(ctx, width, height, 0.35f * bright);
+    }
+
+    private void light(GuiGraphics ctx, float cx, float cy, float radius, int color, float strength) {
+        int steps = 18;
+        for (int i = steps; i >= 1; i--) {
+            int r = Math.round(radius * i / steps);
+            int a = Math.round(strength);
+            if (a <= 0) continue;
+            Theme.round(ctx, Math.round(cx - r), Math.round(cy - r * 0.8f), Math.round(cx + r), Math.round(cy + r * 0.8f), r, Theme.withAlpha(color, a));
+        }
+    }
+
     private void vignette(GuiGraphics ctx) {
         int steps = 16;
         for (int i = 0; i < steps; i++) {
@@ -640,9 +660,9 @@ public class OnixTitleScreen extends Screen {
             int y = top + i * step + (i >= 2 ? 6 : 0) + Math.round((1 - ia) * 8);
             boolean hov = i == hovered;
             float h = hoverAnim("cine:" + item.label(), hov);
-            int color = Theme.lerpColor(i < 2 ? 0xFFDADAE0 : GREY, WHITE, h);
-            int tw = Theme.boldWidth(item.label());
-            ctx.drawString(font, Theme.bold(item.label()), Math.round(menuX - tw / 2f), y, a(color, ia), false);
+            int color = Theme.lerpColor(0xFFB4B4BC, WHITE, h);
+            int tw = Theme.width(item.label());
+            ctx.drawString(font, Theme.ui(item.label()), Math.round(menuX - tw / 2f), y, a(color, ia), false);
             int w = Math.max(110, tw + 30);
             Runnable action = item.action();
             areas.add(new Area(Math.round(menuX - w / 2f), y - 4, Math.round(menuX + w / 2f), y + 12, () -> go(action)));
@@ -686,15 +706,70 @@ public class OnixTitleScreen extends Screen {
         }
         super.render(ctx, mouseX, mouseY, delta); // the skin widget (Screen.render draws the background first)
 
-        // ---- letterbox bars ease in, footer
-        float bars = smooth(since / 1.2f);
-        int bh = Math.round(height * 0.045f * bars);
-        if (bh > 0) {
-            ctx.fill(0, 0, width, bh, 0xFF000000);
-            ctx.fill(0, height - bh, width, height, 0xFF000000);
-        }
-        renderFooter(ctx, mouseX, mouseY, smooth((since - 1f) / 0.6f));
+        // ---- Essential-style bar top right: friends, wardrobe, McReal, screenshots, games, settings
+        renderToolbar(ctx, mouseX, mouseY, smooth((since - 1f) / 0.6f));
+        // tiny version line, nothing else in the corners
+        float fa = smooth((since - 1.2f) / 0.6f);
+        String version = OnixClient.NAME + " " + OnixClient.VERSION;
+        Theme.small(ctx, version, width - 8 - Theme.smallWidth(version), height - 12, a(0xFF55555E, fa));
         renderFade(ctx, now);
+    }
+
+    private record Tool(String icon, String label, Runnable action) {}
+
+    private void renderToolbar(GuiGraphics ctx, int mouseX, int mouseY, float alpha) {
+        if (alpha <= 0.01f) return;
+        List<dev.onix.client.social.Social.Friend> friends = dev.onix.client.social.Social.friends;
+        int online = 0;
+        int unread = 0;
+        for (var f : friends) {
+            if (f.online()) online++;
+            unread += f.unread();
+        }
+        List<Tool> tools = List.of(
+                new Tool("profile", online > 0 ? "Friends · " + online + " online" : "Friends",
+                        () -> go(() -> minecraft.setScreen(new OnixMenuScreen(this, OnixMenuScreen.View.FRIENDS)))),
+                new Tool("cosmetics", "Wardrobe", () -> go(() -> minecraft.setScreen(new OnixMenuScreen(this, OnixMenuScreen.View.COSMETICS)))),
+                new Tool("camera", "McReal", () -> go(() -> minecraft.setScreen(new OnixMenuScreen(this, OnixMenuScreen.View.MCREAL)))),
+                new Tool("visual", "Screenshots", () -> net.minecraft.util.Util.getPlatform().openFile(
+                        new java.io.File(minecraft.gameDirectory, "screenshots"))),
+                new Tool("star", "Mini Games", () -> go(() -> minecraft.setScreen(new OnixMenuScreen(this, OnixMenuScreen.View.GAMES)))),
+                new Tool("settings", "Onix Settings", () -> go(() -> minecraft.setScreen(new OnixMenuScreen(this, OnixMenuScreen.View.SETTINGS)))));
+        int size = 20;
+        int gap = 2;
+        int w = tools.size() * size + (tools.size() - 1) * gap + 8;
+        int x0 = width - w - 10;
+        int y0 = 10 - Math.round((1 - alpha) * 8);
+        glassPill(ctx, x0, y0, x0 + w, y0 + size + 8, alpha, 0);
+        String tip = null;
+        int tipX = 0;
+        for (int i = 0; i < tools.size(); i++) {
+            Tool t = tools.get(i);
+            int bx = x0 + 4 + i * (size + gap);
+            int by = y0 + 4;
+            boolean hov = Theme.inside(mouseX, mouseY, bx, by, bx + size, by + size);
+            float h = hoverAnim("tool:" + t.icon(), hov);
+            if (h > 0.01f) Theme.round(ctx, bx, by, bx + size, by + size, size / 2, a(0x26FFFFFF, h * alpha));
+            drawIcon(ctx, t.icon(), bx + 5, by + 5, 10, a(Theme.lerpColor(0xFFB4B4BC, WHITE, h), alpha));
+            if (i == 0 && unread > 0) {
+                Theme.round(ctx, bx + size - 7, by + 1, bx + size - 1, by + 7, 3, a(0xFFFF4D5E, alpha));
+            } else if (i == 0 && online > 0) {
+                Theme.round(ctx, bx + size - 6, by + 2, bx + size - 2, by + 6, 2, a(0xFF34D399, alpha));
+            }
+            Runnable action = t.action();
+            areas.add(new Area(bx, by, bx + size, by + size, action));
+            if (hov) {
+                tip = t.label();
+                tipX = bx + size / 2;
+            }
+        }
+        if (tip != null) {
+            int tw = Theme.width(tip) + 12;
+            int tx = Math.min(width - 6 - tw, tipX - tw / 2);
+            int ty = y0 + size + 12;
+            Theme.round(ctx, tx, ty, tx + tw, ty + 14, 7, a(0xE00B0B0E, alpha));
+            Theme.text(ctx, tip, tx + 6, ty + 3, a(WHITE, alpha));
+        }
     }
 
     /** Dark liquid glass: see-through black, light top edge, a little shine when hovered. */

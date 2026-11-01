@@ -53,6 +53,8 @@ public class OnixConfig {
     public final BoolSetting introDone = new BoolSetting("introDone", "Setup Done", false).hidden();
     /** 1.1.6 switched everyone once to the cinematic title screen and the glass menus. */
     public final BoolSetting cinematicSet = new BoolSetting("cinematicSet", "Cinematic Set", false).hidden();
+    /** 1.1.8: the cinematic Onix main menu became everyone's main menu once (also for Carbon/vanilla designs). */
+    public final BoolSetting cinematicSet2 = new BoolSetting("cinematicSet2", "Cinematic Default", false).hidden();
 
     // Onix server: badges, coins, cosmetics shop and gifts (see /server in the repository)
     public final TextSetting onixServer = new TextSetting("onixServer", "Onix Server", "", 200)
@@ -161,7 +163,7 @@ public class OnixConfig {
                 onixServer, socialOn, shareServer, nameTagLooks, lightMode, buttonStyle, carbonButtons, menuSkin, menuDesign, menuCharacter, titleDesign, loadingScreens, loadingStyle, loadingTips,
                 hideHudInDebug, snapping, snapDistance, editorGrid,
                 notifications, notificationSound, notificationTime, notificationPosition,
-                ruleNotes, rulesOnJoin, rulesSkip, autoSwitchProfiles, introDone, cinematicSet, menuGlass);
+                ruleNotes, rulesOnJoin, rulesSkip, autoSwitchProfiles, introDone, cinematicSet, cinematicSet2, menuGlass);
     }
 
     public float menuScaleFactor() {
