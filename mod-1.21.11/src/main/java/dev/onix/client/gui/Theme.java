@@ -315,7 +315,7 @@ public final class Theme {
     /** Liquid glass is rounder: every corner radius grows (small ones the most). */
     public static int glassRadius(int radius) {
         if (!glass || radius <= 0) return radius;
-        return radius < 4 ? radius + 3 : Math.round(radius * 1.8f);
+        return radius < 4 ? radius + 4 : Math.round(radius * 2.2f);
     }
 
     /** Liquid glass panel: soft shadow, see-through black body, light rim and a specular streak along the top. */

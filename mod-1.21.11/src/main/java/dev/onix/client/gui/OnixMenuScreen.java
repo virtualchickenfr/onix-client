@@ -487,18 +487,27 @@ public class OnixMenuScreen extends Screen {
         hit(x0, y0, x1, y1, () -> {}, () -> {}); // clicks inside the window never close it
 
         // sidebar
-        if (Theme.glass) Theme.round(ctx, x0 + 6, y0 + 6, x0 + SIDEBAR, y1 - 6, 9, Theme.SURFACE_SUNKEN);
-        else ctx.fill(x0 + 2, y0 + 2, x0 + SIDEBAR, y1 - 2, Theme.SURFACE_SUNKEN);
-        ctx.fill(x0 + SIDEBAR, y0 + 2, x0 + SIDEBAR + 1, y1 - 2, 0xFF000000);
-        ctx.fill(x0 + SIDEBAR + 1, y0 + 2, x0 + SIDEBAR + 2, y1 - 2, Theme.withAlpha(0xFFFFFFFF, Theme.isLight() ? 90 : 14));
+        if (Theme.glass) {
+            // a lighter glass panel floating inside the window, no hard divider
+            Theme.round(ctx, x0 + 7, y0 + 7, x0 + SIDEBAR - 3, y1 - 7, 12, 0x14FFFFFF);
+            Theme.round(ctx, x0 + 8, y0 + 8, x0 + SIDEBAR - 4, y1 - 8, 11, 0xCC08080B);
+        } else {
+            ctx.fill(x0 + 2, y0 + 2, x0 + SIDEBAR, y1 - 2, Theme.SURFACE_SUNKEN);
+            ctx.fill(x0 + SIDEBAR, y0 + 2, x0 + SIDEBAR + 1, y1 - 2, 0xFF000000);
+            ctx.fill(x0 + SIDEBAR + 1, y0 + 2, x0 + SIDEBAR + 2, y1 - 2, Theme.withAlpha(0xFFFFFFFF, Theme.isLight() ? 90 : 14));
+        }
         renderSidebar(ctx, mx, my, x0, y0, y1);
 
         // top bar + content
         int cx1 = x0 + SIDEBAR + 20;
         int cx2 = x1 - 20;
         renderTopbar(ctx, mx, my, cx1, y0, cx2, true);
-        ctx.fill(x0 + SIDEBAR + 2, y0 + 50, x1 - 2, y0 + 51, 0xFF000000);
-        ctx.fill(x0 + SIDEBAR + 2, y0 + 51, x1 - 2, y0 + 52, Theme.withAlpha(0xFFFFFFFF, Theme.isLight() ? 90 : 12));
+        if (Theme.glass) {
+            ctx.fill(cx1, y0 + 51, cx2, y0 + 52, 0x14FFFFFF);
+        } else {
+            ctx.fill(x0 + SIDEBAR + 2, y0 + 50, x1 - 2, y0 + 51, 0xFF000000);
+            ctx.fill(x0 + SIDEBAR + 2, y0 + 51, x1 - 2, y0 + 52, Theme.withAlpha(0xFFFFFFFF, Theme.isLight() ? 90 : 12));
+        }
 
         int[] content = {cx1, y0 + 64, cx2, y1 - 18};
         ctx.pose().pushMatrix();
@@ -510,13 +519,19 @@ public class OnixMenuScreen extends Screen {
     private void renderSidebar(GuiGraphics ctx, int mx, int my, int x0, int y0, int y1) {
         int x = x0 + 12;
         drawTinted(ctx, LOGO, x + 2, y0 + 14, 15, 15, 128, Theme.TEXT, 1f);
-        ctx.pose().pushMatrix();
-        ctx.pose().translate(x + 23, y0 + 15);
-        ctx.pose().scale(1.5f, 1.5f);
-        ctx.drawString(font, "ONIX", 1, 1, Theme.withAlpha(0xFF000000, 120), false);
-        ctx.drawString(font, "ONIX", 0, 0, Theme.TEXT, false);
-        ctx.pose().popMatrix();
-        Theme.label(ctx, "Client", x + 24 + Math.round(font.width("ONIX") * 1.5f) + 4, y0 + 21, Theme.TEXT_3);
+        if (Theme.glass) {
+            Component brand = Theme.display("Onix");
+            Theme.scaled(ctx, brand, x + 23, y0 + 16, 1.25f, Theme.TEXT);
+            Theme.small(ctx, "Client", x + 25 + Math.round(font.width(brand) * 1.25f) + 3, y0 + 19, Theme.TEXT_3);
+        } else {
+            ctx.pose().pushMatrix();
+            ctx.pose().translate(x + 23, y0 + 15);
+            ctx.pose().scale(1.5f, 1.5f);
+            ctx.drawString(font, "ONIX", 1, 1, Theme.withAlpha(0xFF000000, 120), false);
+            ctx.drawString(font, "ONIX", 0, 0, Theme.TEXT, false);
+            ctx.pose().popMatrix();
+            Theme.label(ctx, "Client", x + 24 + Math.round(font.width("ONIX") * 1.5f) + 4, y0 + 21, Theme.TEXT_3);
+        }
 
         int y = y0 + 44;
         // the selection highlight glides from item to item (target from the last frame's layout)
@@ -605,7 +620,16 @@ public class OnixMenuScreen extends Screen {
         String title = pageTitle();
         float ts = Math.max(1f, Math.min(2f, room / (float) (font.width(title + ".") + 2)));
         if (font.width(title + ".") * ts > room) title = font.plainSubstrByWidth(title, (int) (room / ts) - font.width("….")) + "…";
-        Theme.pixelTitle(ctx, title, tx, ty - 5 + Math.round((2f - ts) * 4), ts, Theme.TEXT);
+        if (Theme.glass) {
+            // clean heading in the smooth display face
+            String plain = pageTitle();
+            Component head = Theme.display(plain);
+            float hs = Math.max(1f, Math.min(1.6f, room / (float) (font.width(head) + 2)));
+            if (font.width(head) * hs > room) head = Theme.display(Theme.ellipsize(plain, (int) (room / hs) - 6));
+            Theme.scaled(ctx, head, tx, ty - 3, hs, Theme.TEXT);
+        } else {
+            Theme.pixelTitle(ctx, title, tx, ty - 5 + Math.round((2f - ts) * 4), ts, Theme.TEXT);
+        }
         Theme.small(ctx, Theme.ellipsize(pageSubtitle(), (int) ((x2 - tx - reserved) / 0.75f)), tx, ty + 15, Theme.TEXT_3);
 
         if (!withSearch) return;
