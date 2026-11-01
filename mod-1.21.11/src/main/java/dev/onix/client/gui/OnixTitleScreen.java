@@ -529,12 +529,12 @@ public class OnixTitleScreen extends Screen {
     }
 
     private void light(GuiGraphics ctx, float cx, float cy, float radius, int color, float strength) {
-        int steps = 18;
+        // circles stacked from big to small: each adds a little light, so the middle glows softly
+        int steps = 16;
+        int a = Math.max(1, Math.round(strength * 1.3f));
         for (int i = steps; i >= 1; i--) {
-            int r = Math.round(radius * i / steps);
-            int a = Math.round(strength);
-            if (a <= 0) continue;
-            Theme.round(ctx, Math.round(cx - r), Math.round(cy - r * 0.8f), Math.round(cx + r), Math.round(cy + r * 0.8f), r, Theme.withAlpha(color, a));
+            int r = Math.max(1, Math.round(radius * i / steps));
+            Theme.round(ctx, Math.round(cx - r), Math.round(cy - r), Math.round(cx + r), Math.round(cy + r), r, Theme.withAlpha(color, a));
         }
     }
 
@@ -689,7 +689,10 @@ public class OnixTitleScreen extends Screen {
                 String name = minecraft.getUser().getName();
                 centered(ctx, Theme.bold(name), sxC, sy - 14, 1f, a(WHITE, skinA));
                 // shadow on the "floor"
-                Theme.round(ctx, Math.round(sxC - sw * 0.38f), sy + sh - 4, Math.round(sxC + sw * 0.38f), sy + sh + 2, 3, a(0x55000000, skinA));
+                for (int k = 0; k < 4; k++) {
+                    int hw = Math.round(sw * (0.22f + k * 0.07f));
+                    Theme.round(ctx, Math.round(sxC - hw), sy + sh - 3 - k / 2, Math.round(sxC + hw), sy + sh + 1 + k / 2, 3, a(0x22000000, skinA));
+                }
                 // wardrobe pill
                 String label = "Wardrobe";
                 int pw = Theme.boldWidth(label) + 30;
@@ -735,11 +738,11 @@ public class OnixTitleScreen extends Screen {
                         new java.io.File(minecraft.gameDirectory, "screenshots"))),
                 new Tool("star", "Mini Games", () -> go(() -> minecraft.setScreen(new OnixMenuScreen(this, OnixMenuScreen.View.GAMES)))),
                 new Tool("settings", "Onix Settings", () -> go(() -> minecraft.setScreen(new OnixMenuScreen(this, OnixMenuScreen.View.SETTINGS)))));
-        int size = 20;
-        int gap = 2;
+        int size = 15;
+        int gap = 1;
         int w = tools.size() * size + (tools.size() - 1) * gap + 8;
-        int x0 = width - w - 10;
-        int y0 = 10 - Math.round((1 - alpha) * 8);
+        int x0 = width - w - 8;
+        int y0 = 8 - Math.round((1 - alpha) * 8);
         glassPill(ctx, x0, y0, x0 + w, y0 + size + 8, alpha, 0);
         String tip = null;
         int tipX = 0;
@@ -750,11 +753,11 @@ public class OnixTitleScreen extends Screen {
             boolean hov = Theme.inside(mouseX, mouseY, bx, by, bx + size, by + size);
             float h = hoverAnim("tool:" + t.icon(), hov);
             if (h > 0.01f) Theme.round(ctx, bx, by, bx + size, by + size, size / 2, a(0x26FFFFFF, h * alpha));
-            drawIcon(ctx, t.icon(), bx + 5, by + 5, 10, a(Theme.lerpColor(0xFFB4B4BC, WHITE, h), alpha));
+            drawIcon(ctx, t.icon(), bx + 4, by + 4, 7, a(Theme.lerpColor(0xFFB4B4BC, WHITE, h), alpha));
             if (i == 0 && unread > 0) {
-                Theme.round(ctx, bx + size - 7, by + 1, bx + size - 1, by + 7, 3, a(0xFFFF4D5E, alpha));
+                Theme.round(ctx, bx + size - 5, by + 1, bx + size - 1, by + 5, 2, a(0xFFFF4D5E, alpha));
             } else if (i == 0 && online > 0) {
-                Theme.round(ctx, bx + size - 6, by + 2, bx + size - 2, by + 6, 2, a(0xFF34D399, alpha));
+                Theme.round(ctx, bx + size - 4, by + 2, bx + size - 1, by + 5, 1, a(0xFF34D399, alpha));
             }
             Runnable action = t.action();
             areas.add(new Area(bx, by, bx + size, by + size, action));
