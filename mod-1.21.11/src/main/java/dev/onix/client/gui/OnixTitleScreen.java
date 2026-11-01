@@ -505,19 +505,43 @@ public class OnixTitleScreen extends Screen {
         return t * t * (3 - 2 * t);
     }
 
-    /** Own background: deep grey gradient with slow drifting light, like a studio set. */
+    private static final Identifier CINE_BG = Identifier.fromNamespaceAndPath("onix", "textures/gui/cinematic_bg.png");
+    private static final Identifier CINE_LIGHT = Identifier.fromNamespaceAndPath("onix", "textures/gui/cinematic_light.png");
+    private static final int BG_W = 1600;
+    private static final int BG_H = 900;
+    private float parX;
+    private float parY;
+
+    /**
+     * A clean studio picture (tools/cinematic_bg.py) with light falling in from the top right. Interactive: the picture
+     * and the light beams follow the mouse at different depths and drift slowly on their own.
+     */
     private void renderCinematicBackground(GuiGraphics ctx, int mouseX, int mouseY, float time) {
-        ctx.fillGradient(0, 0, width, height, 0xFF17171B, 0xFF050506);
-        float bright = entered ? 1f : 0.35f;
-        float px = (mouseX - width / 2f) * -0.02f;
-        float py = (mouseY - height / 2f) * -0.02f;
-        // a big soft light from the top right, a smaller one bottom left, both drifting slowly
-        light(ctx, width * (0.78f + 0.04f * (float) Math.sin(time * 0.07f)) + px, height * (0.12f + 0.05f * (float) Math.cos(time * 0.05f)) + py,
-                width * 0.55f, 0xFFFFFFFF, 2.6f * bright);
-        light(ctx, width * (0.18f + 0.05f * (float) Math.cos(time * 0.06f)) + px * 0.5f, height * (0.95f + 0.03f * (float) Math.sin(time * 0.08f)) + py * 0.5f,
-                width * 0.4f, Theme.themeAccent(), 2.0f * bright);
-        vignette(ctx);
-        if (OnixClient.CONFIG == null || OnixClient.CONFIG.menuParticles.isOn()) particles.render(ctx, width, height, 0.35f * bright);
+        // the mouse offset eases in, so the picture glides instead of jumping
+        float tx = (mouseX - width / 2f) / Math.max(1, width / 2f);
+        float ty = (mouseY - height / 2f) / Math.max(1, height / 2f);
+        parX += (tx - parX) * 0.06f;
+        parY += (ty - parY) * 0.06f;
+        float cover = Math.max(width / (float) BG_W, height / (float) BG_H);
+        // base picture: slow breathing zoom, small parallax
+        float zoom = cover * (1.07f + 0.012f * (float) Math.sin(time * 0.08f));
+        int w = Math.round(BG_W * zoom);
+        int h = Math.round(BG_H * zoom);
+        int x = Math.round((width - w) / 2f - parX * width * 0.012f);
+        int y = Math.round((height - h) / 2f - parY * height * 0.012f);
+        ctx.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, CINE_BG, x, y, 0f, 0f, w, h, BG_W, BG_H, BG_W, BG_H, 0xFFFFFFFF);
+        // light beams: closer to the camera, so they move more; they sway and breathe a little
+        float lz = cover * 1.12f;
+        int lw = Math.round(BG_W * lz);
+        int lh = Math.round(BG_H * lz);
+        int lx = Math.round((width - lw) / 2f - parX * width * 0.035f + (float) Math.sin(time * 0.21f) * width * 0.006f);
+        int ly = Math.round((height - lh) / 2f - parY * height * 0.03f);
+        float breathe = 0.82f + 0.18f * (float) Math.sin(time * 0.5f);
+        int la = Math.round(255 * breathe * (entered ? 1f : 0.45f));
+        ctx.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, CINE_LIGHT, lx, ly, 0f, 0f, lw, lh, BG_W, BG_H, BG_W, BG_H, (la << 24) | 0xFFFFFF);
+        if (!entered) ctx.fill(0, 0, width, height, 0x99000000);
+        // dust drifting through the light
+        if (OnixClient.CONFIG == null || OnixClient.CONFIG.menuParticles.isOn()) particles.render(ctx, width, height, 0.3f * (entered ? 1f : 0.4f));
     }
 
     private void light(GuiGraphics ctx, float cx, float cy, float radius, int color, float strength) {
@@ -535,12 +559,7 @@ public class OnixTitleScreen extends Screen {
         ctx.pose().translate(cx, cy);
         ctx.pose().rotate(spin);
         int s = Math.round(size);
-        // soft glow
-        for (int g = 3; g >= 1; g--) {
-            int gs = Math.round(size * (1 + g * 0.14f));
-            ctx.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, LOGO, -gs / 2, -gs / 2, 0f, 0f, gs, gs, 128, 128, 128, 128,
-                    net.minecraft.util.ARGB.colorFromFloat(alpha * 0.10f, 1f, 1f, 1f));
-        }
+        SoftShapes.glow(ctx, 0, 0, size * 1.1f, size * 1.1f, Theme.withAlpha(0xFFFFFFFF, Math.round(40 * alpha)));
         ctx.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, LOGO, -s / 2, -s / 2, 0f, 0f, s, s, 128, 128, 128, 128,
                 net.minecraft.util.ARGB.colorFromFloat(alpha, 1f, 1f, 1f));
         ctx.pose().popMatrix();
@@ -629,8 +648,8 @@ public class OnixTitleScreen extends Screen {
         if (!Float.isNaN(hoverY)) {
             int hy = Math.round(hoverY);
             int hw = Math.round(hoverW);
-            Theme.round(ctx, Math.round(menuX - hw / 2f), hy - 4, Math.round(menuX + hw / 2f), hy + 12, 5, 0x22FFFFFF);
-            ctx.fill(Math.round(menuX - hw / 2f) + 5, hy - 4, Math.round(menuX + hw / 2f) - 5, hy - 3, 0x30FFFFFF);
+            gg.carbon.client.ui.R2D.rrect(ctx, menuX - hw / 2f, hy - 4, hw, 16, 8, 0x1CFFFFFF);
+            gg.carbon.client.ui.R2D.outline(ctx, menuX - hw / 2f, hy - 4, hw, 16, 8, 0.75f, 0x22FFFFFF);
         }
         for (int i = 0; i < cineItems.size(); i++) {
             Item item = cineItems.get(i);
@@ -669,7 +688,7 @@ public class OnixTitleScreen extends Screen {
             poseSkin(walking, walkT, stride, phase, time);
             if (skinWidget.visible) {
                 float here = smooth((walkT - 0.6f) / 0.4f);      // name, light and pill appear as they arrive
-                SoftShapes.glow(ctx, sxC, height / 2f, sw * 1.6f, sh * 0.75f, Theme.withAlpha(Theme.themeAccent(), Math.round(70 * here)));
+                SoftShapes.glow(ctx, sxC, height / 2f, sw * 1.6f, sh * 0.75f, Theme.withAlpha(Theme.themeAccent(), Math.round(35 * here)));
                 // soft shadow on the "floor" under the feet, moving with them
                 SoftShapes.glow(ctx, walkingX, sy + sh - 1, sw * 0.45f, 5, Theme.withAlpha(0xFF000000, Math.round(160 * skinA)));
                 skinA = here;
@@ -734,7 +753,7 @@ public class OnixTitleScreen extends Screen {
             int by = y0 + 4;
             boolean hov = Theme.inside(mouseX, mouseY, bx, by, bx + size, by + size);
             float h = hoverAnim("tool:" + t.icon(), hov);
-            if (h > 0.01f) Theme.round(ctx, bx, by, bx + size, by + size, size / 2, a(0x26FFFFFF, h * alpha));
+            if (h > 0.01f) gg.carbon.client.ui.R2D.rrect(ctx, bx, by, size, size, size / 2f, a(0x26FFFFFF, h * alpha));
             drawIcon(ctx, t.icon(), bx + 4, by + 4, 7, a(Theme.lerpColor(0xFFB4B4BC, WHITE, h), alpha));
             if (i == 0 && unread > 0) {
                 Theme.round(ctx, bx + size - 5, by + 1, bx + size - 1, by + 5, 2, a(0xFFFF4D5E, alpha));
@@ -787,10 +806,10 @@ public class OnixTitleScreen extends Screen {
 
     /** Dark liquid glass: see-through black, light top edge, a little shine when hovered. */
     private void glassPill(GuiGraphics ctx, int x1, int y1, int x2, int y2, float alpha, float hover) {
-        int r = (y2 - y1) / 2;
-        Theme.round(ctx, x1, y1, x2, y2, r, a(0x40FFFFFF, alpha * (0.6f + 0.4f * hover)));
-        Theme.round(ctx, x1 + 1, y1 + 1, x2 - 1, y2 - 1, r - 1, a(Theme.lerpColor(0xB00A0A0E, 0xB0202028, hover), alpha));
-        ctx.fill(x1 + r, y1 + 1, x2 - r, y1 + 2, a(0x55FFFFFF, alpha));
+        // drawn at the screen's real pixel size, so the round ends stay smooth
+        float r = (y2 - y1) / 2f;
+        gg.carbon.client.ui.R2D.rrect(ctx, x1, y1, x2 - x1, y2 - y1, r, a(Theme.lerpColor(0xA00C0C10, 0xC01E1E24, hover), alpha));
+        gg.carbon.client.ui.R2D.outline(ctx, x1, y1, x2 - x1, y2 - y1, r, 0.75f, a(0x2EFFFFFF, alpha * (0.7f + 0.3f * hover)));
     }
 
     /** Black fade: in when the screen opens, out before a cut to the next screen. */
