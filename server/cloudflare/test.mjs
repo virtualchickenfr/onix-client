@@ -210,6 +210,15 @@ globalThis.fetch = realFetch;
   const [, lk] = await call('POST', '/v1/lookup', { uuids: [L, M] });
   assert.deepStrictEqual(lk.looks[L], { style: 'name_fire' });
   assert.strictEqual(lk.looks[M], undefined);
+  // badge sharing off: not in the online list, but the name style is still seen
+  await call('POST', '/v1/heartbeat', { token: tl, playing: true, visible: false });
+  const [, hid] = await call('POST', '/v1/lookup', { uuids: [L] });
+  assert.deepStrictEqual(hid.online, []);
+  assert.deepStrictEqual(hid.looks[L], { style: 'name_fire' }, 'style seen with sharing off');
+  now += 200_000;
+  assert.strictEqual((await call('POST', '/v1/lookup', { uuids: [L] }))[1].looks[L], undefined, 'gone after leaving');
+  await call('POST', '/v1/heartbeat', { token: tl, playing: true });
+  await call('POST', '/v1/heartbeat', { token: tm, playing: true });
   const venv = { ...env, VERIFY: '1' };
   const [, lo] = await call('POST', '/v1/lookup', { uuids: [L, M] }, venv);
   assert.deepStrictEqual(lo.looks[L], { style: 'name_fire', owner: true });

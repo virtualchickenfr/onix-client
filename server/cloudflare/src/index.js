@@ -534,6 +534,8 @@ const routes = {
     }
     const wallet = await heartbeat(env, db, s, body.playing === true);
     const lookError = body.look && typeof body.look === 'object' ? await saveLook(env, db, s, body.look) : null;
+    // the name style stays visible to other Onix players while you play, even with the badge/sharing off
+    if (!(body.look && typeof body.look === 'object')) await db.prepare('UPDATE looks SET updated = ? WHERE uuid = ?').bind(Date.now(), s.uuid).run();
     const n = (await db.prepare('SELECT COUNT(*) AS n FROM online WHERE seen > ?').bind(Date.now() - ONLINE_TTL_MS).first()).n;
     return [200, { ok: true, online: n, wallet, ...(lookError ? { lookError } : {}) }];
   },
@@ -570,14 +572,18 @@ const routes = {
       const rows = await db.prepare(`SELECT uuid FROM online WHERE seen > ? AND uuid IN (${part.map(() => '?').join(',')})`).bind(Date.now() - ONLINE_TTL_MS, ...part).all();
       result.push(...rows.results.map((r) => r.uuid));
     }
-    // name styles of the ones online; owners are marked (violet badge)
+    // name styles of every Onix player playing right now (also with the badge/sharing off); owners are marked (violet badge)
     const looks = {};
     const owners = ownerNames(env);
+    for (let i = 0; i < asked.length; i += 90) {
+      const part = asked.slice(i, i + 90);
+      const rows = await db.prepare(`SELECT uuid, style FROM looks WHERE updated > ? AND uuid IN (${part.map(() => '?').join(',')})`)
+        .bind(Date.now() - ONLINE_TTL_MS, ...part).all();
+      for (const r of rows.results) looks[r.uuid] = { style: r.style };
+    }
     for (let i = 0; i < result.length; i += 90) {
       const part = result.slice(i, i + 90);
       const marks = part.map(() => '?').join(',');
-      const rows = await db.prepare(`SELECT uuid, style, tag, text FROM looks WHERE uuid IN (${marks})`).bind(...part).all();
-      for (const r of rows.results) looks[r.uuid] = { style: r.style };
       if (owners.size && verifyOn(env)) {
         const names = await db.prepare(`SELECT uuid, name FROM online WHERE uuid IN (${marks})`).bind(...part).all();
         for (const r of names.results) {
