@@ -286,8 +286,10 @@ public final class Theme {
     public static void card(GuiGraphics ctx, int x1, int y1, int x2, int y2, int radius, int fill, int border) {
         round(ctx, x1, y1, x2, y2, radius, border);
         // glass: the see-through fill must not show the border colour underneath, so lay a dark base first
-        if (glass && (fill >>> 24) < 0xF0) round(ctx, x1 + 1, y1 + 1, x2 - 1, y2 - 1, Math.max(0, radius - 1), 0xFF0B0B0E);
-        round(ctx, x1 + 1, y1 + 1, x2 - 1, y2 - 1, Math.max(0, radius - 1), fill);
+        // glass corners are big: the inner shape keeps the same radius so the 1px rim stays closed all around
+        int inner = glass ? radius : Math.max(0, radius - 1);
+        if (glass && (fill >>> 24) < 0xF0) round(ctx, x1 + 1, y1 + 1, x2 - 1, y2 - 1, inner, 0xFF0B0B0E);
+        round(ctx, x1 + 1, y1 + 1, x2 - 1, y2 - 1, inner, fill);
     }
 
     /** Soft shadow under windows. */
@@ -323,7 +325,7 @@ public final class Theme {
         shadow(ctx, x1, y1, x2, y2, radius);
         int R = glassRadius(radius);
         round(ctx, x1, y1, x2, y2, radius, 0x34FFFFFF);
-        round(ctx, x1 + 1, y1 + 1, x2 - 1, y2 - 1, radius - 1, SURFACE);
+        round(ctx, x1 + 1, y1 + 1, x2 - 1, y2 - 1, radius, SURFACE);
         // light falling in from the top, fading down
         int h = Math.min(60, (y2 - y1) / 3);
         for (int i = 0; i < 6; i++) {

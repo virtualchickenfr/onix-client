@@ -542,7 +542,7 @@ public class OnixMenuScreen extends Screen {
             int sy = Math.round(navSelY);
             if (Theme.glass) {
                 Theme.round(ctx, x - 3, sy - 1, x2s + 1, sy + 16, 5, 0x2AFFFFFF);
-                Theme.round(ctx, x - 2, sy, x2s, sy + 15, 4, Theme.SURFACE_3);
+                Theme.round(ctx, x - 2, sy, x2s, sy + 15, 5, Theme.SURFACE_3);
                 Theme.round(ctx, x - 1, sy + 4, x + 1, sy + 11, 1, Theme.accent());
             } else {
                 ctx.fill(x - 2, sy, x2s, sy + 15, Theme.SURFACE_3);
