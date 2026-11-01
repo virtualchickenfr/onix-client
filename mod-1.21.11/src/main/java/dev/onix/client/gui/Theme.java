@@ -285,6 +285,8 @@ public final class Theme {
     /** Filled shape with a 1px border. */
     public static void card(GuiGraphics ctx, int x1, int y1, int x2, int y2, int radius, int fill, int border) {
         round(ctx, x1, y1, x2, y2, radius, border);
+        // glass: the see-through fill must not show the border colour underneath, so lay a dark base first
+        if (glass && (fill >>> 24) < 0xF0) round(ctx, x1 + 1, y1 + 1, x2 - 1, y2 - 1, Math.max(0, radius - 1), 0xFF0B0B0E);
         round(ctx, x1 + 1, y1 + 1, x2 - 1, y2 - 1, Math.max(0, radius - 1), fill);
     }
 
