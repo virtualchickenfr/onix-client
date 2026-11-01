@@ -661,10 +661,10 @@ public class OnixTitleScreen extends Screen {
             skinWidget.visible = skinOn && skinA > 0.02f;
             if (skinWidget.visible) {
                 // light pool behind the player
-                for (int r = 5; r >= 1; r--) {
-                    int rr = Math.round(sw * 0.35f * r);
+                for (int r = 16; r >= 1; r--) {
+                    int rr = Math.round(sw * 0.11f * r);
                     Theme.round(ctx, Math.round(sxC - rr), Math.round(height / 2f - rr * 0.9f), Math.round(sxC + rr), Math.round(height / 2f + rr * 0.9f),
-                            rr, Theme.withAlpha(Theme.themeAccent(), Math.round(10 * skinA)));
+                            rr, Theme.withAlpha(Theme.themeAccent(), Math.round(4 * skinA)));
                 }
                 String name = minecraft.getUser().getName();
                 centered(ctx, Theme.bold(name), sxC, sy - 14, 1f, a(WHITE, skinA));

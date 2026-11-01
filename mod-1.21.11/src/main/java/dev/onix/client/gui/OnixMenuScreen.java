@@ -440,7 +440,7 @@ public class OnixMenuScreen extends Screen {
         if (minecraft.level == null) {
             ctx.fillGradient(0, 0, width, height, Theme.lerpColor(0xFF07070A, Theme.current().panel(), 0.6f), 0xFF050507);
         }
-        if (OnixClient.CONFIG.backgroundDim.isOn() || minecraft.level == null) ctx.fill(0, 0, width, height, Theme.fade(Theme.BACKDROP, t));
+        if (OnixClient.CONFIG.backgroundDim.isOn() || minecraft.level == null || Theme.glass) ctx.fill(0, 0, width, height, Theme.fade(Theme.BACKDROP, t));
         if (OnixClient.CONFIG.menuParticles.isOn()) particles.render(ctx, width, height, t * 0.7f);
 
         // ---- scale the fixed design grid to the screen

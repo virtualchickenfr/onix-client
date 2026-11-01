@@ -93,15 +93,15 @@ public final class Theme {
         BACKDROP = withAlpha(lerpColor(0xFF020203, p, 0.4f), 0xB8);
         if (glass) {
             // dark liquid glass: the blurred world shows through, raised parts are lighter glass
-            int tint = lerpColor(0xFF030305, a, 0.04f);
-            SURFACE = withAlpha(tint, 0xC4);
-            SURFACE_SUNKEN = 0x66000000;
-            SURFACE_2 = 0x16FFFFFF;
-            SURFACE_3 = 0x24FFFFFF;
-            SURFACE_4 = 0x34FFFFFF;
-            BORDER = 0x22FFFFFF;
-            BORDER_STRONG = 0x3AFFFFFF;
-            BACKDROP = 0x70000000;
+            int tint = lerpColor(0xFF020203, a, 0.03f);
+            SURFACE = withAlpha(tint, 0xDC);
+            SURFACE_SUNKEN = 0x8C000000;
+            SURFACE_2 = 0x0DFFFFFF;
+            SURFACE_3 = 0x17FFFFFF;
+            SURFACE_4 = 0x24FFFFFF;
+            BORDER = 0x1CFFFFFF;
+            BORDER_STRONG = 0x30FFFFFF;
+            BACKDROP = 0x8A000000;
         }
     }
 
