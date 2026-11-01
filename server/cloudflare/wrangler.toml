@@ -6,7 +6,7 @@ compatibility_date = "2025-01-01"
 
 [vars]
 VERIFY = "1"
-UNLIMITED = "Virtualchickenfr,Fuzed_d"
+UNLIMITED = "Virtualchickenfr,Fuzed_d,carbon2834"
 # OWNER tag and violet badge for these accounts
 OWNERS = "VirtualChickenFR"
 
