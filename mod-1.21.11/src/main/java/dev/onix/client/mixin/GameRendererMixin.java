@@ -16,6 +16,8 @@ public abstract class GameRendererMixin {
     @Inject(method = "getFov", at = @At("RETURN"), cancellable = true)
     private void onix$zoom(Camera camera, float tickDelta, boolean changingFov, CallbackInfoReturnable<Float> cir) {
         if (OnixClient.MODULES == null) return;
+        float beat = dev.onix.client.module.impl.hud.SongLyricsModule.fovFactor();
+        if (beat != 1f) cir.setReturnValue(cir.getReturnValue() * beat);
         ZoomModule zoom = OnixClient.MODULES.get(ZoomModule.class);
         if (zoom == null) return;
         double divisor = zoom.fovDivisor();

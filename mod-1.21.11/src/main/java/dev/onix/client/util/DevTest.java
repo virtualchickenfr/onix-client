@@ -60,6 +60,7 @@ public final class DevTest {
             mc.options.pauseOnLostFocus = false;
             // the lyrics lookup over the real internet (LRCLIB), checked again further down
             dev.onix.client.music.Lyrics.of(LYRICS_PROBE);
+            dev.onix.client.music.Artwork.colors(LYRICS_PROBE);
         });
         // first start: the setup tour
         then(40, () -> snap(mc, "00a_intro_welcome"));
@@ -175,10 +176,15 @@ public final class DevTest {
             lyrics.testWorldLine();
         });
         then(40, () -> snap(mc, "09g_song_lyrics_world"));
+        then(1, () -> OnixClient.MODULES.get(dev.onix.client.module.impl.hud.SongLyricsModule.class).testPreset("Neon"));
+        then(30, () -> snap(mc, "09g2_song_lyrics_neon"));
+        then(1, () -> OnixClient.MODULES.get(dev.onix.client.module.impl.hud.SongLyricsModule.class).testPreset("Music Edit"));
         then(1, () -> {
             var lines = dev.onix.client.music.Lyrics.of(LYRICS_PROBE);
-            OnixClient.LOGGER.info("[devtest] lyrics probe: {} ({})", lines == null ? "still loading" : lines.size() + " lines",
-                    dev.onix.client.music.Lyrics.problem(LYRICS_PROBE));
+            OnixClient.LOGGER.info("[devtest] lyrics probe: {} from {} ({})", lines == null ? "still loading" : lines.size() + " lines",
+                    dev.onix.client.music.Lyrics.source(LYRICS_PROBE), dev.onix.client.music.Lyrics.problem(LYRICS_PROBE));
+            int[] art = dev.onix.client.music.Artwork.colors(LYRICS_PROBE);
+            OnixClient.LOGGER.info("[devtest] artwork colours: {}", art == null ? "none/loading" : Integer.toHexString(art[0]) + " " + Integer.toHexString(art[1]));
         });
         then(2, () -> OnixClient.MODULES.get(dev.onix.client.module.impl.hud.SongLyricsModule.class).setEnabled(false));
         // TNT timer: a lit TNT a few blocks ahead

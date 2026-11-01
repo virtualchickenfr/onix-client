@@ -4,6 +4,8 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import dev.onix.client.gui.Theme;
 import dev.onix.client.module.Category;
 import dev.onix.client.module.HudModule;
+import dev.onix.client.module.OverlayRenderer;
+import dev.onix.client.music.Artwork;
 import dev.onix.client.music.Lyrics;
 import dev.onix.client.music.NowPlaying;
 import dev.onix.client.render.FxDraw;
@@ -16,9 +18,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
+import net.minecraft.client.Camera;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.BlockHitResult;
@@ -27,36 +32,132 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
 /**
- * Song lyrics: the song playing on the PC (Spotify first) with time-synced lyrics from LRCLIB – a bar on screen with
- * the current line (the sung word highlighted) and, if wanted, the words appearing as big text on walls and floor
- * around you. Only you see them. No Spotify login needed: the song is read from the system's media controls.
+ * Song lyrics like a music edit: the song playing on the PC (Spotify first, read from the system's media controls –
+ * no login) with synced lyrics (LRCLIB, then NetEase, then estimated timing). The words appear around you in the
+ * world with animations, colours and effects, plus a karaoke bar, cinematic bars and a title card on screen.
+ * Only you see any of it.
  */
-public class SongLyricsModule extends HudModule {
+public class SongLyricsModule extends HudModule implements OverlayRenderer {
+    // ---------------------------------------------------------------- general
+    private final ModeSetting preset = add(new ModeSetting("preset", "Preset", "Custom", "Music Edit", "Chill", "Hype", "Minimal", "Neon", "Retro", "Dreamy")
+            .describe("Sets everything below to a style in one click; change single settings afterwards as you like."));
     private final BoolSetting onlySpotify = add(new BoolSetting("onlySpotify", "Only Spotify", true)
             .describe("Off: also songs from other players (YouTube Music in the browser, Apple Music …)."));
-    private final BoolSetting nextLine = add(new BoolSetting("nextLine", "Show Next Line", true));
-    private final BoolSetting worldLyrics = add(new BoolSetting("world", "Lyrics in the World", true)
-            .describe("The words appear as big text on walls and the floor around you."));
-    private final NumberSetting worldSize = add(new NumberSetting("worldSize", "World Text Size", 1, 0.4, 2.5, 0.1).unit("x").visibleIf(worldLyrics::isOn));
-    private final NumberSetting worldDistance = add(new NumberSetting("worldDistance", "World Text Distance", 8, 3, 20, 1).unit("blocks").visibleIf(worldLyrics::isOn));
-    private final ModeSetting colors = add(new ModeSetting("colors", "Colors", "Pink", "Theme", "Rainbow", "Custom"));
-    private final ColorSetting customColor = add(new ColorSetting("customColor", "Custom Color", 0xFFFF7AA8).visibleIf(() -> colors.is("Custom")));
+    private final BoolSetting unsynced = add(new BoolSetting("unsynced", "Unsynced Lyrics Fallback", true)
+            .describe("If no synced lyrics exist, plain lyrics are spread over the song (timing estimated)."));
     private final NumberSetting offset = add(new NumberSetting("offset", "Timing Offset", 0, -2000, 2000, 50).unit("ms")
             .describe("Shifts the lyrics if they come too early (−) or too late (+)."));
 
-    /** A word standing in the world. */
-    private record WorldWord(String text, Vec3 pos, Vec3 right, Vec3 up, Vec3 normal, float scale, long showAt, long hideAt, int lineIndex, int wordIndex) {}
+    {
+        group("World");
+    }
+
+    private final BoolSetting worldLyrics = add(new BoolSetting("world", "Lyrics in the World", true));
+    private final ModeSetting placement = add(new ModeSetting("placement", "Placement", "Scattered Around You", "Straight Ahead", "Follow View", "In the Sky")
+            .visibleIf(worldLyrics::isOn));
+    private final ModeSetting animation = add(new ModeSetting("animation", "Animation", "Karaoke", "Typewriter", "Wave", "Drop", "Rise", "Zoom", "Glitch")
+            .visibleIf(worldLyrics::isOn));
+    private final ModeSetting intensity = add(new ModeSetting("intensity", "Intensity", "Normal", "Chill", "Hype").visibleIf(worldLyrics::isOn));
+    private final ModeSetting worldFont = add(new ModeSetting("worldFont", "Lyrics Font", "Bold", "Smooth", "Minecraft").visibleIf(worldLyrics::isOn));
+    private final NumberSetting wordsPerLine = add(new NumberSetting("wordsPerLine", "Words per Line", 6, 2, 14, 1).visibleIf(worldLyrics::isOn));
+    private final NumberSetting stay = add(new NumberSetting("stay", "Lines Stay For", 2.5, 0.5, 8, 0.5).unit("s").visibleIf(worldLyrics::isOn));
+    private final BoolSetting faceYou = add(new BoolSetting("faceYou", "Turn to Face You", false).visibleIf(worldLyrics::isOn)
+            .describe("Words always turn towards you instead of lying on walls and the floor."));
+    private final NumberSetting worldDistance = add(new NumberSetting("worldDistance", "Distance", 8, 3, 20, 1).unit("blocks").visibleIf(worldLyrics::isOn));
+    private final NumberSetting worldSize = add(new NumberSetting("worldSize", "Size", 1, 0.4, 2.5, 0.1).unit("x").visibleIf(worldLyrics::isOn));
+    private final BoolSetting throughWalls = add(new BoolSetting("throughWalls", "Show Through Walls", false).visibleIf(worldLyrics::isOn));
+
+    {
+        group("Look");
+    }
+
+    private final ModeSetting colorMode = add(new ModeSetting("colorMode", "Colour Mode", "Gradient", "Single", "Rainbow", "Album")
+            .describe("Album takes the colours of the song's cover."));
+    private final ColorSetting color1 = add(new ColorSetting("color1", "Colour", 0xFFFF7AA8));
+    private final ColorSetting color2 = add(new ColorSetting("color2", "Second Colour", 0xFFFFB347).visibleIf(() -> colorMode.is("Gradient")));
+    private final BoolSetting glow = add(new BoolSetting("glow", "Glow", true));
+    private final BoolSetting chromatic = add(new BoolSetting("chromatic", "Chromatic Split", false));
+    private final BoolSetting sparkles = add(new BoolSetting("sparkles", "Sparkles", true));
+    private final BoolSetting beatZoom = add(new BoolSetting("beatZoom", "Beat Zoom", false).describe("The view kicks in a little on every word."));
+    private final BoolSetting beatPulse = add(new BoolSetting("beatPulse", "Beat Pulse", true).describe("The sung word grows for a moment."));
+
+    {
+        group("Screen");
+    }
+
+    private final BoolSetting karaokeBar = add(new BoolSetting("karaokeBar", "Karaoke Bar", true));
+    private final BoolSetting nextLine = add(new BoolSetting("nextLine", "Show Next Line", true).visibleIf(karaokeBar::isOn));
+    private final BoolSetting cinematic = add(new BoolSetting("cinematic", "Cinematic Bars", false));
+    private final BoolSetting titleIntro = add(new BoolSetting("titleIntro", "Song Title Intro", true));
+
+    // ---------------------------------------------------------------- state
+
+    /**
+     * A word in the world. surface = lies on a wall/floor with its own axes; otherwise it turns to the camera.
+     * x/y = position inside its line in font pixels, s = blocks per font pixel. follow = attached to the view.
+     */
+    private record WorldWord(String text, Vec3 anchor, Vec3 right, Vec3 up, Vec3 normal, boolean surface, boolean follow,
+                             float x, float y, float s, long showAt, long sungAt, long hideAt, int line, int index, int count) {}
+
+    private static volatile long lastBeat;
+    private static volatile float beatAmount;
 
     private final List<WorldWord> worldWords = new ArrayList<>();
     private final Random random = new Random();
     private String worldSong = "";
     private int worldLine = -1;
+    private int lastSung = -1;
     private int side = 1;
+    private String introSong = "";
+    private long introStart;
+    private float barsAnim;
 
     public SongLyricsModule() {
-        super("songlyrics", "Song Lyrics", "Lyrics of the song you play on Spotify, on screen and in the world.", Category.HUD, false,
+        super("songlyrics", "Song Lyrics", "Synced lyrics of your Spotify song, animated in the world like a music edit.", Category.HUD, false,
                 Anchor.TOP_CENTER, 0, 4);
-        tags("spotify", "lyrics", "music", "song", "karaoke", "now playing");
+        tags("spotify", "lyrics", "music", "song", "karaoke", "now playing", "music edit");
+        preset.onChange(this::applyPreset);
+    }
+
+    /** The FOV kick of Beat Zoom (1 = none), read by GameRendererMixin. */
+    public static float fovFactor() {
+        float amp = beatAmount;
+        if (amp <= 0) return 1f;
+        float t = (System.currentTimeMillis() - lastBeat) / 140f;
+        return t > 4 ? 1f : 1f - amp * (float) Math.exp(-t);
+    }
+
+    private void applyPreset() {
+        switch (preset.get()) {
+            case "Music Edit" -> style("Scattered Around You", "Karaoke", "Normal", "Bold", "Gradient", 0xFFFF7AA8, 0xFFFFB347, true, false, true, false, true, false, true);
+            case "Chill" -> style("Straight Ahead", "Rise", "Chill", "Smooth", "Single", 0xFFA8D8FF, 0xFFFFFFFF, true, false, false, false, false, false, true);
+            case "Hype" -> style("Scattered Around You", "Zoom", "Hype", "Bold", "Rainbow", 0xFFFF4D6D, 0xFFFFD84D, true, true, true, true, true, true, true);
+            case "Minimal" -> style("Follow View", "Karaoke", "Chill", "Smooth", "Single", 0xFFFFFFFF, 0xFFFFFFFF, false, false, false, false, false, false, false);
+            case "Neon" -> style("Scattered Around You", "Glitch", "Normal", "Bold", "Gradient", 0xFF00F0FF, 0xFFFF2BD6, true, true, true, false, true, false, true);
+            case "Retro" -> style("Straight Ahead", "Typewriter", "Normal", "Minecraft", "Single", 0xFFFFD84D, 0xFFFFFFFF, false, false, false, false, false, true, true);
+            case "Dreamy" -> style("In the Sky", "Wave", "Chill", "Smooth", "Gradient", 0xFFC9B6FF, 0xFFFFB6E1, true, false, true, false, true, false, true);
+            default -> {
+                // Custom: keep the current settings
+            }
+        }
+    }
+
+    private void style(String place, String anim, String intense, String font, String colours, int c1, int c2, boolean glowOn, boolean split,
+                       boolean sparkleOn, boolean zoom, boolean pulse, boolean bars, boolean intro) {
+        placement.set(place);
+        animation.set(anim);
+        intensity.set(intense);
+        worldFont.set(font);
+        colorMode.set(colours);
+        color1.set(c1);
+        color2.set(c2);
+        glow.set(glowOn);
+        chromatic.set(split);
+        sparkles.set(sparkleOn);
+        beatZoom.set(zoom);
+        beatPulse.set(pulse);
+        cinematic.set(bars);
+        titleIntro.set(intro);
     }
 
     @Override
@@ -74,12 +175,12 @@ public class SongLyricsModule extends HudModule {
         NowPlaying.stop();
         worldWords.clear();
         worldLine = -1;
+        beatAmount = 0;
     }
-
-    // ------------------------------------------------------------------ state
 
     private NowPlaying.Track track() {
         NowPlaying.start(onlySpotify.isOn()); // cheap when already running; picks up the setting
+        Lyrics.allowUnsynced = unsynced.isOn();
         return NowPlaying.current();
     }
 
@@ -87,16 +188,33 @@ public class SongLyricsModule extends HudModule {
         return t.positionNow() + offset.getInt();
     }
 
-    private int accent(float t) {
-        return switch (colors.get()) {
-            case "Theme" -> Theme.themeAccent();
-            case "Rainbow" -> FxDraw.rainbow(t);
-            case "Custom" -> customColor.color();
-            default -> 0xFFFF7AA8;
+    private float amp() {
+        return intensity.is("Chill") ? 0.5f : intensity.is("Hype") ? 1.8f : 1f;
+    }
+
+    /** Colour of word i of n in a line. */
+    private int wordColor(NowPlaying.Track t, int line, int i, int n) {
+        float f = n <= 1 ? 0 : i / (float) (n - 1);
+        return switch (colorMode.get()) {
+            case "Single" -> color1.color();
+            case "Rainbow" -> FxDraw.rainbow(line * 0.11f + i * 0.06f + (System.currentTimeMillis() % 20_000L) / 20_000f);
+            case "Album" -> {
+                int[] c = t == null ? null : Artwork.colors(t);
+                yield c == null ? Theme.lerpColor(color1.color(), color2.color(), f) : Theme.lerpColor(c[0], c[1], f * 0.6f);
+            }
+            default -> Theme.lerpColor(color1.color(), color2.color(), f);
         };
     }
 
-    // ------------------------------------------------------------------ HUD bar
+    private Component styled(String s) {
+        return switch (worldFont.get()) {
+            case "Smooth" -> Theme.ui(s);
+            case "Bold" -> Theme.display(s);
+            default -> Component.literal(s);
+        };
+    }
+
+    // ================================================================== karaoke bar
 
     private static final int W = 300;
     private static final int H = 16;
@@ -113,11 +231,12 @@ public class SongLyricsModule extends HudModule {
 
     @Override
     public boolean hasContent() {
-        return NowPlaying.current() != null;
+        return karaokeBar.isOn() && NowPlaying.current() != null;
     }
 
     @Override
     public void render(GuiGraphics ctx, boolean preview) {
+        if (!karaokeBar.isOn() && !preview) return;
         NowPlaying.Track t = track();
         String time;
         String current;
@@ -140,7 +259,7 @@ public class SongLyricsModule extends HudModule {
                 noLyrics = true;
                 current = t.title() + (t.artist().isBlank() ? "" : " · " + t.artist());
                 String problem = Lyrics.problem(t);
-                next = lines == null ? "Loading lyrics…" : problem != null && !problem.isEmpty() ? problem : "No synced lyrics";
+                next = lines == null ? "Finding lyrics…" : problem != null && !problem.isEmpty() ? problem : "No lyrics found";
                 words = List.of(current);
             } else {
                 int i = Lyrics.lineAt(lines, ms);
@@ -159,19 +278,16 @@ public class SongLyricsModule extends HudModule {
             }
         }
         drawBackground(ctx, W, H);
-        Font f = Theme.font();
         int x = pad();
         int y = (H - 8) / 2;
         float clock = (System.currentTimeMillis() % 100_000L) / 1000f;
-        int acc = accent(clock * 0.1f);
+        int acc = wordColor(t, 0, 0, 1);
         x = drawText(ctx, time, x, y, 0xFFA1A1AA) + 4;
-        // little playing dot
         Theme.round(ctx, x, y + 1, x + 6, y + 7, 3, acc);
         x += 10;
         int right = W - pad() - 14;
         int nextSpace = nextLine.isOn() && !next.isEmpty() ? Math.min(90, textWidth(next)) : 0;
         int lineMax = right - x - (nextSpace > 0 ? nextSpace + 8 : 0);
-        // current line, word by word; the sung word sits on a coloured pill
         ctx.enableScissor(x, 0, x + lineMax, H);
         int cx = x;
         for (int i = 0; i < words.size(); i++) {
@@ -192,7 +308,6 @@ public class SongLyricsModule extends HudModule {
             drawText(ctx, next, nx, y, 0xFF6B6B76);
             ctx.disableScissor();
         }
-        // equalizer
         boolean playing = t == null || t.playing();
         for (int b = 0; b < 3; b++) {
             float hgt = playing ? 2 + 4 * (0.5f + 0.5f * (float) Math.sin(clock * (6 + b * 2.3f) + b)) : 2;
@@ -206,10 +321,55 @@ public class SongLyricsModule extends HudModule {
         return (s / 60) + ":" + String.format("%02d", s % 60);
     }
 
-    // ------------------------------------------------------------------ lyrics in the world
+    // ================================================================== cinematic bars and title card
+
+    @Override
+    public void renderOverlay(GuiGraphics ctx) {
+        NowPlaying.Track t = NowPlaying.current();
+        boolean playing = t != null && t.playing();
+        int w = ctx.guiWidth();
+        int h = ctx.guiHeight();
+        // cinematic bars slide in while a song plays
+        float target = cinematic.isOn() && playing ? 1f : 0f;
+        barsAnim += (target - barsAnim) * 0.08f;
+        if (barsAnim > 0.01f) {
+            int bh = Math.round(h * 0.085f * barsAnim);
+            ctx.fill(0, 0, w, bh, 0xFF000000);
+            ctx.fill(0, h - bh, w, h, 0xFF000000);
+        }
+        if (t == null || !titleIntro.isOn()) return;
+        if (!t.key().equals(introSong)) {
+            introSong = t.key();
+            introStart = System.currentTimeMillis();
+        }
+        long a = System.currentTimeMillis() - introStart;
+        if (a > 4200) return;
+        float in = Math.min(1f, a / 450f);
+        float out = Math.min(1f, (4200 - a) / 700f);
+        float alpha = Math.min(in, out);
+        if (alpha <= 0.02f) return;
+        float ease = 1 - (1 - in) * (1 - in) * (1 - in);
+        int cy = h / 3 + Math.round((1 - ease) * 12);
+        Font f = Theme.font();
+        int col = wordColor(t, 0, 0, 1);
+        String label = "NOW PLAYING";
+        ctx.drawString(f, label, w / 2 - f.width(label) / 2, cy - 22, Theme.withAlpha(col, Math.round(220 * alpha)), true);
+        Component title = Theme.display(t.title());
+        float scale = Math.min(2.6f, (w * 0.8f) / Math.max(1, f.width(title)));
+        ctx.pose().pushMatrix();
+        ctx.pose().translate(w / 2f, cy);
+        ctx.pose().scale(scale, scale);
+        ctx.drawString(f, title, -f.width(title) / 2, 0, Theme.withAlpha(0xFFFFFFFF, Math.round(255 * alpha)), true);
+        ctx.pose().popMatrix();
+        Component artist = Theme.ui(t.artist());
+        ctx.drawString(f, artist, w / 2 - f.width(artist) / 2, cy + Math.round(11 * scale) + 4, Theme.withAlpha(0xFFC9C9D1, Math.round(255 * alpha)), true);
+    }
+
+    // ================================================================== words in the world
 
     @Override
     public void onTick() {
+        Lyrics.allowUnsynced = unsynced.isOn();
         if (!worldLyrics.isOn() || mc().player == null || mc().level == null) {
             worldWords.clear();
             return;
@@ -218,6 +378,7 @@ public class SongLyricsModule extends HudModule {
         long wall = System.currentTimeMillis();
         worldWords.removeIf(w -> wall > w.hideAt() + 700);
         if (t == null || !t.playing()) return;
+        if (colorMode.is("Album")) Artwork.colors(t);
         List<Lyrics.Line> lines = Lyrics.of(t);
         if (lines == null || lines.isEmpty()) return;
         long ms = now(t);
@@ -227,62 +388,136 @@ public class SongLyricsModule extends HudModule {
             worldLine = -1;
             worldWords.clear();
         }
+        if (i >= 0) {
+            int sung = i * 1000 + Lyrics.wordAt(lines.get(i), ms);
+            if (sung != lastSung) {
+                lastSung = sung;
+                onBeat(i, sung % 1000);
+            }
+        }
         if (i < 0 || i == worldLine) return;
         worldLine = i;
         placeLine(lines.get(i), i, ms, wall);
     }
 
-    /** Puts a line's words on a wall or the floor in front of the player (alternating sides), or floating in the air. */
+    /** A new word is sung: beat zoom and sparkles. */
+    private void onBeat(int line, int index) {
+        lastBeat = System.currentTimeMillis();
+        beatAmount = beatZoom.isOn() ? 0.012f * amp() : 0f;
+        if (!sparkles.isOn() || mc().level == null) return;
+        for (WorldWord w : worldWords) {
+            if (w.line() != line || w.index() != index) continue;
+            Vec3 p = w.surface() ? w.anchor().add(w.right().scale((w.x() + 6) * w.s())).add(w.up().scale(-w.y() * w.s())) : w.anchor();
+            for (int k = 0; k < 3; k++) {
+                mc().level.addParticle(ParticleTypes.END_ROD, p.x + (random.nextDouble() - 0.5) * 0.6, p.y + random.nextDouble() * 0.4,
+                        p.z + (random.nextDouble() - 0.5) * 0.6, 0, 0.02, 0);
+            }
+            break;
+        }
+    }
+
+    /** Puts a line's words into the world, wrapped into rows of "Words per Line". */
     private void placeLine(Lyrics.Line line, int index, long songMs, long wall) {
         Player p = mc().player;
         Font f = mc().font;
-        side = -side;
-        float yaw = p.getYRot() + side * (12 + random.nextInt(22));
-        Vec3 eye = p.getEyePosition();
+        String mode = placement.get();
+        float scale = 0.09f * worldSize.getFloat();
         double dist = worldDistance.get();
-        // a wall or the floor ahead, a bit to the side; if nothing is in reach, aim lower at the floor
-        Vec3 dir = Vec3.directionFromRotation(-4 + random.nextInt(24), yaw);
-        BlockHitResult hit = mc().level.clip(new ClipContext(eye, eye.add(dir.scale(dist)), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, p));
-        if (hit.getType() != HitResult.Type.BLOCK) {
-            dir = Vec3.directionFromRotation(22 + random.nextInt(18), yaw);
-            hit = mc().level.clip(new ClipContext(eye, eye.add(dir.scale(dist)), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, p));
-        }
-        Vec3 flat = new Vec3(dir.x, 0, dir.z).normalize();
-        Vec3 origin;
+        Vec3 eye = p.getEyePosition();
+        Vec3 look = Vec3.directionFromRotation(0, p.getYRot());
+        Vec3 anchor;
         Vec3 normal;
-        Vec3 up;
-        if (hit.getType() == HitResult.Type.BLOCK) {
-            Direction face = hit.getDirection();
-            normal = new Vec3(face.getStepX(), face.getStepY(), face.getStepZ());
-            up = face.getAxis() == Direction.Axis.Y ? (face == Direction.UP ? flat : flat.scale(-1)) : new Vec3(0, 1, 0);
-            origin = hit.getLocation().add(normal.scale(0.03));
-        } else {
-            normal = dir.scale(-1);
-            up = new Vec3(0, 1, 0);
-            normal = new Vec3(normal.x, 0, normal.z).normalize();
-            dir = Vec3.directionFromRotation(0, yaw);
-            normal = new Vec3(-dir.x, 0, -dir.z).normalize();
-            origin = eye.add(dir.scale(Math.min(dist, 6)));
+        Vec3 up = new Vec3(0, 1, 0);
+        boolean surface = !faceYou.isOn();
+        boolean follow = false;
+        switch (mode) {
+            case "Straight Ahead" -> {
+                anchor = eye.add(look.scale(dist)).add(0, 0.4, 0);
+                normal = look.scale(-1);
+            }
+            case "Follow View" -> {
+                anchor = Vec3.ZERO;
+                normal = look.scale(-1);
+                surface = false;
+                follow = true;
+                scale *= 0.6f;
+            }
+            case "In the Sky" -> {
+                side = -side;
+                Vec3 dir = Vec3.directionFromRotation(0, p.getYRot() + side * (5 + random.nextInt(25)));
+                anchor = eye.add(dir.scale(dist * 3)).add(0, 14 + random.nextInt(8), 0);
+                normal = dir.scale(-1);
+                scale *= 3.2f;
+                surface = false;
+            }
+            default -> {
+                side = -side;
+                float yaw = p.getYRot() + side * (12 + random.nextInt(22));
+                Vec3 dir = Vec3.directionFromRotation(-4 + random.nextInt(24), yaw);
+                BlockHitResult hit = mc().level.clip(new ClipContext(eye, eye.add(dir.scale(dist)), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, p));
+                if (hit.getType() != HitResult.Type.BLOCK) {
+                    dir = Vec3.directionFromRotation(22 + random.nextInt(18), yaw);
+                    hit = mc().level.clip(new ClipContext(eye, eye.add(dir.scale(dist)), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, p));
+                }
+                Vec3 flat = new Vec3(dir.x, 0, dir.z).normalize();
+                if (hit.getType() == HitResult.Type.BLOCK) {
+                    Direction face = hit.getDirection();
+                    normal = new Vec3(face.getStepX(), face.getStepY(), face.getStepZ());
+                    if (face.getAxis() == Direction.Axis.Y) up = face == Direction.UP ? flat : flat.scale(-1);
+                    anchor = hit.getLocation().add(normal.scale(surface ? 0.03 : 0.8));
+                } else {
+                    Vec3 d = Vec3.directionFromRotation(0, yaw);
+                    normal = d.scale(-1);
+                    anchor = eye.add(d.scale(Math.min(dist, 6)));
+                }
+            }
         }
         Vec3 right = up.cross(normal).normalize();
-        float scale = 0.09f * worldSize.getFloat();
-        int textW = f.width(line.text());
-        double widthBlocks = textW * scale;
-        if (widthBlocks > 9) {
-            scale *= (float) (9 / widthBlocks);
-            widthBlocks = 9;
-        }
-        double cursor = -widthBlocks / 2;
-        long hideAt = wall + Math.max(1500, Math.min(7000, line.endMs() - songMs)) + 1800;
+
+        // rows of at most "Words per Line" words, centred
+        int per = Math.max(1, wordsPerLine.getInt());
+        List<Lyrics.Word> words = line.words();
+        int rows = (words.size() + per - 1) / per;
         int space = f.width(" ");
-        for (int k = 0; k < line.words().size(); k++) {
-            Lyrics.Word w = line.words().get(k);
-            Vec3 pos = origin.add(right.scale(cursor)).add(up.scale(4 * scale));
-            long showAt = wall + Math.max(0, w.startMs() - songMs);
-            worldWords.add(new WorldWord(w.text(), pos, right, up, normal, scale, showAt, hideAt, index, k));
-            cursor += (f.width(w.text()) + space) * scale;
+        int widest = 0;
+        for (int r = 0; r < rows; r++) {
+            int w = 0;
+            for (int k = r * per; k < Math.min(words.size(), (r + 1) * per); k++) w += f.width(styled(words.get(k).text())) + space;
+            widest = Math.max(widest, w - space);
         }
-        while (worldWords.size() > 60) worldWords.remove(0);
+        if (widest * scale > 9 && !mode.equals("In the Sky")) scale *= (float) (9 / (widest * scale));
+        float rowH = 11;
+        long hideAt = wall + Math.max(800, Math.min(9000, line.endMs() - songMs)) + Math.round(stay.get() * 1000);
+        int slot = follow ? (index % 3) - 1 : 0;
+        for (int r = 0; r < rows; r++) {
+            int from = r * per;
+            int to = Math.min(words.size(), (r + 1) * per);
+            int rowW = 0;
+            for (int k = from; k < to; k++) rowW += f.width(styled(words.get(k).text())) + space;
+            rowW -= space;
+            float cx = -rowW / 2f;
+            float cy = (r - (rows - 1) / 2f) * rowH - rows * rowH * 0.5f + slot * (rows * rowH + 6);
+            for (int k = from; k < to; k++) {
+                Lyrics.Word w = words.get(k);
+                long showAt = wall + Math.max(0, w.startMs() - songMs);
+                if (animation.is("Typewriter") || animation.is("Karaoke") || animation.is("Zoom") || animation.is("Drop") || animation.is("Glitch")) {
+                    // words come in as they are sung
+                } else {
+                    showAt = wall + Math.max(0, w.startMs() - songMs - 120);
+                }
+                worldWords.add(new WorldWord(w.text(), anchor, right, up, normal, surface, follow, cx, cy, scale, showAt,
+                        wall + Math.max(0, w.startMs() - songMs), hideAt, index, k, words.size()));
+                cx += f.width(styled(w.text())) + space;
+            }
+        }
+        while (worldWords.size() > 90) worldWords.remove(0);
+    }
+
+    /** Dev test: switches to a preset and places the sample line again. */
+    public void testPreset(String name) {
+        preset.set(name);
+        worldWords.clear();
+        testWorldLine();
     }
 
     /** Dev test: puts a sample line into the world in front of the player. */
@@ -304,38 +539,107 @@ public class SongLyricsModule extends HudModule {
             if (!isEnabled() || !worldLyrics.isOn() || worldWords.isEmpty() || context.consumers() == null || context.matrices() == null) return;
             PoseStack matrices = context.matrices();
             Vec3 cam = WorldDraw.camera(context);
+            Camera camera = mc().gameRenderer.getMainCamera();
             Font f = mc().font;
             long wall = System.currentTimeMillis();
             NowPlaying.Track t = NowPlaying.current();
             List<Lyrics.Line> lines = t == null ? null : Lyrics.of(t);
             int curLine = lines == null || lines.isEmpty() ? -1 : Lyrics.lineAt(lines, now(t));
             int curWord = curLine < 0 ? -1 : Lyrics.wordAt(lines.get(curLine), now(t));
+            float k = amp();
+            String anim = animation.get();
+            Font.DisplayMode mode = throughWalls.isOn() ? Font.DisplayMode.SEE_THROUGH : Font.DisplayMode.NORMAL;
+            Vec3 lookVec = mc().player != null ? mc().player.getViewVector(1f) : Vec3.ZERO;
             for (WorldWord w : worldWords) {
                 if (wall < w.showAt()) continue;
-                float in = Math.min(1f, (wall - w.showAt()) / 180f);
+                long a = wall - w.showAt();
+                float in = Math.min(1f, a / (anim.equals("Rise") ? 420f : 180f));
                 float out = Math.max(0f, Math.min(1f, (w.hideAt() + 600 - wall) / 600f));
                 float alpha = Math.min(in, out);
                 if (alpha <= 0.02f) continue;
-                float pop = 0.75f + 0.25f * (1 - (1 - in) * (1 - in));
-                boolean sung = w.lineIndex() == curLine && w.wordIndex() == curWord;
-                int base = accent(w.lineIndex() * 0.13f + w.wordIndex() * 0.05f);
-                int color = sung ? 0xFFFFFFFF : base;
-                int argb = (Math.max(5, Math.round(alpha * 255)) << 24) | (color & 0xFFFFFF);
+                float easeIn = 1 - (1 - in) * (1 - in) * (1 - in);
+                float dx = 0;
+                float dy = 0;
+                float pop = 1f;
+                String text = w.text();
+                switch (anim) {
+                    case "Typewriter" -> {
+                        int chars = Math.min(text.length(), 1 + (int) (a / 45));
+                        text = text.substring(0, chars);
+                    }
+                    case "Wave" -> dy = (float) Math.sin(wall * 0.005 + w.index() * 0.7) * 2.5f * k;
+                    case "Drop" -> {
+                        float d = Math.min(1f, a / 380f);
+                        float bounce = (float) (Math.abs(Math.cos(d * Math.PI * 1.5)) * (1 - d));
+                        dy = -(1 - d) * 26 * k - bounce * 4 * k;
+                    }
+                    case "Rise" -> dy = (1 - easeIn) * 14 * k;
+                    case "Zoom" -> pop = 1 + (1 - easeIn) * 1.3f * k;
+                    case "Glitch" -> {
+                        boolean glitching = a < 320 || random.nextFloat() < 0.03f * k;
+                        if (glitching) {
+                            dx = (random.nextFloat() - 0.5f) * 4 * k;
+                            dy = (random.nextFloat() - 0.5f) * 2 * k;
+                        }
+                    }
+                    default -> pop = 0.75f + 0.25f * easeIn;
+                }
+                boolean sung = w.line() == curLine && w.index() == curWord;
+                boolean past = w.line() < curLine || w.line() == curLine && w.index() < curWord;
+                if (beatPulse.isOn() && sung) {
+                    long since = wall - w.sungAt();
+                    pop *= 1 + 0.18f * k * (float) Math.exp(-since / 160.0);
+                }
+                int base = wordColor(t, w.line(), w.index(), w.count());
+                int color = sung ? Theme.lerpColor(base, 0xFFFFFFFF, 0.65f) : past ? base : Theme.lerpColor(base, 0xFFFFFFFF, 0.15f);
+                Component c = styled(text);
+                float tw = f.width(c);
+
                 matrices.pushPose();
-                Vec3 o = w.pos().subtract(cam);
-                Matrix4f basis = new Matrix4f(
-                        (float) w.right().x, (float) w.right().y, (float) w.right().z, 0,
-                        (float) w.up().x, (float) w.up().y, (float) w.up().z, 0,
-                        (float) w.normal().x, (float) w.normal().y, (float) w.normal().z, 0,
-                        (float) o.x, (float) o.y, (float) o.z, 1);
-                matrices.last().pose().mul(basis);
-                float s = w.scale() * pop;
+                Vec3 anchor = w.follow() ? cam.add(lookVec.scale(worldDistance.get() * 0.6)) : w.anchor();
+                Vec3 o = anchor.subtract(cam);
+                if (w.surface()) {
+                    Matrix4f basis = new Matrix4f(
+                            (float) w.right().x, (float) w.right().y, (float) w.right().z, 0,
+                            (float) w.up().x, (float) w.up().y, (float) w.up().z, 0,
+                            (float) w.normal().x, (float) w.normal().y, (float) w.normal().z, 0,
+                            (float) o.x, (float) o.y, (float) o.z, 1);
+                    matrices.last().pose().mul(basis);
+                } else {
+                    matrices.translate(o.x, o.y, o.z);
+                    matrices.mulPose(camera.rotation());
+                }
+                float s = w.s();
                 matrices.scale(s, -s, s);
-                // a soft dark copy behind the word keeps it readable on bright blocks
-                f.drawInBatch(w.text(), 1, 1, (Math.max(8, Math.round(alpha * 120)) << 24), false, matrices.last().pose(), context.consumers(),
-                        Font.DisplayMode.NORMAL, 0, 0xF000F0);
-                matrices.translate(0, 0, 0.6f);
-                f.drawInBatch(w.text(), 0, 0, argb, false, matrices.last().pose(), context.consumers(), Font.DisplayMode.NORMAL, 0, 0xF000F0);
+                // scale around the word's middle
+                float mx = w.x() + tw / 2f + dx;
+                float my = w.y() + 4 + dy;
+                matrices.translate(mx, my, 0);
+                matrices.scale(pop, pop, 1);
+                float x0 = -tw / 2f;
+                float y0 = -4;
+                if (glow.isOn()) {
+                    int g = (Math.max(5, Math.round(alpha * 55)) << 24) | (base & 0xFFFFFF);
+                    for (int gx = -1; gx <= 1; gx++) {
+                        for (int gy = -1; gy <= 1; gy++) {
+                            if (gx == 0 && gy == 0) continue;
+                            f.drawInBatch(c, x0 + gx * 0.7f, y0 + gy * 0.7f, g, false, matrices.last().pose(), context.consumers(), mode, 0, 0xF000F0);
+                        }
+                    }
+                    matrices.translate(0, 0, 0.3f);
+                } else {
+                    f.drawInBatch(c, x0 + 1, y0 + 1, (Math.max(8, Math.round(alpha * 120)) << 24), false, matrices.last().pose(), context.consumers(),
+                            mode, 0, 0xF000F0);
+                    matrices.translate(0, 0, 0.3f);
+                }
+                if (chromatic.isOn() || anim.equals("Glitch") && a < 320) {
+                    int ca = Math.max(5, Math.round(alpha * 150)) << 24;
+                    f.drawInBatch(c, x0 - 0.8f, y0, ca | 0xFF3355, false, matrices.last().pose(), context.consumers(), mode, 0, 0xF000F0);
+                    f.drawInBatch(c, x0 + 0.8f, y0, ca | 0x33E0FF, false, matrices.last().pose(), context.consumers(), mode, 0, 0xF000F0);
+                    matrices.translate(0, 0, 0.3f);
+                }
+                int argb = (Math.max(5, Math.round(alpha * 255)) << 24) | (color & 0xFFFFFF);
+                f.drawInBatch(c, x0, y0, argb, false, matrices.last().pose(), context.consumers(), mode, 0, 0xF000F0);
                 matrices.popPose();
             }
         });

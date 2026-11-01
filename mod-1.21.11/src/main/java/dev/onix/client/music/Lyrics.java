@@ -39,6 +39,12 @@ public final class Lyrics {
     /** Songs whose request failed (network): asked again after this time. */
     private static final Map<String, Long> RETRY_AT = new ConcurrentHashMap<>();
     private static final Pattern TIME = Pattern.compile("\\[(\\d+):(\\d+(?:[.,]\\d+)?)]");
+    /** Where the lyrics of a song came from ("LRCLIB", "NetEase", "timing estimated"). */
+    private static final Map<String, String> SOURCE = new ConcurrentHashMap<>();
+    /** Credit lines some sources put in front of the lyrics ("作词 : …", "Producer: …"). */
+    private static final Pattern CREDIT = Pattern.compile("(?i)^\\s*(作词|作曲|编曲|制作人|制作|混音|母带|和声|吉他|贝斯|鼓|监制|出品|lyrics by|composed by|produced by|written by|arranged by|mixed by|mastered by|composer|lyricist|producer)\\s*[:：].*");
+    /** Unsynced lyrics may be used, their timing spread over the song. Set by the module. */
+    public static volatile boolean allowUnsynced = true;
 
     private Lyrics() {}
 
@@ -58,7 +64,7 @@ public final class Lyrics {
                     List<Line> lines = fetch(t);
                     CACHE.put(key, lines);
                     PROBLEM.put(key, "");
-                    OnixClient.LOGGER.info("Lyrics for {}: {}", key, lines.isEmpty() ? "none with timing on LRCLIB" : lines.size() + " lines");
+                    OnixClient.LOGGER.info("Lyrics for {}: {}", key, lines.isEmpty() ? "none found" : lines.size() + " lines from " + SOURCE.get(key));
                 } catch (Exception e) {
                     OnixClient.LOGGER.warn("Lyrics for {} failed: {}", key, e.toString());
                     PROBLEM.put(key, "Lyrics server not reachable");
@@ -96,6 +102,11 @@ public final class Lyrics {
         return PROBLEM.get(t.key());
     }
 
+    /** Where the lyrics came from, or null. */
+    public static String source(NowPlaying.Track t) {
+        return SOURCE.get(t.key());
+    }
+
     /**
      * Tries several ways, from exact to loose: the exact song (title, artist, album, length), then a search by title
      * and artist, then a search with a cleaned title ("Song - Remastered 2011 (feat. X)" → "Song"), then free text.
@@ -111,8 +122,126 @@ public final class Lyrics {
         if (got != null && got.isJsonObject()) synced = syncedOf(got.getAsJsonObject());
         if (synced == null) synced = best(get("https://lrclib.net/api/search?track_name=" + enc(title) + "&artist_name=" + enc(artist)), t);
         if (synced == null && !clean.equals(title)) synced = best(get("https://lrclib.net/api/search?track_name=" + enc(clean) + "&artist_name=" + enc(artist)), t);
-        if (synced == null) synced = best(get("https://lrclib.net/api/search?q=" + enc(clean + " " + artist)), t);
-        return synced == null ? List.of() : parse(synced, t.durationMs());
+        JsonElement loose = null;
+        if (synced == null) {
+            loose = get("https://lrclib.net/api/search?q=" + enc(clean + " " + artist));
+            synced = best(loose, t);
+        }
+        if (synced != null) {
+            SOURCE.put(t.key(), "LRCLIB");
+            return parse(synced, t.durationMs());
+        }
+        // NetEase Cloud Music has synced lyrics for many songs LRCLIB is missing
+        try {
+            String netease = netease(clean, artist, t.durationMs());
+            if (netease != null) {
+                List<Line> lines = parse(netease, t.durationMs());
+                if (!lines.isEmpty()) {
+                    SOURCE.put(t.key(), "NetEase");
+                    return lines;
+                }
+            }
+        } catch (Exception e) {
+            OnixClient.LOGGER.info("NetEase lyrics for {}: {}", t.key(), e.toString());
+        }
+        // last resort: lyrics without timing, spread over the song
+        if (allowUnsynced) {
+            String plain = plainOf(got);
+            if (plain == null) plain = plainBest(loose != null ? loose : get("https://lrclib.net/api/search?q=" + enc(clean + " " + artist)), t);
+            if (plain != null && t.durationMs() > 0) {
+                SOURCE.put(t.key(), "timing estimated");
+                return estimate(plain, t.durationMs());
+            }
+        }
+        return List.of();
+    }
+
+    private static String plainOf(JsonElement e) {
+        if (e == null || !e.isJsonObject()) return null;
+        JsonObject o = e.getAsJsonObject();
+        if (!o.has("plainLyrics") || o.get("plainLyrics").isJsonNull()) return null;
+        String s = o.get("plainLyrics").getAsString();
+        return s.isBlank() ? null : s;
+    }
+
+    private static String plainBest(JsonElement found, NowPlaying.Track t) {
+        if (found == null || !found.isJsonArray()) return null;
+        for (JsonElement e : found.getAsJsonArray()) {
+            if (!e.isJsonObject()) continue;
+            JsonObject o = e.getAsJsonObject();
+            long diff = o.has("duration") && !o.get("duration").isJsonNull() && t.durationMs() > 0
+                    ? Math.abs(Math.round(o.get("duration").getAsDouble() * 1000) - t.durationMs()) : 0;
+            if (diff > 15_000) continue;
+            String p = plainOf(o);
+            if (p != null) return p;
+        }
+        return null;
+    }
+
+    /** Lines without timing: spread from 8 % to 95 % of the song, longer lines get more time. */
+    static List<Line> estimate(String plain, long durationMs) {
+        List<String> texts = new ArrayList<>();
+        for (String l : plain.split("\\R")) if (!l.isBlank()) texts.add(l.trim());
+        if (texts.isEmpty()) return List.of();
+        long from = durationMs * 8 / 100;
+        long span = durationMs * 87 / 100;
+        int total = 0;
+        for (String l : texts) total += l.length() + 8;
+        List<Line> out = new ArrayList<>();
+        long at = from;
+        for (String l : texts) {
+            long len = span * (l.length() + 8) / Math.max(1, total);
+            out.add(new Line(at, at + len, l, words(l, at, at + len)));
+            at += len;
+        }
+        return Collections.unmodifiableList(out);
+    }
+
+    /** Search NetEase by title and artist, pick the closest length, return its LRC (without credit lines). */
+    private static String netease(String title, String artist, long durationMs) throws Exception {
+        JsonElement found = get163("https://music.163.com/api/cloudsearch/pc?type=1&limit=10&s=" + enc(title + " " + artist));
+        if (found == null || !found.isJsonObject()) return null;
+        JsonObject result = found.getAsJsonObject().has("result") && found.getAsJsonObject().get("result").isJsonObject()
+                ? found.getAsJsonObject().getAsJsonObject("result") : null;
+        if (result == null || !result.has("songs")) return null;
+        long bestId = -1;
+        long best = Long.MAX_VALUE;
+        String wantTitle = title.toLowerCase(java.util.Locale.ROOT);
+        for (JsonElement e : result.getAsJsonArray("songs")) {
+            JsonObject song = e.getAsJsonObject();
+            String name = song.has("name") ? song.get("name").getAsString().toLowerCase(java.util.Locale.ROOT) : "";
+            if (!name.contains(wantTitle) && !wantTitle.contains(name)) continue;
+            if (name.contains("instrumental") || name.contains("karaoke")) continue;
+            long dt = song.has("dt") ? song.get("dt").getAsLong() : 0;
+            long diff = durationMs > 0 && dt > 0 ? Math.abs(dt - durationMs) : 0;
+            if (durationMs > 0 && diff > 10_000) continue;
+            if (diff < best) {
+                best = diff;
+                bestId = song.get("id").getAsLong();
+            }
+        }
+        if (bestId < 0) return null;
+        JsonElement lyr = get163("https://music.163.com/api/song/lyric?lv=1&kv=1&tv=-1&id=" + bestId);
+        if (lyr == null || !lyr.isJsonObject() || !lyr.getAsJsonObject().has("lrc")) return null;
+        JsonObject lrc = lyr.getAsJsonObject().getAsJsonObject("lrc");
+        if (!lrc.has("lyric") || lrc.get("lyric").isJsonNull()) return null;
+        StringBuilder out = new StringBuilder();
+        for (String line : lrc.get("lyric").getAsString().split("\\R")) {
+            String text = line.replaceAll("^(\\[[^]]*])+", "");
+            if (CREDIT.matcher(text).matches()) continue;
+            out.append(line).append('\n');
+        }
+        String s = out.toString().trim();
+        return s.contains("[") ? s : null;
+    }
+
+    private static JsonElement get163(String url) throws Exception {
+        HttpRequest req = HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(10))
+                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) OnixClient/" + OnixClient.VERSION)
+                .header("Referer", "https://music.163.com/").GET().build();
+        HttpResponse<String> res = HTTP.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (res.statusCode() != 200) return null;
+        return JsonParser.parseString(res.body());
     }
 
     /** The synced lyrics of the search result closest in length (within 15 s when the length is known). */
