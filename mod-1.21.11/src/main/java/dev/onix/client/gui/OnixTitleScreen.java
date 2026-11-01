@@ -521,27 +521,12 @@ public class OnixTitleScreen extends Screen {
     }
 
     private void light(GuiGraphics ctx, float cx, float cy, float radius, int color, float strength) {
-        // circles stacked from big to small: each adds a little light, so the middle glows softly
-        int steps = 16;
-        int a = Math.max(1, Math.round(strength * 1.3f));
-        for (int i = steps; i >= 1; i--) {
-            int r = Math.max(1, Math.round(radius * i / steps));
-            Theme.round(ctx, Math.round(cx - r), Math.round(cy - r), Math.round(cx + r), Math.round(cy + r), r, Theme.withAlpha(color, a));
-        }
+        SoftShapes.glow(ctx, cx, cy, radius, radius, Theme.withAlpha(color, Math.min(255, Math.round(strength * 18))));
     }
 
     private void vignette(GuiGraphics ctx) {
-        int steps = 16;
-        for (int i = 0; i < steps; i++) {
-            float f = 1 - i / (float) steps;
-            int a = Math.round(150 * f * f);
-            int bandX = Math.max(1, width / 5 / steps);
-            int bandY = Math.max(1, height / 4 / steps);
-            ctx.fill(i * bandX, 0, (i + 1) * bandX, height, a << 24);
-            ctx.fill(width - (i + 1) * bandX, 0, width - i * bandX, height, a << 24);
-            ctx.fill(0, i * bandY, width, (i + 1) * bandY, a << 24);
-            ctx.fill(0, height - (i + 1) * bandY, width, height - i * bandY, a << 24);
-        }
+        // a bit bigger than the screen so the middle stays clear and the corners go dark
+        SoftShapes.vignette(ctx, -width / 8, -height / 8, width + width / 4, height + height / 4, 0xD0000000);
     }
 
     private void logo(GuiGraphics ctx, float cx, float cy, float size, float alpha, float spin) {
@@ -662,31 +647,34 @@ public class OnixTitleScreen extends Screen {
             areas.add(new Area(Math.round(menuX - w / 2f), y - 4, Math.round(menuX + w / 2f), y + 12, () -> go(action)));
         }
 
-        // ---- the player on the right, slides in; the wardrobe pill under it
-        float skinA = smooth((since - 0.8f) / 0.7f);
+        // ---- the player walks in from the right, turns to you; the wardrobe pill under it
+        float walkT = (since - 0.7f) / 1.7f;                 // 0..1 while walking in
+        float walk = Math.max(0f, Math.min(1f, walkT));
+        float arrive = 1 - (1 - walk) * (1 - walk);           // slows down at the end
+        float skinA = smooth((since - 0.7f) / 0.35f);
         if (skinWidget != null) {
             int sh = Math.max(110, Math.min(240, Math.round(height * 0.52f)));
             int sw = Math.round(sh * 0.55f);
             float sxC = width * 0.76f;
-            float bob = (float) Math.sin(time * 1.4f) * 2.5f;
-            int sx = Math.round(sxC - sw / 2f + (1 - skinA) * 50);
+            float startX = width + sw;                          // just outside the right edge
+            float walkingX = startX + (sxC - startX) * arrive;
+            boolean walking = walkT < 1f;
+            float stride = walking ? 1f - smooth((walkT - 0.8f) / 0.2f) : 0f;   // legs settle as they arrive
+            float phase = since * 9f;
+            float bob = walking ? Math.abs((float) Math.sin(phase)) * -3f * stride : (float) Math.sin(time * 1.4f) * 2.5f;
+            int sx = Math.round(walkingX - sw / 2f);
             int sy = Math.round(height / 2f - sh / 2f - 6 + bob);
             skinWidget.setRectangle(sw, sh, sx, sy);
             skinWidget.visible = skinOn && skinA > 0.02f;
+            poseSkin(walking, walkT, stride, phase, time);
             if (skinWidget.visible) {
-                // light pool behind the player
-                for (int r = 16; r >= 1; r--) {
-                    int rr = Math.round(sw * 0.11f * r);
-                    Theme.round(ctx, Math.round(sxC - rr), Math.round(height / 2f - rr * 0.9f), Math.round(sxC + rr), Math.round(height / 2f + rr * 0.9f),
-                            rr, Theme.withAlpha(Theme.themeAccent(), Math.round(4 * skinA)));
-                }
+                float here = smooth((walkT - 0.6f) / 0.4f);      // name, light and pill appear as they arrive
+                SoftShapes.glow(ctx, sxC, height / 2f, sw * 1.6f, sh * 0.75f, Theme.withAlpha(Theme.themeAccent(), Math.round(70 * here)));
+                // soft shadow on the "floor" under the feet, moving with them
+                SoftShapes.glow(ctx, walkingX, sy + sh - 1, sw * 0.45f, 5, Theme.withAlpha(0xFF000000, Math.round(160 * skinA)));
+                skinA = here;
                 String name = minecraft.getUser().getName();
                 centered(ctx, Theme.bold(name), sxC, sy - 14, 1f, a(WHITE, skinA));
-                // shadow on the "floor"
-                for (int k = 0; k < 4; k++) {
-                    int hw = Math.round(sw * (0.22f + k * 0.07f));
-                    Theme.round(ctx, Math.round(sxC - hw), sy + sh - 3 - k / 2, Math.round(sxC + hw), sy + sh + 1 + k / 2, 3, a(0x22000000, skinA));
-                }
                 // wardrobe pill
                 String label = "Wardrobe";
                 int pw = Theme.boldWidth(label) + 30;
@@ -766,6 +754,34 @@ public class OnixTitleScreen extends Screen {
             int ty = y0 + size + 12;
             Theme.round(ctx, tx, ty, tx + tw, ty + 14, 7, a(0xE00B0B0E, alpha));
             Theme.text(ctx, tip, tx + 6, ty + 3, a(WHITE, alpha));
+        }
+    }
+
+    private boolean skinTurned;
+
+    /** Walk cycle while walking in (side view), then a smooth turn to the front and a calm idle. */
+    private void poseSkin(boolean walking, float walkT, float stride, float phase, float time) {
+        var acc = (dev.onix.client.mixin.PlayerSkinWidgetAccessor) skinWidget;
+        float swing = (float) Math.cos(phase) * 0.9f * stride;
+        float armIdle = walking ? 0f : (float) Math.sin(time * 1.2f) * 0.04f;
+        for (var model : new net.minecraft.client.model.player.PlayerModel[]{acc.onix$wide(), acc.onix$slim()}) {
+            model.rightLeg.xRot = swing;
+            model.leftLeg.xRot = -swing;
+            model.rightArm.xRot = -swing * 0.8f;
+            model.leftArm.xRot = swing * 0.8f;
+            model.rightArm.zRot = 0.05f + armIdle;
+            model.leftArm.zRot = -0.05f - armIdle;
+            model.head.xRot = 0f;
+        }
+        if (walking) {
+            // facing the way they walk (to the left), turning towards you over the last steps
+            float turn = smooth((walkT - 0.7f) / 0.3f);
+            acc.onix$setRotationY(-90f + (30f + 90f) * turn);
+            acc.onix$setRotationX(-5f);
+            skinTurned = false;
+        } else if (!skinTurned) {
+            acc.onix$setRotationY(30f);
+            skinTurned = true;
         }
     }
 

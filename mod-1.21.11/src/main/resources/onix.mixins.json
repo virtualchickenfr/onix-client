@@ -38,7 +38,8 @@
     "SwingDurationMixin",
     "TotemPopMixin",
     "FontSetMixin",
-    "FramerateLimitMixin"
+    "FramerateLimitMixin",
+    "PlayerSkinWidgetAccessor"
   ],
   "injectors": {
     "defaultRequire": 0

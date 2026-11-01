@@ -78,6 +78,7 @@ public final class DevTest {
         // cinematic title: the splash, the burst when entering, then the menu with the player
         then(2, () -> { if (mc.screen != null) mc.screen.keyPressed(new KeyEvent(com.mojang.blaze3d.platform.InputConstants.KEY_SPACE, 0, 0)); });
         then(12, () -> snap(mc, "01a_cinematic_enter"));
+        then(18, () -> snap(mc, "01a2_cinematic_walk"));
         then(60, () -> snap(mc, "01b_cinematic_menu"));
         for (String id : List.of("Carbon", "Voxel", "Portal", "Classic")) {
             then(2, () -> design(id));
