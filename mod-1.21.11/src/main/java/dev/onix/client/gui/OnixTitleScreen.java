@@ -515,15 +515,6 @@ public class OnixTitleScreen extends Screen {
                 width * 0.55f, 0xFFFFFFFF, 2.6f * bright);
         light(ctx, width * (0.18f + 0.05f * (float) Math.cos(time * 0.06f)) + px * 0.5f, height * (0.95f + 0.03f * (float) Math.sin(time * 0.08f)) + py * 0.5f,
                 width * 0.4f, Theme.themeAccent(), 2.0f * bright);
-        // light curtain: soft vertical bands swaying on the right
-        for (int i = 0; i < 5; i++) {
-            float x = width * (0.62f + i * 0.08f) + (float) Math.sin(time * 0.3f + i * 1.7f) * 14 + px;
-            int a = Math.round((4 + 2 * (float) Math.sin(time * 0.5f + i)) * bright);
-            for (int k = 0; k < 6; k++) {
-                int w = 6 + k * 7;
-                ctx.fillGradient(Math.round(x - w / 2f), 0, Math.round(x + w / 2f), height, Theme.withAlpha(0xFFFFFFFF, Math.max(0, a)), 0x00FFFFFF);
-            }
-        }
         vignette(ctx);
         if (OnixClient.CONFIG == null || OnixClient.CONFIG.menuParticles.isOn()) particles.render(ctx, width, height, 0.35f * bright);
     }
