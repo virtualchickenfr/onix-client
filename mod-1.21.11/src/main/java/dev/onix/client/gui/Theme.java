@@ -126,6 +126,7 @@ public final class Theme {
         return switch (c.buttonStyle.get()) {
             case "Square" -> Math.min(radius, 2);
             case "Pill" -> radius * 4;
+            case "Rounded" -> Math.round(radius * 1.6f);
             default -> radius;
         };
     }
@@ -317,7 +318,7 @@ public final class Theme {
     /** Liquid glass is rounder: every corner radius grows (small ones the most). */
     public static int glassRadius(int radius) {
         if (!glass || radius <= 0) return radius;
-        return radius < 4 ? radius + 4 : Math.round(radius * 2.2f);
+        return radius < 4 ? radius + 4 : Math.round(radius * 1.7f);
     }
 
     /** Liquid glass panel: soft shadow, see-through black body, light rim and a specular streak along the top. */

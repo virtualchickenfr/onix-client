@@ -33,8 +33,8 @@ public abstract class AbstractSliderButtonMixin {
 		float hover = self.isHoveredOrFocused() ? 1 : 0;
 		R2D.invert = gg.carbon.client.screen.MenuSkin.light();
 		R2D.pushAlpha(carbon$alpha(self));
-		R2D.rrect(g, x, y, w, h, 6, Theme.lerp(0xD8121215, 0xF01A1A1E, hover));
-		R2D.outline(g, x, y, w, h, 6, 0.75f, Theme.alpha(0xFFFFFFFF, 0.10f + 0.2f * hover));
+		R2D.rrect(g, x, y, w, h, CarbonClient.buttonRadius(h), Theme.lerp(0xD8121215, 0xF01A1A1E, hover));
+		R2D.outline(g, x, y, w, h, CarbonClient.buttonRadius(h), 0.75f, Theme.alpha(0xFFFFFFFF, 0.10f + 0.2f * hover));
 		R2D.popAlpha();
 		R2D.invert = false;
 	}
@@ -48,8 +48,8 @@ public abstract class AbstractSliderButtonMixin {
 		AbstractSliderButton self = (AbstractSliderButton) (Object) this;
 		R2D.invert = gg.carbon.client.screen.MenuSkin.light();
 		R2D.pushAlpha(carbon$alpha(self));
-		R2D.rrect(g, x + 1, y + 2, w - 2, h - 5, 2.5f, self.isActive() ? 0xFF3A3A42 : 0xFF26262B);
-		R2D.outline(g, x + 1, y + 2, w - 2, h - 5, 2.5f, 1f, self.isActive() ? 0xFFE8E8EA : 0xFF55555C);
+		R2D.rrect(g, x + 1, y + 2, w - 2, h - 5, Math.min((w - 2) / 2f, CarbonClient.buttonRadius(h - 5)), self.isActive() ? 0xFF3A3A42 : 0xFF26262B);
+		R2D.outline(g, x + 1, y + 2, w - 2, h - 5, Math.min((w - 2) / 2f, CarbonClient.buttonRadius(h - 5)), 1f, self.isActive() ? 0xFFE8E8EA : 0xFF55555C);
 		R2D.popAlpha();
 		R2D.invert = false;
 	}

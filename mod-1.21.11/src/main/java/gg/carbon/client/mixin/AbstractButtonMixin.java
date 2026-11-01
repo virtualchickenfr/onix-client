@@ -44,9 +44,10 @@ public abstract class AbstractButtonMixin {
 		R2D.invert = gg.carbon.client.screen.MenuSkin.light();
 		R2D.pushAlpha(self.getAlpha());
 		if (!self.isActive()) {
-			Ui.block(g, x, y, w, hh, 4, 3, 0xC0111113, 0xC0060607, 0x14FFFFFF);
+			Ui.block(g, x, y, w, hh, CarbonClient.buttonRadius(hh), CarbonClient.buttonDepth(), 0xC0111113, CarbonClient.buttonDepth() > 0 ? 0xC0060607 : 0xC0111113, 0x14FFFFFF);
 		} else {
-			Ui.block(g, x, y, w, hh, 4, 3, Theme.lerp(0xE81C1C20, 0xF02A2A30, h), 0xF0060607, Theme.alpha(0xFFFFFFFF, 0.12f + 0.22f * h));
+			int face = Theme.lerp(0xE81C1C20, 0xF02A2A30, h);
+			Ui.block(g, x, y, w, hh, CarbonClient.buttonRadius(hh), CarbonClient.buttonDepth(), face, CarbonClient.buttonDepth() > 0 ? 0xF0060607 : face, Theme.alpha(0xFFFFFFFF, 0.12f + 0.22f * h));
 			float sh = s.sheen.get();
 			if (sh > 0 && sh < 1) {
 				float bw = w * 0.4f;

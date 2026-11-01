@@ -67,7 +67,7 @@ public class OnixButton extends Button {
             ctx.drawString(Theme.font(), label, x1 + (getWidth() - w) / 2, fy + (getHeight() - depth - 8) / 2 + 1, text, false);
             return;
         }
-        Theme.card(ctx, x1, y1, x2, y2, 6, fill, border);
+        Theme.card(ctx, x1, y1, x2, y2, Math.min(getHeight() / 2, Theme.corner(6)), fill, border);
         ctx.drawString(Theme.font(), label, x1 + (getWidth() - w) / 2, y1 + (getHeight() - 8) / 2 + 1, text, false);
     }
 }

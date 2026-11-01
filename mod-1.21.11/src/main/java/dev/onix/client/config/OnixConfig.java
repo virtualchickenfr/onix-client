@@ -54,6 +54,8 @@ public class OnixConfig {
     /** 1.1.6 switched everyone once to the cinematic title screen and the glass menus. */
     public final BoolSetting cinematicSet = new BoolSetting("cinematicSet", "Cinematic Set", false).hidden();
     /** 1.1.8: the cinematic Onix main menu became everyone's main menu once (also for Carbon/vanilla designs). */
+    /** 1.1.10: rounder buttons for everyone once (Button Style → Rounded). */
+    public final BoolSetting roundSet = new BoolSetting("roundSet", "Round Set", false).hidden();
     public final BoolSetting cinematicSet2 = new BoolSetting("cinematicSet2", "Cinematic Default", false).hidden();
 
     // Onix server: badges, coins, cosmetics shop and gifts (see /server in the repository)
@@ -66,7 +68,7 @@ public class OnixConfig {
     // Design
     public final BoolSetting lightMode = new BoolSetting("lightMode", "Light Mode", false)
             .describe("Light surfaces and dark text in every Onix menu.");
-    public final ModeSetting buttonStyle = new ModeSetting("buttonShape", "Button Style", "Block", "Rounded", "Square", "Pill")
+    public final ModeSetting buttonStyle = new ModeSetting("buttonShape", "Button Style", "Rounded", "Pill", "Block", "Square")
             .describe("Block: Carbon's stone buttons with depth, a lift on hover and a light sweep.");
     public final BoolSetting carbonButtons = new BoolSetting("carbonButtons", "Carbon Buttons Everywhere", true)
             .describe("Minecraft's own buttons and sliders (options, singleplayer, multiplayer …) as Carbon blocks.");
@@ -163,7 +165,7 @@ public class OnixConfig {
                 onixServer, socialOn, shareServer, nameTagLooks, lightMode, buttonStyle, carbonButtons, menuSkin, menuDesign, menuCharacter, titleDesign, loadingScreens, loadingStyle, loadingTips,
                 hideHudInDebug, snapping, snapDistance, editorGrid,
                 notifications, notificationSound, notificationTime, notificationPosition,
-                ruleNotes, rulesOnJoin, rulesSkip, autoSwitchProfiles, introDone, cinematicSet, cinematicSet2, menuGlass);
+                ruleNotes, rulesOnJoin, rulesSkip, autoSwitchProfiles, introDone, cinematicSet, cinematicSet2, roundSet, menuGlass);
     }
 
     public float menuScaleFactor() {

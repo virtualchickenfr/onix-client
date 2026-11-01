@@ -60,6 +60,12 @@ public class OnixClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         CONFIG = OnixConfig.load();
+        // 1.1.10: rounder buttons everywhere once (they can pick Block again under Design)
+        if (!CONFIG.roundSet.isOn()) {
+            CONFIG.roundSet.set(true);
+            if (CONFIG.buttonStyle.is("Block") || CONFIG.buttonStyle.is("Square")) CONFIG.buttonStyle.set("Rounded");
+            CONFIG.save();
+        }
         // 1.1.8: everyone gets the cinematic Onix main menu once (they can switch back under Design)
         if (!CONFIG.cinematicSet2.isOn()) {
             CONFIG.cinematicSet2.set(true);
