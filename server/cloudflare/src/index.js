@@ -467,6 +467,211 @@ async function mcrealImage(db, s, rawUuid, day) {
   return row ? [200, { image: row.image }] : [404, { error: 'not found' }];
 }
 
+
+// ---------------------------------------------------------------- parties: play together, members follow the leader
+
+const MAX_PARTY = 8;
+const INVITE_TTL_MS = 10 * MINUTE;
+
+async function partyIdOf(db, uuid) {
+  const row = await db.prepare('SELECT party FROM party_members WHERE uuid = ?').bind(uuid).first();
+  return row ? row.party : null;
+}
+
+async function partyView(db, s) {
+  const now = Date.now();
+  const invites = (await db.prepare(
+    `SELECT i.party, i.from_name AS "from", i.at FROM party_invites i JOIN parties p ON p.id = i.party
+      WHERE i.uuid = ? AND i.at > ? ORDER BY i.at DESC LIMIT 10`).bind(s.uuid, now - INVITE_TTL_MS).all()).results;
+  const id = await partyIdOf(db, s.uuid);
+  const p = id && (await db.prepare('SELECT * FROM parties WHERE id = ?').bind(id).first());
+  if (!p) return { party: null, invites };
+  const rows = (await db.prepare(
+    `SELECT m.uuid, m.name, st.updated AS updated FROM party_members m LEFT JOIN status st ON st.uuid = m.uuid
+      WHERE m.party = ? ORDER BY m.joined`).bind(id).all()).results;
+  const pending = (await db.prepare('SELECT uuid FROM party_invites WHERE party = ? AND at > ?').bind(id, now - INVITE_TTL_MS).all()).results;
+  return {
+    party: {
+      id, leader: p.leader,
+      members: rows.map((r) => ({ uuid: r.uuid, name: r.name, leader: r.uuid === p.leader, online: !!(r.updated && r.updated > now - ONLINE_TTL_MS) })),
+      invited: pending.map((r) => r.uuid),
+      target: { kind: p.target_kind, value: p.target, seq: p.seq },
+    },
+    invites,
+  };
+}
+
+/** Removes a player from their party; the next member leads, a party of one is closed. */
+async function leaveParty(db, uuid) {
+  const id = await partyIdOf(db, uuid);
+  if (!id) return;
+  await db.prepare('DELETE FROM party_members WHERE uuid = ?').bind(uuid).run();
+  const rest = (await db.prepare('SELECT uuid FROM party_members WHERE party = ? ORDER BY joined').bind(id).all()).results;
+  if (rest.length <= 1) {
+    await db.batch([
+      db.prepare('DELETE FROM party_members WHERE party = ?').bind(id),
+      db.prepare('DELETE FROM party_invites WHERE party = ?').bind(id),
+      db.prepare('DELETE FROM parties WHERE id = ?').bind(id),
+    ]);
+    return;
+  }
+  await db.prepare('UPDATE parties SET leader = ?, updated = ? WHERE id = ? AND leader = ?').bind(rest[0].uuid, Date.now(), id, uuid).run();
+}
+
+async function partyInvite(db, s, rawTo) {
+  const to = normUuid(rawTo);
+  if (!to || to === s.uuid) return [400, { error: 'Pick a friend to invite.' }];
+  if (!(await areFriends(db, s.uuid, to))) return [403, { error: 'You can only invite friends.' }];
+  let id = await partyIdOf(db, s.uuid);
+  if (!id) {
+    id = randomHex(8);
+    const now = Date.now();
+    await db.batch([
+      db.prepare('INSERT INTO parties (id, leader, updated) VALUES (?, ?, ?)').bind(id, s.uuid, now),
+      db.prepare('INSERT INTO party_members (uuid, party, name, joined) VALUES (?, ?, ?, ?)').bind(s.uuid, id, s.name, now),
+    ]);
+  }
+  const p = await db.prepare('SELECT leader FROM parties WHERE id = ?').bind(id).first();
+  if (p.leader !== s.uuid) return [403, { error: 'Only the party leader can invite.' }];
+  if ((await partyIdOf(db, to)) === id) return [200, { ok: true, state: 'member' }];
+  const n = (await db.prepare('SELECT COUNT(*) AS n FROM party_members WHERE party = ?').bind(id).first()).n;
+  if (n >= MAX_PARTY) return [400, { error: `A party has room for ${MAX_PARTY} players.` }];
+  await db.prepare('INSERT OR REPLACE INTO party_invites (party, uuid, from_name, at) VALUES (?, ?, ?, ?)').bind(id, to, s.name, Date.now()).run();
+  return [200, { ok: true, state: 'invited', party: id }];
+}
+
+async function partyAccept(db, s, rawParty) {
+  const id = typeof rawParty === 'string' ? rawParty : '';
+  const inv = await db.prepare('SELECT at FROM party_invites WHERE party = ? AND uuid = ?').bind(id, s.uuid).first();
+  if (!inv || inv.at < Date.now() - INVITE_TTL_MS) return [404, { error: 'The invite ran out.' }];
+  const p = await db.prepare('SELECT id FROM parties WHERE id = ?').bind(id).first();
+  if (!p) return [404, { error: 'That party is closed.' }];
+  const n = (await db.prepare('SELECT COUNT(*) AS n FROM party_members WHERE party = ?').bind(id).first()).n;
+  if (n >= MAX_PARTY) return [400, { error: 'The party is full.' }];
+  if ((await partyIdOf(db, s.uuid)) !== id) await leaveParty(db, s.uuid);
+  await db.batch([
+    db.prepare('INSERT OR REPLACE INTO party_members (uuid, party, name, joined) VALUES (?, ?, ?, ?)').bind(s.uuid, id, s.name, Date.now()),
+    db.prepare('DELETE FROM party_invites WHERE party = ? AND uuid = ?').bind(id, s.uuid),
+  ]);
+  return [200, await partyView(db, s)];
+}
+
+async function partyKick(db, s, rawUuid) {
+  const who = normUuid(rawUuid);
+  const id = await partyIdOf(db, s.uuid);
+  if (!id || !who) return [400, { error: 'Not in a party.' }];
+  const p = await db.prepare('SELECT leader FROM parties WHERE id = ?').bind(id).first();
+  if (p.leader !== s.uuid) return [403, { error: 'Only the party leader can remove players.' }];
+  if ((await partyIdOf(db, who)) !== id) {
+    await db.prepare('DELETE FROM party_invites WHERE party = ? AND uuid = ?').bind(id, who).run();
+    return [200, await partyView(db, s)];
+  }
+  await leaveParty(db, who);
+  return [200, await partyView(db, s)];
+}
+
+/** The leader tells where they play: a server address, their own world (through the relay) or nothing. */
+async function partyTarget(db, s, kind, value) {
+  const id = await partyIdOf(db, s.uuid);
+  if (!id) return [200, { ok: true, party: null }];
+  const p = await db.prepare('SELECT leader, target_kind, target FROM parties WHERE id = ?').bind(id).first();
+  if (p.leader !== s.uuid) return [200, { ok: true, leader: false }];
+  const k = kind === 'server' || kind === 'world' ? kind : '';
+  const v = k === 'server' ? String(value || '') : k === 'world' ? id : '';
+  if (k === 'server' && !SERVER_RE.test(v)) return [400, { error: 'Bad server address.' }];
+  if (p.target_kind !== k || p.target !== v) {
+    await db.prepare('UPDATE parties SET target_kind = ?, target = ?, seq = seq + 1, updated = ? WHERE id = ?').bind(k, v, Date.now(), id).run();
+  }
+  return [200, { ok: true }];
+}
+
+// ---------------------------------------------------------------- relay: friends join the leader's own world
+// The leader's game opens its world to LAN and keeps a "host" WebSocket here; a joining member's game connects a "guest"
+// WebSocket, the leader's game answers with a "data" WebSocket for that connection, and the PartyRelay object pipes the
+// bytes between the two. Minecraft itself still checks every player with Mojang, the relay only moves bytes.
+
+async function relayUpgrade(request, env, url) {
+  if (request.headers.get('Upgrade') !== 'websocket') return json(426, { error: 'WebSocket expected' });
+  if (!env.RELAY) return json(503, { error: 'relay not configured' });
+  await ensureSchema(env.DB);
+  const s = await sessionFor(env.DB, url.searchParams.get('token'));
+  if (!s) return json(401, { error: 'invalid token' });
+  const id = await partyIdOf(env.DB, s.uuid);
+  const p = id && (await env.DB.prepare('SELECT leader, target_kind FROM parties WHERE id = ?').bind(id).first());
+  if (!p) return json(403, { error: 'not in a party' });
+  const role = url.searchParams.get('role');
+  const leader = p.leader === s.uuid;
+  if ((role === 'host' || role === 'data') !== leader) return json(403, { error: 'wrong role' });
+  if (role === 'guest' && p.target_kind !== 'world') return json(409, { error: 'the leader is not in a world' });
+  if (!['host', 'guest', 'data'].includes(role)) return json(400, { error: 'role?' });
+  const stub = env.RELAY.get(env.RELAY.idFromName(id));
+  const headers = new Headers(request.headers);
+  headers.set('x-role', role);
+  headers.set('x-conn', url.searchParams.get('conn') || '');
+  headers.set('x-name', s.name);
+  return stub.fetch(new Request('https://relay/', { headers }));
+}
+
+export class PartyRelay {
+  constructor(state) {
+    this.state = state;
+    this.host = null;
+    this.guests = new Map(); // conn -> { ws, queue: [], data: null }
+  }
+
+  async fetch(request) {
+    const role = request.headers.get('x-role');
+    const [client, server] = Object.values(new WebSocketPair());
+    server.accept();
+    if (role === 'host') {
+      if (this.host) try { this.host.close(1000, 'replaced'); } catch {}
+      this.host = server;
+      server.addEventListener('close', () => {
+        if (this.host !== server) return;
+        this.host = null;
+        for (const g of this.guests.values()) this.end(g);
+        this.guests.clear();
+      });
+      server.addEventListener('message', () => {}); // keep-alive pings
+    } else if (role === 'guest') {
+      if (!this.host) {
+        server.close(1011, 'The party leader is not hosting right now.');
+        return new Response(null, { status: 101, webSocket: client });
+      }
+      const conn = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
+      const g = { ws: server, queue: [], data: null };
+      this.guests.set(conn, g);
+      server.addEventListener('message', (e) => {
+        if (g.data) g.data.send(e.data);
+        else if (g.queue.length < 512) g.queue.push(e.data);
+      });
+      server.addEventListener('close', () => { this.guests.delete(conn); this.end(g); });
+      server.addEventListener('error', () => { this.guests.delete(conn); this.end(g); });
+      this.host.send(JSON.stringify({ open: conn, name: request.headers.get('x-name') }));
+    } else {
+      const g = this.guests.get(request.headers.get('x-conn'));
+      if (!g) {
+        server.close(1011, 'no such connection');
+        return new Response(null, { status: 101, webSocket: client });
+      }
+      g.data = server;
+      for (const m of g.queue) server.send(m);
+      g.queue = [];
+      server.addEventListener('message', (e) => { try { g.ws.send(e.data); } catch {} });
+      server.addEventListener('close', () => this.end(g));
+      server.addEventListener('error', () => this.end(g));
+    }
+    return new Response(null, { status: 101, webSocket: client });
+  }
+
+  end(g) {
+    for (const ws of [g.ws, g.data]) {
+      if (!ws) continue;
+      try { ws.close(1000, 'closed'); } catch {}
+    }
+  }
+}
+
 const routes = {
   'GET /': async (env, db) => [200, { name: 'onix-presence', online: (await db.prepare('SELECT COUNT(*) AS n FROM online WHERE seen > ?').bind(Date.now() - ONLINE_TTL_MS).first()).n }],
   'GET /v1/hello': async (env) => [200, { name: 'onix-presence', version: 3, verify: verifyOn(env), proof: ['certificate', 'hasJoined'], economy: true, host: 'cloudflare' }],
@@ -550,6 +755,19 @@ const routes = {
   'POST /v1/friends/add': (env, db, body) => withAccount(env, db, body, (s) => addFriend(db, s, body.name)),
   'POST /v1/friends/accept': (env, db, body) => withAccount(env, db, body, (s) => acceptFriend(db, s, body.uuid)),
   'POST /v1/friends/remove': (env, db, body) => withAccount(env, db, body, (s) => removeFriend(db, s, body.uuid)),
+  'POST /v1/party': (env, db, body) => withAccount(env, db, body, async (s) => [200, await partyView(db, s)]),
+  'POST /v1/party/invite': (env, db, body) => withAccount(env, db, body, (s) => partyInvite(db, s, body.uuid)),
+  'POST /v1/party/accept': (env, db, body) => withAccount(env, db, body, (s) => partyAccept(db, s, body.party)),
+  'POST /v1/party/decline': (env, db, body) => withAccount(env, db, body, async (s) => {
+    await db.prepare('DELETE FROM party_invites WHERE party = ? AND uuid = ?').bind(String(body.party || ''), s.uuid).run();
+    return [200, await partyView(db, s)];
+  }),
+  'POST /v1/party/leave': (env, db, body) => withAccount(env, db, body, async (s) => {
+    await leaveParty(db, s.uuid);
+    return [200, await partyView(db, s)];
+  }),
+  'POST /v1/party/kick': (env, db, body) => withAccount(env, db, body, (s) => partyKick(db, s, body.uuid)),
+  'POST /v1/party/target': (env, db, body) => withAccount(env, db, body, (s) => partyTarget(db, s, body.kind, body.value)),
   'POST /v1/chat/send': (env, db, body) => withAccount(env, db, body, (s) => sendChat(db, s, body.to, body.text)),
   'POST /v1/chat/history': (env, db, body) => withAccount(env, db, body, (s) => chatHistory(db, s, body.with, body.after)),
   'POST /v1/chat/inbox': (env, db, body) => withAccount(env, db, body, (s) => inbox(db, s, body.after)),
@@ -600,6 +818,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (request.method === 'OPTIONS') return json(204, {});
+    if (url.pathname === '/v1/relay') return relayUpgrade(request, env, url);
     const handler = routes[`${request.method} ${url.pathname}`];
     if (!handler) return json(404, { error: 'not found' });
     let body = {};
@@ -633,6 +852,7 @@ export default {
       env.DB.prepare('DELETE FROM status WHERE updated < ?').bind(now - 24 * 60 * 60 * 1000),
       env.DB.prepare('DELETE FROM messages WHERE at < ?').bind(now - 30 * 24 * 60 * 60 * 1000),
       env.DB.prepare('DELETE FROM mcreal WHERE at < ?').bind(now - 3 * 24 * 60 * 60 * 1000),
+      env.DB.prepare('DELETE FROM party_invites WHERE at < ?').bind(now - 24 * 60 * 60 * 1000),
     ]);
   },
 };

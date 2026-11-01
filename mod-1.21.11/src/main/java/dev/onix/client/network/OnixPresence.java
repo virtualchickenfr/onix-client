@@ -252,6 +252,22 @@ public final class OnixPresence {
      * Sends an authenticated request (the session token is added) on the background thread and hands
      * the reply to done on the game thread. Signs in again once if the server forgot the session.
      */
+    /**
+     * A signed-in token for the relay WebSockets (party worlds), or null. Blocks: call it off the render thread.
+     */
+    public static String relayToken() {
+        String url = server;
+        Minecraft mc = Minecraft.getInstance();
+        User session = mc.getUser();
+        if (url.isEmpty() || session.getProfileId() == null) return null;
+        try {
+            return WORKER.submit(() -> ensureToken(url, session.getProfileId(), session.getName(), session.getAccessToken()) ? token : null)
+                    .get(20, java.util.concurrent.TimeUnit.SECONDS);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     public static void call(String path, JsonObject body, java.util.function.Consumer<Reply> done) {
         String url = server;
         Minecraft mc = Minecraft.getInstance();

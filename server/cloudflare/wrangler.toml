@@ -17,3 +17,12 @@ crons = ["17 * * * *"]
 binding = "DB"
 database_name = "onix"
 database_id = "2d635367-44d2-40e5-b063-1b6dd738bc19"
+
+# Party relay: pipes Minecraft traffic so friends can join the party leader's own world (see PartyRelay in src/index.js)
+[[durable_objects.bindings]]
+name = "RELAY"
+class_name = "PartyRelay"
+
+[[migrations]]
+tag = "v1-party-relay"
+new_sqlite_classes = ["PartyRelay"]

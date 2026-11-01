@@ -37,7 +37,8 @@
     "WorldMixin",
     "SwingDurationMixin",
     "TotemPopMixin",
-    "FontSetMixin"
+    "FontSetMixin",
+    "FramerateLimitMixin"
   ],
   "injectors": {
     "defaultRequire": 0

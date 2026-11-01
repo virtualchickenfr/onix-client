@@ -62,6 +62,7 @@ public class OnixTitleScreen extends Screen {
     private final List<float[]> sparks = new ArrayList<>();
     private final java.util.Random random = new java.util.Random();
     private boolean dragOnSkin;
+    private long lastFrame;
 
     public OnixTitleScreen() {
         super(Component.literal(OnixClient.NAME));
@@ -568,7 +569,9 @@ public class OnixTitleScreen extends Screen {
     private void renderCinematic(GuiGraphics ctx, int mouseX, int mouseY, float delta) {
         long now = System.currentTimeMillis();
         float time = (now % 1_000_000L) / 1000f;
-        float dt = Math.min(0.05f, Math.max(0.001f, delta / 20f));
+        long frame = System.nanoTime();
+        float dt = lastFrame == 0 ? 0.016f : Math.min(0.05f, Math.max(0.0005f, (frame - lastFrame) / 1_000_000_000f));
+        lastFrame = frame;
         areas.clear();
         float cx = width / 2f;
 

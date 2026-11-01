@@ -237,4 +237,88 @@ globalThis.fetch = realFetch;
 assert.strictEqual((await call('GET', '/nope'))[0], 404);
 assert.strictEqual((await call('GET', '/v1/shop'))[1].prices.crown_gold, 150);
 await worker.scheduled({}, env);
+// ---- parties
+{
+  const P1 = '1'.repeat(32), P2 = '2'.repeat(32), P3 = '3'.repeat(32), P4 = '4'.repeat(32);
+  const t1 = await login(P1, 'Leo'), t2 = await login(P2, 'Mia'), t3 = await login(P3, 'Noa'), t4 = await login(P4, 'Ola');
+  for (const t of [t1, t2, t3, t4]) await call('POST', '/v1/heartbeat', { token: t, playing: true });
+  for (const [t, n] of [[t2, 'Leo'], [t3, 'Leo']]) { await call('POST', '/v1/friends/add', { token: t, name: n }); }
+  await call('POST', '/v1/friends/add', { token: t1, name: 'Mia' });
+  await call('POST', '/v1/friends/add', { token: t1, name: 'Noa' });
+  assert.strictEqual((await call('POST', '/v1/party/invite', { token: t1, uuid: P4 }))[0], 403, 'only friends');
+  let r = await call('POST', '/v1/party/invite', { token: t1, uuid: P2 });
+  assert.deepStrictEqual([r[0], r[1].state], [200, 'invited']);
+  const pid = r[1].party;
+  let v2 = (await call('POST', '/v1/party', { token: t2 }))[1];
+  assert.strictEqual(v2.party, null);
+  assert.deepStrictEqual(v2.invites.map((i) => [i.party, i.from]), [[pid, 'Leo']]);
+  // the leader joins a server before anyone accepts
+  await call('POST', '/v1/party/target', { token: t1, kind: 'server', value: 'play.example.net' });
+  v2 = (await call('POST', '/v1/party/accept', { token: t2, party: pid }))[1];
+  assert.strictEqual(v2.party.id, pid);
+  assert.deepStrictEqual(v2.party.members.map((m) => m.name), ['Leo', 'Mia']);
+  assert.deepStrictEqual(v2.party.target, { kind: 'server', value: 'play.example.net', seq: 1 });
+  assert.strictEqual((await call('POST', '/v1/party/invite', { token: t2, uuid: P3 }))[0], 403, 'members cannot invite');
+  assert.strictEqual((await call('POST', '/v1/party/target', { token: t2, kind: 'server', value: 'x.net' }))[1].leader, false);
+  await call('POST', '/v1/party/target', { token: t1, kind: 'server', value: 'play.example.net' });
+  assert.strictEqual((await call('POST', '/v1/party', { token: t2 }))[1].party.target.seq, 1, 'same target, no new seq');
+  await call('POST', '/v1/party/target', { token: t1, kind: 'world' });
+  assert.deepStrictEqual((await call('POST', '/v1/party', { token: t2 }))[1].party.target, { kind: 'world', value: pid, seq: 2 });
+  assert.strictEqual((await call('POST', '/v1/party/target', { token: t1, kind: 'server', value: 'bad address!' }))[0], 400);
+  // invites run out
+  await call('POST', '/v1/party/invite', { token: t1, uuid: P3 });
+  now += 11 * 60_000;
+  assert.strictEqual((await call('POST', '/v1/party/accept', { token: t3, party: pid }))[0], 404, 'expired');
+  await call('POST', '/v1/party/invite', { token: t1, uuid: P3 });
+  await call('POST', '/v1/party/accept', { token: t3, party: pid });
+  // the leader leaves: the next member leads
+  await call('POST', '/v1/party/leave', { token: t1 });
+  let v3 = (await call('POST', '/v1/party', { token: t3 }))[1];
+  assert.strictEqual(v3.party.leader, P2);
+  assert.deepStrictEqual(v3.party.members.map((m) => [m.name, m.leader]), [['Mia', true], ['Noa', false]]);
+  // the new leader removes the last member: a party of one closes
+  v2 = (await call('POST', '/v1/party/kick', { token: t2, uuid: P3 }))[1];
+  assert.strictEqual(v2.party, null);
+  assert.strictEqual((await call('POST', '/v1/party', { token: t3 }))[1].party, null);
+  // relay needs a WebSocket upgrade and a party
+  const res = await worker.fetch(new Request(`https://x/v1/relay?token=${t1}&role=host`), env);
+  assert.strictEqual(res.status, 426);
+}
+
+// ---- relay object: pairs a guest connection with the leader's data connection and pipes bytes both ways
+{
+  class FakeSocket {
+    constructor() { this.l = {}; this.sent = []; this.closed = false; this.peer = null; }
+    accept() {}
+    addEventListener(t, f) { (this.l[t] = this.l[t] || []).push(f); }
+    send(d) { if (this.closed) throw new Error('closed'); this.peer.sent.push(d); }
+    close() { if (this.closed) return; this.closed = true; for (const f of this.peer.l.close || []) f({}); }
+    emit(t, e) { for (const f of this.l[t] || []) f(e); }
+  }
+  globalThis.WebSocketPair = function () { const a = new FakeSocket(), b = new FakeSocket(); a.peer = b; b.peer = a; return { 0: a, 1: b }; };
+  const OrigResponse = Response;
+  globalThis.Response = class extends OrigResponse { constructor(body, init = {}) { super(body, init.status === 101 ? { status: 200 } : init); this.webSocket = init.webSocket; } };
+  const mod = await import(tmp);
+  const relay = new mod.PartyRelay({});
+  const req = (role, conn = '') => new Request('https://relay/', { headers: { 'x-role': role, 'x-conn': conn, 'x-name': 'Mia' } });
+  // no host yet: the guest is turned away
+  let g0 = (await relay.fetch(req('guest'))).webSocket;
+  assert.ok(g0.sent.length === 0 && g0.peer.closed, 'guest closed without host');
+  const host = (await relay.fetch(req('host'))).webSocket;           // what the leader's game holds
+  const guest = (await relay.fetch(req('guest'))).webSocket;         // what the member's game holds
+  const open = JSON.parse(host.sent.at(-1));
+  assert.strictEqual(open.name, 'Mia');
+  guest.peer.emit('message', { data: 'hello-early' });               // sent before the leader's data socket exists
+  const data = (await relay.fetch(req('data', open.open))).webSocket;
+  assert.deepStrictEqual(data.sent, ['hello-early'], 'queued bytes are flushed');
+  guest.peer.emit('message', { data: 'g2h' });
+  data.peer.emit('message', { data: 'h2g' });
+  assert.deepStrictEqual(data.sent, ['hello-early', 'g2h']);
+  assert.deepStrictEqual(guest.sent, ['h2g']);
+  // the member disconnects: the leader's data socket closes too
+  guest.close();
+  assert.ok(data.peer.closed, 'data closed with guest');
+  globalThis.Response = OrigResponse;
+}
+
 console.log('all cloudflare server tests passed');

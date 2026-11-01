@@ -15,5 +15,9 @@ export default [
   "CREATE INDEX IF NOT EXISTS messages_pair ON messages (from_uuid, to_uuid, at)",
   "CREATE INDEX IF NOT EXISTS messages_unread ON messages (to_uuid, read)",
   "CREATE TABLE IF NOT EXISTS mcreal (uuid TEXT NOT NULL, day TEXT NOT NULL, name TEXT NOT NULL, caption TEXT NOT NULL, image TEXT NOT NULL, at INTEGER NOT NULL, PRIMARY KEY (uuid, day))",
+  "CREATE TABLE IF NOT EXISTS parties (id TEXT PRIMARY KEY, leader TEXT NOT NULL, target_kind TEXT NOT NULL DEFAULT '', target TEXT NOT NULL DEFAULT '', seq INTEGER NOT NULL DEFAULT 0, updated INTEGER NOT NULL)",
+  "CREATE TABLE IF NOT EXISTS party_members (uuid TEXT PRIMARY KEY, party TEXT NOT NULL, name TEXT NOT NULL, joined INTEGER NOT NULL)",
+  "CREATE INDEX IF NOT EXISTS party_members_party ON party_members (party)",
+  "CREATE TABLE IF NOT EXISTS party_invites (party TEXT NOT NULL, uuid TEXT NOT NULL, from_name TEXT NOT NULL, at INTEGER NOT NULL, PRIMARY KEY (party, uuid))",
   "CREATE TABLE IF NOT EXISTS looks (uuid TEXT PRIMARY KEY, style TEXT NOT NULL DEFAULT '', tag TEXT NOT NULL DEFAULT '', text TEXT NOT NULL DEFAULT '', updated INTEGER NOT NULL)"
 ];

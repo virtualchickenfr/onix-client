@@ -941,6 +941,48 @@ public class OnixMenuScreen extends Screen {
         beginClip(ctx, lx - 2, y, lx2 + 2, r[3]);
         int top = y;
         int ly = y - (int) Math.round(scroll);
+        // party: invites, then the party with its members
+        for (var inv : dev.onix.client.social.Party.invites) {
+            Theme.card(ctx, lx, ly, lx2, ly + 24, Theme.corner(6), Theme.SURFACE_2, Theme.withAlpha(Theme.accent(), 160));
+            drawIcon(ctx, "profile", lx + 7, ly + 7, 10, Theme.accent());
+            Theme.text(ctx, Theme.ellipsize(inv.from() + "'s party", lx2 - lx - 120), lx + 22, ly + 4, Theme.TEXT);
+            Theme.small(ctx, "Invite · you follow them into servers and worlds", lx + 22, ly + 14, Theme.TEXT_3);
+            int bx = lx2 - 6 - Theme.smallWidth("No") - 14;
+            smallButton(ctx, mx, my, bx, ly + 5, "No", false, () -> dev.onix.client.social.Party.decline(inv));
+            bx -= Theme.smallWidth("Join") + 18;
+            smallButton(ctx, mx, my, bx, ly + 5, "Join", true, () -> dev.onix.client.social.Party.accept(inv));
+            ly += 27;
+        }
+        if (dev.onix.client.social.Party.inParty()) {
+            var members = dev.onix.client.social.Party.members;
+            boolean lead = dev.onix.client.social.Party.isLeader();
+            int ph = 22 + members.size() * 14;
+            Theme.card(ctx, lx, ly, lx2, ly + ph, Theme.corner(6), Theme.SURFACE_2, Theme.BORDER_STRONG);
+            Theme.label(ctx, "Party  " + members.size() + "/8", lx + 8, ly + 6, Theme.TEXT_3);
+            String where = switch (dev.onix.client.social.Party.targetKind) {
+                case "server" -> "on " + dev.onix.client.social.Party.targetValue;
+                case "world" -> "in their world";
+                default -> "in the menu";
+            };
+            Theme.small(ctx, Theme.ellipsize("Leader " + where, (int) ((lx2 - lx - 90) / 0.75f)), lx + 60, ly + 6, Theme.TEXT_3);
+            smallButton(ctx, mx, my, lx2 - 6 - Theme.smallWidth("Leave") - 14, ly + 3, "Leave", false, dev.onix.client.social.Party::leave);
+            int my2 = ly + 20;
+            for (var m : members) {
+                face(ctx, m.uuid(), m.name(), lx + 8, my2, 10);
+                Theme.text(ctx, Theme.ellipsize(m.name(), lx2 - lx - 90), lx + 22, my2 + 1, m.online() ? Theme.TEXT : Theme.TEXT_3);
+                if (m.leader()) drawIcon(ctx, "star", lx + 24 + Theme.width(Theme.ellipsize(m.name(), lx2 - lx - 90)), my2 + 1, 8, Theme.ORANGE);
+                else if (lead) {
+                    String uuid = m.uuid();
+                    int kx = lx2 - 6 - Theme.smallWidth("Remove") - 14;
+                    boolean kh = hovered(mx, my, kx, my2 - 1, lx2 - 6, my2 + 11);
+                    Theme.small(ctx, "Remove", kx + 7, my2 + 2, kh ? Theme.RED : Theme.TEXT_3);
+                    hit(kx, my2 - 1, lx2 - 6, my2 + 11, () -> dev.onix.client.social.Party.kick(uuid), null);
+                }
+                my2 += 14;
+            }
+            ly += ph + 6;
+        }
+
         // requests
         var incoming = dev.onix.client.social.Social.incoming;
         var outgoing = dev.onix.client.social.Social.outgoing;
@@ -988,7 +1030,7 @@ public class OnixMenuScreen extends Screen {
             face(ctx, f.uuid(), f.name(), lx + 6, ly + 6, 14);
             ctx.fill(lx + 17, ly + 17, lx + 22, ly + 22, 0xFF000000);
             ctx.fill(lx + 18, ly + 18, lx + 21, ly + 21, f.online() ? Theme.GREEN : Theme.TEXT_3);
-            int nameMax = lx2 - lx - 30 - (f.online() && !f.server().isEmpty() ? 40 : 0) - (f.unread() > 0 ? 18 : 0);
+            int nameMax = lx2 - lx - 30 - (f.online() && !f.server().isEmpty() ? 40 : 0) - (f.unread() > 0 ? 18 : 0) - (f.online() ? 44 : 0);
             Theme.text(ctx, Theme.ellipsize(f.name(), nameMax), lx + 26, ly + 5, Theme.TEXT);
             String sub = !f.online() ? "Offline" : f.server().isEmpty() ? "Online" : f.server();
             Theme.small(ctx, Theme.ellipsize(sub, (int) (nameMax / 0.75f)), lx + 26, ly + 15, f.online() ? Theme.TEXT_2 : Theme.TEXT_3);
@@ -996,6 +1038,19 @@ public class OnixMenuScreen extends Screen {
             if (f.online() && !f.server().isEmpty()) {
                 rx -= Theme.smallWidth("Join") + 14;
                 smallButton(ctx, mx, my, rx, ly + 7, "Join", true, () -> dev.onix.client.social.Social.join(f, this));
+                rx -= 4;
+            }
+            boolean canInvite = f.online() && !dev.onix.client.social.Party.isMember(f.uuid())
+                    && (!dev.onix.client.social.Party.inParty() || dev.onix.client.social.Party.isLeader());
+            if (canInvite) {
+                boolean sent = dev.onix.client.social.Party.invited.contains(f.uuid());
+                String label = sent ? "Invited" : "Party";
+                rx -= Theme.smallWidth(label) + 14;
+                String fu = f.uuid();
+                String fn = f.name();
+                smallButton(ctx, mx, my, rx, ly + 7, label, false, () -> {
+                    if (!sent) dev.onix.client.social.Party.invite(fu, fn);
+                });
                 rx -= 4;
             }
             if (f.unread() > 0) {

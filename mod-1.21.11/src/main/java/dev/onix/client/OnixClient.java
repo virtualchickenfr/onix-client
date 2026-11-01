@@ -95,6 +95,7 @@ public class OnixClient implements ClientModInitializer {
             OnixPresence.tick(serverUrl(), share, badgeOn || looksOn, badge == null ? 15 : badge.lookupSeconds());
             if (CONFIG.socialOn.isOn() && !OnixPresence.server().isEmpty()) {
                 dev.onix.client.social.Social.tick(client.screen instanceof OnixMenuScreen);
+                dev.onix.client.social.Party.tick();
             }
             dev.onix.client.social.Social.tickShot();
             TpsTracker.tick();
