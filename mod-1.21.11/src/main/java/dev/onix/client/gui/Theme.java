@@ -268,7 +268,7 @@ public final class Theme {
             }
             return;
         }
-        int r = Math.min(radius, Math.min(w, h) / 2);
+        int r = Math.min(glassRadius(radius), Math.min(w, h) / 2);
         if (r <= 0) {
             ctx.fill(x1, y1, x2, y2, color);
             return;
@@ -310,9 +310,16 @@ public final class Theme {
         ctx.fill(x1 + radius, y1 + 1, x2 - radius, y1 + 2, withAlpha(0xFFFFFFFF, 14));
     }
 
+    /** Liquid glass is rounder: every corner radius grows (small ones the most). */
+    public static int glassRadius(int radius) {
+        if (!glass || radius <= 0) return radius;
+        return radius < 4 ? radius + 3 : Math.round(radius * 1.8f);
+    }
+
     /** Liquid glass panel: soft shadow, see-through black body, light rim and a specular streak along the top. */
     public static void glassWindow(GuiGraphics ctx, int x1, int y1, int x2, int y2, int radius) {
         shadow(ctx, x1, y1, x2, y2, radius);
+        int R = glassRadius(radius);
         round(ctx, x1, y1, x2, y2, radius, 0x34FFFFFF);
         round(ctx, x1 + 1, y1 + 1, x2 - 1, y2 - 1, radius - 1, SURFACE);
         // light falling in from the top, fading down
@@ -320,18 +327,18 @@ public final class Theme {
         for (int i = 0; i < 6; i++) {
             int ya = y1 + 1 + h * i / 6;
             int yb = y1 + 1 + h * (i + 1) / 6;
-            int inset = i == 0 ? radius - 1 : Math.max(1, radius / (i + 1));
+            int inset = i == 0 ? R - 1 : Math.max(1, R / (i + 1));
             ctx.fill(x1 + inset, ya, x2 - inset, yb, withAlpha(0xFFFFFFFF, 9 - i));
         }
         // specular streak: brightest in the middle of the top edge
-        int w = x2 - x1 - 2 * radius;
+        int w = x2 - x1 - 2 * R;
         for (int i = 0; i < 8; i++) {
             int a = 22 + i * 10;
             int inset = w * i / 18;
-            ctx.fill(x1 + radius + inset, y1 + 1, x2 - radius - inset, y1 + 2, withAlpha(0xFFFFFFFF, Math.min(110, a) / 3));
+            ctx.fill(x1 + R + inset, y1 + 1, x2 - R - inset, y1 + 2, withAlpha(0xFFFFFFFF, Math.min(110, a) / 3));
         }
         // faint darker rim at the bottom for depth
-        ctx.fill(x1 + radius, y2 - 2, x2 - radius, y2 - 1, 0x30000000);
+        ctx.fill(x1 + R, y2 - 2, x2 - R, y2 - 1, 0x30000000);
     }
 
     /** Minecraft-style window: hard drop shadow, black outline, light top-left and dark bottom-right bevel. */
@@ -349,6 +356,7 @@ public final class Theme {
 
     /** Raised bevel on a box (light top/left edge, dark bottom/right edge). */
     public static void bevel(GuiGraphics ctx, int x1, int y1, int x2, int y2, float strength) {
+        if (glass) return; // straight bevel lines would stick out of the round glass corners
         ctx.fill(x1 + 1, y1 + 1, x2 - 1, y1 + 2, withAlpha(0xFFFFFFFF, Math.round((isLight() ? 120 : 26) * strength)));
         ctx.fill(x1 + 1, y2 - 2, x2 - 1, y2 - 1, withAlpha(0xFF000000, Math.round(90 * strength)));
     }

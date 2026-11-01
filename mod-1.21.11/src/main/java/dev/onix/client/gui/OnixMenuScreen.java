@@ -487,7 +487,7 @@ public class OnixMenuScreen extends Screen {
         hit(x0, y0, x1, y1, () -> {}, () -> {}); // clicks inside the window never close it
 
         // sidebar
-        if (Theme.glass) Theme.round(ctx, x0 + 4, y0 + 4, x0 + SIDEBAR, y1 - 4, 9, Theme.SURFACE_SUNKEN);
+        if (Theme.glass) Theme.round(ctx, x0 + 6, y0 + 6, x0 + SIDEBAR, y1 - 6, 9, Theme.SURFACE_SUNKEN);
         else ctx.fill(x0 + 2, y0 + 2, x0 + SIDEBAR, y1 - 2, Theme.SURFACE_SUNKEN);
         ctx.fill(x0 + SIDEBAR, y0 + 2, x0 + SIDEBAR + 1, y1 - 2, 0xFF000000);
         ctx.fill(x0 + SIDEBAR + 1, y0 + 2, x0 + SIDEBAR + 2, y1 - 2, Theme.withAlpha(0xFFFFFFFF, Theme.isLight() ? 90 : 14));
@@ -525,9 +525,15 @@ public class OnixMenuScreen extends Screen {
             if (Float.isNaN(navSelY) || !OnixClient.CONFIG.menuAnimations.isOn()) navSelY = navSelTarget;
             else navSelY += (navSelTarget - navSelY) * Math.min(1f, frameDt * 16f);
             int sy = Math.round(navSelY);
-            ctx.fill(x - 2, sy, x2s, sy + 15, Theme.SURFACE_3);
-            Theme.outline(ctx, x - 3, sy - 1, x2s + 1, sy + 16, Theme.withAlpha(Theme.TEXT, 220));
-            ctx.fill(x - 2, sy, x - 1, sy + 15, Theme.accent());
+            if (Theme.glass) {
+                Theme.round(ctx, x - 3, sy - 1, x2s + 1, sy + 16, 5, 0x2AFFFFFF);
+                Theme.round(ctx, x - 2, sy, x2s, sy + 15, 4, Theme.SURFACE_3);
+                Theme.round(ctx, x - 1, sy + 4, x + 1, sy + 11, 1, Theme.accent());
+            } else {
+                ctx.fill(x - 2, sy, x2s, sy + 15, Theme.SURFACE_3);
+                Theme.outline(ctx, x - 3, sy - 1, x2s + 1, sy + 16, Theme.withAlpha(Theme.TEXT, 220));
+                ctx.fill(x - 2, sy, x - 1, sy + 15, Theme.accent());
+            }
         }
         navSelTarget = Float.NaN;
         y = navGroup(ctx, mx, my, "Modules", NAV_MODULES, x, y);
@@ -1270,7 +1276,10 @@ public class OnixMenuScreen extends Screen {
         if (focused) Theme.round(ctx, x - 2, y - 2, x + w + 2, y + h + 2, Theme.corner(8) + 2, Theme.withAlpha(Theme.accent(), 170));
         Theme.card(ctx, x, y, x + w, y + h, Theme.corner(8), Theme.lerpColor(Theme.SURFACE_2, Theme.SURFACE_3, Math.max(ht, focused ? 0.6f : 0f)), border);
         Theme.bevel(ctx, x, y, x + w, y + h, 1f);
-        if (on > 0.01f) ctx.fill(x + 1, y + 1, x + 3, y + h - 1, Theme.fade(Theme.accent(), on));
+        if (on > 0.01f) {
+            int inset = Theme.glass ? Theme.glassRadius(Theme.corner(8)) / 2 + 2 : 1;
+            ctx.fill(x + 1, y + inset, x + 3, y + h - inset, Theme.fade(Theme.accent(), on));
+        }
 
         drawIcon(ctx, m.getCategory().getIcon(), x + 11, y + 11, 9, Theme.lerpColor(Theme.TEXT_3, Theme.accent(), on));
         // server-rule note and favorite star, top right

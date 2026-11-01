@@ -1171,22 +1171,22 @@ body.clean .group, body.clean .note, body.clean .dl-card, body.clean .source, bo
 /* title bar */
 body.clean .topbar.titlebar { background: transparent; backdrop-filter: none; }
 body.clean .tb-brand b { font: 700 14px var(--display); letter-spacing: .08em; }
-body.clean .titlebar .account-card { border-radius: 12px; margin: 6px 0; height: calc(100% - 12px); background: var(--glass) !important; box-shadow: none !important; }
+body.clean .titlebar .account-card { border-radius: 999px; margin: 6px 0; height: calc(100% - 12px); background: var(--glass) !important; box-shadow: none !important; }
 body.clean .titlebar .account-card .acc-avatar { border-radius: 6px !important; }
-body.clean .palette-trigger { border-radius: 10px; }
+body.clean .palette-trigger { border-radius: 999px; }
 
 /* navigation rail */
 body.clean .hotbar-wrap { left: 12px; top: calc(var(--title-h) + 8px); bottom: 12px; transform: none; justify-content: flex-start; }
 body.clean .hotbar-name { display: none; }
-body.clean .hotbar { flex-direction: column; gap: 4px; padding: 8px; border-radius: 16px; background: var(--glass); border: 1px solid var(--glass-line);
+body.clean .hotbar { flex-direction: column; gap: 4px; padding: 8px; border-radius: 24px; background: var(--glass); border: 1px solid var(--glass-line);
   box-shadow: 0 10px 30px rgba(0, 0, 0, .35); backdrop-filter: blur(14px); }
-body.clean .hotbar .nav-item { width: 40px; height: 40px; border-radius: 11px; background: transparent !important; box-shadow: none !important; color: var(--text-3);
+body.clean .hotbar .nav-item { width: 40px; height: 40px; border-radius: 14px; background: transparent !important; box-shadow: none !important; color: var(--text-3);
   transition: color .25s var(--ease-out), background .25s var(--ease-out); }
 body.clean .hotbar .nav-item + .nav-item { margin-left: 0; }
 body.clean .hotbar .nav-item:hover { background: var(--glass-2) !important; color: var(--text); }
 body.clean .hotbar .nav-item .num { display: none; }
 body.clean .hotbar .nav-item svg.picon, body.clean .hotbar .nav-item .picon { width: 18px; height: 18px; position: relative; z-index: 1; }
-body.clean .hot-sel { width: 40px; height: 40px; margin: 4px; border-radius: 11px; box-shadow: none;
+body.clean .hot-sel { width: 40px; height: 40px; margin: 4px; border-radius: 14px; box-shadow: none;
   background: color-mix(in srgb, var(--accent) 18%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
   transition: transform .45s var(--ease-out); }
 body.clean .hotbar .nav-item.active .picon { color: var(--accent); }
@@ -1202,35 +1202,35 @@ body.clean .page-head .rule::after { height: 1px; }
 
 /* buttons, inputs, cards */
 body.clean .btn, body.clean .picker-btn, body.clean .cos-wallet {
-  border-radius: 10px; background: var(--glass-2); border: 1px solid var(--glass-line); box-shadow: none !important; transform: none !important; outline: none !important;
+  border-radius: 14px; background: var(--glass-2); border: 1px solid var(--glass-line); box-shadow: none !important; transform: none !important; outline: none !important;
   transition: background .2s var(--ease-out), border-color .2s, opacity .2s; }
 body.clean .btn.sm { box-shadow: none !important; }
 body.clean .btn:hover:not(:disabled), body.clean .picker-btn:hover:not(:disabled) { background: rgba(255, 255, 255, .1); border-color: rgba(255, 255, 255, .14); }
 body.clean .btn::after, body.clean .play::after { display: none; }
 body.clean .btn.primary, body.clean .play {
-  border-radius: 12px; color: var(--on-accent); border: 0;
+  border-radius: 18px; color: var(--on-accent); border: 0;
   background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 92%, #fff), color-mix(in srgb, var(--accent) 70%, #000)) !important;
   box-shadow: 0 10px 30px color-mix(in srgb, var(--accent) 35%, transparent), inset 0 1px 0 rgba(255, 255, 255, .3) !important; }
 body.clean .btn.primary:hover:not(:disabled), body.clean .play:hover:not(:disabled) { filter: brightness(1.08); }
 body.clean .play:active:not(:disabled) { transform: scale(.98) !important; }
-body.clean .input, body.clean select.input, body.clean textarea.input { border-radius: 10px; background: rgba(255, 255, 255, .04); box-shadow: inset 0 0 0 1px var(--glass-line); }
+body.clean .input, body.clean select.input, body.clean textarea.input { border-radius: 14px; background: rgba(255, 255, 255, .04); box-shadow: inset 0 0 0 1px var(--glass-line); }
 body.clean .input:focus { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 60%, transparent), 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
-body.clean .segmented { background: var(--glass); border-radius: 12px; padding: 3px; gap: 2px; border: 1px solid var(--glass-line); }
-body.clean .segmented button { height: 32px; border-radius: 9px; background: transparent; box-shadow: none; transform: none; }
+body.clean .segmented { background: var(--glass); border-radius: 16px; padding: 3px; gap: 2px; border: 1px solid var(--glass-line); }
+body.clean .segmented button { height: 32px; border-radius: 13px; background: transparent; box-shadow: none; transform: none; }
 body.clean .segmented button.active { background: var(--glass-2); box-shadow: inset 0 0 0 1px var(--glass-line); }
 body.clean .pcard, body.clean .table, body.clean .mm-card, body.clean .pv-stat, body.clean .pv-card, body.clean .pv-world, body.clean .group,
 body.clean .note, body.clean .dl-card, body.clean .source, body.clean .install-options {
-  border-radius: 16px !important; background: var(--glass) !important; border: 1px solid var(--glass-line) !important; box-shadow: none !important; }
+  border-radius: 22px !important; background: var(--glass) !important; border: 1px solid var(--glass-line) !important; box-shadow: none !important; }
 body.clean .pcard { transition: transform .3s var(--ease-out), border-color .3s; }
 body.clean .pcard:hover { transform: translateY(-2px); border-color: rgba(255, 255, 255, .14) !important; }
 body.clean .pcard.active { outline: 0; border-color: color-mix(in srgb, var(--accent) 50%, transparent) !important; }
-body.clean .pcard-icon, body.clean .pv-icon, body.clean .ticon, body.clean .acc-avatar, body.clean .tile-ico { border-radius: 10px !important; }
+body.clean .pcard-icon, body.clean .pv-icon, body.clean .ticon, body.clean .acc-avatar, body.clean .tile-ico { border-radius: 14px !important; }
 body.clean .tag { border-radius: 999px; font-family: var(--font); letter-spacing: 0; }
 body.clean .switch i, body.clean .switch i::after { border-radius: 999px !important; }
-body.clean .modal { border-radius: 18px; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(20px);
+body.clean .modal { border-radius: 26px; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(20px);
   border: 1px solid var(--glass-line); box-shadow: 0 30px 80px rgba(0, 0, 0, .6); }
-body.clean .popover { border-radius: 14px; backdrop-filter: blur(16px); }
-body.clean #toast { border-radius: 14px; background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(14px);
+body.clean .popover { border-radius: 18px; backdrop-filter: blur(16px); }
+body.clean #toast { border-radius: 999px; background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(14px);
   box-shadow: 0 0 0 1px var(--glass-line), 0 12px 30px rgba(0, 0, 0, .5); }
 body.clean .taskline { border-radius: 999px; background: color-mix(in srgb, var(--bg) 80%, transparent); backdrop-filter: blur(12px);
   box-shadow: 0 0 0 1px var(--glass-line); }
@@ -1265,3 +1265,12 @@ body.clean .home-skin.loaded { opacity: 1; transform: none; animation: skin-floa
 @keyframes skin-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -6px; } }
 body.clean .home-floor { width: 120px; height: 14px; margin-top: -8px; border-radius: 50%; background: radial-gradient(closest-side, rgba(0, 0, 0, .6), transparent); }
 @media (max-height: 560px) { body.clean .home-skin { height: 34vh; } }
+
+/* rounder everywhere in the clean layout */
+body.clean .titlebar .account-card .acc-avatar { border-radius: 50% !important; }
+body.clean .cos-tab, body.clean .chip, body.clean .tag, body.clean .update-pill { border-radius: 999px !important; }
+body.clean .ctile, body.clean .theme, body.clean .cos-stage, body.clean .tile { border-radius: 18px !important; overflow: hidden; }
+body.clean .bg-tile img, body.clean .bg-tile .same { border-radius: 16px; }
+body.clean .swatch { border-radius: 50%; }
+body.clean .xl-sq { border-radius: 18px !important; }
+body.clean .picker .popover .pop-item, body.clean .pop-item { border-radius: 12px; }
