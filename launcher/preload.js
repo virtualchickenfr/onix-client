@@ -132,4 +132,5 @@ contextBridge.exposeInMainWorld('onix', {
   installUpdate: () => invoke('update:install'),
   openUpdateDownload: () => invoke('update:download'),
   onUpdate: (cb) => ipcRenderer.on('update:status', (_e, v) => cb(v)),
+  onModUpdated: (cb) => ipcRenderer.on('mod:updated', (_e, v) => cb(v)),
 });

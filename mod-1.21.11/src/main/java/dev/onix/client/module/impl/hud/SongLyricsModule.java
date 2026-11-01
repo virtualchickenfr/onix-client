@@ -486,7 +486,7 @@ public class SongLyricsModule extends HudModule implements OverlayRenderer {
             widest = Math.max(widest, w - space);
         }
         if (widest * scale > 9 && !mode.equals("In the Sky")) scale *= (float) (9 / (widest * scale));
-        float rowH = 11;
+        float rowH = 13;
         long hideAt = wall + Math.max(800, Math.min(9000, line.endMs() - songMs)) + Math.round(stay.get() * 1000);
         int slot = follow ? (index % 3) - 1 : 0;
         for (int r = 0; r < rows; r++) {

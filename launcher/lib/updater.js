@@ -3,8 +3,8 @@
 /**
  * Launcher updates from GitHub Releases (electron-updater), published by .github/workflows/build.yml when a
  * version tag is pushed. Every start checks for a new version;
- * Windows and the Linux AppImage download it in the background and install it when the launcher
- * closes (or right away with "Restart"). macOS builds without an Apple signature cannot replace
+ * Windows and the Linux AppImage download it in the background and install it silently when the launcher
+ * closes (or right away from the update pill) – no forced restart. macOS builds without an Apple signature cannot replace
  * themselves, so there the launcher only offers the download page.
  * The Onix mod is inside the launcher, so a launcher update also updates the mod in every profile.
  */
@@ -43,9 +43,6 @@ function set(patch) {
 
 let automatic = () => true;
 let gameRunning = () => false;
-const startedAt = Date.now();
-/** An update that finishes downloading this soon after the start is installed right away. */
-const INSTALL_ON_START_MS = 3 * 60 * 1000;
 
 /**
  * send: pushes the state to the window; isAutomatic: whether the user lets the launcher check by itself;
@@ -68,16 +65,9 @@ function init(send, isAutomatic, isGameRunning) {
   autoUpdater.on('update-available', (info) => set({ status: selfInstall ? 'downloading' : 'available', version: info.version, percent: 0 }));
   autoUpdater.on('download-progress', (p) => set({ status: 'downloading', percent: Math.round(p.percent || 0) }));
   autoUpdater.on('update-downloaded', (info) => {
+    // no restart: it installs silently when the launcher closes; the Onix mod itself already updates in the
+    // background (lib/modupdate.js), so the next game start has the new mod anyway
     set({ status: 'ready', version: info.version, percent: 100 });
-    // Installing only when the launcher closes left many players on old versions (the launcher often keeps
-    // running). Right after the start nothing is lost by restarting, so the new version is installed at once.
-    if (automatic() && !gameRunning() && Date.now() - startedAt < INSTALL_ON_START_MS) {
-      set({ status: 'installing' });
-      setTimeout(() => {
-        if (!gameRunning()) autoUpdater.quitAndInstall(true, true);
-        else set({ status: 'ready' });
-      }, 1500);
-    }
   });
   autoUpdater.on('error', (err) => {
     // keep a finished download even if a later check fails

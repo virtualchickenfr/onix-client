@@ -18,14 +18,14 @@ function renderUpdate(v) {
       pill.hidden = false;
       pill.disabled = true;
       pill.replaceChildren(icon('download'), `Downloading update${version}`, el('span', { class: 'bar' }, [el('i', { style: `width:${v.percent || 0}%` })]));
-      text.textContent = `Downloading version${version} (${v.percent || 0} %). It installs when you close the launcher.`;
+      text.textContent = `Downloading version${version} (${v.percent || 0} %) in the background. It installs by itself when you close the launcher.`;
       break;
     case 'ready':
       pill.hidden = false;
       pill.classList.add('ready');
-      pill.replaceChildren(icon('refresh'), `Update${version} ready · Restart`);
-      pill.title = 'Restart the launcher to install the update now. Otherwise it installs when you close the launcher.';
-      text.textContent = `Version${version} is downloaded. Restart the launcher to install it, or it installs when you close the launcher.`;
+      pill.replaceChildren(icon('check'), `Update${version} ready`);
+      pill.title = 'Nothing to do: it installs by itself when you close the launcher. Click to install it right now.';
+      text.textContent = `Version${version} is downloaded and installs by itself when you close the launcher. The Onix mod is already up to date for your next game.`;
       break;
     case 'installing':
       pill.hidden = false;
@@ -72,8 +72,9 @@ async function runUpdateAction() {
   api.onUpdate((v) => {
     const was = updateState && updateState.status;
     renderUpdate(v);
-    if (v.status === 'ready' && was !== 'ready') toast(`Update ${v.version} is ready – it installs when you close the launcher`);
+    if (v.status === 'ready' && was !== 'ready') toast(`Update ${v.version} downloaded – it installs by itself when you close the launcher`);
   });
+  if (api.onModUpdated) api.onModUpdated((m) => toast(`Onix mod ${m.version} downloaded – your next game uses it, no restart needed`));
   $('#update-pill').addEventListener('click', runUpdateAction);
   $('#update-check').addEventListener('click', async () => {
     const btn = $('#update-check');

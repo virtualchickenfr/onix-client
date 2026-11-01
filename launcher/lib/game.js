@@ -3,6 +3,7 @@ const path = require('path');
 const { Client } = require('minecraft-launcher-core');
 const McHandler = require('minecraft-launcher-core/components/handler');
 const { download, fetchJson } = require('./download');
+const modupdate = require('./modupdate');
 const modrinth = require('./modrinth');
 
 /** Most memory a game gets, whatever the profile says (see the launch code). */
@@ -138,16 +139,18 @@ function findBundledMod(mc = MC_VERSION) {
     const jar = fs
       .readdirSync(dir)
       .find((f) => /^onix-client-.*\.jar$/.test(f) && !f.endsWith('-sources.jar'));
-    if (jar) return path.join(dir, jar);
+    if (jar) return modupdate.newest(mc, path.join(dir, jar));
   }
-  return null;
+  // nothing inside the launcher: a mod downloaded in the background (lib/modupdate.js)
+  return modupdate.newest(mc, null);
 }
 
 async function ensureMods(root, settings, report, log, throttle = true, mc = MC_VERSION) {
   const modsDir = path.join(root, 'mods');
   fs.mkdirSync(modsDir, { recursive: true });
 
-  // 1. Onix Client mod
+  // 1. Onix Client mod (a newer one from the latest release, downloaded in the background, wins)
+  await modupdate.beforeLaunch();
   const bundled = findBundledMod(mc);
   if (bundled) {
     const name = path.basename(bundled);

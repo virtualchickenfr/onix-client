@@ -956,6 +956,12 @@ app.whenReady().then(() => {
 
   createWindow();
   updater.init((v) => send('update:status', v), () => settings().autoUpdate !== false, () => running);
+  // the Onix mod updates in the background without restarting the launcher (lib/modupdate.js)
+  if (app.isPackaged && settings().autoUpdate !== false) {
+    const page = updater.releasesUrl();
+    const slug = page ? page.replace(/^https:\/\/github\.com\//, '').replace(/\/releases\/latest$/, '') : null;
+    require('./lib/modupdate').init(app.getPath('userData'), slug, app.getVersion(), versions.DEFAULT, (m) => send('mod:updated', m));
+  }
   win.webContents.once('did-finish-load', () => {
     if (settings().autoUpdate !== false) updater.check();
   });
