@@ -187,6 +187,7 @@ public class ModuleManager {
                 dev.onix.client.module.impl.pack.PackVisuals::modules)) {
             for (Module m : pack.get()) register(m);
         }
+        for (Module m : dev.onix.client.module.impl.pack.ViralPack.modules()) register(m);
     }
 
     public void register(Module module) {

@@ -251,7 +251,7 @@ public final class Kinds {
             float cy = h / 2f;
             Font f = mc().font;
             switch (style) {
-                case FLASH -> ctx.fill(0, 0, w, h, Theme.withAlpha(c, Math.round(Math.min(200, 90 * k) * (1 - t))));
+                case FLASH -> ctx.fill(0, 0, w, h, Theme.withAlpha(c, Math.round(Math.min(200, 90 * k) * (1 - ViralFx.easeOutCubic(t)))));
                 case VIGNETTE -> SoftShapes.vignette(ctx, -w / 10, -h / 10, w + w / 5, h + h / 5, Theme.withAlpha(c, Math.round(Math.min(255, 220 * k) * (1 - t))));
                 case BORDER -> {
                     int a = Math.round(Math.min(255, 200 * k) * (1 - t));
@@ -263,35 +263,31 @@ public final class Kinds {
                     ctx.fill(w - b, b, w, h - b, col);
                 }
                 case TEXT, SHAKE_TEXT -> {
-                    float pop = t < 0.18f ? 1 + 0.7f * (1 - t / 0.18f) : 1f;
-                    float alpha = t > 0.7f ? (1 - t) / 0.3f : 1f;
-                    float s = 2.2f * pop * Math.max(0.6f, k);
-                    Component word = Theme.display(text);
+                    float pop = 1 + 0.9f * (1 - ViralFx.easeOutBack(t / 0.2f));
+                    float alpha = ViralFx.fade(t, 0.04f, 0.3f);
+                    float s = 2.4f * Math.max(0.3f, pop) * Math.max(0.6f, k);
                     float dx = style == Style.SHAKE_TEXT ? (float) Math.sin(t * 80) * 3 * (1 - t) : 0;
-                    ctx.pose().pushMatrix();
-                    ctx.pose().translate(cx + dx, h * 0.3f);
-                    ctx.pose().scale(s, s);
-                    ctx.drawString(f, word, -f.width(word) / 2, -4, Theme.withAlpha(c, Math.round(255 * alpha)), true);
-                    ctx.pose().popMatrix();
+                    float lift = t > 0.7f ? (t - 0.7f) / 0.3f * 8 : 0;
+                    ViralFx.caption(ctx, text, cx + dx, h * 0.3f - lift, s, c, alpha, true);
                 }
                 case HITMARKER -> {
-                    int a = Math.round(255 * (1 - t));
-                    int col = Theme.withAlpha(c, a);
-                    float gap = 3 + 2 * t;
+                    float alpha = 1 - ViralFx.easeInOutCubic(t);
+                    int col = Theme.withAlpha(c, Math.round(255 * alpha));
+                    float gap = 3 + 3 * ViralFx.easeOutCubic(t);
+                    float len = 5 * Math.max(0.6f, k);
                     for (int i = 0; i < 4; i++) {
-                        float d = gap + i;
-                        for (int sx = -1; sx <= 1; sx += 2) {
-                            for (int sy = -1; sy <= 1; sy += 2) {
-                                int x = Math.round(cx + sx * d);
-                                int y = Math.round(cy + sy * d);
-                                ctx.fill(x, y, x + 1, y + 1, col);
-                            }
-                        }
+                        ctx.pose().pushMatrix();
+                        ctx.pose().translate(cx, cy);
+                        ctx.pose().rotate((float) (Math.PI / 4 + i * Math.PI / 2));
+                        gg.carbon.client.ui.R2D.rrect(ctx, gap, -0.75f, len, 1.5f, 0.75f, col);
+                        ctx.pose().popMatrix();
                     }
                 }
                 case RING -> {
-                    float r = 4 + 28 * k * (1 - (1 - t) * (1 - t));
-                    gg.carbon.client.ui.R2D.outline(ctx, cx - r, cy - r, r * 2, r * 2, r, 1.2f, Theme.withAlpha(c, Math.round(230 * (1 - t))));
+                    float e = ViralFx.easeOutCubic(t);
+                    float r = 4 + 30 * k * e;
+                    SoftShapes.glow(ctx, cx, cy, r * 1.3f, r * 1.3f, Theme.withAlpha(c, Math.round(70 * (1 - t))));
+                    gg.carbon.client.ui.R2D.circleOutline(ctx, cx, cy, r, 2.4f * (1 - t) + 0.6f, Theme.withAlpha(c, Math.round(235 * (1 - t))));
                 }
                 case SPEEDLINES -> {
                     int a = Math.round(160 * (1 - t) * Math.min(1.5f, k));

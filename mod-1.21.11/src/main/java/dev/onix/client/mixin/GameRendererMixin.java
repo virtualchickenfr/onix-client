@@ -18,10 +18,18 @@ public abstract class GameRendererMixin {
         if (OnixClient.MODULES == null) return;
         float beat = dev.onix.client.module.impl.hud.SongLyricsModule.fovFactor();
         if (beat != 1f) cir.setReturnValue(cir.getReturnValue() * beat);
+        float punch = dev.onix.client.module.impl.pack.ViralFx.fovFactor();
+        if (punch != 1f) cir.setReturnValue(cir.getReturnValue() * punch);
         ZoomModule zoom = OnixClient.MODULES.get(ZoomModule.class);
         if (zoom == null) return;
         double divisor = zoom.fovDivisor();
         if (divisor != 1.0) cir.setReturnValue((float) (cir.getReturnValue() / divisor));
+    }
+
+    /** Camera shake of the viral pack (only your view, not where you aim). */
+    @Inject(method = "bobHurt", at = @At("HEAD"), require = 0)
+    private void onix$shake(com.mojang.blaze3d.vertex.PoseStack pose, float tickDelta, CallbackInfo ci) {
+        dev.onix.client.module.impl.pack.ViralFx.applyShake(pose);
     }
 
     /** Totem Spirit can hide the big totem that pops up on screen. */
