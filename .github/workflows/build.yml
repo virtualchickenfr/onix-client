@@ -266,7 +266,7 @@ jobs:
   launcher-mac:
     needs: [plan, mod, mod-1-21-11, mod-ports, prepare-release]
     if: ${{ !cancelled() && needs.mod.result == 'success' && needs.mod-1-21-11.result == 'success' && needs.mod-ports.result == 'success' && needs.prepare-release.result != 'failure' }}
-    runs-on: macos-latest
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
