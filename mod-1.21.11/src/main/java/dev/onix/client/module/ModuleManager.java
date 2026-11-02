@@ -175,6 +175,8 @@ public class ModuleManager {
                 OnixClient.LOGGER.error("Could not initialise module {}", m.getId(), e);
             }
         }
+        // pack 1: 100 modules for Crystal PvP, Sword PvP, SMP, UHC, Bedwars (impl/pack/GameModePack)
+        for (Module m : dev.onix.client.module.impl.pack.GameModePack.modules()) register(m);
     }
 
     public void register(Module module) {

@@ -150,6 +150,17 @@ public final class DevTest {
         then(40, () -> snap(mc, "09_menu_ingame"));
         then(2, () -> mc.setScreen(new OnixMenuScreen(null, OnixMenuScreen.View.MODULES)));
         then(40, () -> snap(mc, "09a_menu_ingame_glass_modules"));
+        // pack 1: a few of the new game-mode modules on the HUD
+        then(2, () -> {
+            mc.setScreen(null);
+            for (var m : OnixClient.MODULES.all()) {
+                if (java.util.Set.of("gm_attackcooldown", "gm_portalcoords", "gm_orelevel", "gm_movement", "gm_freeslots", "gm_dimension", "gm_nightin")
+                        .contains(m.getId())) m.setEnabled(true);
+            }
+            OnixClient.LOGGER.info("[devtest] modules: {}", OnixClient.MODULES.all().size());
+        });
+        then(20, () -> snap(mc, "09f_pack_hud"));
+        then(2, () -> { for (var m : OnixClient.MODULES.all()) if (m.getId().startsWith("gm_")) m.setEnabled(false); });
         // name styles: the menu tab and your own name tag in third person
         then(2, () -> {
             dev.onix.client.cosmetics.Cosmetics.testOwnAll = true;
