@@ -1296,3 +1296,17 @@ body.clean .play:hover:not(:disabled) { transform: translateY(-1px) !important; 
 body.clean .btn:active:not(:disabled), body.clean .play:active:not(:disabled), body.clean .picker-btn:active:not(:disabled),
 body.clean .xl-sq:active:not(:disabled), body.clean .hotbar .nav-item:active { transform: scale(.97) !important; transition-duration: .08s !important; }
 body.clean .ctile:hover, body.clean .theme:hover { transform: translateY(-2px); }
+
+/* Geist (SIL OFL, fonts/GEIST_LICENSE.txt) for the clean layout */
+@font-face { font-family: 'Geist'; font-weight: 400; src: url(fonts/geist-400.ttf) format('truetype'); }
+@font-face { font-family: 'Geist'; font-weight: 500; src: url(fonts/geist-500.ttf) format('truetype'); }
+@font-face { font-family: 'Geist'; font-weight: 600; src: url(fonts/geist-600.ttf) format('truetype'); }
+@font-face { font-family: 'Geist'; font-weight: 700; src: url(fonts/geist-700.ttf) format('truetype'); }
+@font-face { font-family: 'Geist Mono'; font-weight: 500; src: url(fonts/geistmono-500.ttf) format('truetype'); }
+@font-face { font-family: 'Geist Mono'; font-weight: 700; src: url(fonts/geistmono-700.ttf) format('truetype'); }
+body.clean { --font: 'Geist', 'Inter', system-ui, sans-serif; --display: 'Geist', 'Inter Display', sans-serif; --mono: 'Geist Mono', 'JetBrains Mono', monospace; --pixel: 'Geist', sans-serif;
+  font-family: var(--font); letter-spacing: -0.006em; -webkit-font-smoothing: antialiased; }
+body.clean .page-head h2, body.clean .home-name, body.clean .tb-brand b { font-family: var(--display); letter-spacing: -0.03em; }
+body.clean .page-head h2 { font-weight: 700; font-size: 32px; }
+body.clean .group-label, body.clean .page-head .rule { font-family: var(--mono); }
+body.clean button, body.clean input, body.clean select, body.clean textarea { font-family: inherit; }

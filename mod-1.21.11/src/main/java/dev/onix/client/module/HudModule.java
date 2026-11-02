@@ -74,9 +74,14 @@ public abstract class HudModule extends Module {
                 .visibleIf(() -> background.isOn() || border.isOn()));
         padding = add(new NumberSetting("padding", "Padding", 4, 0, 10, 1).unit("px"));
         textShadow = add(new BoolSetting("shadow", "Text Shadow", true));
-        font = add(new ModeSetting("font", "Font", "Minecraft", "Onix")
+        font = add(new ModeSetting("font", "Font", "Onix", "Minecraft")
                 .describe("Minecraft's pixel font or the Onix interface font."));
         group(GROUP_GENERAL);
+    }
+
+    /** Switches this element to the smooth Onix font (one-time update for everyone). */
+    public void useOnixFont() {
+        font.set("Onix");
     }
 
     /** Unscaled width. */

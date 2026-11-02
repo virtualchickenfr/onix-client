@@ -22,15 +22,15 @@ public final class Fonts {
 	private Fonts() {}
 
 	public enum Face {
-		BODY(new CarbonFont("inter_500.ttf", false, 0.80f), 8.5f),
-		BODY_BOLD(new CarbonFont("inter_700.ttf", false, 0.80f), 8.5f),
-		MEDIUM(new CarbonFont("inter_600.ttf", false, 0.80f), 8.5f),
-		LIGHT(new CarbonFont("inter_400.ttf", false, 0.80f), 8.5f),
+		BODY(new CarbonFont("geist_500.ttf", false, 0.80f), 8.5f),
+		BODY_BOLD(new CarbonFont("geist_700.ttf", false, 0.80f), 8.5f),
+		MEDIUM(new CarbonFont("geist_600.ttf", false, 0.80f), 8.5f),
+		LIGHT(new CarbonFont("geist_400.ttf", false, 0.80f), 8.5f),
 		/** Legacy alias: small pixel-font labels are now set in Inter Bold for legibility. */
-		PIXEL(new CarbonFont("inter_700.ttf", false, 0.80f), 8.5f),
-		DISPLAY(new CarbonFont("pixelify_700.ttf", true, 0.80f), 8f),
-		MONO(new CarbonFont("mono_500.ttf", false, 0.80f), 8f),
-		MONO_BOLD(new CarbonFont("mono_700.ttf", false, 0.80f), 8f);
+		PIXEL(new CarbonFont("geist_700.ttf", false, 0.80f), 8.5f),
+		DISPLAY(new CarbonFont("geist_700.ttf", false, 0.80f), 8f),
+		MONO(new CarbonFont("geistmono_500.ttf", false, 0.80f), 8f),
+		MONO_BOLD(new CarbonFont("geistmono_700.ttf", false, 0.80f), 8f);
 		public final CarbonFont font;
 		/** Em size in GUI units at scale 1. */
 		public final float em;

@@ -79,6 +79,12 @@ public class OnixClient implements ClientModInitializer {
         MODULES.registerDefaults();
         PROFILES = new ProfileManager(MODULES, CONFIG);
         PROFILES.loadActive();
+        // 1.1.13: the HUD switches to the smooth Onix font once (each element can go back to Minecraft's font)
+        if (!CONFIG.fontSet.isOn()) {
+            CONFIG.fontSet.set(true);
+            for (var m : MODULES.all()) if (m instanceof dev.onix.client.module.HudModule hud) hud.useOnixFont();
+            save();
+        }
         Cosmetics.load();
         Theme.refresh();
 

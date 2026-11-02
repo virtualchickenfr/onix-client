@@ -55,6 +55,8 @@ public class OnixConfig {
     public final BoolSetting cinematicSet = new BoolSetting("cinematicSet", "Cinematic Set", false).hidden();
     /** 1.1.8: the cinematic Onix main menu became everyone's main menu once (also for Carbon/vanilla designs). */
     /** 1.1.10: rounder buttons for everyone once (Button Style → Rounded). */
+    /** 1.1.13: the HUD uses the smooth Onix font (Geist) once for everyone. */
+    public final BoolSetting fontSet = new BoolSetting("fontSet", "Font Set", false).hidden();
     public final BoolSetting roundSet = new BoolSetting("roundSet", "Round Set", false).hidden();
     public final BoolSetting cinematicSet2 = new BoolSetting("cinematicSet2", "Cinematic Default", false).hidden();
 
@@ -165,7 +167,7 @@ public class OnixConfig {
                 onixServer, socialOn, shareServer, nameTagLooks, lightMode, buttonStyle, carbonButtons, menuSkin, menuDesign, menuCharacter, titleDesign, loadingScreens, loadingStyle, loadingTips,
                 hideHudInDebug, snapping, snapDistance, editorGrid,
                 notifications, notificationSound, notificationTime, notificationPosition,
-                ruleNotes, rulesOnJoin, rulesSkip, autoSwitchProfiles, introDone, cinematicSet, cinematicSet2, roundSet, menuGlass);
+                ruleNotes, rulesOnJoin, rulesSkip, autoSwitchProfiles, introDone, cinematicSet, cinematicSet2, roundSet, fontSet, menuGlass);
     }
 
     public float menuScaleFactor() {
