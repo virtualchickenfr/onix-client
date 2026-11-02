@@ -112,6 +112,7 @@ public class OnixClient implements ClientModInitializer {
             dev.onix.client.social.Social.tickShot();
             TpsTracker.tick();
             CombatTracker.tick(client);
+            dev.onix.client.module.impl.pack.Events.tick();
             SessionTracker.tick(client);
             MODULES.tick();
             dev.onix.client.util.DevTest.tick(client);

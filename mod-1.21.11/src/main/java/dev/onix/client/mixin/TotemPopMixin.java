@@ -26,6 +26,7 @@ public abstract class TotemPopMixin {
         if (packet.getEventId() != 35) return;
         TotemSpiritModule spirit = onix$spirit();
         var level = Minecraft.getInstance().level;
+        if (level != null) dev.onix.client.module.impl.pack.Events.pop(packet.getEntity(level));
         if (spirit != null && level != null) spirit.onPop(packet.getEntity(level));
     }
 

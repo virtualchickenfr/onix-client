@@ -160,6 +160,18 @@ public final class DevTest {
             OnixClient.LOGGER.info("[devtest] modules: {}", OnixClient.MODULES.all().size());
         });
         then(20, () -> snap(mc, "09f_pack_hud"));
+        // visual pack: fire a kill and a crit by hand and look at the effects
+        then(2, () -> {
+            for (var m : OnixClient.MODULES.all()) {
+                if (java.util.Set.of("gm2_fx_killconfetti", "gm2_fx_killshake", "gm2_fx_critflash", "gm2_sword_hitmarker").contains(m.getId())) m.setEnabled(true);
+            }
+            dev.onix.client.module.impl.pack.Events.fire(dev.onix.client.module.impl.pack.Events.Event.KILL, mc.player);
+            dev.onix.client.module.impl.pack.Events.fire(dev.onix.client.module.impl.pack.Events.Event.HIT, mc.player);
+        });
+        then(5, () -> snap(mc, "09g_pack_kill_effects"));
+        then(2, () -> mc.setScreen(new OnixMenuScreen(null, OnixMenuScreen.View.MODULES)));
+        then(30, () -> snap(mc, "09h_pack_menu_count"));
+        then(2, () -> mc.setScreen(null));
         then(2, () -> { for (var m : OnixClient.MODULES.all()) if (m.getId().startsWith("gm_")) m.setEnabled(false); });
         // name styles: the menu tab and your own name tag in third person
         then(2, () -> {
