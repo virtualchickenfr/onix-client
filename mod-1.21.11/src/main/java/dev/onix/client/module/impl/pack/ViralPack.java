@@ -226,7 +226,7 @@ public final class ViralPack {
             float pop = b < 1 ? 1 + 0.5f * (1 - ViralFx.easeOutCubic(b)) : 1;
             float heat = ViralFx.clamp01((combo - 2) / 12f);
             int c = heat < 0.5f ? ViralFx.lerpColor(0xFFFFFFFF, 0xFFFFC23D, heat * 2) : ViralFx.lerpColor(0xFFFFC23D, 0xFFFF3B5C, (heat - 0.5f) * 2);
-            float x = ctx.guiWidth() * 0.78f;
+            float x = ctx.guiWidth() * 0.22f;
             float y = ctx.guiHeight() * 0.42f;
             float k = Math.max(0.7f, strength.getFloat());
             float alpha = Math.min(1, left * 4);
@@ -638,7 +638,7 @@ public final class ViralPack {
 
         @Override
         protected float top(int h) {
-            return 6;
+            return h * 0.36f;
         }
     }
 
@@ -664,7 +664,7 @@ public final class ViralPack {
 
         @Override
         protected float top(int h) {
-            return h * 0.3f;
+            return h * 0.62f;
         }
     }
 
@@ -715,7 +715,7 @@ public final class ViralPack {
 
         AuraPoints() {
             super("vx_aura", "Aura Points", "+1000 aura for a kill, -2000 for dying. Your aura count for the session with popping +aura numbers.",
-                    Category.HUD, false, Anchor.TOP_LEFT, 4, 30);
+                    Category.HUD, false, Anchor.TOP_CENTER, 0, 22);
             tags("aura", "aura points", "sigma", "viral", "tiktok", "meme");
             give(Event.KILL, 1000);
             give(Event.TRIPLE_KILL, 2500);

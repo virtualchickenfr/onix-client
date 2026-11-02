@@ -143,11 +143,12 @@ public final class ViralFx {
     public static void small(GuiGraphics ctx, String text, float x, float y, float scale, int color, float alpha) {
         if (alpha <= 0.01f) return;
         Font f = Minecraft.getInstance().font;
-        int w = f.width(text);
+        Component c = Theme.display(text);
+        int w = f.width(c);
         ctx.pose().pushMatrix();
         ctx.pose().translate(x, y);
         ctx.pose().scale(scale, scale);
-        ctx.drawString(f, text, -w / 2, -4, Theme.withAlpha(color, Math.round(255 * alpha)), true);
+        ctx.drawString(f, c, -w / 2, -4, Theme.withAlpha(color, Math.round(255 * alpha)), true);
         ctx.pose().popMatrix();
     }
 
