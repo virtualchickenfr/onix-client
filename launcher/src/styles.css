@@ -1274,3 +1274,25 @@ body.clean .bg-tile img, body.clean .bg-tile .same { border-radius: 16px; }
 body.clean .swatch { border-radius: 50%; }
 body.clean .xl-sq { border-radius: 18px !important; }
 body.clean .picker .popover .pop-item, body.clean .pop-item { border-radius: 12px; }
+
+/* 3D skin figure on the home page (falls back to the picture) */
+.home-skin3d { display: none; }
+body.clean.skin3d .home-skin { display: none; }
+body.clean.skin3d .home-skin3d { display: block; position: relative; height: min(52vh, 340px); aspect-ratio: 11 / 14; width: auto;
+  filter: drop-shadow(0 18px 30px rgba(0, 0, 0, .55)); animation: skin-in .9s var(--ease-out) both; }
+@keyframes skin-in { from { opacity: 0; transform: translateY(16px) scale(.97); } to { opacity: 1; transform: none; } }
+
+/* smoother button feel in the clean layout: everything eases, a soft lift on hover, a small press */
+body.clean .btn, body.clean .play, body.clean .picker-btn, body.clean .xl-sq, body.clean .pcard, body.clean .ctile, body.clean .theme,
+body.clean .segmented button, body.clean .hotbar .nav-item, body.clean .cos-tab, body.clean .tile, body.clean .bg-tile img {
+  transition: background-color .28s var(--ease-out), border-color .28s var(--ease-out), color .28s var(--ease-out),
+    box-shadow .35s var(--ease-out), transform .35s var(--ease-out), filter .28s var(--ease-out), opacity .28s var(--ease-out) !important;
+}
+body.clean .btn:hover:not(:disabled), body.clean .picker-btn:hover:not(:disabled), body.clean .xl-sq:hover:not(:disabled) {
+  transform: translateY(-1px) !important; box-shadow: 0 8px 22px rgba(0, 0, 0, .35) !important;
+}
+body.clean .play:hover:not(:disabled) { transform: translateY(-1px) !important; filter: brightness(1.08);
+  box-shadow: 0 14px 38px color-mix(in srgb, var(--accent) 45%, transparent), inset 0 1px 0 rgba(255, 255, 255, .3) !important; }
+body.clean .btn:active:not(:disabled), body.clean .play:active:not(:disabled), body.clean .picker-btn:active:not(:disabled),
+body.clean .xl-sq:active:not(:disabled), body.clean .hotbar .nav-item:active { transform: scale(.97) !important; transition-duration: .08s !important; }
+body.clean .ctile:hover, body.clean .theme:hover { transform: translateY(-2px); }

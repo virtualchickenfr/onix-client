@@ -483,6 +483,7 @@ public class OnixMenuScreen extends Screen {
         int y0 = (vh - DH) / 2;
         int x1 = x0 + DW;
         int y1 = y0 + DH;
+        if (Theme.glass) SoftShapes.glow(ctx, (x0 + x1) / 2f, (y0 + y1) / 2f, DW * 0.75f, DH * 0.8f, Theme.withAlpha(Theme.vibe(), 30));
         Theme.window(ctx, x0, y0, x1, y1, 10);
         hit(x0, y0, x1, y1, () -> {}, () -> {}); // clicks inside the window never close it
 
@@ -541,9 +542,9 @@ public class OnixMenuScreen extends Screen {
             else navSelY += (navSelTarget - navSelY) * Math.min(1f, frameDt * 16f);
             int sy = Math.round(navSelY);
             if (Theme.glass) {
-                Theme.round(ctx, x - 3, sy - 1, x2s + 1, sy + 16, 5, 0x2AFFFFFF);
-                Theme.round(ctx, x - 2, sy, x2s, sy + 15, 5, Theme.SURFACE_3);
-                Theme.round(ctx, x - 1, sy + 4, x + 1, sy + 11, 1, Theme.accent());
+                SoftShapes.glow(ctx, (x + x2s) / 2f, sy + 7.5f, (x2s - x) * 0.7f, 14, Theme.withAlpha(Theme.vibe(), 40));
+                Theme.round(ctx, x - 3, sy - 1, x2s + 1, sy + 16, 6, Theme.withAlpha(Theme.vibe(), 0x55));
+                Theme.round(ctx, x - 2, sy, x2s, sy + 15, 6, Theme.withAlpha(Theme.lerpColor(0xFF15151C, Theme.vibe(), 0.22f), 0xF0));
             } else {
                 ctx.fill(x - 2, sy, x2s, sy + 15, Theme.SURFACE_3);
                 Theme.outline(ctx, x - 3, sy - 1, x2s + 1, sy + 16, Theme.withAlpha(Theme.TEXT, 220));
@@ -1339,7 +1340,13 @@ public class OnixMenuScreen extends Screen {
         boolean hov = hovered(mx, my, x, y, x + w, y + h);
         float ht = anim("card:" + m.getId(), hov, 18f);
         float on = anim("on:" + m.getId(), m.isEnabled(), 14f);
-        int border = Theme.lerpColor(Theme.lerpColor(Theme.BORDER, Theme.BORDER_STRONG, ht), Theme.lerpColor(Theme.BORDER_STRONG, Theme.accent(), 0.35f), on);
+        int border = Theme.glass
+                ? Theme.lerpColor(Theme.lerpColor(Theme.BORDER, Theme.BORDER_STRONG, ht), Theme.withAlpha(Theme.vibe(), 0xB0), on)
+                : Theme.lerpColor(Theme.lerpColor(Theme.BORDER, Theme.BORDER_STRONG, ht), Theme.lerpColor(Theme.BORDER_STRONG, Theme.accent(), 0.35f), on);
+        if (Theme.glass && (on > 0.01f || ht > 0.01f)) {
+            // soft coloured glow behind enabled (and hovered) cards
+            SoftShapes.glow(ctx, x + w / 2f, y + h / 2f, w * 0.72f, h * 0.95f, Theme.withAlpha(Theme.vibe(), Math.round(30 * Math.max(on, ht * 0.5f))));
+        }
         // toggle pulse: a ring that grows and fades
         Long pulse = pulses.get(m.getId());
         if (pulse != null) {
@@ -1355,10 +1362,7 @@ public class OnixMenuScreen extends Screen {
         if (focused) Theme.round(ctx, x - 2, y - 2, x + w + 2, y + h + 2, Theme.corner(8) + 2, Theme.withAlpha(Theme.accent(), 170));
         Theme.card(ctx, x, y, x + w, y + h, Theme.corner(8), Theme.lerpColor(Theme.SURFACE_2, Theme.SURFACE_3, Math.max(ht, focused ? 0.6f : 0f)), border);
         Theme.bevel(ctx, x, y, x + w, y + h, 1f);
-        if (on > 0.01f) {
-            int inset = Theme.glass ? Theme.glassRadius(Theme.corner(8)) / 2 + 2 : 1;
-            ctx.fill(x + 1, y + inset, x + 3, y + h - inset, Theme.fade(Theme.accent(), on));
-        }
+        if (on > 0.01f && !Theme.glass) ctx.fill(x + 1, y + 1, x + 3, y + h - 1, Theme.fade(Theme.accent(), on));
 
         drawIcon(ctx, m.getCategory().getIcon(), x + 11, y + 11, 9, Theme.lerpColor(Theme.TEXT_3, Theme.accent(), on));
         // server-rule note and favorite star, top right

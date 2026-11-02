@@ -128,6 +128,7 @@ contextBridge.exposeInMainWorld('onix', {
   onCrash: (cb) => ipcRenderer.on('game:crash', (_e, v) => cb(v)),
 
   updateStatus: () => invoke('update:get'),
+  installUpdateNow: () => invoke('update:installNow'),
   checkUpdate: () => invoke('update:check'),
   installUpdate: () => invoke('update:install'),
   openUpdateDownload: () => invoke('update:download'),

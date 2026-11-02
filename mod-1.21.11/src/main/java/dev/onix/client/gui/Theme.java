@@ -105,6 +105,18 @@ public final class Theme {
         }
     }
 
+    /**
+     * Glow colour for the glass look: the theme accent, or a soft violet when the accent is grey or white
+     * (a white glow just looks like fog).
+     */
+    public static int vibe() {
+        int a = current.accent();
+        float r = red(a), g = green(a), b = blue(a);
+        float max = Math.max(r, Math.max(g, b));
+        float min = Math.min(r, Math.min(g, b));
+        return max - min < 0.18f ? 0xFF8B7CFF : a;
+    }
+
     /** Accent for menus (darkened in light mode when the theme accent is very light). */
     public static int accent() {
         return uiAccent;
@@ -318,7 +330,7 @@ public final class Theme {
     /** Liquid glass is rounder: every corner radius grows (small ones the most). */
     public static int glassRadius(int radius) {
         if (!glass || radius <= 0) return radius;
-        return radius < 4 ? radius + 4 : Math.round(radius * 1.7f);
+        return radius < 4 ? radius + 5 : Math.round(radius * 2.0f);
     }
 
     /** Liquid glass panel: soft shadow, see-through black body, light rim and a specular streak along the top. */

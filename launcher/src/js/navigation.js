@@ -15,6 +15,7 @@ function showView(name) {
   if (name === 'profile') renderProfileView();
   if (name === 'discover' && typeof openDiscover === 'function') openDiscover();
   if (name === 'skins' && typeof openSkins === 'function') openSkins();
+  if (name === 'home' && typeof homeSkinAnimate === 'function') homeSkinAnimate();
   if (name === 'home' && typeof homeWorld === 'function') homeWorld(true); else if (typeof homeWorld === 'function') homeWorld(false);
   if (name === 'mods') renderMods();
   if (name === 'cosmetics') loadCosmetics();

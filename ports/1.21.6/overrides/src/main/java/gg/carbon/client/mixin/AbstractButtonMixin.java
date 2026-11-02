@@ -31,7 +31,7 @@ public abstract class AbstractButtonMixin {
 
 	@Unique
 	private static final class State {
-		final Smooth hover = new Smooth(0, 16f);
+		final Smooth hover = new Smooth(0, 11f);
 		final Anim sheen = new Anim(1, 650, Easing.SMOOTH);
 		boolean was;
 	}
@@ -58,6 +58,8 @@ public abstract class AbstractButtonMixin {
 		} else {
 			int face = Theme.lerp(0xE81C1C20, 0xF02A2A30, h);
 			Ui.block(g, x, y, w, hh, CarbonClient.buttonRadius(hh), CarbonClient.buttonDepth(), face, CarbonClient.buttonDepth() > 0 ? 0xF0060607 : face, Theme.alpha(0xFFFFFFFF, 0.12f + 0.22f * h));
+			// a soft colour wash fades in on hover
+			if (h > 0.01f) R2D.rrect(g, x, y, w, hh - CarbonClient.buttonDepth(), CarbonClient.buttonRadius(hh), Theme.alpha(dev.onix.client.gui.Theme.vibe(), 0.16f * h));
 			float sh = s.sheen.get();
 			if (sh > 0 && sh < 1) {
 				float bw = w * 0.4f;

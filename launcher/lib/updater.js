@@ -98,6 +98,14 @@ function install(gameRunning) {
   return true;
 }
 
+/** Installs the downloaded update right away, silently, and starts the new version (used at start-up). */
+function installNow() {
+  if (state.status !== 'ready') throw new Error('No update has been downloaded yet.');
+  set({ status: 'installing' });
+  setImmediate(() => autoUpdater.quitAndInstall(true, true));
+  return true;
+}
+
 function openDownload() {
   const url = releasesUrl();
   if (!url) throw new Error('No download page is set for this launcher.');
@@ -105,4 +113,4 @@ function openDownload() {
   return true;
 }
 
-module.exports = { init, check, install, openDownload, view, releasesUrl };
+module.exports = { init, check, install, installNow, openDownload, view, releasesUrl };

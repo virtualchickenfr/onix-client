@@ -218,7 +218,49 @@ api.onState((s) => {
   homeWorld(currentView === 'home');
 });
 
-/** Clean layout: your skin in the middle of the home page, name above it. */
+/** Clean layout: your skin as a 3D figure in a new pose every start (falls back to a picture), name above it. */
+const homeSkin = { pose: Skin3D.nextPose(), px: null, slim: false, key: null, raf: 0, start: performance.now() };
+
+function homeSkinLoop() {
+  homeSkin.raf = 0;
+  const canvas = $('#home-skin3d');
+  if (!canvas || !homeSkin.px || currentView !== 'home' || !document.body.classList.contains('clean') || document.hidden) return;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const w = Math.round(canvas.clientWidth * dpr);
+  const h = Math.round(canvas.clientHeight * dpr);
+  if (w > 0 && (canvas.width !== w || canvas.height !== h)) {
+    canvas.width = w;
+    canvas.height = h;
+  }
+  Skin3D.draw(canvas, homeSkin.px, homeSkin.slim, homeSkin.pose, (performance.now() - homeSkin.start) / 1000);
+  homeSkin.raf = requestAnimationFrame(homeSkinLoop);
+}
+
+function homeSkinAnimate() {
+  if (!homeSkin.raf && homeSkin.px) homeSkin.raf = requestAnimationFrame(homeSkinLoop);
+}
+document.addEventListener('visibilitychange', homeSkinAnimate);
+
+async function loadHomeSkin(a) {
+  const key = a ? a.uuid || a.name : '';
+  if (homeSkin.key === key) return;
+  homeSkin.key = key;
+  homeSkin.px = null;
+  document.body.classList.remove('skin3d');
+  if (!a || a.demo || a.offline) return;
+  try {
+    const res = await api.skinProfile();
+    const prof = res && res.ok ? res.value : null;
+    if (homeSkin.key !== key || !prof || !prof.skin || !prof.skin.data) return;
+    const img = await L.image(prof.skin.data);
+    homeSkin.px = Skin3D.pixels(img);
+    homeSkin.slim = prof.skin.variant === 'slim';
+    homeSkin.start = performance.now();
+    document.body.classList.add('skin3d');
+    homeSkinAnimate();
+  } catch { /* stays the picture */ }
+}
+
 function renderHomeStage() {
   const img = $('#home-skin');
   const name = $('#home-name');
@@ -234,4 +276,6 @@ function renderHomeStage() {
     img.onerror = () => img.classList.remove('loaded');
     img.src = src;
   }
+  loadHomeSkin(a);
+  homeSkinAnimate();
 }

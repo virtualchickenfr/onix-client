@@ -952,6 +952,7 @@ app.whenReady().then(() => {
   ipcMain.handle('update:get', () => updater.view());
   ipcMain.handle('update:check', () => updater.check());
   ipcMain.handle('update:install', safe(() => updater.install(running)));
+  ipcMain.handle('update:installNow', safe(() => updater.installNow()));
   ipcMain.handle('update:download', safe(() => updater.openDownload()));
 
   createWindow();
