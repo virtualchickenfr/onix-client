@@ -81,7 +81,7 @@ public final class GameModePack {
         private final Supplier<String> value;
 
         Info(String id, String name, String description, Category category, String label, Supplier<String> value, int slot, String... tags) {
-            super("gm_" + id, name, description, category, false, Anchor.TOP_LEFT, 4, 120 + (slot % 30) * 12);
+            super("gm_" + id, name, description, category, false, Anchor.TOP_LEFT, 4 + (slot / 12 % 4) * 96, 64 + (slot % 12) * 13);
             this.label = label;
             this.value = value;
             tags(tags);
