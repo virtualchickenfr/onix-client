@@ -150,6 +150,19 @@ public final class DevTest {
         then(40, () -> snap(mc, "09_menu_ingame"));
         then(2, () -> mc.setScreen(new OnixMenuScreen(null, OnixMenuScreen.View.MODULES)));
         then(40, () -> snap(mc, "09a_menu_ingame_glass_modules"));
+        // the clean (Carbon style) right shift menu
+        then(2, () -> mc.setScreen(new gg.carbon.client.screen.ClickGui(null)));
+        then(40, () -> snap(mc, "09b1_clickgui_grid"));
+        then(2, () -> {
+            if (mc.screen instanceof gg.carbon.client.screen.ClickGui gui) {
+                for (var m : OnixClient.MODULES.all()) if (m.getId().equals("keystrokes")) gui.showModule(m);
+            }
+        });
+        then(30, () -> snap(mc, "09b2_clickgui_detail"));
+        then(2, () -> {
+            OnixClient.LOGGER.info("[devtest] modules with carbon pack: {}", OnixClient.MODULES.all().size());
+            mc.setScreen(null);
+        });
         // pack 1: a few of the new game-mode modules on the HUD
         then(2, () -> {
             mc.setScreen(null);

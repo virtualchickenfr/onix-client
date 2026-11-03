@@ -74,7 +74,7 @@ public class OnixTitleScreen extends Screen {
         items.clear();
         items.add(new Item("Singleplayer", "world", () -> minecraft.setScreen(new SelectWorldScreen(this)), true));
         items.add(new Item("Multiplayer", "server", () -> minecraft.setScreen(new JoinMultiplayerScreen(this)), true));
-        items.add(new Item("Modules", "all", () -> minecraft.setScreen(new OnixMenuScreen(this)), false));
+        items.add(new Item("Modules", "all", () -> minecraft.setScreen(OnixClient.CONFIG.menuStyle.is("Clean") ? new gg.carbon.client.screen.ClickGui(this) : new OnixMenuScreen(this)), false));
         items.add(new Item("Cosmetics", "cosmetics", () -> minecraft.setScreen(new OnixMenuScreen(this, OnixMenuScreen.View.COSMETICS)), false));
         items.add(new Item("Profiles", "profile", () -> minecraft.setScreen(new OnixMenuScreen(this, OnixMenuScreen.View.PROFILES)), false));
         items.add(new Item("Options", "settings", () -> minecraft.setScreen(new OptionsScreen(this, minecraft.options)), false));

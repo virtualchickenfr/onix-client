@@ -75,6 +75,12 @@ public class OnixClient implements ClientModInitializer {
             CONFIG.titleDesign.set("Cinematic");
             CONFIG.save();
         }
+        // 1.1.16: right shift opens the clean Carbon style mod menu once (Classic and Bloom stay under Design)
+        if (!CONFIG.cleanSet.isOn()) {
+            CONFIG.cleanSet.set(true);
+            CONFIG.menuStyle.set("Clean");
+            CONFIG.save();
+        }
         MODULES = new ModuleManager();
         MODULES.registerDefaults();
         PROFILES = new ProfileManager(MODULES, CONFIG);
@@ -95,7 +101,8 @@ public class OnixClient implements ClientModInitializer {
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (MENU_KEY.consumeClick()) {
-                if (client.screen == null) client.setScreen(new OnixMenuScreen(null));
+                if (client.screen == null) client.setScreen(CONFIG.menuStyle.is("Clean")
+                        ? new gg.carbon.client.screen.ClickGui(null) : new OnixMenuScreen(null));
             }
             while (CWT_KEY.consumeClick()) CwtMode.toggle();
             LauncherInbox.tick();
