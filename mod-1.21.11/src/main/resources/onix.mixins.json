@@ -9,6 +9,7 @@
     "BossBarHudMixin",
     "CameraMixin",
     "ChatHudMixin",
+    "ChatSendMixin",
     "ConnectScreenMixin",
     "ContainerScreenMixin",
     "DarkModeBlitMixin",

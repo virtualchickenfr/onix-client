@@ -188,6 +188,7 @@ public class ModuleManager {
             for (Module m : pack.get()) register(m);
         }
         for (Module m : dev.onix.client.module.impl.pack.ViralPack.modules()) register(m);
+        for (Module m : dev.onix.client.module.impl.carbon.CarbonPack.modules()) register(m);
     }
 
     public void register(Module module) {

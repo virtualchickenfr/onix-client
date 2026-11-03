@@ -71,26 +71,346 @@ public final class PixelIcons {
 		def("arrowleft", ".........", ".........", "....#....", "...#.....", "..#######", "...#.....", "....#....", ".........", ".........");
 		def("shulker", ".#######.", "#.......#", "#.#####.#", "#########", "#...#...#", "#..###..#", "#...#...#", ".#######.", ".........");
 		def("power", "....#....", ".#..#..#.", "#...#...#", "#...#...#", "#.......#", "#.......#", ".#.....#.", "..#####..", ".........");
-		def("hex","...###...", ".##...##.", "#.......#", "#..###..#", "#..#....#", "#..###..#", "#.......#", ".##...##.", "...###...");
+		def("hex", "...###...", ".##...##.", "#.......#", "#..###..#", "#..#....#", "#..###..#", "#.......#", ".##...##.", "...###...");
+		def("hand", "...#.#...", "..#.#.#..", "..#.#.#.#", "..#####.#", ".#######.", ".#######.", "..#####..", "...###...", "...###...");
+		def("axes", "....#....", "...###...", "....#....", "....#....", "....#....", "...#.#...", "..#...#..", ".#.....##", "##......#");
+		def("swing", "......###", "....##...", "...#.....", "..#......", ".#....#..", ".#...##..", "#...###..", "#.....##.", "#.......#");
+		def("gem", "..#####..", ".#.#.#.#.", "#########", ".#.....#.", "..#...#..", "...#.#...", "....#....", ".........", ".........");
+		def("star", "....#....", "...###...", "...###...", "#########", ".#######.", "..#####..", ".###.###.", ".##...##.", "#.......#");
+		def("sunset", ".........", "....#....", ".#.....#.", "...###...", "..#####..", "#########", ".........", ".#######.", "...###...");
+		def("burst", "#...#...#", ".#..#..#.", "..#...#..", ".........", "###...###", ".........", "..#...#..", ".#..#..#.", "#...#...#");
+		def("flame", "....#....", "...##....", "...###...", "..####.#.", ".#####.#.", ".###+###.", "###+++###", ".##+++##.", "..#####..");
+		def("flamelow", "#########", ".........", "....#....", "...##....", "...###.#.", "..#####..", ".###+###.", ".##+++##.", "..#####..");
+		def("totem", "..#####..", ".#.....#.", ".#.#.#.#.", ".#.....#.", "###.#.###", "#.#####.#", "..#####..", "..#...#..", "..##.##..");
+		def("trail", ".........", ".......##", ".....##..", "...##....", ".##......", "#........", ".........", ".+.+.+...", ".........");
+		def("rings", ".........", "....#....", "...###...", "....#....", ".........", "..#####..", ".#.....#.", "#.......#", ".#######.");
+		def("comet", "......##.", ".....####", "....#####", "...+####.", "..+.+##..", ".+.+.....", "+.+......", ".+.......", "+........");
+		def("portal", "..#####..", ".#.....#.", "#..###..#", "#.#...#.#", "#.#.#.#.#", "#.#...#.#", "#..###..#", ".#.....#.", "..#####..");
+		def("orbit", "..#...#..", ".........", "#..###..#", "..#...#..", "..#.#.#..", "..#...#..", "#..###..#", ".........", "..#...#..");
+		def("card", ".........", "#########", "#.##....#", "#.##.##.#", "#.......#", "#.#####.#", "#########", ".........", ".........");
+		def("crystal", "....#....", "...###...", "..##.##..", ".##...##.", "##.....##", ".##...##.", "..##.##..", "...###...", "....#....");
+		def("pillar", "...###...", "..#...#..", "...###...", "....#....", "...#+#...", "...#+#...", "..##+##..", ".#######.", "#########");
+		def("rain", "...###...", "..#...##.", ".#......#", "#.......#", ".#######.", ".........", ".#..#..#.", "#..#..#..", ".........");
+		def("hat", ".........", ".........", "....#....", "...###...", "..#####..", ".#######.", "#########", "...+++...", "...+++...");
+		def("pickaxe", ".#####...", "#.....##.", "....##.#.", "...##..#.", "..##...#.", ".##......", "##.......", "#........", ".........");
+		def("wings", ".........", "#.......#", "##.....##", "###...###", "####.####", ".###.###.", "..##.##..", "...#.#...", ".........");
+		def("knife", "........#", ".......##", "......##.", ".....##..", "....##...", "...##....", ".+##.....", ".#+......", "#.+......");
+		def("drop", "....#....", "...###...", "....#....", ".........", "..#####..", ".#+++++#.", "#########", ".#######.", ".........");
+		def("skyline", "..+...#..", ".....###.", "+....#.#.", "......#..", ".........", "...#.....", "..###.#..", ".#####.#.", "#########");
+		def("cape", "#########", "#.......#", "#..###..#", "#.#...#.#", "#.......#", ".#.....#.", ".#.....#.", "..#...#..", "..#####..");
+		def("glove", "..#.#.#..", "..#.#.#.#", "..#.#.#.#", "..#######", ".########", ".#######.", "..#####..", "..+++++..", "..+++++..");
+		def("heart", ".##...##.", "####.####", "#########", "#########", ".#######.", "..#####..", "...###...", "....#....", ".........");
+		def("calc", "#########", "#.......#", "#.#####.#", "#.......#", "#.#.#.#.#", "#.......#", "#.#.#.#.#", "#.......#", "#########");
+		def("copy", "..######.", "..#....#.", "######.#.", "#....#.#.", "#....#.#.", "#....###.", "#....#...", "######...", ".........");
+		def("plus", ".........", "....#....", "....#....", "....#....", "#########", "....#....", "....#....", "....#....", ".........");
+		def("stack", ".........", "#########", ".........", "#########", ".........", "#########", ".........", ".+.+.+.+.", ".........");
+		def("respawn", "...###...", ".##...#..", "#.....###", "#......#.", "#........", "#.......#", ".#.....#.", "..#####..", ".........");
+		def("tree", "...###...", "..#####..", ".#######.", ".###+###.", "..#####..", "....#....", "....#....", "...###...", ".........");
+		def("torch", "....+....", "...#+#...", "...###...", "....#....", "....#....", "....#....", "....#....", "....#....", ".........");
+		def("zombie", "#########", "#.......#", "#.##.##.#", "#.##.##.#", "#.......#", "#..###..#", "#.#...#.#", "#.......#", "#########");
+		def("creeper", "#########", "#..###..#", "#..###..#", "####.####", "###...###", "###...###", "###.#.###", "#########", ".........");
+		def("calendar", ".#.....#.", "#########", "#########", "#.......#", "#.#.#.#.#", "#.......#", "#.#.#.#.#", "#.......#", "#########");
+		def("nightfall", "..##...#.", ".##...###", "##.....#.", "##.......", "##.......", "##.....+.", ".##...+++", "..##...+.", ".........");
+		def("gamepad", ".........", ".#######.", "#.......#", "#.#....##", "####..#.#", "#.#....##", "#.......#", ".##...##.", ".........");
+		def("border", "#.#.#.#.#", ".........", "#.......#", ".........", "#...#...#", ".........", "#.......#", ".........", "#.#.#.#.#");
+		def("paw", "..#...#..", "..#...#..", "#.......#", "#..###..#", "..#####..", ".#######.", ".#######.", "..##.##..", ".........");
+		def("person", "...###...", "...###...", "...###...", ".........", "..#####..", ".#######.", ".#######.", ".#######.", ".........");
+		def("people", "..#...#..", ".###.###.", "..#...#..", ".........", ".###.###.", "#########", "#########", "#########", ".........");
+		def("heartgold", ".##...##.", "#++#.#++#", "#+++#+++#", "#+++++++#", ".#+++++#.", "..#+++#..", "...#+#...", "....#....", ".........");
+		def("heartplus", ".##...##.", "####.####", "###...###", "####.####", ".#######.", "..#####..", "...###...", "....#....", ".........");
+		def("heartbroken", ".##...##.", "####.####", "###.#####", "#####.###", ".##.####.", "..##.##..", "...#.#...", "....#....", ".........");
+		def("orb", ".........", "...###...", "..#+++#..", ".#++#++#.", ".#+###+#.", ".#++#++#.", "..#+++#..", "...###...", ".........");
+		def("bar", ".........", ".........", "#########", "#####...#", "#####...#", "#########", ".........", "..#.#.#..", ".........");
+		def("bubble", ".........", "......##.", ".....#..#", "..##..##.", ".#..#....", ".#..#.##.", "..##.#..#", ".....#..#", "......##.");
+		def("updown", "....#....", "...###...", "..#####..", "....#....", "....#....", "....#....", "..#####..", "...###...", "....#....");
+		def("gauge", ".........", "..#####..", ".#.....#.", "#......##", "#.....#.#", "#....#..#", "#...#...#", "#########", ".........");
+		def("fall", "....#....", "....#....", "....#....", "....#....", "..#.#.#..", "...###...", "....#....", ".........", "#########");
+		def("tilt", "........#", ".......#.", "......#..", ".....#...", "....#....", "...#.....", "..#......", ".#.......", "#########");
+		def("mountain", ".........", "...#.....", "..###....", ".#####.#.", ".#####.##", "#########", "#########", "#########", ".........");
+		def("chunk", "#########", "#...#...#", "#...#...#", "#...#...#", "#########", "#...#...#", "#...#...#", "#...#...#", "#########");
+		def("chunkdot", "#########", "#.......#", "#.......#", "#.....#.#", "#.......#", "#.......#", "#.......#", "#.......#", "#########");
+		def("netherportal", "#########", "#+++++++#", "#+++++++#", "#+++++++#", "#+++++++#", "#+++++++#", "#+++++++#", "#+++++++#", "#########");
+		def("sword", ".......##", "......###", ".....###.", "....###..", ".#.###...", "..###....", "..##.....", ".#..#....", "#........");
+		def("slots", "####.####", "#..#.#..#", "#..#.#..#", "####.####", ".........", "####.####", "#..#.#..#", "#..#.#..#", "####.####");
+		def("cup", ".+.+.....", "..+.+....", ".........", "######...", "#....###.", "#....#.#.", "#....###.", ".####....", "#######..");
+		def("pearl", "...###...", ".#+++++#.", "#+++++++#", "#++###++#", "#+#####+#", "#++###++#", "#+++++++#", ".#+++++#.", "...###...");
+		def("apple", "....#....", "....#.##.", "..##.##..", ".#######.", "#########", "#########", "#########", ".#######.", "..##.##..");
+		def("gapple", "....#....", "....#.##.", "..##.##..", ".#+++++#.", "#+++++++#", "#+++++++#", "#+++++++#", ".#+++++#.", "..##.##..");
+		def("arrowitem", "......###", ".......##", "......#.#", ".....#...", "....#....", "...#.....", "#.#......", ".##......", "###......");
+		def("bottle", "...###...", "....#....", "...###...", "..#...#..", ".#.+.+.#.", ".#+.+.+#.", ".#.+.+.#.", ".#+.+.+#.", "..#####..");
+		def("obsidian", "#########", "#+#+++#+#", "#++#+#++#", "#+++#+++#", "##+++++##", "#+++#+++#", "#++#+#++#", "#+#+++#+#", "#########");
+		def("anchor", "#########", "#.#.#.#.#", "#########", "#.......#", "#..+++..#", "#..+#+..#", "#..+++..#", "#.......#", "#########");
+		def("glow", "#########", "#.+...+.#", "#+#+.+#+#", "#.+...+.#", "#...+...#", "#.+...+.#", "#+#+.+#+#", "#.+...+.#", "#########");
+		def("web", "#...#...#", ".#..#..#.", "..#####..", ".#.###.#.", "#########", ".#.###.#.", "..#####..", ".#..#..#.", "#...#...#");
+		def("bucket", ".........", "..#####..", ".#.....#.", "#########", "#+++++++#", ".#+++++#.", ".#+++++#.", "..#####..", ".........");
+		def("rocket", "....#....", "...###...", "...#+#...", "...###...", "...#+#...", "...###...", "..#####..", "..#.#.#..", "..+.+.+..");
+		def("carrot", "......#.#", ".....###.", "....###..", "...###...", "..###....", ".###.....", ".##......", "#........", ".........");
+		def("ball", ".........", "...###...", "..#+++#..", ".#+++++#.", ".#+++++#.", ".#+++++#.", "..#+++#..", "...###...", ".........");
+		def("swirl", "..####...", ".#....#..", "#..##..#.", "#.#..#.#.", "#.#.#..#.", "#..#..#..", ".#...#...", "..###....", ".........");
+		def("footsteps", ".##......", "####.....", "####..##.", ".##..####", ".....####", "##....##.", "##.......", "......##.", "......##.");
+		def("lava", "....#....", "...#+#...", "..#+++#..", "..#+++#..", "...###...", ".........", ".##..##..", "#..##..##", ".........");
+		def("lightning", "....###..", "...###...", "..###....", ".#######.", "....###..", "...###...", "..##.....", ".#.......", ".........");
+		def("void", "....#....", "..#.#.#..", "...###...", "....#....", ".........", "###...###", "##.....##", "#.......#", ".........");
+		def("radar", "...###...", ".##...##.", "#.....#.#", "#....#..#", "#...#.+.#", "#.......#", "#..+....#", ".##...##.", "...###...");
+		def("tnt", "#########", "#+#+#+#+#", "#########", "#..###..#", "#...#...#", "#...#...#", "#########", "#+#+#+#+#", "#########");
+		def("snowflake", "....#....", ".#..#..#.", "..#.#.#..", "...###...", "#########", "...###...", "..#.#.#..", ".#..#..#.", "....#....");
+		def("zzz", ".....####", ".......#.", "......#..", ".....####", "####.....", "..#......", ".#.......", "####.....", ".........");
+		def("shadow", "...###...", "..#####..", "..#####..", "...###...", ".........", ".........", "..+++++..", ".+++++++.", "..+++++..");
+		def("subtitle", ".........", "#########", "#.......#", "#.##.##.#", "#.#..#..#", "#.##.##.#", "#.......#", "#########", ".........");
+		def("resize", "####.....", "##.......", "#.#......", "#..#.....", "....#....", ".....#..#", "......#.#", ".......##", ".....####");
+		def("width", "#.......#", "#.......#", "#.#...#.#", "##.....##", "#########", "##.....##", "#.#...#.#", "#.......#", "#.......#");
+		def("palette", "..#####..", ".#.....#.", "#.#..+..#", "#.......#", "#.+...###", "#....#...", "#.#..#...", ".#....#..", "..####...");
+		def("note", "...######", "...#....#", "...#....#", "...#....#", ".###..###", "####.####", ".##...##.", ".........", ".........");
+		def("disc", "...###...", ".##+++##.", "#+++++++#", "#++###++#", "#++#.#++#", "#++###++#", "#+++++++#", ".##+++##.", "...###...");
+		def("speaker", "....#....", "...##..#.", "###.#...#", "#...#.#.#", "#...#.#.#", "#...#.#.#", "###.#...#", "...##..#.", "....#....");
+		def("mute", "....#....", "...##....", "###.#....", "#...#.#.#", "#...#..#.", "#...#.#.#", "###.#....", "...##....", "....#....");
+		def("expand", "###...###", "##.....##", "#.#...#.#", ".........", ".........", ".........", "#.#...#.#", "##.....##", "###...###");
+		def("trash", "...###...", "#########", ".........", ".#######.", ".#.#.#.#.", ".#.#.#.#.", ".#.#.#.#.", ".#.#.#.#.", "..#####..");
+		def("minus", ".........", ".........", ".........", ".........", "#########", ".........", ".........", ".........", ".........");
+		def("door", ".#######.", ".#.....#.", ".#.....#.", ".#.....#.", ".#...#.#.", ".#.....#.", ".#.....#.", ".#.....#.", "#########");
+		def("trophy", ".#######.", "##+++++##", "#.#+++#.#", ".##+++##.", "...###...", "....#....", "....#....", "..#####..", ".#######.");
+		def("filter", "#########", "#.......#", ".#.....#.", "..#...#..", "...#.#...", "...#.#...", "...#.#...", "...#.#...", "....#....");
+		def("link", ".........", ".........", "####.####", "#..#.#..#", "#.#####.#", "#..#.#..#", "####.####", ".........", ".........");
+		def("megaphone", ".......#.", "......##.", "#....#.#.", "##..#..#.", "#.##...#.", "##..#..#.", "#....#.#.", "......##.", ".......#.");
+		def("at", "..#####..", ".#.....#.", "#..####.#", "#.#...#.#", "#.#...#.#", "#..#####.", "#........", ".#.....#.", "..#####..");
+		def("envelope", ".........", "#########", "##.....##", "#.#...#.#", "#..#.#..#", "#...#...#", "#.......#", "#########", ".........");
+		def("file", "######...", "#....##..", "#....#.#.", "#....####", "#.####..#", "#.......#", "#.####..#", "#.......#", "#########");
+		def("quote", ".........", "#........", ".##......", "...##....", ".....##..", "...##....", ".##......", "#.....###", ".........");
+		def("text", "#######..", "...#.....", "...#.....", "...#.####", "...#...#.", "...#...#.", "...#...#.", "...#...#.", ".........");
+		def("pen", "......##.", ".....#..#", "....#..#.", "...#..#..", "..#..#...", ".#..#....", "#.##.....", "##.......", "#########");
+		def("smile", "..#####..", ".#.....#.", "#.#...#.#", "#.#...#.#", "#.......#", "#.#...#.#", "#..###..#", ".#.....#.", "..#####..");
 	}
 
 	private static final Map<String, String> MODULES = Map.ofEntries(
-		Map.entry("fps", "bolt"), Map.entry("cps", "mouse"), Map.entry("ping", "signal"), Map.entry("coordinates", "pin"),
-		Map.entry("direction", "compass"), Map.entry("armorStatus", "chestplate"), Map.entry("potionEffects", "potion"),
-		Map.entry("time", "clock"), Map.entry("speedMeter", "speed"), Map.entry("playtime", "hourglass"),
-		Map.entry("serverAddress", "server"), Map.entry("systemresources", "chip"), Map.entry("tps", "pulse"),
-		Map.entry("saturation", "drumstick"), Map.entry("packdisplay", "cube"), Map.entry("keystrokes", "keyboard"),
-		Map.entry("mousestrokes", "cursor"), Map.entry("toggleSprint", "sprint"), Map.entry("comboDisplay", "swords"),
-		Map.entry("reachDisplay", "ruler"), Map.entry("jumpreset", "jump"), Map.entry("itemCounter", "chest"),
-		Map.entry("hitbox", "hitbox"), Map.entry("dropprevention", "shield"), Map.entry("zoom", "magnifier"),
-		Map.entry("perspective", "eye"), Map.entry("snaplook", "flip"), Map.entry("autoperspective", "camera"),
-		Map.entry("crosshair", "crosshair"), Map.entry("brightness", "sun"), Map.entry("fovChanger", "fov"),
-		Map.entry("blockOverlay", "frame"), Map.entry("camera", "video"), Map.entry("nametags", "tag"),
-		Map.entry("weatherchanger", "cloud"), Map.entry("bossBar", "skull"), Map.entry("scoreboard", "list"),
-		Map.entry("titletweaker", "title"), Map.entry("waypoints", "flag"), Map.entry("autoText", "chat"),
-		Map.entry("reconnect", "plug"), Map.entry("toastcontrol", "bell"), Map.entry("stopwatch1", "stopwatch"),
-		Map.entry("deathInfo", "grave"), Map.entry("unfocusedfps", "moon"), Map.entry("particlelimiter", "sparkle"),
-		Map.entry("entityculling", "eyeoff"), Map.entry("shulkertooltips", "shulker"), Map.entry("darkmode", "moon"), Map.entry("client", "gear"));
+		Map.entry("healthIndicator", "heart"),
+		Map.entry("crystalOptimizer", "burst"),
+		Map.entry("fastPlace", "bolt"),
+		Map.entry("quickSwapKeys", "slots"),
+		Map.entry("pearlKey", "pearl"),
+		Map.entry("shieldBreaker", "axes"),
+		Map.entry("doubleHand", "totem"),
+		Map.entry("xpThrower", "orb"),
+		Map.entry("popCounter", "skull"),
+		Map.entry("anchorSwap", "anchor"),
+		Map.entry("anchorGuard", "shield"),
+		Map.entry("anchorAlert", "glow"),
+		Map.entry("cpvpCrystalDamage", "tnt"),
+		Map.entry("cpvpSurround", "obsidian"),
+		Map.entry("cpvpTargetHole", "radar"),
+		Map.entry("cpvpEnemyArmor", "chestplate"),
+		Map.entry("cpvpEnemyHands", "hand"),
+		Map.entry("cpvpCombatTimer", "stopwatch"),
+		Map.entry("cpvpCooldowns", "hourglass"),
+		Map.entry("cpvpCrystalSpeed", "speed"),
+		Map.entry("cpvpHurtTime", "pulse"),
+		Map.entry("cpvpLastPop", "heartbroken"),
+		Map.entry("cpvpArmorAlert", "bell"),
+		Map.entry("cpvpPearlAlert", "eye"),
+		Map.entry("cpvpAntiSuicide", "heartplus"),
+		Map.entry("cpvpObsidianSwap", "cube"),
+		Map.entry("cpvpTotemKey", "plus"),
+		Map.entry("cpvpHotbarRefill", "stack"),
+		Map.entry("cpvpGappleKey", "gapple"),
+		Map.entry("cpvpElytraSwap", "wings"),
+		Map.entry("cpvpNoGlowstone", "filter"),
+		Map.entry("cpvpAutoLog", "door"),
+		Map.entry("dsAttackCharge", "gauge"),
+		Map.entry("dsShieldStatus", "shield"),
+		Map.entry("dsKills", "trophy"),
+		Map.entry("dsEnemyWeapon", "sword"),
+		Map.entry("dsMaceDanger", "skull"),
+		Map.entry("dsEnemyLow", "heart"),
+		Map.entry("dsPotionAlert", "drop"),
+		Map.entry("dsCombatLog", "door"),
+		Map.entry("dsBowAlert", "arrowitem"),
+		Map.entry("swDamage", "burst"),
+		Map.entry("swEnchants", "sparkle"),
+		Map.entry("swDps", "speed"),
+		Map.entry("swHitsToKill", "skull"),
+		Map.entry("swLastHit", "pulse"),
+		Map.entry("swBestCombo", "trophy"),
+		Map.entry("swAccuracy", "crosshair"),
+		Map.entry("swTargetDefense", "chestplate"),
+		Map.entry("swKnockback", "sprint"),
+		Map.entry("swSweep", "swing"),
+		Map.entry("swEnemySword", "swords"),
+		Map.entry("swDamageDealt", "heartbroken"),
+		Map.entry("swHitInterval", "stopwatch"),
+		Map.entry("swChargeBar", "bar"),
+		Map.entry("swBreakAlert", "bell"),
+		Map.entry("swChargeSound", "note"),
+		Map.entry("swCritSound", "lightning"),
+		Map.entry("swHitSound", "speaker"),
+		Map.entry("swComboSound", "disc"),
+		Map.entry("swAutoSword", "hand"),
+		Map.entry("swBackup", "stack"),
+		Map.entry("swReturn", "arrowleft"),
+		Map.entry("swCooldownGuard", "hourglass"),
+		Map.entry("swReachGuard", "ruler"),
+		Map.entry("swTeamGuard", "people"),
+		Map.entry("swNoFist", "glove"),
+		Map.entry("swDurabilitySaver", "shield"),
+		Map.entry("swCritGuard", "star"),
+		Map.entry("dsMaceInfo", "pickaxe"),
+		Map.entry("dsSmashCounter", "trophy"),
+		Map.entry("dsTargetBelow", "radar"),
+		Map.entry("dsSmashPredict", "tnt"),
+		Map.entry("dsWindCharges", "swirl"),
+		Map.entry("dsSmashSound", "speaker"),
+		Map.entry("dsMaceReady", "fall"),
+		Map.entry("dsMaceSwapBack", "arrowleft"),
+		Map.entry("dsElytraMace", "wings"),
+		Map.entry("dsSmartMace", "chip"),
+		Map.entry("blockFastPlace", "cube"),
+		Map.entry("inventorySensitivity", "cursor"),
+		Map.entry("freecam", "camera"),
+		Map.entry("outline", "frame"),
+		Map.entry("playerBoxes", "cube"),
+		Map.entry("tracers", "link"),
+		Map.entry("holeEsp", "obsidian"),
+		Map.entry("storageEsp", "chest"),
+		Map.entry("reachCircle", "rings"),
+		Map.entry("trajectories", "arrow"),
+		Map.entry("lightLevels", "torch"),
+		Map.entry("logoutSpots", "door"),
+		Map.entry("landingSpot", "fall"),
+		Map.entry("hudBiome", "tree"),
+		Map.entry("hudDimension", "portal"),
+		Map.entry("hudMobSpawn", "zombie"),
+		Map.entry("hudWorldTime", "clock"),
+		Map.entry("hudDayCount", "calendar"),
+		Map.entry("hudNightIn", "nightfall"),
+		Map.entry("hudDifficulty", "skull"),
+		Map.entry("hudGameMode", "gamepad"),
+		Map.entry("hudWorldBorder", "border"),
+		Map.entry("hudEntities", "paw"),
+		Map.entry("hudOnline", "people"),
+		Map.entry("hudServerBrand", "server"),
+		Map.entry("hudEffectCount", "potion"),
+		Map.entry("hudMovement", "sprint"),
+		Map.entry("hudKmh", "gauge"),
+		Map.entry("hudYaw", "compass"),
+		Map.entry("hudPitch", "tilt"),
+		Map.entry("hudInChunk", "chunkdot"),
+		Map.entry("hudNetherCoords", "netherportal"),
+		Map.entry("hudTargetBlock", "cube"),
+		Map.entry("hudTargetDistance", "ruler"),
+		Map.entry("hudOffhand", "shield"),
+		Map.entry("hudElytra", "wings"),
+		Map.entry("hudEmptySlots", "slots"),
+		Map.entry("hudJava", "cup"),
+		Map.entry("hudFov", "fov"),
+		Map.entry("cntPearls", "pearl"),
+		Map.entry("cntGapples", "gapple"),
+		Map.entry("cntEgapples", "apple"),
+		Map.entry("cntArrows", "arrowitem"),
+		Map.entry("cntXpBottles", "bottle"),
+		Map.entry("cntCrystals", "crystal"),
+		Map.entry("cntObsidian", "obsidian"),
+		Map.entry("cntAnchors", "anchor"),
+		Map.entry("cntGlowstone", "glow"),
+		Map.entry("cntCobwebs", "web"),
+		Map.entry("cntWaterBuckets", "bucket"),
+		Map.entry("cntFireworks", "rocket"),
+		Map.entry("cntGoldenCarrots", "carrot"),
+		Map.entry("cntSnowballs", "ball"),
+		Map.entry("cntWindCharges", "swirl"),
+		Map.entry("statAirTime", "cloud"),
+		Map.entry("statDamageTaken", "heartbroken"),
+		Map.entry("statHealed", "heartplus"),
+		Map.entry("alertFire", "flame"),
+		Map.entry("alertLava", "lava"),
+		Map.entry("alertInventoryFull", "chest"),
+		Map.entry("alertDay", "sunset"),
+		Map.entry("alertThunder", "lightning"),
+		Map.entry("alertNewPlayer", "radar"),
+		Map.entry("alertCreeper", "creeper"),
+		Map.entry("alertTnt", "tnt"),
+		Map.entry("alertFreezing", "snowflake"),
+		Map.entry("alertPing", "signal"),
+		Map.entry("alertFps", "bolt"),
+		Map.entry("noVignette", "frame"),
+		Map.entry("glintStrength", "gem"),
+		Map.entry("hideSplash", "title"),
+		Map.entry("hotbarAttackIndicator", "swords"),
+		Map.entry("forceSubtitles", "subtitle"),
+		Map.entry("noMipmaps", "grid"),
+		Map.entry("simulationCap", "gear"),
+		Map.entry("chatOpacity", "chat"),
+		Map.entry("hideJoinLeave", "door"),
+		Map.entry("hideAdvancements", "trophy"),
+		Map.entry("chatFilter", "filter"),
+		Map.entry("linkFilter", "link"),
+		Map.entry("antiSpam", "stack"),
+		Map.entry("hideShouting", "megaphone"),
+		Map.entry("mentionPing", "at"),
+		Map.entry("whisperAlert", "envelope"),
+		Map.entry("chatLogger", "file"),
+		Map.entry("chatPrefix", "tag"),
+		Map.entry("volRecords", "disc"),
+		Map.entry("volAmbient", "speaker"),
+		Map.entry("muteToggle", "mute"),
+		Map.entry("copyTeleport", "copy"),
+		Map.entry("toggleFullscreen", "expand"),
+		Map.entry("clearChat", "trash"),
+		Map.entry("renderDistanceUp", "plus"),
+		Map.entry("renderDistanceDown", "minus"),
+		Map.entry("turnAround", "flip"),
+		Map.entry("lookStraight", "arrow"),
+		Map.entry("grid", "grid"),
+		Map.entry("hitbox", "hitbox"),
+		Map.entry("crosshair", "crosshair"),
+		Map.entry("video", "camera"),
+		Map.entry("chat", "chat"),
+		Map.entry("knife", "knife"),
+		Map.entry("fps", "bolt"),
+		Map.entry("cps", "mouse"),
+		Map.entry("ping", "signal"),
+		Map.entry("coordinates", "pin"),
+		Map.entry("direction", "compass"),
+		Map.entry("armorStatus", "chestplate"),
+		Map.entry("potionEffects", "potion"),
+		Map.entry("time", "clock"),
+		Map.entry("speedMeter", "speed"),
+		Map.entry("playtime", "hourglass"),
+		Map.entry("serverAddress", "server"),
+		Map.entry("systemresources", "chip"),
+		Map.entry("tps", "pulse"),
+		Map.entry("saturation", "drumstick"),
+		Map.entry("packdisplay", "cube"),
+		Map.entry("keystrokes", "keyboard"),
+		Map.entry("mousestrokes", "cursor"),
+		Map.entry("toggleSprint", "sprint"),
+		Map.entry("comboDisplay", "swords"),
+		Map.entry("reachDisplay", "ruler"),
+		Map.entry("jumpreset", "jump"),
+		Map.entry("itemCounter", "chest"),
+		Map.entry("dropprevention", "shield"),
+		Map.entry("zoom", "magnifier"),
+		Map.entry("perspective", "eye"),
+		Map.entry("snaplook", "flip"),
+		Map.entry("autoperspective", "camera"),
+		Map.entry("brightness", "sun"),
+		Map.entry("fovChanger", "fov"),
+		Map.entry("blockOverlay", "frame"),
+		Map.entry("camera", "video"),
+		Map.entry("nametags", "tag"),
+		Map.entry("weatherchanger", "cloud"),
+		Map.entry("bossBar", "skull"),
+		Map.entry("scoreboard", "list"),
+		Map.entry("titletweaker", "title"),
+		Map.entry("waypoints", "flag"),
+		Map.entry("autoText", "chat"),
+		Map.entry("reconnect", "plug"),
+		Map.entry("toastcontrol", "bell"),
+		Map.entry("stopwatch1", "stopwatch"),
+		Map.entry("deathInfo", "grave"),
+		Map.entry("unfocusedfps", "moon"),
+		Map.entry("particlelimiter", "sparkle"),
+		Map.entry("entityculling", "eyeoff"),
+		Map.entry("shulkertooltips", "shulker"),
+		Map.entry("darkmode", "moon"),
+		Map.entry("client", "gear"));
 
 	public static String forModule(String moduleId) {
 		return MODULES.getOrDefault(moduleId, "grid");

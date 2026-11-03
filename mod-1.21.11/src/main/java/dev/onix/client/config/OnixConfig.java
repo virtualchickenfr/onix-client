@@ -34,8 +34,8 @@ public class OnixConfig {
     // Interface
     public final BoolSetting menuGlass = new BoolSetting("menuGlass", "Liquid Glass", true)
             .describe("In-game menus as dark frosted glass: the world blurs behind see-through panels with light edges.");
-    public final ModeSetting menuStyle = new ModeSetting("menuStyle", "Menu Style", "Classic", "Bloom")
-            .describe("Classic opens straight into the module list. Bloom starts with a flower of categories.");
+    public final ModeSetting menuStyle = new ModeSetting("menuStyle", "Menu Style", "Clean", "Classic", "Bloom")
+            .describe("Clean opens the Carbon style mod menu with module cards. Classic opens the Onix module list, Bloom starts with a flower of categories.");
     public final ModeSetting menuScale = new ModeSetting("menuScale", "Menu Size", "Normal", "Small", "Large");
     public final BoolSetting menuAnimations = new BoolSetting("menuAnimations", "Animations", true);
     public final BoolSetting clickSounds = new BoolSetting("clickSounds", "Click Sounds", true);
@@ -58,6 +58,7 @@ public class OnixConfig {
     /** 1.1.13: the HUD uses the smooth Onix font (Geist) once for everyone. */
     public final BoolSetting fontSet = new BoolSetting("fontSet", "Font Set", false).hidden();
     public final BoolSetting roundSet = new BoolSetting("roundSet", "Round Set", false).hidden();
+    public final BoolSetting cleanSet = new BoolSetting("cleanSet", "Clean Menu Set", false).hidden();
     public final BoolSetting cinematicSet2 = new BoolSetting("cinematicSet2", "Cinematic Default", false).hidden();
 
     // Onix server: badges, coins, cosmetics shop and gifts (see /server in the repository)
@@ -167,7 +168,7 @@ public class OnixConfig {
                 onixServer, socialOn, shareServer, nameTagLooks, lightMode, buttonStyle, carbonButtons, menuSkin, menuDesign, menuCharacter, titleDesign, loadingScreens, loadingStyle, loadingTips,
                 hideHudInDebug, snapping, snapDistance, editorGrid,
                 notifications, notificationSound, notificationTime, notificationPosition,
-                ruleNotes, rulesOnJoin, rulesSkip, autoSwitchProfiles, introDone, cinematicSet, cinematicSet2, roundSet, fontSet, menuGlass);
+                ruleNotes, rulesOnJoin, rulesSkip, autoSwitchProfiles, introDone, cinematicSet, cinematicSet2, cleanSet, roundSet, fontSet, menuGlass);
     }
 
     public float menuScaleFactor() {
