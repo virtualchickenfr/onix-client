@@ -70,7 +70,7 @@ public final class Presets {
 
         @Override
         public String getDescription() {
-            return dev.onix.client.util.I18n.ui(super.getDescription()) + " (" + modules().size() + " " + dev.onix.client.util.I18n.ui("modules") + ")";
+            return modules().size() + " " + dev.onix.client.util.I18n.ui("modules") + " · " + dev.onix.client.util.I18n.ui(super.getDescription());
         }
     }
 

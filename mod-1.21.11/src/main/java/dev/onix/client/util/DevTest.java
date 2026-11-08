@@ -259,9 +259,18 @@ public final class DevTest {
                 if (safe && !id.startsWith("cb_no") && !id.equals("fullbright") && !id.equals("darkmode") && !id.startsWith("vx_impact") && !id.startsWith("vx_wasted")) m.setEnabled(true);
             }
         });
-        then(40, () -> PerfProbe.start());
+        then(40, () -> {
+            PerfProbe.start();
+            dev.onix.client.module.ModuleManager.profile = new java.util.HashMap<>();
+        });
         then(200, () -> {
             frames[1] = PerfProbe.stop();
+            var prof = dev.onix.client.module.ModuleManager.profile;
+            dev.onix.client.module.ModuleManager.profile = null;
+            long total = prof.values().stream().mapToLong(Long::longValue).sum();
+            OnixClient.LOGGER.info("[devtest] perf: module CPU time {} ms in 10 s", total / 1_000_000);
+            prof.entrySet().stream().sorted((a, b) -> Long.compare(b.getValue(), a.getValue())).limit(20)
+                    .forEach(e -> OnixClient.LOGGER.info("[devtest] perf: {} {} ms", e.getKey(), e.getValue() / 1_000_000));
             long on = OnixClient.MODULES.all().stream().filter(dev.onix.client.module.Module::isEnabled).count();
             OnixClient.LOGGER.info("[devtest] perf: {} fps with no modules, {} fps with {} modules on (worst frame {} ms)", frames[0], frames[1], on, PerfProbe.worst());
             snap(mc, "09n_all_modules_on");
