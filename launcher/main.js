@@ -201,7 +201,7 @@ function createWindow() {
     minWidth: 940,
     minHeight: 600,
     frame: false,
-    backgroundColor: '#0e0b09',
+    backgroundColor: '#030305',
     icon: path.join(__dirname, 'build', 'icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -214,6 +214,42 @@ function createWindow() {
   win.webContents.on('will-navigate', (e) => e.preventDefault());
   win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   win.loadFile(path.join(__dirname, 'src', 'index.html'));
+  if (process.env.ONIX_SMOKE_DIR) smokeTest(process.env.ONIX_SMOKE_DIR);
+}
+
+/*
+ * CI smoke test (launcher-smoke workflow): captures the start sequence and the launch terminal of the real
+ * launcher window as PNGs, then quits. Only runs when ONIX_SMOKE_DIR is set.
+ */
+function smokeTest(dir) {
+  fs.mkdirSync(dir, { recursive: true });
+  const shot = async (name) => {
+    try {
+      const img = await win.webContents.capturePage();
+      fs.writeFileSync(path.join(dir, `${name}.png`), img.toPNG());
+    } catch (err) {
+      fs.writeFileSync(path.join(dir, `${name}.txt`), String(err));
+    }
+  };
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  win.webContents.on('console-message', (_e, level, message) => fs.appendFileSync(path.join(dir, 'console.txt'), `${level} ${message}\n`));
+  win.webContents.once('did-finish-load', async () => {
+    const t0 = Date.now();
+    for (const at of [120, 400, 800, 1200, 1700, 2400, 4000]) {
+      await wait(Math.max(0, at - (Date.now() - t0)));
+      await shot(`boot-${String(at).padStart(4, '0')}`);
+    }
+    await win.webContents.executeJavaScript(`(() => {
+      edexTerm.open(); state = 'preparing';
+      for (const l of ['Starting profile "Default"', 'Sign-in and Java ready after 0.2 s', 'Fabric and mods ready after 0.1 s']) edexTerm.log(l);
+      edexTerm.label('Starting Minecraft');
+      edexTerm.log('[16:01:02] [main/INFO] (FabricLoader/GameProvider) Loading Minecraft 1.21.11 with Fabric Loader 0.19.3');
+      return true;
+    })()`).catch((err) => fs.writeFileSync(path.join(dir, 'term-error.txt'), String(err)));
+    await wait(700);
+    await shot('launch-terminal');
+    app.exit(0);
+  });
 }
 
 function send(channel, payload) {

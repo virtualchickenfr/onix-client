@@ -1,0 +1,41 @@
+name: Launcher smoke test
+# Starts the real launcher (Electron) in a virtual display, captures the start sequence and the launch terminal
+# (ONIX_SMOKE_DIR in main.js) and pushes the screenshots to the branch launcher-smoke-results.
+on:
+  push:
+    paths: ['.github/launcher-smoke-trigger']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install
+        working-directory: launcher
+        run: npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+      - name: Run the launcher
+        working-directory: launcher
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq xvfb > /dev/null
+          export ONIX_SMOKE_DIR="$PWD/smoke"
+          timeout 120 xvfb-run -a -s "-screen 0 1280x800x24" npx electron . --no-sandbox --disable-gpu > smoke-log.txt 2>&1 || true
+          ls smoke; tail -n 30 smoke-log.txt
+      - name: Push results
+        if: always()
+        run: |
+          out=$(mktemp -d)
+          cp -r launcher/smoke/. "$out/" 2>/dev/null || true
+          cp launcher/smoke-log.txt "$out/" 2>/dev/null || true
+          cd "$out"
+          git init -q -b launcher-smoke-results
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Launcher smoke test of ${GITHUB_SHA}"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" launcher-smoke-results
