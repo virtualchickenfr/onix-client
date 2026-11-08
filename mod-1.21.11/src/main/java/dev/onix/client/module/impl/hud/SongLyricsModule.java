@@ -629,11 +629,6 @@ public class SongLyricsModule extends HudModule implements OverlayRenderer {
             rigTime = wall;
             if (rigPos == null || rigPos.distanceTo(target) > 24) rigPos = target;
             else rigPos = rigPos.add(target.subtract(rigPos).scale(1 - Math.exp(-dt * 4.5)));
-            Vec3 toCam = cam.subtract(rigPos);
-            Vec3 flat = new Vec3(toCam.x, 0, toCam.z);
-            Vec3 rigNormal = flat.lengthSqr() < 1e-4 ? lookVec.scale(-1) : flat.normalize();
-            Vec3 rigUp = new Vec3(0, 1, 0);
-            Vec3 rigRight = rigUp.cross(rigNormal).normalize();
             // where each line sits: the newest in the middle, older ones above
             java.util.Map<Integer, Float> lineH = new java.util.HashMap<>();
             for (WorldWord w : worldWords) if (w.follow()) lineH.putIfAbsent(w.line(), w.lineH());
@@ -705,12 +700,9 @@ public class SongLyricsModule extends HudModule implements OverlayRenderer {
                 Vec3 anchor = stacked ? rigPos : w.follow() ? cam.add(lookVec.scale(worldDistance.get() * 0.6)) : w.anchor();
                 Vec3 o = anchor.subtract(cam);
                 if (stacked) {
-                    Matrix4f basis = new Matrix4f(
-                            (float) rigRight.x, (float) rigRight.y, (float) rigRight.z, 0,
-                            (float) rigUp.x, (float) rigUp.y, (float) rigUp.z, 0,
-                            (float) rigNormal.x, (float) rigNormal.y, (float) rigNormal.z, 0,
-                            (float) o.x, (float) o.y, (float) o.z, 1);
-                    matrices.last().pose().mul(basis);
+                    // turned to the camera like a billboard
+                    matrices.translate(o.x, o.y, o.z);
+                    matrices.mulPose(camera.rotation());
                 } else if (w.surface()) {
                     Matrix4f basis = new Matrix4f(
                             (float) w.right().x, (float) w.right().y, (float) w.right().z, 0,
