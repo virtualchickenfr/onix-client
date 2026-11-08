@@ -560,7 +560,7 @@ public class SongLyricsModule extends HudModule implements OverlayRenderer {
     /** Dev test: what the world lyrics are doing right now. */
     public String debugState() {
         long wall = System.currentTimeMillis();
-        StringBuilder b = new StringBuilder("placement=" + placement.get() + " words=" + worldWords.size() + " rig=" + rigPos + " renders=" + renders);
+        StringBuilder b = new StringBuilder("placement=" + placement.get() + " words=" + worldWords.size() + " rig=" + rigPos + " renders=" + renders + " drawn=" + drawn + " o=" + lastO + " look=" + lastLook + " argb=" + Integer.toHexString(lastArgb));
         for (int i = 0; i < Math.min(3, worldWords.size()); i++) {
             WorldWord w = worldWords.get(i);
             b.append(" | ").append(w.text()).append(" follow=").append(w.follow()).append(" s=").append(w.s()).append(" x=").append(w.x()).append(" y=").append(w.y())
@@ -569,7 +569,9 @@ public class SongLyricsModule extends HudModule implements OverlayRenderer {
         return b.toString();
     }
 
-    private int renders;
+    private int renders, drawn;
+    private Vec3 lastO, lastLook;
+    private int lastArgb;
 
     /** Dev test: a second sample line, so the first one slides up. */
     public void testNextLine() {
@@ -745,6 +747,10 @@ public class SongLyricsModule extends HudModule implements OverlayRenderer {
                     matrices.translate(0, 0, 0.3f);
                 }
                 int argb = (Math.max(5, Math.round(alpha * 255)) << 24) | (color & 0xFFFFFF);
+                drawn++;
+                lastO = o;
+                lastArgb = argb;
+                lastLook = lookVec;
                 f.drawInBatch(c, x0, y0, argb, false, matrices.last().pose(), context.consumers(), mode, 0, 0xF000F0);
                 matrices.popPose();
             }
