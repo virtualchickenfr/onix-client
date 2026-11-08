@@ -45,7 +45,25 @@ public class ModuleListModule extends HudModule {
         };
     }
 
+    // the list is asked for several times per frame (size, content, drawing): build it at most every 100 ms
+    private List<Module> cached = List.of();
+    private long cachedAt;
+    private int cachedWidth;
+
     private List<Module> entries(boolean preview) {
+        long now = System.currentTimeMillis();
+        if (now - cachedAt >= 100) {
+            cached = build(false);
+            cachedAt = now;
+        }
+        List<Module> list = cached.isEmpty() && preview ? build(true) : cached;
+        int w = 0;
+        for (Module m : list) w = Math.max(w, textWidth(label(m)));
+        cachedWidth = w;
+        return list;
+    }
+
+    private List<Module> build(boolean preview) {
         List<Module> list = new ArrayList<>();
         for (Module m : OnixClient.MODULES.all()) {
             if (!m.isEnabled() || m == this) continue;
@@ -58,9 +76,14 @@ public class ModuleListModule extends HudModule {
                 if (list.size() >= 4) break;
             }
         }
-        if (sort.is("Length")) list.sort(Comparator.comparingInt((Module m) -> -textWidth(label(m))));
-        else list.sort(Comparator.comparing(Module::getName));
-        return list.size() > maxShown.getInt() ? list.subList(0, maxShown.getInt()) : list;
+        if (sort.is("Length")) {
+            java.util.Map<Module, Integer> widths = new java.util.HashMap<>();
+            for (Module m : list) widths.put(m, textWidth(label(m)));
+            list.sort(Comparator.comparingInt((Module m) -> -widths.get(m)));
+        } else {
+            list.sort(Comparator.comparing(Module::getName));
+        }
+        return list.size() > maxShown.getInt() ? new ArrayList<>(list.subList(0, maxShown.getInt())) : list;
     }
 
     private boolean rightAligned() {
@@ -76,9 +99,8 @@ public class ModuleListModule extends HudModule {
 
     @Override
     public int getWidth() {
-        int w = 0;
-        for (Module m : entries(true)) w = Math.max(w, textWidth(label(m)));
-        return w + pad() * 2 + (sideBar.isOn() ? 3 : 0);
+        entries(true);
+        return cachedWidth + pad() * 2 + (sideBar.isOn() ? 3 : 0);
     }
 
     @Override
