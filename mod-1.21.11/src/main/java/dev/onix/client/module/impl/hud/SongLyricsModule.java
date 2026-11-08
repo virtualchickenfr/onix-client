@@ -557,6 +557,20 @@ public class SongLyricsModule extends HudModule implements OverlayRenderer {
         testWorldLine();
     }
 
+    /** Dev test: what the world lyrics are doing right now. */
+    public String debugState() {
+        long wall = System.currentTimeMillis();
+        StringBuilder b = new StringBuilder("placement=" + placement.get() + " words=" + worldWords.size() + " rig=" + rigPos + " renders=" + renders);
+        for (int i = 0; i < Math.min(3, worldWords.size()); i++) {
+            WorldWord w = worldWords.get(i);
+            b.append(" | ").append(w.text()).append(" follow=").append(w.follow()).append(" s=").append(w.s()).append(" x=").append(w.x()).append(" y=").append(w.y())
+                    .append(" show+").append(w.showAt() - wall).append(" hide+").append(w.hideAt() - wall);
+        }
+        return b.toString();
+    }
+
+    private int renders;
+
     /** Dev test: a second sample line, so the first one slides up. */
     public void testNextLine() {
         if (mc().player == null) return;
@@ -586,6 +600,7 @@ public class SongLyricsModule extends HudModule implements OverlayRenderer {
     private void registerWorldRenderer() {
         WorldRenderEvents.AFTER_ENTITIES.register(context -> {
             if (!isEnabled() || !worldLyrics.isOn() || worldWords.isEmpty() || context.consumers() == null || context.matrices() == null) return;
+            renders++;
             PoseStack matrices = context.matrices();
             Vec3 cam = WorldDraw.camera(context);
             Camera camera = mc().gameRenderer.getMainCamera();

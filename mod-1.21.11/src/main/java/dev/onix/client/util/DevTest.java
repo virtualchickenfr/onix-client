@@ -313,12 +313,18 @@ public final class DevTest {
             lyrics.setEnabled(true);
             lyrics.testWorldLine();
         });
-        then(40, () -> snap(mc, "09g_song_lyrics_world"));
+        then(40, () -> {
+            snap(mc, "09g_song_lyrics_world");
+            OnixClient.LOGGER.info("[devtest] lyrics state: {}", OnixClient.MODULES.get(dev.onix.client.module.impl.hud.SongLyricsModule.class).debugState());
+        });
         then(1, () -> OnixClient.MODULES.get(dev.onix.client.module.impl.hud.SongLyricsModule.class).testPreset("Neon"));
         then(30, () -> snap(mc, "09g2_song_lyrics_neon"));
         then(1, () -> OnixClient.MODULES.get(dev.onix.client.module.impl.hud.SongLyricsModule.class).testPreset("Music Edit"));
         then(30, () -> OnixClient.MODULES.get(dev.onix.client.module.impl.hud.SongLyricsModule.class).testNextLine());
-        then(12, () -> snap(mc, "09g3_lyrics_follow_stack"));
+        then(12, () -> {
+            snap(mc, "09g3_lyrics_follow_stack");
+            OnixClient.LOGGER.info("[devtest] lyrics state: {}", OnixClient.MODULES.get(dev.onix.client.module.impl.hud.SongLyricsModule.class).debugState());
+        });
         then(1, () -> mc.player.setYRot(mc.player.getYRot() + 50));
         then(6, () -> snap(mc, "09g4_lyrics_follow_turning"));
         then(30, () -> snap(mc, "09g5_lyrics_follow_caught_up"));
