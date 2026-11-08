@@ -212,6 +212,56 @@ public final class DevTest {
         });
         then(10, () -> snap(mc, "09k_viral_wasted"));
         then(2, () -> { for (var m : OnixClient.MODULES.all()) if (m.getId().startsWith("vx_")) m.setEnabled(false); });
+        // carbon world visuals: reach circle, light levels, trajectories with a pearl, logout list
+        then(2, () -> {
+            for (String id : new String[]{"cb_reachcircle", "cb_lightlevels", "cb_trajectories", "cb_logoutlist"}) {
+                var m = OnixClient.MODULES.get(id);
+                if (m != null) m.setEnabled(true);
+            }
+            mc.player.getInventory().setItem(mc.player.getInventory().getSelectedSlot(), new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.ENDER_PEARL));
+            mc.player.setXRot(-10);
+        });
+        then(30, () -> snap(mc, "09l_carbon_visuals"));
+        then(2, () -> {
+            for (String id : new String[]{"cb_reachcircle", "cb_lightlevels", "cb_trajectories", "cb_logoutlist"}) {
+                var m = OnixClient.MODULES.get(id);
+                if (m != null) m.setEnabled(false);
+            }
+        });
+        // presets page in the right shift menu
+        then(2, () -> {
+            var gui = new gg.carbon.client.screen.ClickGui(null);
+            mc.setScreen(gui);
+            gui.showPresets();
+        });
+        then(40, () -> snap(mc, "09m_presets"));
+        then(2, () -> mc.setScreen(null));
+        // performance: frames per second with no modules vs. every HUD, combat and visual module
+        java.util.List<dev.onix.client.module.Module> before = new java.util.ArrayList<>();
+        int[] frames = new int[2];
+        then(2, () -> {
+            for (var m : OnixClient.MODULES.all()) if (m.isEnabled()) { before.add(m); m.setEnabled(false); }
+            frames[0] = -1;
+        });
+        then(40, () -> PerfProbe.start());
+        then(200, () -> {
+            frames[0] = PerfProbe.stop();
+            for (var m : OnixClient.MODULES.all()) {
+                boolean safe = m instanceof dev.onix.client.module.HudModule || m.getCategory() == dev.onix.client.module.Category.COMBAT
+                        || m.getCategory() == dev.onix.client.module.Category.VISUAL;
+                String id = m.getId();
+                if (safe && !id.startsWith("cb_no") && !id.equals("fullbright") && !id.equals("darkmode") && !id.startsWith("vx_impact") && !id.startsWith("vx_wasted")) m.setEnabled(true);
+            }
+        });
+        then(40, () -> PerfProbe.start());
+        then(200, () -> {
+            frames[1] = PerfProbe.stop();
+            long on = OnixClient.MODULES.all().stream().filter(dev.onix.client.module.Module::isEnabled).count();
+            OnixClient.LOGGER.info("[devtest] perf: {} fps with no modules, {} fps with {} modules on (worst frame {} ms)", frames[0], frames[1], on, PerfProbe.worst());
+            snap(mc, "09n_all_modules_on");
+            for (var m : OnixClient.MODULES.all()) m.setEnabled(false);
+            for (var m : before) m.setEnabled(true);
+        });
         then(2, () -> mc.setScreen(new OnixMenuScreen(null, OnixMenuScreen.View.MODULES)));
         then(30, () -> snap(mc, "09h_pack_menu_count"));
         then(2, () -> mc.setScreen(null));

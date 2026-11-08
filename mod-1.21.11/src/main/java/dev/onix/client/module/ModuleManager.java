@@ -22,6 +22,7 @@ import net.minecraft.client.gui.GuiGraphics;
 
 public class ModuleManager {
     private final List<Module> modules = new ArrayList<>();
+    private final java.util.Map<String, Module> byId = new java.util.HashMap<>();
 
     public void registerDefaults() {
         // HUD
@@ -193,6 +194,12 @@ public class ModuleManager {
 
     public void register(Module module) {
         modules.add(module);
+        byId.putIfAbsent(module.getId(), module);
+    }
+
+    /** The module with this id, or null. */
+    public Module get(String id) {
+        return byId.get(id);
     }
 
     public List<Module> all() {

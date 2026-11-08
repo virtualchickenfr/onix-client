@@ -123,6 +123,7 @@ public final class CarbonPack {
         options(m);
         pvp(m);
         misc(m);
+        m.addAll(CarbonVisuals.modules());
         return m;
     }
 

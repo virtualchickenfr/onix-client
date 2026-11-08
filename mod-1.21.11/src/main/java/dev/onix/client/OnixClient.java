@@ -134,6 +134,7 @@ public class OnixClient implements ClientModInitializer {
 
         HudRenderCallback.EVENT.register((context, tickCounter) -> {
             FrameStats.onFrame();
+            dev.onix.client.util.PerfProbe.frame();
             MODULES.renderHud(context);
             if (Minecraft.getInstance().screen == null) Notifications.render(context);
         });

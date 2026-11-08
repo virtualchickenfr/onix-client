@@ -40,7 +40,7 @@ public class ClickGui extends Screen {
 	private static final float GAP = 10;
 	private static final String[] CATEGORY_ICONS = {"monitor", "swords", "eye", "camera", "chat", "wrench", "bolt"};
 	/** Client links below the categories: label, icon, Onix menu page (null = HUD editor). */
-	private static final String[][] LINKS = {{"Edit HUD", "move"}, {"Cosmetics", "cosmetics"}, {"Friends", "people"}, {"Design", "sparkle"}, {"Settings", "gear"}};
+	private static final String[][] LINKS = {{"Presets", "star"}, {"Edit HUD", "move"}, {"Cosmetics", "cosmetics"}, {"Friends", "people"}, {"Design", "sparkle"}, {"Settings", "gear"}};
 
 	/** Remembered between openings. */
 	private static int lastNav = 0;
@@ -116,17 +116,24 @@ public class ClickGui extends Screen {
 		return OnixClient.CONFIG.lightMode.isOn();
 	}
 
-	private int hudNav() {
+	/** First entry under "Client": the presets page (shown inside this menu). */
+	private int presetsNav() {
 		return Category.values().length + 1;
+	}
+
+	private int hudNav() {
+		return presetsNav();
 	}
 
 	private static List<Setting<?, ?>> settingsOf(Module m) {
 		List<Setting<?, ?>> out = new ArrayList<>();
+		if (m instanceof dev.onix.client.module.Presets.Preset) return out;
 		for (Setting<?, ?> s : m.getSettings()) if (!s.isHidden()) out.add(s);
 		return out;
 	}
 
 	private static String iconOf(Module m) {
+		if (m instanceof dev.onix.client.module.Presets.Preset p) return p.icon();
 		String icon = PixelIcons.forModule(m.getId());
 		if (!icon.equals("grid")) return icon;
 		String id = m.getId().toLowerCase(Locale.ROOT);
@@ -161,6 +168,10 @@ public class ClickGui extends Screen {
 	private List<Module> visibleModules() {
 		String q = search.text().trim().toLowerCase(Locale.ROOT);
 		List<Module> list = new ArrayList<>();
+		if (nav == presetsNav() && q.isEmpty()) {
+			list.addAll(dev.onix.client.module.Presets.all());
+			return list;
+		}
 		for (Module m : OnixClient.MODULES.all()) {
 			if (nav >= 1 && nav <= Category.values().length && m.getCategory() != Category.values()[nav - 1]) continue;
 			if (!q.isEmpty() && !m.getName().toLowerCase(Locale.ROOT).contains(q) && !m.getDescription().toLowerCase(Locale.ROOT).contains(q) && m.getTags().stream().noneMatch(t -> t.contains(q))) continue;
@@ -188,6 +199,12 @@ public class ClickGui extends Screen {
 	}
 
 	/** Opens straight into a module's settings page (used by the HUD editor). */
+	/** Opens straight on the presets page. */
+	public void showPresets() {
+		nav = lastNav = presetsNav();
+		resetGrid();
+	}
+
 	public void showModule(Module m) {
 		if (!settingsOf(m).isEmpty()) openDetail(m, false);
 	}
@@ -390,7 +407,9 @@ public class ClickGui extends Screen {
 			navItem(g, i + 1, CATEGORY_ICONS[i], c.getDisplayName(), String.valueOf(count), mx, my, active == i + 1);
 		}
 		for (int i = 0; i < LINKS.length; i++) {
-			navItem(g, hudNav() + i, LINKS[i][1], LINKS[i][0], i == 0 && minecraft.level == null ? "in-game" : "", mx, my, false);
+			int idx = hudNav() + i;
+			String extra = i == 0 ? String.valueOf(dev.onix.client.module.Presets.all().size()) : i == 1 && minecraft.level == null ? "in-game" : "";
+			navItem(g, idx, LINKS[i][1], LINKS[i][0], extra, mx, my, active == idx);
 		}
 
 		// profile
@@ -432,10 +451,11 @@ public class ClickGui extends Screen {
 		boolean filtered = !search.text().isBlank();
 		Category cat = nav >= 1 && nav <= Category.values().length && !filtered ? Category.values()[nav - 1] : null;
 		long on = mods.stream().filter(Module::isEnabled).count();
-		Ui.eyebrow(g, filtered ? "Search" : mods.size() + " modules  ·  " + on + " on", x0, y0 - 2, 0xFFB4B4BC);
-		String title = filtered ? "Results" : cat == null ? "All modules" : cat.getDisplayName();
+		Ui.eyebrow(g, filtered ? "Search" : mods.size() + (nav == presetsNav() ? " presets" : " modules") + "  ·  " + on + " on", x0, y0 - 2, 0xFFB4B4BC);
+		boolean presets = nav == presetsNav() && !filtered;
+		String title = filtered ? "Results" : presets ? "Presets" : cat == null ? "All modules" : cat.getDisplayName();
 		Pixel.headline(g, title, x0, y0 + 10, Theme.WHITE, 2f, true);
-		String sub = filtered ? "for \"" + search.text() + "\"" : cat == null ? "everything Onix ships with" : cat.getDescription().toLowerCase(Locale.ROOT);
+		String sub = filtered ? "for \"" + search.text() + "\"" : presets ? "one click sets you up for a game mode" : cat == null ? "everything Onix ships with" : cat.getDescription().toLowerCase(Locale.ROOT);
 		Fonts.draw(g, sub, x0 + Pixel.width(title, 2f) + 9, y0 + 17, Theme.TEXT_MUTED, false, 0.82f, false);
 		float top = y0 + 34, bottom = wy + wh - 6;
 		int cols = Math.max(2, (int) ((cw + GAP) / (160 + GAP)));
@@ -646,11 +666,11 @@ public class ClickGui extends Screen {
 		// sidebar
 		for (int i = 0; i <= settingsNav(); i++) {
 			if (!R2D.hover(mx, my, wx + 10, navItemY(i), SIDEBAR - 20, NAV_H)) continue;
-			if (i == hudNav() && minecraft.level == null) return true;
+			if (i == hudNav() + 1 && minecraft.level == null) return true;
 			Ui.click();
-			if (i >= hudNav()) {
+			if (i > presetsNav()) {
 				OnixClient.save();
-				int link = i - hudNav();
+				int link = i - hudNav() - 1;
 				if (link == 0) minecraft.setScreen(new HudEditorScreen(this));
 				else minecraft.setScreen(new OnixMenuScreen(this, switch (link) {
 					case 1 -> OnixMenuScreen.View.COSMETICS;
