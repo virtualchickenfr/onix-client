@@ -100,6 +100,7 @@ contextBridge.exposeInMainWorld('onix', {
   onInstallProgress: (cb) => ipcRenderer.on('install:progress', (_e, v) => cb(v)),
 
   launch: (profileId, quick) => invoke('game:launch', profileId, quick),
+  warmup: () => invoke('game:warmup'),
   stopGame: () => invoke('game:stop'),
 
   skinProfile: () => invoke('skins:profile'),

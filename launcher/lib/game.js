@@ -25,6 +25,8 @@ const MANAGED_MODS = [
   { project: 'ferrite-core', id: 'ferritecore', name: 'FerriteCore', performance: true },
   { project: 'immediatelyfast', id: 'immediatelyfast', name: 'ImmediatelyFast', performance: true },
   { project: 'entityculling', id: 'entityculling', name: 'EntityCulling', performance: true },
+  // faster game start and less memory; only a full release, and simply left out on versions it does not support yet
+  { project: 'modernfix', id: 'modernfix', name: 'ModernFix', performance: true, optional: true },
 ];
 
 const MANIFEST = '.onix-managed.json';
@@ -208,7 +210,7 @@ async function ensureMods(root, settings, report, log, throttle = true, mc = MC_
       report(`Checking ${mod.name}`, 0);
       const query = `game_versions=${encodeURIComponent(JSON.stringify([mc]))}&loaders=${encodeURIComponent(JSON.stringify(['fabric']))}`;
       const versions = await fetchJson(`https://api.modrinth.com/v2/project/${mod.project}/version?${query}`);
-      const version = versions.find((v) => v.version_type === 'release') || versions[0];
+      const version = versions.find((v) => v.version_type === 'release') || (mod.optional ? null : versions[0]);
       if (!version) throw new Error('no matching version');
       const file = version.files.find((f) => f.primary) || version.files[0];
       const filename = modrinth.safeFileName(file.filename);
@@ -309,7 +311,8 @@ async function launch({ root, gameDir, auth, javaPath, settings, world = null, s
     authorization,
     javaPath,
     version: VERSION_ID_RUN ? { number: mc, type: 'release', custom: VERSION_ID_RUN } : { number: mc, type: 'release' },
-    memory: { max: `${ramMb}M`, min: `${Math.min(ramMb, 2048)}M` },
+    // the whole heap from the start: Java does not have to grow it step by step while Minecraft loads
+    memory: { max: `${ramMb}M`, min: `${ramMb}M` },
     customArgs: [...jvmArgs(root, fastStart, mc), ...extraJvmArgs(settings.jvmArgs)],
     overrides: { maxSockets: 24, gameDirectory: gameDir },
   };

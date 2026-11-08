@@ -684,11 +684,11 @@ app.whenReady().then(() => {
    * so its first start is quick. A start waits for a download that is still running.
    */
   let preparing = null;
-  const prepareProfile = (profile) => {
+  const prepareProfile = (profile, quiet = false) => {
     if (!profile || running) return;
     const before = preparing || Promise.resolve();
     const job = before.then(async () => {
-      const report = (label, progress) => send('prepare:progress', { profile: profile.name, label, progress });
+      const report = quiet ? () => {} : (label, progress) => send('prepare:progress', { profile: profile.name, label, progress });
       const log = (line) => send('game:log', line);
       try {
         log(`Getting profile "${profile.name}" ready in the background`);
@@ -696,11 +696,11 @@ app.whenReady().then(() => {
         const s = settings();
         const javaPath = s.javaPath && s.javaPath.trim() ? s.javaPath.trim() : await ensureJava(GAME_DIR, report, versions.javaMajor(versions.ofProfile(profile).mc));
         await game.prepare({ root: GAME_DIR, gameDir: profiles.dir(profile), javaPath, settings: profile, report, log });
-        send('prepare:progress', { profile: profile.name, done: true });
+        if (!quiet) send('prepare:progress', { profile: profile.name, done: true });
         log(`Profile "${profile.name}" is ready`);
       } catch (err) {
         log(`Could not prepare "${profile.name}": ${err && err.message ? err.message : err}`);
-        send('prepare:progress', { profile: profile.name, done: true, error: friendlyError(err) });
+        if (!quiet) send('prepare:progress', { profile: profile.name, done: true, error: friendlyError(err) });
       }
     });
     const settled = job.finally(() => {
@@ -708,6 +708,21 @@ app.whenReady().then(() => {
     });
     preparing = settled;
   };
+  /*
+   * Warm-up right after the launcher opened: signs in with Microsoft, checks Fabric, the mods and the game files of
+   * the active profile in the background, so pressing Play starts Java right away instead of waiting for all that.
+   */
+  ipcMain.handle('game:warmup', () => {
+    if (running) return false;
+    try {
+      auth.refresh(store, true).catch(() => {});
+    } catch {
+      // not signed in yet
+    }
+    const profile = profiles.active();
+    if (profile && (profile.loader || 'fabric') === 'fabric') prepareProfile(profile, true);
+    return true;
+  });
   ipcMain.handle('profile:prepare', (_e, id) => {
     prepareProfile(profiles.list().find((p) => p.id === id) || profiles.active());
     return true;
