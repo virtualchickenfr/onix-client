@@ -317,6 +317,11 @@ public final class DevTest {
         then(1, () -> OnixClient.MODULES.get(dev.onix.client.module.impl.hud.SongLyricsModule.class).testPreset("Neon"));
         then(30, () -> snap(mc, "09g2_song_lyrics_neon"));
         then(1, () -> OnixClient.MODULES.get(dev.onix.client.module.impl.hud.SongLyricsModule.class).testPreset("Music Edit"));
+        then(30, () -> OnixClient.MODULES.get(dev.onix.client.module.impl.hud.SongLyricsModule.class).testNextLine());
+        then(12, () -> snap(mc, "09g3_lyrics_follow_stack"));
+        then(1, () -> mc.player.setYRot(mc.player.getYRot() + 50));
+        then(6, () -> snap(mc, "09g4_lyrics_follow_turning"));
+        then(30, () -> snap(mc, "09g5_lyrics_follow_caught_up"));
         then(1, () -> {
             var lines = dev.onix.client.music.Lyrics.of(LYRICS_PROBE);
             OnixClient.LOGGER.info("[devtest] lyrics probe: {} from {} ({})", lines == null ? "still loading" : lines.size() + " lines",

@@ -53,8 +53,10 @@ public class SongLyricsModule extends HudModule implements OverlayRenderer {
     }
 
     private final BoolSetting worldLyrics = add(new BoolSetting("world", "Lyrics in the World", true));
-    private final ModeSetting placement = add(new ModeSetting("placement", "Placement", "Scattered Around You", "Straight Ahead", "Follow View", "In the Sky")
+    private final ModeSetting placement = add(new ModeSetting("placement", "Placement", "Follow You", "Scattered Around You", "Straight Ahead", "Follow View", "In the Sky")
+            .describe("Follow You: the lyrics float in front of you and smoothly follow where you go and look; the current line is in the middle, the last one slides up.")
             .visibleIf(worldLyrics::isOn));
+    private final BoolSetting followSet = add(new BoolSetting("followSet", "Follow Set", false).hidden());
     private final ModeSetting animation = add(new ModeSetting("animation", "Animation", "Karaoke", "Typewriter", "Wave", "Drop", "Rise", "Zoom", "Glitch")
             .visibleIf(worldLyrics::isOn));
     private final ModeSetting intensity = add(new ModeSetting("intensity", "Intensity", "Normal", "Chill", "Hype").visibleIf(worldLyrics::isOn));
@@ -97,7 +99,16 @@ public class SongLyricsModule extends HudModule implements OverlayRenderer {
      * x/y = position inside its line in font pixels, s = blocks per font pixel. follow = attached to the view.
      */
     private record WorldWord(String text, Vec3 anchor, Vec3 right, Vec3 up, Vec3 normal, boolean surface, boolean follow,
-                             float x, float y, float s, long showAt, long sungAt, long hideAt, int line, int index, int count) {}
+                             float x, float y, float s, long showAt, long sungAt, long hideAt, int line, int index, int count, float lineH) {
+        WorldWord hideBy(long t) {
+            return t >= hideAt ? this : new WorldWord(text, anchor, right, up, normal, surface, follow, x, y, s, showAt, sungAt, t, line, index, count, lineH);
+        }
+    }
+
+    // Follow You: a point in front of the player that trails behind the view, and where each line sits in the stack
+    private Vec3 rigPos;
+    private long rigTime;
+    private final java.util.Map<Integer, Float> lineShift = new java.util.HashMap<>();
 
     private static volatile long lastBeat;
     private static volatile float beatAmount;
@@ -129,11 +140,11 @@ public class SongLyricsModule extends HudModule implements OverlayRenderer {
 
     private void applyPreset() {
         switch (preset.get()) {
-            case "Music Edit" -> style("Scattered Around You", "Karaoke", "Normal", "Bold", "Gradient", 0xFFFF7AA8, 0xFFFFB347, true, false, true, false, true, false, true);
+            case "Music Edit" -> style("Follow You", "Karaoke", "Normal", "Bold", "Gradient", 0xFFFF7AA8, 0xFFFFB347, true, false, true, false, true, false, true);
             case "Chill" -> style("Straight Ahead", "Rise", "Chill", "Smooth", "Single", 0xFFA8D8FF, 0xFFFFFFFF, true, false, false, false, false, false, true);
-            case "Hype" -> style("Scattered Around You", "Zoom", "Hype", "Bold", "Rainbow", 0xFFFF4D6D, 0xFFFFD84D, true, true, true, true, true, true, true);
-            case "Minimal" -> style("Follow View", "Karaoke", "Chill", "Smooth", "Single", 0xFFFFFFFF, 0xFFFFFFFF, false, false, false, false, false, false, false);
-            case "Neon" -> style("Scattered Around You", "Glitch", "Normal", "Bold", "Gradient", 0xFF00F0FF, 0xFFFF2BD6, true, true, true, false, true, false, true);
+            case "Hype" -> style("Follow You", "Zoom", "Hype", "Bold", "Rainbow", 0xFFFF4D6D, 0xFFFFD84D, true, true, true, true, true, true, true);
+            case "Minimal" -> style("Follow You", "Karaoke", "Chill", "Smooth", "Single", 0xFFFFFFFF, 0xFFFFFFFF, false, false, false, false, false, false, false);
+            case "Neon" -> style("Follow You", "Glitch", "Normal", "Bold", "Gradient", 0xFF00F0FF, 0xFFFF2BD6, true, true, true, false, true, false, true);
             case "Retro" -> style("Straight Ahead", "Typewriter", "Normal", "Minecraft", "Single", 0xFFFFD84D, 0xFFFFFFFF, false, false, false, false, false, true, true);
             case "Dreamy" -> style("In the Sky", "Wave", "Chill", "Smooth", "Gradient", 0xFFC9B6FF, 0xFFFFB6E1, true, false, true, false, true, false, true);
             default -> {
@@ -163,6 +174,18 @@ public class SongLyricsModule extends HudModule implements OverlayRenderer {
     @Override
     protected void onEnable() {
         NowPlaying.start(onlySpotify.isOn());
+    }
+
+    @Override
+    public void init() {
+        registerWorldRenderer();
+    }
+
+    /** 1.1.20: the lyrics follow you (once, after the profile is loaded; other placements stay selectable). */
+    public void followByDefault() {
+        if (followSet.isOn()) return;
+        followSet.set(true);
+        if (placement.is("Scattered Around You")) placement.set("Follow You");
     }
 
     @Override
@@ -435,6 +458,13 @@ public class SongLyricsModule extends HudModule implements OverlayRenderer {
                 anchor = eye.add(look.scale(dist)).add(0, 0.4, 0);
                 normal = look.scale(-1);
             }
+            case "Follow You" -> {
+                anchor = Vec3.ZERO;
+                normal = look.scale(-1);
+                surface = false;
+                follow = true;
+                scale *= 0.62f;
+            }
             case "Follow View" -> {
                 anchor = Vec3.ZERO;
                 normal = look.scale(-1);
@@ -485,10 +515,17 @@ public class SongLyricsModule extends HudModule implements OverlayRenderer {
             for (int k = r * per; k < Math.min(words.size(), (r + 1) * per); k++) w += f.width(styled(words.get(k).text())) + space;
             widest = Math.max(widest, w - space);
         }
-        if (widest * scale > 9 && !mode.equals("In the Sky")) scale *= (float) (9 / (widest * scale));
+        boolean stack = mode.equals("Follow You");
+        if (widest * scale > (stack ? 5.5 : 9) && !mode.equals("In the Sky")) scale *= (float) ((stack ? 5.5 : 9) / (widest * scale));
         float rowH = 13;
         long hideAt = wall + Math.max(800, Math.min(9000, line.endMs() - songMs)) + Math.round(stay.get() * 1000);
-        int slot = follow ? (index % 3) - 1 : 0;
+        // the line before goes away so lines never pile up: in Follow You it slides up and fades, elsewhere it fades out
+        for (int k = 0; k < worldWords.size(); k++) {
+            WorldWord old = worldWords.get(k);
+            if (old.line() != index) worldWords.set(k, old.hideBy(wall + (stack ? 1300 : 0)));
+        }
+        int slot = follow && !stack ? (index % 3) - 1 : 0;
+        float lineH = rows * rowH + 10;
         for (int r = 0; r < rows; r++) {
             int from = r * per;
             int to = Math.min(words.size(), (r + 1) * per);
@@ -505,8 +542,8 @@ public class SongLyricsModule extends HudModule implements OverlayRenderer {
                 } else {
                     showAt = wall + Math.max(0, w.startMs() - songMs - 120);
                 }
-                worldWords.add(new WorldWord(w.text(), anchor, right, up, normal, surface, follow, cx, cy, scale, showAt,
-                        wall + Math.max(0, w.startMs() - songMs), hideAt, index, k, words.size()));
+                worldWords.add(new WorldWord(w.text(), anchor, right, up, normal, surface, follow, cx, stack ? (r - (rows - 1) / 2f) * rowH : cy, scale, showAt,
+                        wall + Math.max(0, w.startMs() - songMs), hideAt, index, k, words.size(), lineH));
                 cx += f.width(styled(w.text())) + space;
             }
         }
@@ -518,6 +555,19 @@ public class SongLyricsModule extends HudModule implements OverlayRenderer {
         preset.set(name);
         worldWords.clear();
         testWorldLine();
+    }
+
+    /** Dev test: a second sample line, so the first one slides up. */
+    public void testNextLine() {
+        if (mc().player == null) return;
+        String text = "We were dancing all night long";
+        List<Lyrics.Word> words = new ArrayList<>();
+        long t0 = 0;
+        for (String w : text.split(" ")) {
+            words.add(new Lyrics.Word(w, t0));
+            t0 += 150;
+        }
+        placeLine(new Lyrics.Line(0, 3000, text, words), 1, 0, System.currentTimeMillis());
     }
 
     /** Dev test: puts a sample line into the world in front of the player. */
@@ -533,8 +583,7 @@ public class SongLyricsModule extends HudModule implements OverlayRenderer {
         placeLine(new Lyrics.Line(0, 3000, text, words), 0, 0, System.currentTimeMillis());
     }
 
-    @Override
-    public void init() {
+    private void registerWorldRenderer() {
         WorldRenderEvents.AFTER_ENTITIES.register(context -> {
             if (!isEnabled() || !worldLyrics.isOn() || worldWords.isEmpty() || context.consumers() == null || context.matrices() == null) return;
             PoseStack matrices = context.matrices();
@@ -549,13 +598,46 @@ public class SongLyricsModule extends HudModule implements OverlayRenderer {
             float k = amp();
             String anim = animation.get();
             Font.DisplayMode mode = throughWalls.isOn() ? Font.DisplayMode.SEE_THROUGH : Font.DisplayMode.NORMAL;
-            Vec3 lookVec = mc().player != null ? mc().player.getViewVector(1f) : Vec3.ZERO;
+            Vec3 lookVec = mc().player != null ? mc().player.getViewVector(WorldDraw.partialTick()) : Vec3.ZERO;
+            // Follow You: the stage trails behind your view with a soft delay, like a camera rig
+            Vec3 target = cam.add(lookVec.scale(worldDistance.get() * 0.6)).add(0, -0.15, 0);
+            float dt = rigTime == 0 ? 1f : Math.min(0.25f, (wall - rigTime) / 1000f);
+            rigTime = wall;
+            if (rigPos == null || rigPos.distanceTo(target) > 24) rigPos = target;
+            else rigPos = rigPos.add(target.subtract(rigPos).scale(1 - Math.exp(-dt * 4.5)));
+            Vec3 toCam = cam.subtract(rigPos);
+            Vec3 flat = new Vec3(toCam.x, 0, toCam.z);
+            Vec3 rigNormal = flat.lengthSqr() < 1e-4 ? lookVec.scale(-1) : flat.normalize();
+            Vec3 rigUp = new Vec3(0, 1, 0);
+            Vec3 rigRight = rigUp.cross(rigNormal).normalize();
+            // where each line sits: the newest in the middle, older ones above
+            java.util.Map<Integer, Float> lineH = new java.util.HashMap<>();
+            for (WorldWord w : worldWords) if (w.follow()) lineH.putIfAbsent(w.line(), w.lineH());
+            float acc = 0;
+            List<Integer> order = new ArrayList<>(lineH.keySet());
+            order.sort(java.util.Comparator.reverseOrder());
+            java.util.Map<Integer, Float> targetShift = new java.util.HashMap<>();
+            for (int li = 0; li < order.size(); li++) {
+                int line = order.get(li);
+                if (li > 0) acc += (lineH.get(order.get(li - 1)) + lineH.get(line)) / 2f;
+                targetShift.put(line, -acc);
+            }
+            float ease = 1 - (float) Math.exp(-dt * 10);
+            lineShift.keySet().retainAll(targetShift.keySet());
+            for (var e : targetShift.entrySet()) {
+                Float cur = lineShift.get(e.getKey());
+                lineShift.put(e.getKey(), cur == null ? (e.getValue() == 0 ? 0f : e.getValue()) : cur + (e.getValue() - cur) * ease);
+            }
+            int newest = order.isEmpty() ? -1 : order.get(0);
             for (WorldWord w : worldWords) {
                 if (wall < w.showAt()) continue;
                 long a = wall - w.showAt();
                 float in = Math.min(1f, a / (anim.equals("Rise") ? 420f : 180f));
-                float out = Math.max(0f, Math.min(1f, (w.hideAt() + 600 - wall) / 600f));
+                float fadeMs = w.follow() ? 500f : 300f;
+                float out = Math.max(0f, Math.min(1f, (w.hideAt() + fadeMs - wall) / fadeMs));
                 float alpha = Math.min(in, out);
+                boolean stacked = w.follow() && placement.is("Follow You");
+                if (stacked && w.line() != newest) alpha *= 0.42f;
                 if (alpha <= 0.02f) continue;
                 float easeIn = 1 - (1 - in) * (1 - in) * (1 - in);
                 float dx = 0;
@@ -596,9 +678,16 @@ public class SongLyricsModule extends HudModule implements OverlayRenderer {
                 float tw = f.width(c);
 
                 matrices.pushPose();
-                Vec3 anchor = w.follow() ? cam.add(lookVec.scale(worldDistance.get() * 0.6)) : w.anchor();
+                Vec3 anchor = stacked ? rigPos : w.follow() ? cam.add(lookVec.scale(worldDistance.get() * 0.6)) : w.anchor();
                 Vec3 o = anchor.subtract(cam);
-                if (w.surface()) {
+                if (stacked) {
+                    Matrix4f basis = new Matrix4f(
+                            (float) rigRight.x, (float) rigRight.y, (float) rigRight.z, 0,
+                            (float) rigUp.x, (float) rigUp.y, (float) rigUp.z, 0,
+                            (float) rigNormal.x, (float) rigNormal.y, (float) rigNormal.z, 0,
+                            (float) o.x, (float) o.y, (float) o.z, 1);
+                    matrices.last().pose().mul(basis);
+                } else if (w.surface()) {
                     Matrix4f basis = new Matrix4f(
                             (float) w.right().x, (float) w.right().y, (float) w.right().z, 0,
                             (float) w.up().x, (float) w.up().y, (float) w.up().z, 0,
@@ -613,7 +702,8 @@ public class SongLyricsModule extends HudModule implements OverlayRenderer {
                 matrices.scale(s, -s, s);
                 // scale around the word's middle
                 float mx = w.x() + tw / 2f + dx;
-                float my = w.y() + 4 + dy;
+                float my = w.y() + 4 + dy + (stacked ? lineShift.getOrDefault(w.line(), 0f) : 0f);
+                if (stacked && w.line() != newest) pop *= 0.82f;
                 matrices.translate(mx, my, 0);
                 matrices.scale(pop, pop, 1);
                 float x0 = -tw / 2f;

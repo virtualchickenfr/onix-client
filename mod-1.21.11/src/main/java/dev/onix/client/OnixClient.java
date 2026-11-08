@@ -98,6 +98,8 @@ public class OnixClient implements ClientModInitializer {
             for (var m : MODULES.all()) if (m instanceof dev.onix.client.module.HudModule hud) hud.useOnixFont();
             save();
         }
+        var lyrics = MODULES.get(dev.onix.client.module.impl.hud.SongLyricsModule.class);
+        if (lyrics != null) lyrics.followByDefault();
         Cosmetics.load();
         Theme.refresh();
 
