@@ -1366,7 +1366,7 @@ body.edex-enter .main::after { content: ""; position: fixed; left: 0; right: 0; 
 @keyframes edex-scan { from { top: 0; opacity: 1; } to { top: 100%; opacity: 0; } }
 
 /* launch terminal */
-.edex-term { position: fixed; right: 28px; bottom: 96px; z-index: 60; width: min(480px, calc(100vw - 56px));
+.edex-term { position: fixed; right: 24px; top: 64px; z-index: 60; width: min(440px, calc(100vw - 56px));
   background: color-mix(in srgb, #030305 88%, transparent); border: 1px solid var(--edex-dim); backdrop-filter: blur(14px);
   box-shadow: 0 0 0 1px rgba(0,0,0,.4), 0 18px 50px rgba(0,0,0,.55), 0 0 30px color-mix(in srgb, var(--edex) 12%, transparent);
   font: 500 11px/1.55 var(--term); color: color-mix(in srgb, var(--edex) 80%, #fff); pointer-events: none;

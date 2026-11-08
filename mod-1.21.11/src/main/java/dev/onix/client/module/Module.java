@@ -128,8 +128,8 @@ public abstract class Module {
     // ---------------------------------------------------------------- metadata
 
     public String getId() { return id; }
-    public String getName() { return name; }
-    public String getDescription() { return description; }
+    public String getName() { return dev.onix.client.util.I18n.t("name." + id, name); }
+    public String getDescription() { return dev.onix.client.util.I18n.t("desc." + id, description); }
     public Category getCategory() { return category; }
     public boolean isEnabled() { return enabled; }
     public boolean isEnabledByDefault() { return enabledByDefault; }

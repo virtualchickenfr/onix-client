@@ -58,6 +58,8 @@ public class OnixConfig {
     /** 1.1.13: the HUD uses the smooth Onix font (Geist) once for everyone. */
     public final BoolSetting fontSet = new BoolSetting("fontSet", "Font Set", false).hidden();
     public final BoolSetting roundSet = new BoolSetting("roundSet", "Round Set", false).hidden();
+    public final ModeSetting language = new ModeSetting("language", "Language", "English", "Deutsch")
+            .describe("Language of the Onix menus, categories and modules (Minecraft keeps its own language).");
     public final BoolSetting edexSet = new BoolSetting("edexSet", "eDEX Loading Set", false).hidden();
     public final BoolSetting cleanSet = new BoolSetting("cleanSet", "Clean Menu Set", false).hidden();
     public final BoolSetting cinematicSet2 = new BoolSetting("cinematicSet2", "Cinematic Default", false).hidden();
@@ -140,7 +142,7 @@ public class OnixConfig {
     }
 
     public List<Setting<?, ?>> interfaceSettings() {
-        return List.of(customMainMenu, clickSounds, tooltips);
+        return List.of(language, customMainMenu, clickSounds, tooltips);
     }
 
     public List<Setting<?, ?>> hudSettings() {
@@ -165,7 +167,7 @@ public class OnixConfig {
 
     private List<Setting<?, ?>> all() {
         return List.of(theme, titleBackground, backgroundSlideshow, slideshowSeconds, backgroundMotion,
-                menuStyle, menuScale, menuAnimations, clickSounds, menuParticles, backgroundDim, tooltips, customMainMenu,
+                menuStyle, menuScale, menuAnimations, language, clickSounds, menuParticles, backgroundDim, tooltips, customMainMenu,
                 onixServer, socialOn, shareServer, nameTagLooks, lightMode, buttonStyle, carbonButtons, menuSkin, menuDesign, menuCharacter, titleDesign, loadingScreens, loadingStyle, loadingTips,
                 hideHudInDebug, snapping, snapDistance, editorGrid,
                 notifications, notificationSound, notificationTime, notificationPosition,

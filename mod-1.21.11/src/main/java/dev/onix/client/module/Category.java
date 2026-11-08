@@ -19,7 +19,7 @@ public enum Category {
         this.description = description;
     }
 
-    public String getDisplayName() { return displayName; }
+    public String getDisplayName() { return dev.onix.client.util.I18n.ui(displayName); }
     public String getIcon() { return icon; }
-    public String getDescription() { return description; }
+    public String getDescription() { return dev.onix.client.util.I18n.ui(description); }
 }

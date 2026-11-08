@@ -56,7 +56,7 @@ public class ClickGui extends Screen {
 	private final Smooth[] navHover = new Smooth[Category.values().length + 1 + LINKS.length];
 	private boolean designPage;
 
-	private final TextField search = new TextField("", "Search modules…", 32, s -> resetGrid());
+	private final TextField search = new TextField("", dev.onix.client.util.I18n.ui("Search modules…"), 32, s -> resetGrid());
 	private final Smooth searchHover = new Smooth(0, 16f);
 	private final Smooth scroll = new Smooth(0, 16f);
 	private float scrollTarget, maxScroll;
@@ -364,7 +364,7 @@ public class ClickGui extends Screen {
 		Pixel.logo(g, "ONIX", bx, by + 2, 15, 1f);
 		float lw = Fonts.displayWidth("ONIX", 15);
 		R2D.rect(g, bx + lw + 10, by + 3, 1, 12, 0x26FFFFFF);
-		Fonts.draw(g, "Mod menu", bx + lw + 18, by + 5, Theme.TEXT_DIM, Fonts.Face.MEDIUM, 0.9f, false);
+		Fonts.draw(g, dev.onix.client.util.I18n.ui("Mod menu"), bx + lw + 18, by + 5, Theme.TEXT_DIM, Fonts.Face.MEDIUM, 0.9f, false);
 
 		// search
 		float sx = searchX(), sw = searchW(), sy = wy + (HEADER - 22) / 2f;
@@ -388,8 +388,8 @@ public class ClickGui extends Screen {
 		float top = wy + HEADER + 1;
 		R2D.rect(g, wx + SIDEBAR, top + 10, 1, wh - HEADER - 20, 0x12FFFFFF);
 
-		Ui.eyebrow(g, "Modules", wx + 14, top + 12, Theme.TEXT_MUTED);
-		Ui.eyebrow(g, "Client", wx + 14, navItemY(hudNav()) - 14, Theme.TEXT_MUTED);
+		Ui.eyebrow(g, dev.onix.client.util.I18n.ui("Modules"), wx + 14, top + 12, Theme.TEXT_MUTED);
+		Ui.eyebrow(g, dev.onix.client.util.I18n.ui("Client"), wx + 14, navItemY(hudNav()) - 14, Theme.TEXT_MUTED);
 
 		int active = onDetail() ? -1 : nav;
 		if (active >= 0) {
@@ -400,7 +400,7 @@ public class ClickGui extends Screen {
 			Ui.block(g, wx + 10, y, SIDEBAR - 20, NAV_H + 2, 5, 2, 0xFFEDEDF0, 0xFF8C8C94, 0);
 		}
 
-		navItem(g, 0, "grid", "All Modules", String.valueOf(OnixClient.MODULES.all().size()), mx, my, active == 0);
+		navItem(g, 0, "grid", dev.onix.client.util.I18n.ui("All Modules"), String.valueOf(OnixClient.MODULES.all().size()), mx, my, active == 0);
 		for (int i = 0; i < Category.values().length; i++) {
 			Category c = Category.values()[i];
 			long count = OnixClient.MODULES.all().stream().filter(m -> m.getCategory() == c).count();
@@ -408,8 +408,8 @@ public class ClickGui extends Screen {
 		}
 		for (int i = 0; i < LINKS.length; i++) {
 			int idx = hudNav() + i;
-			String extra = i == 0 ? String.valueOf(dev.onix.client.module.Presets.all().size()) : i == 1 && minecraft.level == null ? "in-game" : "";
-			navItem(g, idx, LINKS[i][1], LINKS[i][0], extra, mx, my, active == idx);
+			String extra = i == 0 ? String.valueOf(dev.onix.client.module.Presets.all().size()) : i == 1 && minecraft.level == null ? dev.onix.client.util.I18n.ui("in-game") : "";
+			navItem(g, idx, LINKS[i][1], dev.onix.client.util.I18n.ui(LINKS[i][0]), extra, mx, my, active == idx);
 		}
 
 		// profile
@@ -451,11 +451,11 @@ public class ClickGui extends Screen {
 		boolean filtered = !search.text().isBlank();
 		Category cat = nav >= 1 && nav <= Category.values().length && !filtered ? Category.values()[nav - 1] : null;
 		long on = mods.stream().filter(Module::isEnabled).count();
-		Ui.eyebrow(g, filtered ? "Search" : mods.size() + (nav == presetsNav() ? " presets" : " modules") + "  ·  " + on + " on", x0, y0 - 2, 0xFFB4B4BC);
+		Ui.eyebrow(g, filtered ? dev.onix.client.util.I18n.ui("Search") : mods.size() + " " + dev.onix.client.util.I18n.ui(nav == presetsNav() ? "presets" : "modules") + "  ·  " + on + " " + dev.onix.client.util.I18n.ui("on"), x0, y0 - 2, 0xFFB4B4BC);
 		boolean presets = nav == presetsNav() && !filtered;
-		String title = filtered ? "Results" : presets ? "Presets" : cat == null ? "All modules" : cat.getDisplayName();
+		String title = filtered ? dev.onix.client.util.I18n.ui("Results") : presets ? dev.onix.client.util.I18n.ui("Presets") : cat == null ? dev.onix.client.util.I18n.ui("All modules") : cat.getDisplayName();
 		Pixel.headline(g, title, x0, y0 + 10, Theme.WHITE, 2f, true);
-		String sub = filtered ? "for \"" + search.text() + "\"" : presets ? "one click sets you up for a game mode" : cat == null ? "everything Onix ships with" : cat.getDescription().toLowerCase(Locale.ROOT);
+		String sub = filtered ? dev.onix.client.util.I18n.ui("for") + " \"" + search.text() + "\"" : presets ? dev.onix.client.util.I18n.ui("one click sets you up for a game mode") : cat == null ? dev.onix.client.util.I18n.ui("everything Onix ships with") : cat.getDescription().toLowerCase(Locale.ROOT);
 		Fonts.draw(g, sub, x0 + Pixel.width(title, 2f) + 9, y0 + 17, Theme.TEXT_MUTED, false, 0.82f, false);
 		float top = y0 + 34, bottom = wy + wh - 6;
 		int cols = Math.max(2, (int) ((cw + GAP) / (160 + GAP)));
@@ -501,7 +501,7 @@ public class ClickGui extends Screen {
 	}
 
 	private float linkWidth() {
-		return Fonts.width("Configure", true, 0.78f) + 12;
+		return Fonts.width(dev.onix.client.util.I18n.ui("Configure"), true, 0.78f) + 12;
 	}
 
 	private void renderCard(GuiGraphics g, Module m, Card c, double mx, double my, boolean interactive) {
@@ -532,7 +532,7 @@ public class ClickGui extends Screen {
 			int col = Theme.lerp(Theme.TEXT_MUTED, Theme.WHITE, Math.max(l, h * 0.5f));
 			float lw = linkWidth();
 			float lx = c.x + c.w - 12 - lw;
-			Fonts.draw(g, "Configure", lx, ly + 1, col, true, 0.75f, false);
+			Fonts.draw(g, dev.onix.client.util.I18n.ui("Configure"), lx, ly + 1, col, true, 0.75f, false);
 			PixelIcons.draw(g, "arrow", lx + lw - 9 + l * 2.5f, ly, 9, col);
 		}
 		R2D.pop(g);
@@ -565,7 +565,7 @@ public class ClickGui extends Screen {
 		float b = backHover.get();
 		int bc = Theme.lerp(Theme.TEXT_MUTED, Theme.WHITE, b);
 		PixelIcons.draw(g, "arrowleft", x0 - b * 2, y0, 9, bc);
-		Fonts.draw(g, isClient ? "Back" : "Back to " + (nav >= 1 && nav <= Category.values().length ? Category.values()[nav - 1].getDisplayName() : "modules"),
+		Fonts.draw(g, dev.onix.client.util.I18n.ui("Back") + " · " + (nav >= 1 && nav <= Category.values().length ? Category.values()[nav - 1].getDisplayName() : nav == presetsNav() ? dev.onix.client.util.I18n.ui("Presets") : dev.onix.client.util.I18n.ui("All modules")),
 			x0 + 13, y0 + 1, bc, true, 0.78f, false);
 
 		float ty = y0 + 18;
@@ -583,7 +583,7 @@ public class ClickGui extends Screen {
 			R2D.pop(g);
 			rx -= 48;
 		}
-		String reset = "Reset";
+		String reset = dev.onix.client.util.I18n.ui("Reset");
 		float rw = Fonts.width(reset, true, 0.78f) + 18;
 		boolean rh = interactive && R2D.hover(mx, my, rx - rw, ty + 7, rw, 16);
 		resetHover.target(rh ? 1 : 0);
@@ -740,7 +740,7 @@ public class ClickGui extends Screen {
 			}
 			rx -= 48;
 		}
-		float rw = Fonts.width("Reset", true, 0.78f) + 18;
+		float rw = Fonts.width(dev.onix.client.util.I18n.ui("Reset"), true, 0.78f) + 18;
 		if (R2D.hover(mx, my, rx - rw, ty + 7, rw, 16)) {
 			Ui.click();
 			for (Setting<?, ?> s : settingsOf(m)) s.reset();

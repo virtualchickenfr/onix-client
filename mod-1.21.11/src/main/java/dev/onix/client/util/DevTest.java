@@ -235,6 +235,12 @@ public final class DevTest {
             gui.showPresets();
         });
         then(40, () -> snap(mc, "09m_presets"));
+        then(2, () -> {
+            OnixClient.CONFIG.language.set("Deutsch");
+            mc.setScreen(new gg.carbon.client.screen.ClickGui(null));
+        });
+        then(40, () -> snap(mc, "09m2_menu_german"));
+        then(2, () -> OnixClient.CONFIG.language.set("English"));
         then(2, () -> mc.setScreen(null));
         // performance: frames per second with no modules vs. every HUD, combat and visual module
         java.util.List<dev.onix.client.module.Module> before = new java.util.ArrayList<>();

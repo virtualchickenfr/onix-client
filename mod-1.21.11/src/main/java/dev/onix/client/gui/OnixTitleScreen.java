@@ -33,7 +33,11 @@ public class OnixTitleScreen extends Screen {
     private static final int GREY = 0xFFA1A1AA;
     private static final int DIM = 0xFF6B6B76;
 
-    private record Item(String label, String icon, Runnable action, boolean primary) {}
+    private record Item(String label, String icon, Runnable action, boolean primary) {
+        Item {
+            label = dev.onix.client.util.I18n.ui(label);
+        }
+    }
 
     private record Area(int x1, int y1, int x2, int y2, Runnable action) {}
 
@@ -83,7 +87,7 @@ public class OnixTitleScreen extends Screen {
         cineItems.add(new Item("Singleplayer", "world", () -> minecraft.setScreen(new SelectWorldScreen(this)), true));
         cineItems.add(new Item("Multiplayer", "server", () -> minecraft.setScreen(new JoinMultiplayerScreen(this)), true));
         cineItems.add(new Item("Minecraft Settings", "settings", () -> minecraft.setScreen(new OptionsScreen(this, minecraft.options)), false));
-        cineItems.add(new Item("Client", "all", () -> minecraft.setScreen(new OnixMenuScreen(this)), false));
+        cineItems.add(new Item("Client", "all", () -> minecraft.setScreen(OnixClient.CONFIG.menuStyle.is("Clean") ? new gg.carbon.client.screen.ClickGui(this) : new OnixMenuScreen(this)), false));
         cineItems.add(new Item("Quit Game", "power", () -> minecraft.stop(), false));
 
         // 1.1.6: everyone gets the cinematic title screen and the glass menus once

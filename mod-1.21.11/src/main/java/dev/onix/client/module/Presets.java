@@ -64,8 +64,13 @@ public final class Presets {
         }
 
         @Override
+        public String getName() {
+            return dev.onix.client.util.I18n.ui(super.getName());
+        }
+
+        @Override
         public String getDescription() {
-            return super.getDescription() + " (" + modules().size() + " modules)";
+            return dev.onix.client.util.I18n.ui(super.getDescription()) + " (" + modules().size() + " " + dev.onix.client.util.I18n.ui("modules") + ")";
         }
     }
 
