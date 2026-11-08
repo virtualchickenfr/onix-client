@@ -600,7 +600,16 @@ public class SongLyricsModule extends HudModule implements OverlayRenderer {
             Font.DisplayMode mode = throughWalls.isOn() ? Font.DisplayMode.SEE_THROUGH : Font.DisplayMode.NORMAL;
             Vec3 lookVec = mc().player != null ? mc().player.getViewVector(WorldDraw.partialTick()) : Vec3.ZERO;
             // Follow You: the stage trails behind your view with a soft delay, like a camera rig
-            Vec3 target = cam.add(lookVec.scale(worldDistance.get() * 0.6)).add(0, -0.15, 0);
+            // follows where you look, but stays between slightly below and above eye height and never inside blocks
+            double followDist = worldDistance.get() * 0.6;
+            Vec3 target = cam;
+            if (mc().player != null) {
+                float pitch = Math.max(-25f, Math.min(8f, mc().player.getViewXRot(WorldDraw.partialTick())));
+                Vec3 dir = Vec3.directionFromRotation(pitch, mc().player.getViewYRot(WorldDraw.partialTick()));
+                target = cam.add(dir.scale(followDist));
+                BlockHitResult block = mc().level.clip(new ClipContext(cam, target, ClipContext.Block.VISUAL, ClipContext.Fluid.NONE, mc().player));
+                if (block.getType() == HitResult.Type.BLOCK) target = cam.add(dir.scale(Math.max(1.2, block.getLocation().distanceTo(cam) - 0.5)));
+            }
             float dt = rigTime == 0 ? 1f : Math.min(0.25f, (wall - rigTime) / 1000f);
             rigTime = wall;
             if (rigPos == null || rigPos.distanceTo(target) > 24) rigPos = target;
