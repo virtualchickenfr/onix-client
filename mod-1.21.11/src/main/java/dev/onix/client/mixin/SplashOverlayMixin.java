@@ -30,6 +30,12 @@ public abstract class SplashOverlayMixin {
         return !LoadingAnimation.enabled();
     }
 
+    /** No red Mojang background behind the Onix screen (also not while it fades into the menu). */
+    @com.llamalad7.mixinextras.injector.ModifyExpressionValue(method = "render", at = @At(value = "INVOKE", target = "Ljava/util/function/IntSupplier;getAsInt()I"))
+    private int onix$background(int original) {
+        return LoadingAnimation.enabled() ? 0xFF030305 : original;
+    }
+
     @Inject(method = "drawProgressBar", at = @At("HEAD"), cancellable = true)
     private void onix$hideBar(CallbackInfo ci) {
         if (LoadingAnimation.enabled()) ci.cancel();

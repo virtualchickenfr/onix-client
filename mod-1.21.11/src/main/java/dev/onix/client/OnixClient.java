@@ -76,6 +76,13 @@ public class OnixClient implements ClientModInitializer {
             CONFIG.save();
         }
         // 1.1.16: right shift opens the clean Carbon style mod menu once (Classic and Bloom stay under Design)
+        // 1.1.18: the eDEX style loading screen replaces the red Mojang screen once (other styles stay under Design)
+        if (!CONFIG.edexSet.isOn()) {
+            CONFIG.edexSet.set(true);
+            CONFIG.loadingStyle.set("eDEX");
+            CONFIG.loadingScreens.set(true);
+            CONFIG.save();
+        }
         if (!CONFIG.cleanSet.isOn()) {
             CONFIG.cleanSet.set(true);
             CONFIG.menuStyle.set("Clean");

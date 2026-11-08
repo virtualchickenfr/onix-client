@@ -74,6 +74,10 @@ public final class DevTest {
         then(30, () -> snap(mc, "00e_intro_done"));
         then(2, () -> { if (mc.screen != null) mc.screen.keyPressed(new KeyEvent(com.mojang.blaze3d.platform.InputConstants.KEY_RIGHT, 0, 0)); });
         then(2, () -> design("Onix"));
+        // eDEX style resource loading screen (F3 + T)
+        then(2, () -> mc.reloadResourcePacks());
+        then(6, () -> snap(mc, "00z1_edex_loading"));
+        then(14, () -> snap(mc, "00z2_edex_loading"));
         then(80, () -> snap(mc, "01_title_onix"));
         // cinematic title: the splash, the burst when entering, then the menu with the player
         then(2, () -> { if (mc.screen != null) mc.screen.keyPressed(new KeyEvent(com.mojang.blaze3d.platform.InputConstants.KEY_SPACE, 0, 0)); });

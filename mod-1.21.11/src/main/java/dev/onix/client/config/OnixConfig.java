@@ -58,6 +58,7 @@ public class OnixConfig {
     /** 1.1.13: the HUD uses the smooth Onix font (Geist) once for everyone. */
     public final BoolSetting fontSet = new BoolSetting("fontSet", "Font Set", false).hidden();
     public final BoolSetting roundSet = new BoolSetting("roundSet", "Round Set", false).hidden();
+    public final BoolSetting edexSet = new BoolSetting("edexSet", "eDEX Loading Set", false).hidden();
     public final BoolSetting cleanSet = new BoolSetting("cleanSet", "Clean Menu Set", false).hidden();
     public final BoolSetting cinematicSet2 = new BoolSetting("cinematicSet2", "Cinematic Default", false).hidden();
 
@@ -88,7 +89,7 @@ public class OnixConfig {
     // Loading screens
     public final BoolSetting loadingScreens = new BoolSetting("loadingScreens", "Onix Loading Screens", true)
             .describe("Replaces resource loading, world loading, connecting and saving screens.");
-    public final ModeSetting loadingStyle = new ModeSetting("loadingStyle", "Animation", "Gem", "Orbit", "Minimal");
+    public final ModeSetting loadingStyle = new ModeSetting("loadingStyle", "Animation", "eDEX", "Gem", "Orbit", "Minimal");
     public final BoolSetting loadingTips = new BoolSetting("loadingTips", "Show Tips", true);
 
     // HUD
@@ -168,7 +169,7 @@ public class OnixConfig {
                 onixServer, socialOn, shareServer, nameTagLooks, lightMode, buttonStyle, carbonButtons, menuSkin, menuDesign, menuCharacter, titleDesign, loadingScreens, loadingStyle, loadingTips,
                 hideHudInDebug, snapping, snapDistance, editorGrid,
                 notifications, notificationSound, notificationTime, notificationPosition,
-                ruleNotes, rulesOnJoin, rulesSkip, autoSwitchProfiles, introDone, cinematicSet, cinematicSet2, cleanSet, roundSet, fontSet, menuGlass);
+                ruleNotes, rulesOnJoin, rulesSkip, autoSwitchProfiles, introDone, cinematicSet, cinematicSet2, cleanSet, edexSet, roundSet, fontSet, menuGlass);
     }
 
     public float menuScaleFactor() {

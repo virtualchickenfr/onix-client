@@ -75,6 +75,10 @@ public final class LoadingScreens {
         // vanilla keeps the overlay for one second after loading and fades out during the next
         float alpha = completeAt < 0 ? 1f : 1f - Math.max(0f, Math.min(1f, (now - completeAt) / 1000f - 1f));
         if (alpha <= 0.01f) return;
+        if (LoadingAnimation.edex()) {
+            EdexLoading.splash(ctx, progress, completeAt >= 0, alpha);
+            return;
+        }
         ctx.pose().pushMatrix();
         ctx.pose().translate(0, 0);
         LoadingAnimation.render(ctx, null, null, completeAt >= 0 ? 1f : progress, alpha, false);
