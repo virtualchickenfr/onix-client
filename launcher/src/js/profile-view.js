@@ -509,6 +509,8 @@ function renderPvSettings() {
   const server = el('input', { class: 'input', placeholder: 'Server address (optional)', spellcheck: 'false', value: p.quickJoin || '' });
   const perf = el('input', { type: 'checkbox' });
   perf.checked = p.performanceMods;
+  const shade = el('input', { type: 'checkbox' });
+  shade.checked = p.shaders !== false;
 
   const save = el('button', {
     class: 'btn primary',
@@ -523,6 +525,7 @@ function renderPvSettings() {
         fullscreen: full.checked,
         quickJoin: server.value.trim(),
         performanceMods: perf.checked,
+        shaders: shade.checked,
       });
       if (res && res.ok === false) return toast(res.error, true);
       profileState = res && res.ok ? res.value : res;
@@ -538,6 +541,7 @@ function renderPvSettings() {
       el('label', { class: 'field' }, [el('span', {}, ['Memory ', ramOut]), ram]),
       field('Join on launch', server),
       el('div', { class: 'field inline' }, [el('span', { text: 'Performance pack (Sodium, Lithium, FerriteCore, ImmediatelyFast, EntityCulling)' }), el('label', { class: 'switch' }, [perf, el('i')])]),
+      el('div', { class: 'field inline' }, [el('span', { text: 'Shaders on the first start (Iris + Complementary Reimagined, K in game turns them off)' }), el('label', { class: 'switch' }, [shade, el('i')])]),
     ]),
     el('section', { class: 'pv-card' }, [
       el('h4', { text: 'Window' }),

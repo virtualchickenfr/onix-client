@@ -240,6 +240,46 @@ async function ensureMods(root, settings, report, log, throttle = true, mc = MC_
     }
   }));
   writeManifest(modsDir, manifest);
+  await ensureDefaultShaders(root, settings, report, log, mc);
+}
+
+/**
+ * Shaders are on by default: the first start of a Fabric profile installs Iris and Complementary Reimagined from
+ * Modrinth and switches the pack on once. After that the player decides (K in game, or the Shaders tab); a newer
+ * Minecraft version of the profile only brings the matching Iris. Never stops the game from starting.
+ */
+async function ensureDefaultShaders(gameDir, settings, report, log, mc) {
+  if (settings.shaders === false || !settings.performanceMods) return; // Iris needs Sodium from the performance pack
+  const shaders = require('./shaders');
+  const marker = path.join(gameDir, 'shaderpacks', '.onix-default-shader');
+  let before = null;
+  try {
+    before = fs.readFileSync(marker, 'utf8').trim();
+  } catch {
+    // first start with shaders
+  }
+  const slug = shaders.DEFAULT;
+  if (before === `${slug}@${mc}`) return;
+  const progress = ({ label, progress: p }) => report(label, p || 0);
+  try {
+    if (before) {
+      // the profile moved to another Minecraft version: only Iris has to match it
+      await modrinth.install(modrinth.IRIS, path.join(gameDir, 'mods'), progress, mc, 'fabric');
+      log(`Shaders: Iris updated for Minecraft ${mc}`);
+    } else {
+      const dir = path.join(gameDir, 'shaderpacks');
+      const result = await modrinth.installAsset(slug, 'shader', dir, path.join(gameDir, 'mods'), progress, mc, 'fabric');
+      result.warnings.forEach((w) => log(`Shaders: ${w}`));
+      const entry = modrinth.readManifest(dir)[slug];
+      if (!entry) throw new Error('the shader pack was not installed');
+      shaders.enableInIris(gameDir, entry.file);
+      log(`Shaders: ${entry.title} installed and switched on (K in game turns them off)`);
+    }
+    fs.mkdirSync(path.dirname(marker), { recursive: true });
+    fs.writeFileSync(marker, `${slug}@${mc}`);
+  } catch (err) {
+    log(`Shaders could not be set up: ${err.message} – starting without them`);
+  }
 }
 
 /** Profiles with another loader cannot load the Onix (Fabric) mod: switch its jar off. */

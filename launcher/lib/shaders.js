@@ -24,6 +24,9 @@ const QUICK = [
   },
 ];
 
+/** The pack every Fabric profile gets on its first start. */
+const DEFAULT = 'complementary-reimagined';
+
 const isQuick = (slug) => QUICK.some((s) => s.slug === slug);
 
 /** Escapes a value for a Java .properties file (backslashes and line breaks). */
@@ -44,4 +47,4 @@ function enableInIris(gameDir, packFile) {
   fs.writeFileSync(file, lines.join('\n') + '\n');
 }
 
-module.exports = { QUICK, isQuick, enableInIris };
+module.exports = { QUICK, DEFAULT, isQuick, enableInIris };
