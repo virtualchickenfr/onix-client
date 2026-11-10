@@ -98,6 +98,13 @@ public class OnixClient implements ClientModInitializer {
             for (var m : MODULES.all()) if (m instanceof dev.onix.client.module.HudModule hud) hud.useOnixFont();
             save();
         }
+        // 1.1.21: everything round – no more square or block buttons, rounder HUD elements (once)
+        if (!CONFIG.roundSet2.isOn()) {
+            CONFIG.roundSet2.set(true);
+            if (!CONFIG.buttonStyle.is("Pill")) CONFIG.buttonStyle.set("Rounded");
+            for (var m : MODULES.all()) if (m instanceof dev.onix.client.module.HudModule hud) hud.useRoundCorners();
+            save();
+        }
         var lyrics = MODULES.get(dev.onix.client.module.impl.hud.SongLyricsModule.class);
         if (lyrics != null) lyrics.followByDefault();
         Cosmetics.load();

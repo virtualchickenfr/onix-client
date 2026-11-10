@@ -396,7 +396,7 @@ public class OnixMenuScreen extends Screen {
     @Override
     public void render(GuiGraphics ctx, int rawX, int rawY, float delta) {
         boolean glass = OnixClient.CONFIG.menuGlass.isOn() && !OnixClient.CONFIG.lightMode.isOn() && minecraft.level != null;
-        Theme.pixel = !glass;
+        Theme.pixel = false; // round corners everywhere (the pixel look was too square)
         Theme.glass = glass;
         if (glass) {
             try {

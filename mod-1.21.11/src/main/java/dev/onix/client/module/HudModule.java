@@ -70,7 +70,7 @@ public abstract class HudModule extends Module {
                 .visibleIf(background::isOn));
         border = add(new BoolSetting("border", "Border", false));
         borderColor = add(ColorSetting.accent("borderColor", "Border Color").visibleIf(border::isOn));
-        cornerRadius = add(new NumberSetting("radius", "Corner Radius", 3, 0, 8, 1).unit("px")
+        cornerRadius = add(new NumberSetting("radius", "Corner Radius", 6, 0, 12, 1).unit("px")
                 .visibleIf(() -> background.isOn() || border.isOn()));
         padding = add(new NumberSetting("padding", "Padding", 4, 0, 10, 1).unit("px"));
         textShadow = add(new BoolSetting("shadow", "Text Shadow", true));
@@ -82,6 +82,11 @@ public abstract class HudModule extends Module {
     /** Switches this element to the smooth Onix font (one-time update for everyone). */
     public void useOnixFont() {
         font.set("Onix");
+    }
+
+    /** Lifts old square-ish corners to the new round default. */
+    public void useRoundCorners() {
+        if (cornerRadius.getInt() < 6) cornerRadius.set(6.0);
     }
 
     /** Unscaled width. */

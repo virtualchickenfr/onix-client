@@ -10,7 +10,7 @@ public class OnixButton extends Button {
     private final Anim hover = new Anim(0);
     private final Anim sheen = new Anim(0);
     private static boolean block() {
-        return dev.onix.client.OnixClient.CONFIG != null && dev.onix.client.OnixClient.CONFIG.buttonStyle.is("Block");
+        return false; // block buttons were removed: everything is round
     }
 
     public OnixButton(int x, int y, int width, int height, Component message, OnPress onPress) {

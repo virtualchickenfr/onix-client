@@ -136,10 +136,8 @@ public final class Theme {
         OnixConfig c = OnixClient.CONFIG;
         if (c == null) return radius;
         return switch (c.buttonStyle.get()) {
-            case "Square" -> Math.min(radius, 2);
             case "Pill" -> radius * 4;
-            case "Rounded" -> Math.round(radius * 1.6f);
-            default -> radius;
+            default -> radius * 2;
         };
     }
 
@@ -373,7 +371,7 @@ public final class Theme {
 
     /** Raised bevel on a box (light top/left edge, dark bottom/right edge). */
     public static void bevel(GuiGraphics ctx, int x1, int y1, int x2, int y2, float strength) {
-        if (glass) return; // straight bevel lines would stick out of the round glass corners
+        if (!pixel) return; // straight bevel lines would stick out of round corners
         ctx.fill(x1 + 1, y1 + 1, x2 - 1, y1 + 2, withAlpha(0xFFFFFFFF, Math.round((isLight() ? 120 : 26) * strength)));
         ctx.fill(x1 + 1, y2 - 2, x2 - 1, y2 - 1, withAlpha(0xFF000000, Math.round(90 * strength)));
     }
@@ -404,10 +402,8 @@ public final class Theme {
         if (x + w + 12 > screenW) x = Math.max(2, mx - w - 16);
         if (y + h + 12 > screenH) y = Math.max(2, screenH - h - 12);
         ctx.nextStratum();
-        ctx.fill(x + 2, y + h + 10, x + w + 12, y + h + 12, 0x55000000);
-        ctx.fill(x, y, x + w + 10, y + h + 10, 0xFF000000);
-        ctx.fill(x + 1, y + 1, x + w + 9, y + h + 9, isLight() ? 0xFFF4F4F6 : 0xFF141419);
-        ctx.fill(x + 1, y + 1, x + w + 9, y + 2, withAlpha(accent(), 200));
+        round(ctx, x + 1, y + 2, x + w + 11, y + h + 12, 7, 0x40000000);
+        card(ctx, x, y, x + w + 10, y + h + 10, 6, isLight() ? 0xFFF4F4F6 : 0xFF141419, withAlpha(accent(), 150));
         for (int i = 0; i < lines.size(); i++) text(ctx, lines.get(i), x + 5, y + 5 + i * 10, i == 0 ? TEXT : TEXT_2);
     }
 

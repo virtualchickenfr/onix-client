@@ -57,6 +57,7 @@ public class OnixConfig {
     /** 1.1.10: rounder buttons for everyone once (Button Style → Rounded). */
     /** 1.1.13: the HUD uses the smooth Onix font (Geist) once for everyone. */
     public final BoolSetting fontSet = new BoolSetting("fontSet", "Font Set", false).hidden();
+    public final BoolSetting roundSet2 = new BoolSetting("roundSet2", "Round Set 2", false).hidden();
     public final BoolSetting roundSet = new BoolSetting("roundSet", "Round Set", false).hidden();
     public final ModeSetting language = new ModeSetting("language", "Language", "English", "Deutsch")
             .describe("Language of the Onix menus, categories and modules (Minecraft keeps its own language).");
@@ -74,8 +75,8 @@ public class OnixConfig {
     // Design
     public final BoolSetting lightMode = new BoolSetting("lightMode", "Light Mode", false)
             .describe("Light surfaces and dark text in every Onix menu.");
-    public final ModeSetting buttonStyle = new ModeSetting("buttonShape", "Button Style", "Rounded", "Pill", "Block", "Square")
-            .describe("Block: Carbon's stone buttons with depth, a lift on hover and a light sweep.");
+    public final ModeSetting buttonStyle = new ModeSetting("buttonShape", "Button Style", "Rounded", "Pill")
+            .describe("Rounded corners or fully round pill buttons.");
     public final BoolSetting carbonButtons = new BoolSetting("carbonButtons", "Carbon Buttons Everywhere", true)
             .describe("Minecraft's own buttons and sliders (options, singleplayer, multiplayer …) as Carbon blocks.");
     public final BoolSetting menuSkin = new BoolSetting("menuSkin", "Carbon Menu Skin", true)
@@ -171,7 +172,7 @@ public class OnixConfig {
                 onixServer, socialOn, shareServer, nameTagLooks, lightMode, buttonStyle, carbonButtons, menuSkin, menuDesign, menuCharacter, titleDesign, loadingScreens, loadingStyle, loadingTips,
                 hideHudInDebug, snapping, snapDistance, editorGrid,
                 notifications, notificationSound, notificationTime, notificationPosition,
-                ruleNotes, rulesOnJoin, rulesSkip, autoSwitchProfiles, introDone, cinematicSet, cinematicSet2, cleanSet, edexSet, roundSet, fontSet, menuGlass);
+                ruleNotes, rulesOnJoin, rulesSkip, autoSwitchProfiles, introDone, cinematicSet, cinematicSet2, cleanSet, edexSet, roundSet, roundSet2, fontSet, menuGlass);
     }
 
     public float menuScaleFactor() {
