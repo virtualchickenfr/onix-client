@@ -54,11 +54,20 @@ object OnixSetup {
     }
 
     private fun createVersionIfMissing(): Boolean {
-        val folder = VersionsManager.getVersionPath(VERSION_NAME)
-        val json = File(folder, "$VERSION_NAME.json")
-        if (json.exists()) return false
-        val loaders = JSONArray(DownloadUtils.downloadString("$FABRIC_META/${enc(MC)}"))
-        if (loaders.length() == 0) throw IllegalStateException("Fabric has no loader for $MC")
+        if (File(VersionsManager.getVersionPath(VERSION_NAME), "$VERSION_NAME.json").exists()) return false
+        createFabricVersion(VERSION_NAME, MC)
+        return true
+    }
+
+    /** A game version [name] with Minecraft [mc] and the newest stable Fabric Loader, in its own folder. */
+    @JvmStatic
+    fun createFabricVersion(name: String, mc: String) {
+        if (!name.matches(Regex("[A-Za-z0-9 ._-]{1,40}"))) throw IllegalArgumentException("Use letters, numbers, spaces, . _ - for the name")
+        val folder = VersionsManager.getVersionPath(name)
+        val json = File(folder, "$name.json")
+        if (json.exists()) throw IllegalArgumentException("A profile called $name already exists")
+        val loaders = JSONArray(DownloadUtils.downloadString("$FABRIC_META/${enc(mc)}"))
+        if (loaders.length() == 0) throw IllegalStateException("Fabric has no loader for $mc")
         var loader = loaders.getJSONObject(0).getJSONObject("loader").getString("version")
         for (i in 0 until loaders.length()) {
             val l = loaders.getJSONObject(i).getJSONObject("loader")
@@ -67,19 +76,18 @@ object OnixSetup {
                 break
             }
         }
-        val profile = JSONObject(DownloadUtils.downloadString("$FABRIC_META/${enc(MC)}/${enc(loader)}/profile/json"))
-        profile.put("id", VERSION_NAME)
+        val profile = JSONObject(DownloadUtils.downloadString("$FABRIC_META/${enc(mc)}/${enc(loader)}/profile/json"))
+        profile.put("id", name)
         folder.mkdirs()
         json.writeText(profile.toString(2))
-        VersionInfo(MC, arrayOf(VersionInfo.LoaderInfo("Fabric", loader))).save(folder)
+        VersionInfo(mc, arrayOf(VersionInfo.LoaderInfo("Fabric", loader))).save(folder)
         // its own game folder, so the Onix mods never mix with other versions
         VersionConfig(folder, VersionConfig.IsolationType.ENABLE).save()
         // FPS first: phone video settings for the new game folder and a lower render resolution
         val options = File(folder, "options.txt")
         if (!options.exists()) options.writeText(PHONE_OPTIONS.joinToString("\n", postfix = "\n"))
         if (AllSettings.resolutionRatio.getValue() == 100) AllSettings.resolutionRatio.put(70).save()
-        Logging.i("Onix Setup", "Created the version $VERSION_NAME (Minecraft $MC, Fabric $loader)")
-        return true
+        Logging.i("Onix Setup", "Created the version $name (Minecraft $mc, Fabric $loader)")
     }
 
     /** Before a launch (call it off the UI thread): newest Onix mod and Fabric API for Fabric versions. */

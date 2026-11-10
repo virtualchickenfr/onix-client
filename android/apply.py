@@ -230,6 +230,45 @@ def glass():
         ])
 
 
+# ------------------------------------------------------------------ the PC launcher's interface as the home screen
+
+def launcher_ui():
+    """launcher/src -> assets/onix-ui, with android-api.js (the launcher's api on Android) and android.css."""
+    assets = os.path.join(OUT, 'ZalithLauncher', 'src', 'main', 'assets', 'onix-ui')
+    if os.path.isdir(assets):
+        shutil.rmtree(assets)
+    shutil.copytree(os.path.join(ROOT, 'launcher', 'src'), assets)
+    for f in ('android-api.js', 'android.css'):
+        shutil.copyfile(os.path.join(HERE, 'ui', f), os.path.join(assets, f))
+    # the Minecraft versions Onix supports (launcher/lib/versions.js)
+    try:
+        out = subprocess.run(['node', '-e', "process.stdout.write(JSON.stringify(require('./launcher/lib/versions').all()))"],
+                             cwd=ROOT, check=True, capture_output=True, text=True).stdout
+        versions = json.loads(out)
+    except (OSError, subprocess.CalledProcessError, ValueError):
+        versions = [{'id': '1.21.11', 'mc': '1.21.11', 'loader': '', 'note': 'Onix + Carbon', 'onix': True}]
+    open(os.path.join(assets, 'android-versions.js'), 'w').write('window.ONIX_VERSIONS = ' + json.dumps(versions) + ';\n')
+    index = os.path.join(assets, 'index.html')
+    html = open(index, encoding='utf-8').read()
+    for old, new in (
+        # Modrinth is called from the page on Android (on the PC the main process does it)
+        ("content=\"default-src 'self';", "content=\"default-src 'self'; connect-src 'self' https://api.modrinth.com;"),
+        ("img-src 'self' data: https://mc-heads.net https://cdn.modrinth.com;", "img-src 'self' data: https:;"),
+        ('<meta charset="utf-8">', '<meta charset="utf-8">\n  <meta name="viewport" content="width=1100, user-scalable=no">'),
+        ('<link rel="stylesheet" href="styles.css">', '<link rel="stylesheet" href="styles.css">\n  <link rel="stylesheet" href="android.css">'),
+        ('<script src="js/carbon/icons.js"></script>', '<script src="android-versions.js"></script>\n  <script src="android-api.js"></script>\n  <script src="js/carbon/icons.js"></script>'),
+    ):
+        if html.count(old) != 1:
+            sys.exit(f'apply.py: launcher/src/index.html changed, cannot place: {old}')
+        html = html.replace(old, new)
+    open(index, 'w', encoding='utf-8').write(html)
+    # the launcher interface replaces Zalith's main menu
+    patch('ZalithLauncher/src/main/java/net/kdt/pojavlaunch/LauncherActivity.java', [
+        ('.add(R.id.container_fragment, MainMenuFragment.class, null, MainMenuFragment.TAG).commit();',
+         '.add(R.id.container_fragment, com.movtery.zalithlauncher.onix.OnixWebFragment.class, null, MainMenuFragment.TAG).commit();'),
+    ])
+
+
 def main():
     code, name = version()
     if '--version' in sys.argv:
@@ -285,6 +324,7 @@ def main():
     ])
     icons()
     glass()
+    launcher_ui()
     print(f'Onix Android {name} ({code}) ready in {OUT}')
 
 
