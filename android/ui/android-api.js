@@ -1,5 +1,27 @@
 'use strict';
 
+/* Older Android WebViews (before Chrome 86) miss a few things the launcher interface uses. */
+(() => {
+  const P = Element.prototype;
+  if (!P.replaceChildren) {
+    const fix = function (...nodes) {
+      while (this.lastChild) this.removeChild(this.lastChild);
+      if (nodes.length) this.append(...nodes);
+    };
+    P.replaceChildren = fix;
+    DocumentFragment.prototype.replaceChildren = fix;
+  }
+  if (!Array.prototype.at) {
+    Object.defineProperty(Array.prototype, 'at', { configurable: true, writable: true, value(i) { i = Math.trunc(i) || 0; return this[i < 0 ? this.length + i : i]; } });
+    Object.defineProperty(String.prototype, 'at', { configurable: true, writable: true, value(i) { i = Math.trunc(i) || 0; return this[i < 0 ? this.length + i : i]; } });
+  }
+  if (!String.prototype.replaceAll) {
+    Object.defineProperty(String.prototype, 'replaceAll', { configurable: true, writable: true, value(a, b) { return a instanceof RegExp ? this.replace(a, b) : this.split(a).join(typeof b === 'function' ? b(a) : b); } });
+  }
+  if (!Object.hasOwn) Object.hasOwn = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+  if (!window.structuredClone) window.structuredClone = (v) => (v === undefined ? v : JSON.parse(JSON.stringify(v)));
+})();
+
 /*
  * The Onix PC launcher's `api` (launcher/preload.js) for Android: the interface is the same HTML/CSS/JS, these
  * functions answer it with Zalith Launcher underneath (OnixWebFragment.Bridge). Profiles are game versions,
