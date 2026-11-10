@@ -89,12 +89,14 @@ jobs:
           script: |
             mkdir -p shots
             adb install -r "$(ls apk/*.apk | head -1)"
+            adb shell settings put secure immersive_mode_confirmations confirmed
             adb shell monkey -p dev.onix.android -c android.intent.category.LAUNCHER 1
             sleep 25; adb exec-out screencap -p > shots/01_start.png
             adb shell input tap 2035 997
             sleep 8; adb exec-out screencap -p > shots/02_unpacking.png
-            sleep 60; adb exec-out screencap -p > shots/03_home.png
-            sleep 20; adb exec-out screencap -p > shots/04_home_later.png
+            sleep 90; adb exec-out screencap -p > shots/03_home.png
+            sleep 60; adb exec-out screencap -p > shots/04_home_later.png
+            adb shell input tap 1200 140; sleep 3; adb exec-out screencap -p > shots/05_tap_top.png
             adb logcat -d > shots/logcat.txt || true
 
       - name: Push the screenshots
