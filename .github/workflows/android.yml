@@ -1,0 +1,107 @@
+name: Android app
+
+# Builds the Onix Android app (android/: Zalith Launcher + the Onix changes) and, when the release of the
+# version in launcher/package.json exists, adds the APKs and onix-android.json to it. Installed apps look at
+# releases/latest/download/onix-android.json and offer the update.
+on:
+  push:
+    paths: ['android/**', 'launcher/package.json', 'launcher/build/icon.png', '.github/workflows/android.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [all, arm64]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Prepare the source tree
+        run: |
+          pip install --quiet pillow
+          python3 android/apply.py
+
+      - name: Signing key
+        env:
+          KEYSTORE_B64: ${{ secrets.ONIX_ANDROID_KEYSTORE }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/onix.jks"
+            echo "ONIX_KEYSTORE=$RUNNER_TEMP/onix.jks" >> "$GITHUB_ENV"
+          else
+            echo "::warning::No ONIX_ANDROID_KEYSTORE secret: the APK is signed with the public debug key."
+          fi
+
+      - name: Build the APK (${{ matrix.arch }})
+        working-directory: android/build/zalith
+        env:
+          ZL_BUILD_TYPE: RELEASE
+          ONIX_KEYSTORE_PASSWORD: ${{ secrets.ONIX_ANDROID_KEYSTORE_PASSWORD }}
+          ONIX_KEY_ALIAS: ${{ secrets.ONIX_ANDROID_KEY_ALIAS }}
+        run: |
+          chmod +x gradlew
+          ./gradlew jre_lwjgl3glfw:build --no-daemon
+          ./gradlew ZalithLauncher:assembleRelease -Darch=${{ matrix.arch }} --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: onix-android-${{ matrix.arch }}
+          path: android/build/zalith/ZalithLauncher/build/outputs/apk/release/*.apk
+
+  # only main (or a manual run) adds the app to a release; other branches keep it as a build artifact
+  publish:
+    needs: apk
+    if: github.ref_name == github.event.repository.default_branch || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: onix-android-*
+          path: apks
+          merge-multiple: true
+
+      - name: Add the APKs to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          read code name < <(python3 android/apply.py --version)
+          tag="v$name"
+          ls -la apks
+          if ! gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "No release $tag yet – the APKs are only kept as build artifacts."
+            exit 0
+          fi
+          draft=$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json isDraft -q .isDraft)
+          has=$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json assets -q '.assets[].name' | grep -c '^onix-android.json$' || true)
+          if [ "$draft" != "true" ] && [ "$has" != "0" ]; then
+            echo "$tag is published and already has the app – not replacing it."
+            exit 0
+          fi
+          all=$(ls apks/*.apk | grep -v -- '-arm64-v8a.apk' | head -1)
+          arm=$(ls apks/*-arm64-v8a.apk | head -1)
+          cp "$all" "apks/Onix-Android-$name.apk"
+          cp "$arm" "apks/Onix-Android-$name-arm64-v8a.apk"
+          base="https://github.com/$GITHUB_REPOSITORY/releases/download/$tag"
+          cat > apks/onix-android.json <<EOF
+          {"versionCode": $code, "versionName": "$name",
+           "apk": {"all": "$base/Onix-Android-$name.apk", "arm64-v8a": "$base/Onix-Android-$name-arm64-v8a.apk"}}
+          EOF
+          cat apks/onix-android.json
+          gh release upload "$tag" "apks/Onix-Android-$name.apk" "apks/Onix-Android-$name-arm64-v8a.apk" apks/onix-android.json \
+            --repo "$GITHUB_REPOSITORY" --clobber

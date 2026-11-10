@@ -1,0 +1,124 @@
+package com.movtery.zalithlauncher.onix
+
+import com.movtery.zalithlauncher.feature.log.Logging
+import com.movtery.zalithlauncher.feature.version.Version
+import com.movtery.zalithlauncher.feature.version.VersionConfig
+import com.movtery.zalithlauncher.feature.version.VersionInfo
+import com.movtery.zalithlauncher.feature.version.VersionsManager
+import net.kdt.pojavlaunch.Tools
+import net.kdt.pojavlaunch.utils.DownloadUtils
+import org.json.JSONArray
+import org.json.JSONObject
+import java.io.File
+import java.net.URLEncoder
+
+/**
+ * Onix on Android:
+ * - the first start creates the game version "Onix" (Minecraft [MC] with the newest stable Fabric Loader, in its own folder)
+ * - before a Fabric version starts, its mods folder gets the newest Onix mod for that Minecraft version from the
+ *   GitHub releases and Fabric API from Modrinth (the old copies are replaced)
+ * Nothing here stops the game from starting: without network or on errors it starts with what is there.
+ */
+object OnixSetup {
+    const val VERSION_NAME = "Onix"
+    const val MC = "1.21.11"
+    const val REPO = "virtualchickenfr/onix-client"
+    private const val FABRIC_META = "https://meta.fabricmc.net/v2/versions/loader"
+    private const val FABRIC_API = "P7dR8mSH"
+
+    /** Creates the "Onix" version in the background when it is missing. */
+    @JvmStatic
+    fun ensureVersion() {
+        Thread {
+            runCatching {
+                if (createVersionIfMissing()) VersionsManager.refresh("OnixSetup")
+            }.onFailure { e -> Logging.e("Onix Setup", Tools.printToString(e)) }
+        }.start()
+    }
+
+    private fun createVersionIfMissing(): Boolean {
+        val folder = VersionsManager.getVersionPath(VERSION_NAME)
+        val json = File(folder, "$VERSION_NAME.json")
+        if (json.exists()) return false
+        val loaders = JSONArray(DownloadUtils.downloadString("$FABRIC_META/${enc(MC)}"))
+        if (loaders.length() == 0) throw IllegalStateException("Fabric has no loader for $MC")
+        var loader = loaders.getJSONObject(0).getJSONObject("loader").getString("version")
+        for (i in 0 until loaders.length()) {
+            val l = loaders.getJSONObject(i).getJSONObject("loader")
+            if (l.optBoolean("stable", false)) {
+                loader = l.getString("version")
+                break
+            }
+        }
+        val profile = JSONObject(DownloadUtils.downloadString("$FABRIC_META/${enc(MC)}/${enc(loader)}/profile/json"))
+        profile.put("id", VERSION_NAME)
+        folder.mkdirs()
+        json.writeText(profile.toString(2))
+        VersionInfo(MC, arrayOf(VersionInfo.LoaderInfo("Fabric", loader))).save(folder)
+        // its own game folder, so the Onix mods never mix with other versions
+        VersionConfig(folder, VersionConfig.IsolationType.ENABLE).save()
+        Logging.i("Onix Setup", "Created the version $VERSION_NAME (Minecraft $MC, Fabric $loader)")
+        return true
+    }
+
+    /** Before a launch (call it off the UI thread): newest Onix mod and Fabric API for Fabric versions. */
+    @JvmStatic
+    fun syncMods(version: Version) {
+        val info = version.getVersionInfo() ?: return
+        if (info.loaderInfo?.any { it.name == "Fabric" } != true) return
+        val mc = info.minecraftVersion
+        val mods = File(version.getGameDir(), "mods")
+        mods.mkdirs()
+        runCatching { syncOnix(mods, mc) }.onFailure { e -> Logging.e("Onix Setup", "Onix mod: " + Tools.printToString(e)) }
+        runCatching { syncFabricApi(mods, mc) }.onFailure { e -> Logging.e("Onix Setup", "Fabric API: " + Tools.printToString(e)) }
+    }
+
+    private fun isOnixJar(name: String) = name.startsWith("onix-client-") && name.endsWith(".jar") && !name.contains("-sources")
+
+    private fun syncOnix(mods: File, mc: String) {
+        val release = JSONObject(DownloadUtils.downloadString("https://api.github.com/repos/$REPO/releases/latest"))
+        val assets = release.getJSONArray("assets")
+        for (i in 0 until assets.length()) {
+            val asset = assets.getJSONObject(i)
+            val name = asset.getString("name")
+            // onix-client-<version>+<minecraft>.jar (GitHub may show the + as a dot)
+            if (!isOnixJar(name) || !(name.endsWith("+$mc.jar") || name.endsWith(".$mc.jar"))) continue
+            val target = File(mods, name)
+            if (target.isFile && target.length() == asset.getLong("size")) return
+            download(asset.getString("browser_download_url"), mods, name) { isOnixJar(it.name) }
+            Logging.i("Onix Setup", "Installed $name")
+            return
+        }
+        Logging.i("Onix Setup", "No Onix mod for Minecraft $mc in the latest release")
+    }
+
+    private fun syncFabricApi(mods: File, mc: String) {
+        val url = "https://api.modrinth.com/v2/project/$FABRIC_API/version?loaders=${enc("[\"fabric\"]")}&game_versions=${enc("[\"$mc\"]")}"
+        val versions = JSONArray(DownloadUtils.downloadString(url))
+        if (versions.length() == 0) return
+        var version = versions.getJSONObject(0)
+        for (i in 0 until versions.length()) {
+            if (versions.getJSONObject(i).optString("version_type") == "release") {
+                version = versions.getJSONObject(i)
+                break
+            }
+        }
+        val files = version.getJSONArray("files")
+        var file = files.getJSONObject(0)
+        for (i in 0 until files.length()) if (files.getJSONObject(i).optBoolean("primary")) file = files.getJSONObject(i)
+        val name = File(file.getString("filename")).name
+        if (File(mods, name).isFile) return
+        download(file.getString("url"), mods, name) { it.name.startsWith("fabric-api-") && it.name.endsWith(".jar") }
+        Logging.i("Onix Setup", "Installed $name")
+    }
+
+    /** Downloads into a temporary file first, then replaces the old copies (matched by [old]) with it. */
+    private fun download(url: String, mods: File, name: String, old: (File) -> Boolean) {
+        val part = File(mods, "$name.part")
+        DownloadUtils.downloadFile(url, part)
+        mods.listFiles()?.forEach { if (it.isFile && old(it)) it.delete() }
+        if (!part.renameTo(File(mods, name))) throw IllegalStateException("Could not save $name")
+    }
+
+    private fun enc(s: String): String = URLEncoder.encode(s, "UTF-8")
+}
