@@ -192,9 +192,9 @@ def glass():
          '        android:layout_height="@dimen/_40sdp"\n        android:background="@drawable/onix_glass_bar"'),
     ])
     # the scene behind the glass: an Onix title background, blurred and a little darker
-    scene = Image.open(os.path.join(ROOT, 'mod-1.21.11', 'src', 'main', 'resources', 'assets', 'onix', 'textures', 'gui', 'cinematic_bg.png')).convert('RGB')
-    scene = scene.resize((1280, 720), Image.LANCZOS).filter(ImageFilter.GaussianBlur(22))
-    scene = ImageEnhance.Brightness(scene).enhance(0.72)
+    scene = Image.open(os.path.join(ROOT, 'mod-1.21.11', 'src', 'main', 'resources', 'assets', 'onix', 'textures', 'gui', 'backgrounds', 'dusk.png')).convert('RGB')
+    scene = scene.resize((1280, 720), Image.LANCZOS).filter(ImageFilter.GaussianBlur(16))
+    scene = ImageEnhance.Brightness(scene).enhance(0.8)
     os.makedirs(os.path.join(res, 'drawable-nodpi'), exist_ok=True)
     scene.save(os.path.join(res, 'drawable-nodpi', 'onix_glass_background.jpg'), quality=88)
     patch('ZalithLauncher/src/main/java/com/movtery/zalithlauncher/feature/background/BackgroundManager.kt', [
