@@ -105,6 +105,130 @@ def icons():
     img.save(title)
 
 
+# ------------------------------------------------------------------ Liquid Glass look
+
+# frosted glass over a blurred Onix scene: translucent white surfaces, a light rim, a soft sheen at the top
+GLASS_COLORS = {
+    'black_or_white': '#FFFFFF', 'background_app': '#FF0B0B10', 'background_app_error': '#FF2A0F14',
+    'background_overlay': '#59000000', 'background_status_bar': '#00000000', 'background_menu_top': '#1FFFFFFF',
+    'background_menu_top_error': '#40FF5A5F', 'background_menu_element': '#B9A8FF', 'background_ripple_effect': '#33FFFFFF',
+    'button_background': '#26FFFFFF', 'button_background_selected': '#47FFFFFF', 'dialog_background': '#E6181820',
+    'menu_bar': '#1FFFFFFF', 'menu_bar_text': '#FFFFFF', 'menu_overlay': '#29FFFFFF', 'menu_progress': '#B9A8FF',
+    'background_item': '#1FFFFFFF', 'background_item_selected': '#40FFFFFF', 'background_item_disabled': '#33FF6B6B',
+    'background_sponsor_intermediate': '#40FFCB8B', 'background_sponsor_advanced': '#40FDA28A',
+    'edit_box_fill': '#1AFFFFFF', 'edit_box_fill_selected': '#33FFFFFF', 'mod_category_fill': '#26FFFFFF',
+    'text_background_fill': '#26FFFFFF', 'settings_category': '#C9BDFF', 'favorite_color': '#FF8FA3',
+    'icon_color': '#FFFFFF', 'primary_text': '#FFFFFF',
+}
+
+
+def glass_shape(fill, radius, rim='#38FFFFFF', padding=''):
+    """A glass surface: fill + light rim, and a sheen fading out from the top edge."""
+    return ('<?xml version="1.0" encoding="utf-8"?>\n'
+            '<layer-list xmlns:android="http://schemas.android.com/apk/res/android">\n'
+            '    <item>\n        <shape android:shape="rectangle">\n'
+            f'            <corners android:radius="{radius}" />\n'
+            f'            <solid android:color="{fill}" />\n'
+            f'            <stroke android:width="1dp" android:color="{rim}" />\n'
+            f'{padding}'
+            '        </shape>\n    </item>\n'
+            '    <item>\n        <shape android:shape="rectangle">\n'
+            f'            <corners android:radius="{radius}" />\n'
+            '            <gradient android:angle="270" android:startColor="#1FFFFFFF" android:centerColor="#00FFFFFF" '
+            'android:centerY="0.45" android:endColor="#00FFFFFF" />\n'
+            '        </shape>\n    </item>\n</layer-list>\n')
+
+
+def glass_button(fill, rim):
+    pad = ('            <padding android:bottom="@dimen/abc_button_padding_vertical_material" '
+           'android:left="@dimen/abc_button_padding_horizontal_material" '
+           'android:right="@dimen/abc_button_padding_horizontal_material" '
+           'android:top="@dimen/abc_button_padding_vertical_material" />\n')
+    inner = glass_shape(fill, '999dp', rim, pad).split('\n', 1)[1]
+    return ('<?xml version="1.0" encoding="utf-8"?>\n'
+            '<inset xmlns:android="http://schemas.android.com/apk/res/android" '
+            'android:insetLeft="@dimen/abc_button_inset_horizontal_material" android:insetTop="@dimen/abc_button_inset_vertical_material" '
+            'android:insetRight="@dimen/abc_button_inset_horizontal_material" android:insetBottom="@dimen/abc_button_inset_vertical_material">\n'
+            + inner.replace('xmlns:android="http://schemas.android.com/apk/res/android"', '') + '</inset>\n')
+
+
+def glass():
+    from PIL import Image, ImageFilter, ImageEnhance
+    res = os.path.join(OUT, 'ZalithLauncher', 'src', 'main', 'res')
+    write = lambda rel, text: open(os.path.join(res, rel), 'w', encoding='utf-8').write(text)
+    # colours: the same glass look in light and dark mode
+    for rel in ('values/colors.xml', 'values-night/colors_night.xml'):
+        path = os.path.join(res, rel)
+        text = open(path, encoding='utf-8').read()
+        for name, value in GLASS_COLORS.items():
+            text = re.sub(rf'(<color name="{name}">)[^<]*(</color>)', rf'\g<1>{value}\g<2>', text)
+        open(path, 'w', encoding='utf-8').write(text)
+    # surfaces
+    write('drawable/background_card.xml', glass_shape('@color/menu_overlay', '@dimen/_16sdp'))
+    for name, fill in (('background_item_unselected', 'background_item'), ('background_item_selected', 'background_item_selected'),
+                       ('background_item_disabled', 'background_item_disabled'), ('background_item_2_unselected', 'background_item'),
+                       ('background_item_2_selected', 'background_item_selected')):
+        write(f'drawable/{name}.xml', glass_shape(f'@color/{fill}', '@dimen/_12sdp', '#26FFFFFF'))
+    write('drawable/button_background_unselected.xml', glass_button('@color/button_background', '#33FFFFFF'))
+    write('drawable/button_background_selected.xml', glass_button('@color/button_background_selected', '#66FFFFFF'))
+    write('drawable/dialog_background.xml', glass_shape('@color/dialog_background', '@dimen/_18sdp', '#40FFFFFF'))
+    edit_pad = '            <padding android:bottom="@dimen/padding_input_bottom" android:top="@dimen/padding_input_top" />\n'
+    write('drawable/background_edit_box_unselected.xml', glass_shape('@color/edit_box_fill', '@dimen/_10sdp', '#26FFFFFF', edit_pad))
+    write('drawable/background_edit_box_selected.xml', glass_shape('@color/edit_box_fill_selected', '@dimen/_10sdp', '#80C9BDFF'))
+    # no hard drop shadows under bars on glass
+    for side in ('down', 'up', 'left', 'right'):
+        write(f'drawable/shadow_gradient_{side}.xml', '<?xml version="1.0" encoding="utf-8"?>\n'
+              '<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">\n'
+              '    <solid android:color="#00000000" />\n</shape>\n')
+    # the top bar: a glass strip with a light lower edge
+    write('drawable/onix_glass_bar.xml', '<?xml version="1.0" encoding="utf-8"?>\n'
+          '<layer-list xmlns:android="http://schemas.android.com/apk/res/android">\n'
+          '    <item><shape><solid android:color="#1FFFFFFF" /></shape></item>\n'
+          '    <item android:gravity="bottom" android:height="1dp"><shape><solid android:color="#33FFFFFF" /></shape></item>\n'
+          '</layer-list>\n')
+    patch('ZalithLauncher/src/main/res/layout/activity_launcher.xml', [
+        ('        android:layout_height="@dimen/_40sdp"\n        android:background="@color/background_menu_top"',
+         '        android:layout_height="@dimen/_40sdp"\n        android:background="@drawable/onix_glass_bar"'),
+    ])
+    # the scene behind the glass: an Onix title background, blurred and a little darker
+    scene = Image.open(os.path.join(ROOT, 'mod-1.21.11', 'src', 'main', 'resources', 'assets', 'onix', 'textures', 'gui', 'cinematic_bg.png')).convert('RGB')
+    scene = scene.resize((1280, 720), Image.LANCZOS).filter(ImageFilter.GaussianBlur(22))
+    scene = ImageEnhance.Brightness(scene).enhance(0.72)
+    os.makedirs(os.path.join(res, 'drawable-nodpi'), exist_ok=True)
+    scene.save(os.path.join(res, 'drawable-nodpi', 'onix_glass_background.jpg'), quality=88)
+    patch('ZalithLauncher/src/main/java/com/movtery/zalithlauncher/feature/background/BackgroundManager.kt', [
+        ('            ContextCompat.getDrawable(context, R.color.background_app)\n',
+         '            ContextCompat.getDrawable(context, R.drawable.onix_glass_background)\n'),
+    ])
+    # dark themes everywhere and the Onix interface font (Geist, OFL)
+    os.makedirs(os.path.join(res, 'font'), exist_ok=True)
+    shutil.copyfile(os.path.join(ROOT, 'launcher', 'src', 'fonts', 'geist-500.ttf'), os.path.join(res, 'font', 'onix_font.ttf'))
+    patch('ZalithLauncher/src/main/res/values-night/styles.xml', [
+        ('<style name="AppTheme" parent="@style/Theme.AppCompat.NoActionBar">\n',
+         '<style name="AppTheme" parent="@style/Theme.AppCompat.NoActionBar">\n'
+         '        <item name="android:fontFamily">@font/onix_font</item>\n'
+         '        <item name="fontFamily">@font/onix_font</item>\n'
+         '        <item name="colorAccent">#C9BDFF</item>\n'
+         '        <item name="android:windowBackground">@color/background_app</item>\n'),
+    ])
+    for rel in ('ZalithLauncher/src/main/res/values/styles.xml',):
+        patch(rel, [
+            ('<style name="AppTheme" parent="@style/Theme.AppCompat.DayNight.NoActionBar">\n',
+             '<style name="AppTheme" parent="@style/Theme.AppCompat.NoActionBar">\n'
+             '        <item name="android:fontFamily">@font/onix_font</item>\n'
+             '        <item name="fontFamily">@font/onix_font</item>\n'
+             '        <item name="colorAccent">#C9BDFF</item>\n'
+             '        <item name="android:windowBackground">@color/background_app</item>\n'),
+            ('<style name="CustomDialogStyle" parent="Theme.AppCompat.Light.Dialog">\n',
+             '<style name="CustomDialogStyle" parent="Theme.AppCompat.Dialog">\n'
+             '        <item name="android:fontFamily">@font/onix_font</item>\n'
+             '        <item name="android:backgroundDimAmount">0.55</item>\n'),
+            ('<style name="CustomAlertDialogTheme" parent="Theme.AppCompat.Light.Dialog.Alert">\n',
+             '<style name="CustomAlertDialogTheme" parent="Theme.AppCompat.Dialog.Alert">\n'
+             '        <item name="android:fontFamily">@font/onix_font</item>\n'),
+        ])
+
+
 def main():
     code, name = version()
     if '--version' in sys.argv:
@@ -159,6 +283,7 @@ def main():
          '                    com.movtery.zalithlauncher.onix.OnixUpdate.check(context, !ignore)\n'),
     ])
     icons()
+    glass()
     print(f'Onix Android {name} ({code}) ready in {OUT}')
 
 

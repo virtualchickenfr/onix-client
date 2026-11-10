@@ -62,6 +62,51 @@ jobs:
           name: onix-android-${{ matrix.arch }}
           path: android/build/zalith/ZalithLauncher/build/outputs/apk/release/*.apk
 
+  # starts the app in an Android emulator and pushes screenshots to the branch android-screens (to check the design)
+  screens:
+    needs: apk
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: onix-android-all
+          path: apk
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+
+      - name: Run the app and take screenshots
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: false
+          script: |
+            mkdir -p shots
+            adb install -r "$(ls apk/*.apk | head -1)"
+            adb shell monkey -p dev.onix.android -c android.intent.category.LAUNCHER 1
+            sleep 25; adb exec-out screencap -p > shots/01_start.png
+            sleep 20; adb exec-out screencap -p > shots/02_after_45s.png
+            adb shell input keyevent KEYCODE_BACK; sleep 4; adb exec-out screencap -p > shots/03_back.png
+            adb logcat -d > shots/logcat.txt || true
+
+      - name: Push the screenshots
+        if: always()
+        run: |
+          [ -d shots ] || exit 0
+          cd shots
+          git init -q
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git checkout -q -b android-screens
+          git add -A
+          git commit -q -m "Android screenshots for ${GITHUB_SHA::8}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" android-screens
+
   # only main (or a manual run) adds the app to a release; other branches keep it as a build artifact
   publish:
     needs: apk
