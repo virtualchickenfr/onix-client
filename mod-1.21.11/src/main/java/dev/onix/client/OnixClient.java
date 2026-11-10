@@ -55,6 +55,15 @@ public class OnixClient implements ClientModInitializer {
 
     public static final KeyMapping.Category KEY_CATEGORY = KeyMapping.Category.register(net.minecraft.resources.Identifier.fromNamespaceAndPath(MOD_ID, "main"));
     public static KeyMapping MENU_KEY;
+
+    /** Effects that cost the most frames; switched off once on phones (they can be turned on again). */
+    private static final String[] MOBILE_HEAVY = {"atmosphere", "customsky", "impactfx", "halo", "rainripples", "colorgrading",
+            "trail", "jumpcircles", "handaura", "totemspirit", "framegraph", "shaders"};
+
+    /** True when the game runs on Android through a PojavLauncher based launcher (it sets POJAV_* variables). */
+    public static boolean isMobile() {
+        return System.getenv("POJAV_RENDERER") != null || System.getenv("POJAV_NATIVEDIR") != null;
+    }
     public static KeyMapping CWT_KEY;
 
     @Override
@@ -103,6 +112,20 @@ public class OnixClient implements ClientModInitializer {
             CONFIG.roundSet2.set(true);
             if (!CONFIG.buttonStyle.is("Pill")) CONFIG.buttonStyle.set("Rounded");
             for (var m : MODULES.all()) if (m instanceof dev.onix.client.module.HudModule hud) hud.useRoundCorners();
+            save();
+        }
+        // on a phone (PojavLauncher / Zalith / the Onix Android app) everything goes to FPS once
+        if (isMobile() && !CONFIG.mobileSet.isOn()) {
+            CONFIG.mobileSet.set(true);
+            var preset = MODULES.get(dev.onix.client.module.impl.performance.PerformancePresetModule.class);
+            if (preset != null) {
+                preset.useFastGraphics();
+                preset.setEnabled(true);
+            }
+            for (String id : MOBILE_HEAVY) {
+                var m = MODULES.get(id);
+                if (m != null) m.setEnabled(false);
+            }
             save();
         }
         var lyrics = MODULES.get(dev.onix.client.module.impl.hud.SongLyricsModule.class);

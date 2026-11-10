@@ -58,6 +58,7 @@ public class OnixConfig {
     /** 1.1.13: the HUD uses the smooth Onix font (Geist) once for everyone. */
     public final BoolSetting fontSet = new BoolSetting("fontSet", "Font Set", false).hidden();
     public final BoolSetting roundSet2 = new BoolSetting("roundSet2", "Round Set 2", false).hidden();
+    public final BoolSetting mobileSet = new BoolSetting("mobileSet", "Mobile Set", false).hidden();
     public final BoolSetting roundSet = new BoolSetting("roundSet", "Round Set", false).hidden();
     public final ModeSetting language = new ModeSetting("language", "Language", "English", "Deutsch")
             .describe("Language of the Onix menus, categories and modules (Minecraft keeps its own language).");
@@ -172,7 +173,7 @@ public class OnixConfig {
                 onixServer, socialOn, shareServer, nameTagLooks, lightMode, buttonStyle, carbonButtons, menuSkin, menuDesign, menuCharacter, titleDesign, loadingScreens, loadingStyle, loadingTips,
                 hideHudInDebug, snapping, snapDistance, editorGrid,
                 notifications, notificationSound, notificationTime, notificationPosition,
-                ruleNotes, rulesOnJoin, rulesSkip, autoSwitchProfiles, introDone, cinematicSet, cinematicSet2, cleanSet, edexSet, roundSet, roundSet2, fontSet, menuGlass);
+                ruleNotes, rulesOnJoin, rulesSkip, autoSwitchProfiles, introDone, cinematicSet, cinematicSet2, cleanSet, edexSet, roundSet, roundSet2, mobileSet, fontSet, menuGlass);
     }
 
     public float menuScaleFactor() {

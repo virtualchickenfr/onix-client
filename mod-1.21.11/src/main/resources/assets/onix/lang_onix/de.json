@@ -339,5 +339,7 @@
  "name.halo": "Heiligenschein",
  "desc.halo": "Ein leuchtender Ring schwebt über deinem Kopf.",
  "name.rainripples": "Regen-Ringe",
- "desc.rainripples": "Regentropfen hinterlassen kleine Ringe auf dem Boden und auf Wasser."
+ "desc.rainripples": "Regentropfen hinterlassen kleine Ringe auf dem Boden und auf Wasser.",
+ "name.shaders": "Shader",
+ "desc.shaders": "Schaltet das Shaderpack an und aus (braucht Iris, das der Launcher auf starken PCs installiert)."
 }

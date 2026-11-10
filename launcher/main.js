@@ -293,6 +293,8 @@ if (!app.requestSingleInstanceLock()) {
 }
 
 app.whenReady().then(() => {
+  // the graphics card decides whether new profiles get shaders (lib/shaders.js)
+  app.getGPUInfo('complete').then((i) => shaders.setGpu(i)).catch(() => {});
   fs.mkdirSync(GAME_DIR, { recursive: true });
   store = new Store(path.join(app.getPath('userData'), 'onix-launcher.json'), {});
   // all Minecraft versions Fabric supports (cached, refreshed in the background)

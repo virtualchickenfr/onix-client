@@ -22,6 +22,11 @@ public class PerformancePresetModule extends Module {
     private Integer prevBlend;
     private GraphicsPreset prevGraphics;
 
+    /** Phones: fast graphics on top of the other savings. */
+    public void useFastGraphics() {
+        fastGraphics.set(true);
+    }
+
     public PerformancePresetModule() {
         super("performance", "Performance Preset", "One switch for FPS-friendly video settings.", Category.PERFORMANCE, false);
         tags("fps boost", "low end", "potato");

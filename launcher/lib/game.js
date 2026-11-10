@@ -251,6 +251,12 @@ async function ensureMods(root, settings, report, log, throttle = true, mc = MC_
 async function ensureDefaultShaders(gameDir, settings, report, log, mc) {
   if (settings.shaders === false || !settings.performanceMods) return; // Iris needs Sodium from the performance pack
   const shaders = require('./shaders');
+  // shaders halve the frame rate: only PCs with a strong graphics card get them (the Onix module Shaders switches them)
+  const gpu = shaders.gpuInfo();
+  if (!gpu.strong) {
+    log(`Shaders: left off for more FPS (graphics card: ${gpu.name}) – Profile › Shaders installs them by hand`);
+    return;
+  }
   const marker = path.join(gameDir, 'shaderpacks', '.onix-default-shader');
   let before = null;
   try {

@@ -161,6 +161,7 @@ public class ModuleManager {
         register(new PerformancePresetModule());
         register(new EntityDistanceModule());
         register(new RenderDistanceToggleModule());
+        register(new dev.onix.client.module.impl.performance.ShadersModule());
 
         // from Carbon Client
         register(new dev.onix.client.module.impl.hud.MousestrokesModule());
