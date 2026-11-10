@@ -167,31 +167,6 @@ public final class DevTest {
             OnixClient.LOGGER.info("[devtest] modules with carbon pack: {}", OnixClient.MODULES.all().size());
             mc.setScreen(null);
         });
-        // viral pack: a double kill with streak announcer, kill cam, kill feed, aura, lightning, firework, shockwave
-        then(2, () -> {
-            for (var m : OnixClient.MODULES.all()) {
-                if (java.util.Set.of("vx_streak", "vx_killcam", "vx_killfeed", "vx_aura", "vx_lightning", "vx_firework", "vx_shockwave", "vx_killzoom", "vx_shake")
-                        .contains(m.getId())) m.setEnabled(true);
-            }
-            dev.onix.client.module.impl.pack.Events.fire(dev.onix.client.module.impl.pack.Events.Event.KILL, mc.player);
-            dev.onix.client.module.impl.pack.Events.fire(dev.onix.client.module.impl.pack.Events.Event.KILL, mc.player);
-            OnixClient.LOGGER.info("[devtest] modules with viral pack: {}", OnixClient.MODULES.all().size());
-        });
-        then(6, () -> snap(mc, "09i_viral_double_kill"));
-        then(40, () -> {
-            for (var m : OnixClient.MODULES.all()) if (m.getId().startsWith("vx_")) m.setEnabled(false);
-            for (var m : OnixClient.MODULES.all()) if (java.util.Set.of("vx_phonk", "vx_popfeed").contains(m.getId())) m.setEnabled(true);
-            dev.onix.client.module.impl.pack.Events.fire(dev.onix.client.module.impl.pack.Events.Event.ENEMY_POP, mc.player);
-            dev.onix.client.module.impl.pack.Events.fire(dev.onix.client.module.impl.pack.Events.Event.KILL, mc.player);
-        });
-        then(6, () -> snap(mc, "09j_viral_phonk"));
-        then(40, () -> {
-            for (var m : OnixClient.MODULES.all()) if (m.getId().startsWith("vx_")) m.setEnabled(false);
-            for (var m : OnixClient.MODULES.all()) if (m.getId().equals("vx_wasted")) m.setEnabled(true);
-            dev.onix.client.module.impl.pack.Events.fire(dev.onix.client.module.impl.pack.Events.Event.DEATH, mc.player);
-        });
-        then(10, () -> snap(mc, "09k_viral_wasted"));
-        then(2, () -> { for (var m : OnixClient.MODULES.all()) if (m.getId().startsWith("vx_")) m.setEnabled(false); });
         // carbon world visuals: reach circle, light levels, trajectories with a pearl, logout list
         then(2, () -> {
             for (String id : new String[]{"cb_reachcircle", "cb_lightlevels", "cb_trajectories", "cb_logoutlist"}) {
@@ -236,7 +211,7 @@ public final class DevTest {
                 boolean safe = m instanceof dev.onix.client.module.HudModule || m.getCategory() == dev.onix.client.module.Category.COMBAT
                         || m.getCategory() == dev.onix.client.module.Category.VISUAL;
                 String id = m.getId();
-                if (safe && !id.startsWith("cb_no") && !id.equals("fullbright") && !id.equals("darkmode") && !id.startsWith("vx_impact") && !id.startsWith("vx_wasted")) m.setEnabled(true);
+                if (safe && !id.startsWith("cb_no") && !id.equals("fullbright") && !id.equals("darkmode")) m.setEnabled(true);
             }
         });
         then(40, () -> {

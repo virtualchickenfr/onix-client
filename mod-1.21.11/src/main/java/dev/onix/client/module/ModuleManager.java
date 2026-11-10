@@ -169,7 +169,6 @@ public class ModuleManager {
         register(new dev.onix.client.module.impl.utility.ToastControlModule());
         register(new dev.onix.client.module.impl.performance.ParticleLimiterModule());
 
-        for (Module m : dev.onix.client.module.impl.pack.ViralPack.modules()) register(m);
         for (Module m : dev.onix.client.module.impl.carbon.CarbonPack.modules()) register(m);
         // init once everything is registered (the packs register world renderers here too)
         for (Module m : modules) {
