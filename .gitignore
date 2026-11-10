@@ -1,4 +1,5 @@
 mod/.gradle/
+mod-1.21.11/.gradle/
 mod/build/
 mod/run/
 mod/out/
