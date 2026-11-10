@@ -109,7 +109,8 @@ def icons():
 
 # frosted glass over a blurred Onix scene: translucent white surfaces, a light rim, a soft sheen at the top
 GLASS_COLORS = {
-    'black_or_white': '#FFFFFF', 'background_app': '#FF0B0B10', 'background_app_error': '#FF2A0F14',
+    'black_or_white': '#FFFFFF', 'background_app': '#00000000',  # the blurred scene (window background) shows through
+    'background_app_error': '#FF2A0F14',
     'background_overlay': '#59000000', 'background_status_bar': '#00000000', 'background_menu_top': '#1FFFFFFF',
     'background_menu_top_error': '#40FF5A5F', 'background_menu_element': '#B9A8FF', 'background_ripple_effect': '#33FFFFFF',
     'button_background': '#26FFFFFF', 'button_background_selected': '#47FFFFFF', 'dialog_background': '#E6181820',
@@ -209,7 +210,7 @@ def glass():
          '        <item name="android:fontFamily">@font/onix_font</item>\n'
          '        <item name="fontFamily">@font/onix_font</item>\n'
          '        <item name="colorAccent">#C9BDFF</item>\n'
-         '        <item name="android:windowBackground">@color/background_app</item>\n'),
+         '        <item name="android:windowBackground">@drawable/onix_glass_background</item>\n'),
     ])
     for rel in ('ZalithLauncher/src/main/res/values/styles.xml',):
         patch(rel, [
@@ -218,7 +219,7 @@ def glass():
              '        <item name="android:fontFamily">@font/onix_font</item>\n'
              '        <item name="fontFamily">@font/onix_font</item>\n'
              '        <item name="colorAccent">#C9BDFF</item>\n'
-             '        <item name="android:windowBackground">@color/background_app</item>\n'),
+             '        <item name="android:windowBackground">@drawable/onix_glass_background</item>\n'),
             ('<style name="CustomDialogStyle" parent="Theme.AppCompat.Light.Dialog">\n',
              '<style name="CustomDialogStyle" parent="Theme.AppCompat.Dialog">\n'
              '        <item name="android:fontFamily">@font/onix_font</item>\n'

@@ -90,8 +90,10 @@ jobs:
             adb install -r "$(ls apk/*.apk | head -1)"
             adb shell monkey -p dev.onix.android -c android.intent.category.LAUNCHER 1
             sleep 25; adb exec-out screencap -p > shots/01_start.png
-            sleep 20; adb exec-out screencap -p > shots/02_after_45s.png
-            adb shell input keyevent KEYCODE_BACK; sleep 4; adb exec-out screencap -p > shots/03_back.png
+            adb shell input tap 2035 997
+            sleep 8; adb exec-out screencap -p > shots/02_unpacking.png
+            sleep 60; adb exec-out screencap -p > shots/03_home.png
+            sleep 20; adb exec-out screencap -p > shots/04_home_later.png
             adb logcat -d > shots/logcat.txt || true
 
       - name: Push the screenshots
