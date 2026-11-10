@@ -74,20 +74,26 @@ class OnixWebFragment : Fragment() {
         return view
     }
 
+    /** The PC interface has its own title bar and navigation: the app's bar only shows on its other pages. */
+    private fun appBar(show: Boolean) {
+        val v = if (show) View.VISIBLE else View.GONE
+        activity?.findViewById<View>(R.id.top_layout)?.visibility = v
+        activity?.findViewById<View>(R.id.shadowView)?.visibility = v
+    }
+
     override fun onResume() {
         super.onResume()
-        // the PC interface has its own title bar and navigation
-        activity?.findViewById<View>(R.id.top_layout)?.visibility = View.GONE
-        activity?.findViewById<View>(R.id.shadowView)?.visibility = View.GONE
+        if (!isHidden) appBar(false)
         emit("android:resume", JSONObject())
     }
 
-    override fun onPause() {
-        super.onPause()
-        activity?.findViewById<View>(R.id.top_layout)?.visibility = View.VISIBLE
+    override fun onHiddenChanged(hidden: Boolean) {
+        super.onHiddenChanged(hidden)
+        appBar(hidden)
     }
 
     override fun onDestroyView() {
+        appBar(true)
         web?.destroy()
         web = null
         super.onDestroyView()

@@ -90,6 +90,7 @@ jobs:
             mkdir -p shots
             adb install -r "$(ls apk/*.apk | head -1)"
             adb shell settings put secure immersive_mode_confirmations confirmed
+            adb shell pm grant dev.onix.android android.permission.POST_NOTIFICATIONS || true
             sleep 45
             adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS || true
             adb shell monkey -p dev.onix.android -c android.intent.category.LAUNCHER 1
