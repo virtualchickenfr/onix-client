@@ -186,10 +186,10 @@ public class ImpactFxModule extends Module implements OverlayRenderer {
                     float grow = Math.min(1f, t * 4f);
                     float out = t < 0.6f ? 1f : 1f - (t - 0.6f) / 0.4f;
                     float h = 9f * grow * b.scale();
-                    float r = 0.35f * b.scale() * (0.6f + 0.4f * out);
-                    FxDraw.band(m, vc, x, y, z, r, h, FxDraw.withAlpha(0xFFFFFFFF, out * 0.9f), FxDraw.withAlpha(c, 0f), 24);
-                    FxDraw.band(m, vc, x, y, z, r * 2.2f, h * 0.6f, FxDraw.withAlpha(c, out * 0.45f), FxDraw.withAlpha(c, 0f), 24);
-                    FxDraw.ringBoth(m, vc, x, y + 0.03, z, 0f, r * 4f, FxDraw.withAlpha(c, out * 0.6f), FxDraw.withAlpha(c, 0f), 32);
+                    // a slim bright core in a soft gold sheath (the kill splash lights the ground)
+                    float r = 0.22f * b.scale() * (0.6f + 0.4f * out);
+                    FxDraw.band(m, vc, x, y, z, r, h, FxDraw.withAlpha(0xFFFFFFFF, out * 0.85f), FxDraw.withAlpha(c, 0f), 24);
+                    FxDraw.band(m, vc, x, y, z, r * 2f, h * 0.55f, FxDraw.withAlpha(c, out * 0.3f), FxDraw.withAlpha(c, 0f), 24);
                 }
             }
         }
