@@ -40,9 +40,7 @@ public final class Events {
     }
 
     private static final Map<Event, List<BiConsumer<Event, Entity>>> LISTENERS = new EnumMap<>(Event.class);
-    private static final Map<Event, Integer> SESSION = new EnumMap<>(Event.class);
     private static final Map<Event, Long> LAST = new EnumMap<>(Event.class);
-    private static final Map<Event, List<Long>> RECENT = new EnumMap<>(Event.class);
     private static boolean hooked;
 
     public static void on(Event e, BiConsumer<Event, Entity> listener) {
@@ -51,11 +49,7 @@ public final class Events {
 
     public static void fire(Event e, Entity entity) {
         long now = System.currentTimeMillis();
-        SESSION.merge(e, 1, Integer::sum);
         LAST.put(e, now);
-        List<Long> r = RECENT.computeIfAbsent(e, k -> new ArrayList<>());
-        r.add(now);
-        r.removeIf(t -> now - t > 60_000);
         for (BiConsumer<Event, Entity> l : LISTENERS.getOrDefault(e, List.of())) {
             try {
                 l.accept(e, entity);
@@ -65,28 +59,14 @@ public final class Events {
         }
     }
 
-    public static int session(Event e) {
-        return SESSION.getOrDefault(e, 0);
-    }
-
     /** Milliseconds since it last happened, or -1. */
     public static long since(Event e) {
         Long t = LAST.get(e);
         return t == null ? -1 : System.currentTimeMillis() - t;
     }
 
-    public static int perMinute(Event e) {
-        long now = System.currentTimeMillis();
-        List<Long> r = RECENT.get(e);
-        if (r == null) return 0;
-        r.removeIf(t -> now - t > 60_000);
-        return r.size();
-    }
-
     public static void reset() {
-        SESSION.clear();
         LAST.clear();
-        RECENT.clear();
     }
 
     // ------------------------------------------------------------------ sources

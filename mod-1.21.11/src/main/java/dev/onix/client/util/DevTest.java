@@ -167,28 +167,8 @@ public final class DevTest {
             OnixClient.LOGGER.info("[devtest] modules with carbon pack: {}", OnixClient.MODULES.all().size());
             mc.setScreen(null);
         });
-        // pack 1: a few of the new game-mode modules on the HUD
-        then(2, () -> {
-            mc.setScreen(null);
-            for (var m : OnixClient.MODULES.all()) {
-                if (java.util.Set.of("gm_attackcooldown", "gm_portalcoords", "gm_orelevel", "gm_movement", "gm_freeslots", "gm_dimension", "gm_nightin")
-                        .contains(m.getId())) m.setEnabled(true);
-            }
-            OnixClient.LOGGER.info("[devtest] modules: {}", OnixClient.MODULES.all().size());
-        });
-        then(20, () -> snap(mc, "09f_pack_hud"));
-        // visual pack: fire a kill and a crit by hand and look at the effects
-        then(2, () -> {
-            for (var m : OnixClient.MODULES.all()) {
-                if (java.util.Set.of("gm2_fx_killconfetti", "gm2_fx_killshake", "gm2_fx_critflash", "gm2_sword_hitmarker").contains(m.getId())) m.setEnabled(true);
-            }
-            dev.onix.client.module.impl.pack.Events.fire(dev.onix.client.module.impl.pack.Events.Event.KILL, mc.player);
-            dev.onix.client.module.impl.pack.Events.fire(dev.onix.client.module.impl.pack.Events.Event.HIT, mc.player);
-        });
-        then(5, () -> snap(mc, "09g_pack_kill_effects"));
         // viral pack: a double kill with streak announcer, kill cam, kill feed, aura, lightning, firework, shockwave
         then(2, () -> {
-            for (var m : OnixClient.MODULES.all()) if (m.getId().startsWith("gm2_")) m.setEnabled(false);
             for (var m : OnixClient.MODULES.all()) {
                 if (java.util.Set.of("vx_streak", "vx_killcam", "vx_killfeed", "vx_aura", "vx_lightning", "vx_firework", "vx_shockwave", "vx_killzoom", "vx_shake")
                         .contains(m.getId())) m.setEnabled(true);
@@ -280,7 +260,6 @@ public final class DevTest {
         then(2, () -> mc.setScreen(new OnixMenuScreen(null, OnixMenuScreen.View.MODULES)));
         then(30, () -> snap(mc, "09h_pack_menu_count"));
         then(2, () -> mc.setScreen(null));
-        then(2, () -> { for (var m : OnixClient.MODULES.all()) if (m.getId().startsWith("gm_")) m.setEnabled(false); });
         // name styles: the menu tab and your own name tag in third person
         then(2, () -> {
             dev.onix.client.cosmetics.Cosmetics.testOwnAll = true;
