@@ -90,13 +90,13 @@ jobs:
             mkdir -p shots
             adb install -r "$(ls apk/*.apk | head -1)"
             adb shell settings put secure immersive_mode_confirmations confirmed
+            sleep 45
+            adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS || true
             adb shell monkey -p dev.onix.android -c android.intent.category.LAUNCHER 1
-            sleep 25; adb exec-out screencap -p > shots/01_start.png
+            sleep 30; adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS || true
+            sleep 2; adb exec-out screencap -p > shots/01_start.png
             adb shell input tap 2035 997
-            sleep 8; adb exec-out screencap -p > shots/02_unpacking.png
-            sleep 90; adb exec-out screencap -p > shots/03_home.png
-            sleep 60; adb exec-out screencap -p > shots/04_home_later.png
-            adb shell input tap 1200 140; sleep 3; adb exec-out screencap -p > shots/05_tap_top.png
+            for i in 2 3 4 5 6 7; do sleep 40; adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS || true; sleep 2; adb exec-out screencap -p > shots/0${i}_after.png; done
             adb logcat -d > shots/logcat.txt || true
 
       - name: Push the screenshots
