@@ -112,6 +112,9 @@ public class ModuleManager {
         register(new dev.onix.client.module.impl.visual.ColorGradingModule());
         register(new dev.onix.client.module.impl.visual.CustomGlintModule());
         register(new dev.onix.client.module.impl.visual.TotemSpiritModule());
+        register(new dev.onix.client.module.impl.visual.ImpactFxModule());
+        register(new dev.onix.client.module.impl.visual.HaloModule());
+        register(new dev.onix.client.module.impl.visual.RainRipplesModule());
         register(new NametagsModule());
         register(new OnixBadgeModule());
         register(new CustomSkyModule());

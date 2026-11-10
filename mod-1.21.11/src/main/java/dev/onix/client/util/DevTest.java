@@ -259,6 +259,23 @@ public final class DevTest {
         then(10, () -> mc.options.keyJump.setDown(true));
         then(2, () -> mc.options.keyJump.setDown(false));
         then(4, () -> snap(mc, "09e_jump_circle"));
+        // impact fx + halo: fire a hit, a crit and a kill on yourself (third person from behind) and look
+        then(2, () -> {
+            OnixClient.MODULES.get(dev.onix.client.module.impl.visual.JumpCirclesModule.class).setEnabled(false);
+            OnixClient.MODULES.get(dev.onix.client.module.impl.visual.ImpactFxModule.class).setEnabled(true);
+            OnixClient.MODULES.get(dev.onix.client.module.impl.visual.HaloModule.class).setEnabled(true);
+            if (mc.player != null) mc.player.setXRot(20f);
+            dev.onix.client.module.impl.pack.Events.fire(dev.onix.client.module.impl.pack.Events.Event.HIT, mc.player);
+        });
+        then(3, () -> snap(mc, "09e2_impact_hit"));
+        then(2, () -> dev.onix.client.module.impl.pack.Events.fire(dev.onix.client.module.impl.pack.Events.Event.CRIT, mc.player));
+        then(3, () -> snap(mc, "09e3_impact_crit"));
+        then(2, () -> dev.onix.client.module.impl.pack.Events.fire(dev.onix.client.module.impl.pack.Events.Event.KILL, mc.player));
+        then(6, () -> snap(mc, "09e4_impact_kill_halo"));
+        then(30, () -> {
+            OnixClient.MODULES.get(dev.onix.client.module.impl.visual.ImpactFxModule.class).setEnabled(false);
+            OnixClient.MODULES.get(dev.onix.client.module.impl.visual.HaloModule.class).setEnabled(false);
+        });
         // song lyrics in the world (a sample line, no music needed)
         then(2, () -> {
             mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);

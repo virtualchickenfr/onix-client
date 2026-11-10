@@ -333,5 +333,11 @@
  "ui.Profiles": "Profile",
  "ui.Quit Game": "Spiel beenden",
  "ui.Minecraft Settings": "Minecraft-Einstellungen",
- "ui.Mod menu": "Mod-Menü"
+ "ui.Mod menu": "Mod-Menü",
+ "name.impactfx": "Impact FX",
+ "desc.impactfx": "Leuchtende Ringe, Boden-Splashes, Crit-Sterne und eine Lichtsäule bei Kills.",
+ "name.halo": "Heiligenschein",
+ "desc.halo": "Ein leuchtender Ring schwebt über deinem Kopf.",
+ "name.rainripples": "Regen-Ringe",
+ "desc.rainripples": "Regentropfen hinterlassen kleine Ringe auf dem Boden und auf Wasser."
 }
