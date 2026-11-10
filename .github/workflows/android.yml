@@ -139,7 +139,8 @@ jobs:
           fi
           draft=$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json isDraft -q .isDraft)
           has=$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json assets -q '.assets[].name' | grep -c '^onix-android.json$' || true)
-          if [ "$draft" != "true" ] && [ "$has" != "0" ]; then
+          # a manual run may replace the app of a published release (pushes to main never do)
+          if [ "$draft" != "true" ] && [ "$has" != "0" ] && [ "$GITHUB_EVENT_NAME" != "workflow_dispatch" ]; then
             echo "$tag is published and already has the app – not replacing it."
             exit 0
           fi
