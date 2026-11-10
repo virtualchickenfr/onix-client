@@ -1386,3 +1386,14 @@ body.edex-enter .main::after { content: ""; position: fixed; left: 0; right: 0; 
   body.edex-enter *, body.edex-enter .main::after, .edex-term, .edex-term.out, .boot-log .bl { animation: none !important; }
   .boot.edex.title .boot-word::before, .boot.edex.title .boot-word::after { display: none; }
 }
+
+/* one click shaders (profile › Shaders) */
+.shader-quick { border: 1px solid var(--line); border-radius: 16px; background: var(--s1); padding: 16px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 12px; }
+.shader-quick .sq-title { display: flex; flex-direction: column; gap: 4px; }
+.shader-quick .sq-title b { font-size: 14px; color: var(--text); }
+.shader-quick .sq-title span { font-size: 12px; color: var(--text-3); }
+.shader-quick .sq-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.shader-quick .sq-item { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 12px; background: var(--s2, var(--s1)); border: 1px solid var(--line); }
+.shader-quick .sq-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.shader-quick .sq-text { font-size: 12px; color: var(--text-2); flex: 1; }
+.shader-quick .btn { align-self: flex-start; border-radius: 999px; }

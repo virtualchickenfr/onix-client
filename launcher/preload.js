@@ -50,6 +50,8 @@ contextBridge.exposeInMainWorld('onix', {
   profileSizes: (profileId) => invoke('content:sizes', profileId),
   installedAssets: (profileId, kind) => invoke('modrinth:installedAssets', profileId, kind),
   installAsset: (profileId, kind, projectId) => invoke('modrinth:installAsset', profileId, kind, projectId),
+  quickShaders: () => invoke('shaders:quickList'),
+  quickShaderSetup: (profileId, slug) => invoke('shaders:quickSetup', profileId, slug),
 
   getCosmetics: () => invoke('cosmetics:get'),
   setCosmetic: (slot, id) => invoke('cosmetics:set', slot, id),

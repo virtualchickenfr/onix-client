@@ -20,6 +20,7 @@ const skins = require('./lib/skins');
 const shortcuts = require('./lib/shortcuts');
 const packFolders = require('./lib/packfolders');
 const crashDoctor = require('./lib/crashdoctor');
+const shaders = require('./lib/shaders');
 
 const GAME_DIR = path.join(app.getPath('appData'), '.onix');
 const TOTAL_MB = Math.floor(os.totalmem() / 1024 / 1024);
@@ -437,6 +438,25 @@ app.whenReady().then(() => {
     notWhileRunning(profileId);
     if (typeof projectId !== 'string' || !PROJECT_ID.test(projectId)) throw new Error('Unknown project');
     return modrinth.installAsset(projectId, kind, assetDir(profileId, kind), modsDirOf(profileId), progress, mcOf(profileId), loaderOf(profileId));
+  }));
+  // One click shaders: Iris + a shader pack from Modrinth, switched on in Iris straight away
+  ipcMain.handle('shaders:quickList', () => shaders.QUICK);
+  ipcMain.handle('shaders:quickSetup', safe(async (_e, profileId, slug) => {
+    notWhileRunning(profileId);
+    if (!shaders.isQuick(slug)) throw new Error('Unknown shader');
+    const profile = profileById(profileId);
+    if ((profile.loader || 'fabric') !== 'fabric') throw new Error('Shaders need a Fabric profile.');
+    // Iris runs on Sodium, which comes with the performance pack
+    if (profile.performanceMods === false) {
+      profiles.save({ ...profile, performanceMods: true });
+      send('profiles:changed', profileState());
+    }
+    const dir = assetDir(profileId, 'shader');
+    const result = await modrinth.installAsset(slug, 'shader', dir, modsDirOf(profileId), progress, mcOf(profileId), loaderOf(profileId));
+    const entry = modrinth.readManifest(dir)[slug];
+    if (!entry) throw new Error('The shader pack could not be installed.');
+    shaders.enableInIris(profiles.dir(profileById(profileId)), entry.file);
+    return { ...result, pack: entry.title };
   }));
 
   // What else is in a profile: packs, worlds, screenshots, logs
