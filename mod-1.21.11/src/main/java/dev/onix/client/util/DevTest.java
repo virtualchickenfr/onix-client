@@ -203,9 +203,9 @@ public final class DevTest {
                 dev.onix.client.gui.FallTransition.render(this, ctx, "Loading world", "Preparing spawn area · 42%", 0.42f);
             }
         }));
-        then(16, () -> snap(mc, "09g0_fall_air"));
-        then(15, () -> snap(mc, "09g0_fall_splash"));
-        then(50, () -> snap(mc, "09g0_fall_underwater"));
+        then(20, () -> snap(mc, "09g0_sunken_enter"));
+        then(40, () -> snap(mc, "09g0_sunken_mid"));
+        then(60, () -> snap(mc, "09g0_sunken_deep"));
         then(2, () -> mc.setScreen(null));
         // performance: frames per second with no modules vs. every HUD, combat and visual module
         java.util.List<dev.onix.client.module.Module> before = new java.util.ArrayList<>();

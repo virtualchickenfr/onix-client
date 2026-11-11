@@ -17,8 +17,10 @@ const Skin3D = (() => {
     cool: { head: [-4, 18, 0], ra: [-20, 0, -16], la: [-20, 0, -16], rl: [0, 0, 0], ll: [-8, 0, -6] },
     // the Play transition: arms up, legs apart, falling (not picked as a home pose)
     fall: { head: [-22, 0, 0], ra: [-12, 0, 148], la: [-12, 0, 148], rl: [16, 0, 12], ll: [-10, 0, 12], flail: true },
+    // the sunken transition: falling backwards, arms reaching up for the light, one knee pulled up
+    sunken: { head: [26, 0, 0], ra: [-38, 0, 28], la: [-18, 0, 34], rl: [-88, 0, 4], ll: [-22, 0, 6], drift: true },
   };
-  const POSE_NAMES = Object.keys(POSES).filter((p) => p !== 'fall');
+  const POSE_NAMES = Object.keys(POSES).filter((p) => p !== 'fall' && p !== 'sunken');
 
   const rad = (d) => (d * Math.PI) / 180;
   function rot([rx, ry, rz]) {
@@ -99,9 +101,11 @@ const Skin3D = (() => {
         r[2] += breathe * 2.5;
         if (pose.wave && key === 'ra') r[2] -= Math.sin(t * 7) * 14;
         if (pose.flail) r[2] += Math.sin(t * 5 + (key === 'la' ? 1.4 : 0)) * 10;
+        if (pose.drift) r[0] += Math.sin(t * 1.3 + (key === 'la' ? 1.1 : 0)) * 7;
         if (key === 'la') r[2] = -r[2]; // the left arm lifts to the other side
       }
       if (pose.flail && (key === 'rl' || key === 'll')) r[0] += Math.sin(t * 4.2 + (key === 'll' ? 2 : 0)) * 14;
+      if (pose.drift && (key === 'rl' || key === 'll')) r[0] += Math.sin(t * 1.1 + (key === 'll' ? 2 : 0)) * 6;
       if (key === 'll') r[2] = -r[2];
       if (key === 'head') r = [r[0] + breathe * 1.2, r[1], r[2]];
       const R = rot(r);
