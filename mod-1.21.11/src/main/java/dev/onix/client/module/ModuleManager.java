@@ -127,6 +127,7 @@ public class ModuleManager {
         register(new CustomSkyModule());
         register(new LowFireModule());
         register(new ItemPhysicsModule());
+        register(new MotionBlurModule());
         register(new BlockOutlineModule());
         register(new ChunkBordersModule());
         register(new HitboxesModule());

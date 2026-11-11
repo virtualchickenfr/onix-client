@@ -45,7 +45,8 @@
     "HotbarSlideMixin",
     "FogDistanceMixin",
     "ItemEntityRendererMixin",
-    "ItemEntityRenderStateMixin"
+    "ItemEntityRenderStateMixin",
+    "MotionBlurMixin"
   ],
   "injectors": {
     "defaultRequire": 0

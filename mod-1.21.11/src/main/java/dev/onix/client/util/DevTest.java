@@ -282,6 +282,11 @@ public final class DevTest {
         then(3, () -> snap(mc, "09e3_impact_crit"));
         then(2, () -> dev.onix.client.module.impl.pack.Events.fire(dev.onix.client.module.impl.pack.Events.Event.KILL, mc.player));
         then(6, () -> snap(mc, "09e4_impact_kill_halo"));
+        // motion blur: turn quickly for a few ticks with the blur on
+        then(2, () -> OnixClient.MODULES.get(dev.onix.client.module.impl.visual.MotionBlurModule.class).setEnabled(true));
+        for (int i = 0; i < 6; i++) then(1, () -> { if (mc.player != null) mc.player.setYRot(mc.player.getYRot() + 14f); });
+        then(0, () -> snap(mc, "09e5_motion_blur"));
+        then(2, () -> OnixClient.MODULES.get(dev.onix.client.module.impl.visual.MotionBlurModule.class).setEnabled(false));
         // combat text: damage numbers and the streak announcer
         then(2, () -> {
             var ct = OnixClient.MODULES.get(dev.onix.client.module.impl.combat.CombatTextModule.class);

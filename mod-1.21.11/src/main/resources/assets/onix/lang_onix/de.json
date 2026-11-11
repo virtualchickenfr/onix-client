@@ -91,6 +91,8 @@
  "desc.compass": "Ein waagerechter Kompassstreifen.",
  "name.minimap": "Minimap",
  "name.itemphysics": "Item-Physik",
+ "name.motionblur": "Motion Blur",
+ "desc.motionblur": "Weiche Bewegungsunschärfe beim Umschauen, wie in PvP-Montagen.",
  "desc.itemphysics": "Gedroppte Items liegen flach auf dem Boden statt zu schweben und sich zu drehen.",
  "desc.minimap": "Eine Karte der Umgebung mit Spielern und Wegpunkten.",
  "name.coords": "Koordinaten",
