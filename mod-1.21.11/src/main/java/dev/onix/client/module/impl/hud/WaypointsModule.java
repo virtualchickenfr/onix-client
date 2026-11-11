@@ -101,6 +101,14 @@ public class WaypointsModule extends TextHudModule {
         }
     }
 
+    /** Waypoints in this dimension as {x, z} block positions (for the minimap), also while the HUD list is off. */
+    public List<int[]> inThisDimension() {
+        load();
+        List<int[]> out = new ArrayList<>();
+        for (Waypoint w : waypoints) if (w.dimension().equals(dimension())) out.add(new int[]{w.x(), w.z()});
+        return out;
+    }
+
     private String arrow(Waypoint w) {
         if (mc().player == null) return "";
         double dx = w.x() + 0.5 - mc().player.getX();

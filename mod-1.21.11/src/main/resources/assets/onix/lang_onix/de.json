@@ -89,6 +89,8 @@
  "desc.clock": "Die echte Uhrzeit.",
  "name.compass": "Kompass",
  "desc.compass": "Ein waagerechter Kompassstreifen.",
+ "name.minimap": "Minimap",
+ "desc.minimap": "Eine Karte der Umgebung mit Spielern und Wegpunkten.",
  "name.coords": "Koordinaten",
  "desc.coords": "Deine Position, Richtung und Nether-Koordinaten.",
  "name.countdown": "Countdown",

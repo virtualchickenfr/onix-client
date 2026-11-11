@@ -141,7 +141,7 @@ public final class DevTest {
         then(0, () -> {
             for (Module m : OnixClient.MODULES.all()) {
                 String id = m.getId();
-                if (m instanceof HudModule && List.of("fps", "coords", "keystrokes", "mousestrokes", "cps", "armor").contains(id)) m.setEnabled(true);
+                if (m instanceof HudModule && List.of("fps", "coords", "keystrokes", "mousestrokes", "cps", "armor", "minimap").contains(id)) m.setEnabled(true);
             }
         });
         then(200, () -> snap(mc, "07_hud"));

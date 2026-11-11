@@ -55,6 +55,7 @@ public class ModuleManager {
         register(new PotionEffectsModule());
         register(new HeldItemModule());
         register(new CompassModule());
+        register(new MinimapModule());
         register(new InventoryViewerModule());
         register(new HungerModule());
         register(new HealthModule());
