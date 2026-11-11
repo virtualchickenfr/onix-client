@@ -32,21 +32,27 @@ public class ChatCopyModule extends Module {
                 || GLFW.glfwGetKey(window, GLFW.GLFW_KEY_RIGHT_CONTROL) == GLFW.GLFW_PRESS
                 || GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_SUPER) == GLFW.GLFW_PRESS;
         if (!ctrl) return false;
-        String text = m.messageAt(mc);
+        var window = mc.getWindow();
+        double mx = mc.mouseHandler.xpos() * window.getGuiScaledWidth() / Math.max(1, window.getScreenWidth());
+        double my = mc.mouseHandler.ypos() * window.getGuiScaledHeight() / Math.max(1, window.getScreenHeight());
+        return m.copyAt(mc, mx, my);
+    }
+
+    /** Copies the message at (mx, my) in GUI coordinates; true when there was one. */
+    public boolean copyAt(Minecraft mc, double mx, double my) {
+        String text = messageAt(mc, mx, my);
         if (text == null || text.isBlank()) return false;
         mc.keyboardHandler.setClipboard(text);
-        if (m.notify.isOn()) Notifications.show("Copied", text.length() > 60 ? text.substring(0, 57) + "…" : text);
+        if (notify.isOn()) Notifications.show("Copied", text.length() > 60 ? text.substring(0, 57) + "…" : text);
         return true;
     }
 
     /** The whole chat message under the mouse, or null. Mirrors ChatComponent's layout (lines from the bottom up). */
-    private String messageAt(Minecraft mc) {
+    public String messageAt(Minecraft mc, double mx, double my) {
         ChatComponent chat = mc.gui.getChat();
         List<GuiMessage.Line> lines = ((ChatComponentAccessor) chat).onix$lines();
         if (lines.isEmpty()) return null;
         var window = mc.getWindow();
-        double mx = mc.mouseHandler.xpos() * window.getGuiScaledWidth() / Math.max(1, window.getScreenWidth());
-        double my = mc.mouseHandler.ypos() * window.getGuiScaledHeight() / Math.max(1, window.getScreenHeight());
         double scale = mc.options.chatScale().get();
         int width = ChatComponent.getWidth(mc.options.chatWidth().get());
         if (mx < 0 || mx > width + 12) return null;

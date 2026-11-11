@@ -48,6 +48,11 @@ public final class DevTest {
         STEPS.add(new Step(0, condition));
     }
 
+    private static void cmd(Minecraft mc, String command) {
+        var server = mc.getSingleplayerServer();
+        if (server != null) server.execute(() -> server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), command));
+    }
+
     private static void design(String id) {
         OnixClient.CONFIG.menuDesign.set(id);
         Minecraft.getInstance().setScreen(new TitleScreen());
@@ -73,8 +78,8 @@ public final class DevTest {
         then(2, () -> { if (mc.screen != null) mc.screen.keyPressed(new KeyEvent(com.mojang.blaze3d.platform.InputConstants.KEY_RIGHT, 0, 0)); });
         then(30, () -> snap(mc, "00e_intro_done"));
         then(2, () -> { if (mc.screen != null) mc.screen.keyPressed(new KeyEvent(com.mojang.blaze3d.platform.InputConstants.KEY_RIGHT, 0, 0)); });
-        then(2, () -> design("Onix"));
         then(0, () -> OnixClient.CONFIG.lastServer.set("Hypixel\nmc.hypixel.net"));
+        then(2, () -> design("Onix"));
         // resource loading screen (F3 + T)
         then(2, () -> mc.reloadResourcePacks());
         then(6, () -> snap(mc, "00z1_loading"));
@@ -359,6 +364,66 @@ public final class DevTest {
                     "execute as @p at @s run summon minecraft:tnt ~ ~ ~5 {fuse:120}"));
         });
         then(30, () -> snap(mc, "09h_tnt_timer"));
+        // ---- minimap on real terrain: grass, a water pool, a stone hill and a sand patch around you
+        then(2, () -> {
+            OnixClient.MODULES.get(dev.onix.client.module.impl.visual.TntTimerModule.class).setEnabled(false);
+            OnixClient.MODULES.get(dev.onix.client.module.impl.hud.MinimapModule.class).setEnabled(true);
+            cmd(mc, "kill @e[type=minecraft:tnt]");
+            cmd(mc, "execute as @p at @s run fill ~-24 ~-1 ~-24 ~24 ~-1 ~24 minecraft:grass_block");
+            cmd(mc, "execute as @p at @s run fill ~6 ~-4 ~-14 ~16 ~-1 ~-4 minecraft:water");
+            cmd(mc, "execute as @p at @s run fill ~-16 ~ ~4 ~-6 ~2 ~14 minecraft:stone");
+            cmd(mc, "execute as @p at @s run fill ~-13 ~3 ~7 ~-9 ~4 ~11 minecraft:stone");
+            cmd(mc, "execute as @p at @s run fill ~4 ~-1 ~6 ~12 ~-1 ~14 minecraft:sand");
+            cmd(mc, "execute as @p at @s run fill ~-4 ~ ~-12 ~-2 ~4 ~-10 minecraft:oak_log");
+        });
+        then(60, () -> snap(mc, "09i1_minimap_terrain"));
+        // ---- item physics: drop some items in front of you and look down at them
+        then(2, () -> {
+            OnixClient.MODULES.get(dev.onix.client.module.impl.visual.ItemPhysicsModule.class).setEnabled(true);
+            if (mc.player != null) {
+                mc.player.setYRot(0f);
+                mc.player.setXRot(55f);
+            }
+            for (String item : new String[]{"diamond_sword", "golden_apple", "ender_pearl", "oak_planks", "bow"}) {
+                cmd(mc, "execute as @p at @s run summon minecraft:item ~" + (item.length() % 3 - 1) + " ~1 ~" + (2 + item.length() % 2)
+                        + " {Item:{id:\"minecraft:" + item + "\",count:1},PickupDelay:32767}");
+            }
+        });
+        then(60, () -> snap(mc, "09i2_item_physics"));
+        // ---- hit colour: a zombie in front of you gets hit
+        then(2, () -> {
+            OnixClient.MODULES.get(dev.onix.client.module.impl.visual.ItemPhysicsModule.class).setEnabled(false);
+            OnixClient.MODULES.get(dev.onix.client.module.impl.combat.HitColorModule.class).setEnabled(true);
+            cmd(mc, "kill @e[type=minecraft:item]");
+            if (mc.player != null) mc.player.setXRot(10f);
+            cmd(mc, "execute as @p at @s run summon minecraft:zombie ~ ~ ~4 {NoAI:1b,Silent:1b,PersistenceRequired:1b}");
+        });
+        then(10, () -> cmd(mc, "damage @e[type=minecraft:zombie,limit=1] 1 minecraft:generic"));
+        then(4, () -> snap(mc, "09i3_hit_color"));
+        then(2, () -> cmd(mc, "kill @e[type=minecraft:zombie]"));
+        // ---- chat copy: copy the newest chat line (as if it was Ctrl + clicked) and show it
+        then(2, () -> {
+            mc.gui.getChat().addMessage(net.minecraft.network.chat.Component.literal("Onix Chat Copy test: GG everyone"));
+            try {
+                // ChatScreen(String) before 1.21.9, ChatScreen(String, boolean) after
+                var ctor = net.minecraft.client.gui.screens.ChatScreen.class.getConstructors()[0];
+                Object[] args = ctor.getParameterCount() == 1 ? new Object[]{""} : new Object[]{"", false};
+                mc.setScreen((net.minecraft.client.gui.screens.Screen) ctor.newInstance(args));
+            } catch (ReflectiveOperationException e) {
+                OnixClient.LOGGER.warn("[devtest] chat screen", e);
+            }
+        });
+        then(10, () -> {
+            var copy = OnixClient.MODULES.get(dev.onix.client.module.impl.chat.ChatCopyModule.class);
+            double scale = mc.options.chatScale().get();
+            int bottom = (int) Math.floor((mc.getWindow().getGuiScaledHeight() - 40) / scale);
+            int lh = (int) (9 * (mc.options.chatLineSpacing().get() + 1.0));
+            String text = copy.messageAt(mc, 20, (bottom - lh / 2.0) * scale);
+            OnixClient.LOGGER.info("[devtest] chat copy got: {}", text);
+            copy.copyAt(mc, 20, (bottom - lh / 2.0) * scale);
+        });
+        then(10, () -> snap(mc, "09i4_chat_copy"));
+        then(2, () -> mc.setScreen(null));
         then(2, () -> {
             OnixClient.MODULES.get(dev.onix.client.module.impl.visual.TntTimerModule.class).setEnabled(false);
             var server = mc.getSingleplayerServer();
