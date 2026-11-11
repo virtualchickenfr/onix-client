@@ -196,6 +196,15 @@ public final class DevTest {
         });
         then(40, () -> snap(mc, "09m2_menu_german"));
         then(2, () -> OnixClient.CONFIG.language.set("English"));
+        // the fall transition of world loading (with your skin)
+        then(2, () -> mc.setScreen(new net.minecraft.client.gui.screens.Screen(net.minecraft.network.chat.Component.literal("Fall")) {
+            @Override
+            public void render(net.minecraft.client.gui.GuiGraphics ctx, int mx, int my, float d) {
+                dev.onix.client.gui.FallTransition.render(this, ctx, "Loading world", "Preparing spawn area · 42%", 0.42f);
+            }
+        }));
+        then(20, () -> snap(mc, "09g0_fall_dropping"));
+        then(50, () -> snap(mc, "09g0_fall_sinking"));
         then(2, () -> mc.setScreen(null));
         // performance: frames per second with no modules vs. every HUD, combat and visual module
         java.util.List<dev.onix.client.module.Module> before = new java.util.ArrayList<>();

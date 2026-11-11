@@ -1,5 +1,6 @@
 package dev.onix.client.gui;
 
+import dev.onix.client.OnixClient;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Map;
@@ -87,21 +88,35 @@ public final class LoadingScreens {
 
     // ------------------------------------------------------------------ world loading
 
+    /** Joining a world: your character falls and sinks into the deep (Design → Loading Screens → Fall Transition). */
+    private static boolean fall() {
+        return OnixClient.CONFIG != null && OnixClient.CONFIG.fallTransition.isOn();
+    }
+
     public static void levelLoading(Screen screen, GuiGraphics ctx) {
         LevelLoadTracker tracker = fieldOfType(screen, LevelLoadTracker.class);
         float progress = tracker == null ? -1f : tracker.serverProgress();
         String detail = tracker == null ? "Preparing spawn area" : "Preparing spawn area · " + Math.round(progress * 100) + "%";
+        if (fall()) {
+            FallTransition.render(screen, ctx, "Loading world", detail, progress);
+            return;
+        }
         LoadingAnimation.render(ctx, "Loading world", detail, progress, 1f, true);
     }
 
     public static void terrain(Screen screen, GuiGraphics ctx) {
+        if (fall()) {
+            FallTransition.render(screen, ctx, "Joining world", "Loading terrain", -1f);
+            return;
+        }
         LoadingAnimation.render(ctx, "Joining world", "Loading terrain", -1f, 1f, true);
     }
 
     public static void connecting(Screen screen, GuiGraphics ctx, int mouseX, int mouseY, float delta) {
         Component status = fieldOfType(screen, Component.class, true);
         String detail = status == null ? "Connecting to the server" : status.getString();
-        LoadingAnimation.render(ctx, "Connecting", detail, -1f, 1f, true);
+        if (fall()) FallTransition.render(screen, ctx, "Connecting", detail, -1f);
+        else LoadingAnimation.render(ctx, "Connecting", detail, -1f, 1f, true);
         renderWidgets(screen, ctx, mouseX, mouseY, delta);
     }
 

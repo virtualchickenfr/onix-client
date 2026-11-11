@@ -95,6 +95,8 @@ public class OnixConfig {
             .describe("Replaces resource loading, world loading, connecting and saving screens.");
     public final ModeSetting loadingStyle = new ModeSetting("loadingStyle", "Animation", "eDEX", "Gem", "Orbit", "Minimal");
     public final BoolSetting loadingTips = new BoolSetting("loadingTips", "Show Tips", true);
+    public final BoolSetting fallTransition = new BoolSetting("fallTransition", "Fall Transition", true)
+            .describe("Joining a world: your character falls and sinks into the deep while it loads.");
 
     // HUD
     public final BoolSetting hideHudInDebug = new BoolSetting("hideHudInDebug", "Hide HUD on F3 Screen", true);
@@ -140,7 +142,7 @@ public class OnixConfig {
     }
 
     public List<Setting<?, ?>> loadingSettings() {
-        return List.of(loadingScreens, loadingStyle, loadingTips);
+        return List.of(loadingScreens, loadingStyle, loadingTips, fallTransition);
     }
 
     public List<Setting<?, ?>> interfaceSettings() {
@@ -170,7 +172,7 @@ public class OnixConfig {
     private List<Setting<?, ?>> all() {
         return List.of(theme, titleBackground, backgroundSlideshow, slideshowSeconds, backgroundMotion,
                 menuStyle, menuScale, menuAnimations, language, clickSounds, menuParticles, backgroundDim, tooltips, customMainMenu,
-                onixServer, socialOn, shareServer, nameTagLooks, lightMode, buttonStyle, carbonButtons, menuSkin, menuDesign, menuCharacter, titleDesign, loadingScreens, loadingStyle, loadingTips,
+                onixServer, socialOn, shareServer, nameTagLooks, lightMode, buttonStyle, carbonButtons, menuSkin, menuDesign, menuCharacter, titleDesign, loadingScreens, loadingStyle, loadingTips, fallTransition,
                 hideHudInDebug, snapping, snapDistance, editorGrid,
                 notifications, notificationSound, notificationTime, notificationPosition,
                 ruleNotes, rulesOnJoin, rulesSkip, autoSwitchProfiles, introDone, cinematicSet, cinematicSet2, cleanSet, edexSet, roundSet, roundSet2, mobileSet, fontSet, menuGlass);

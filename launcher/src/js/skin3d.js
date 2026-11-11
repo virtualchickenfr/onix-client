@@ -15,8 +15,10 @@ const Skin3D = (() => {
     point: { head: [0, -18, 0], ra: [-70, 0, 40], la: [0, 0, 6], rl: [0, 0, 2], ll: [0, 0, 2] },
     relaxed: { head: [6, -8, 3], ra: [14, 0, 4], la: [14, 0, 4], rl: [-6, 0, 2], ll: [8, 0, 3] },
     cool: { head: [-4, 18, 0], ra: [-20, 0, -16], la: [-20, 0, -16], rl: [0, 0, 0], ll: [-8, 0, -6] },
+    // the Play transition: arms up, legs apart, falling (not picked as a home pose)
+    fall: { head: [-22, 0, 0], ra: [-12, 0, 148], la: [-12, 0, 148], rl: [16, 0, 12], ll: [-10, 0, 12], flail: true },
   };
-  const POSE_NAMES = Object.keys(POSES);
+  const POSE_NAMES = Object.keys(POSES).filter((p) => p !== 'fall');
 
   const rad = (d) => (d * Math.PI) / 180;
   function rot([rx, ry, rz]) {
@@ -78,8 +80,8 @@ const Skin3D = (() => {
 
   const LIGHT = (() => { const l = [-0.35, -0.7, -0.62]; const n = Math.hypot(...l); return l.map((x) => x / n); })();
 
-  /** Draws the figure. t in seconds for the idle motion. */
-  function draw(canvas, px, slim, poseName, t) {
+  /** Draws the figure. t in seconds for the idle motion; opts.view = [rx, ry, rz] turns the whole figure. */
+  function draw(canvas, px, slim, poseName, t, opts = {}) {
     const ctx = canvas.getContext('2d');
     const W = canvas.width;
     const H = canvas.height;
@@ -88,7 +90,7 @@ const Skin3D = (() => {
     const pose = POSES[poseName] || POSES.idle;
     const breathe = Math.sin(t * 1.6);
     const sway = Math.sin(t * 0.5);
-    const view = rot([-10, 24 + sway * 6, 0]);
+    const view = rot(opts.view || [-10, 24 + sway * 6, 0]);
     const quads = [];
     const P = parts(slim);
     for (const [key, part] of Object.entries(P)) {
@@ -96,8 +98,10 @@ const Skin3D = (() => {
       if (key === 'ra' || key === 'la') {
         r[2] += breathe * 2.5;
         if (pose.wave && key === 'ra') r[2] -= Math.sin(t * 7) * 14;
+        if (pose.flail) r[2] += Math.sin(t * 5 + (key === 'la' ? 1.4 : 0)) * 10;
         if (key === 'la') r[2] = -r[2]; // the left arm lifts to the other side
       }
+      if (pose.flail && (key === 'rl' || key === 'll')) r[0] += Math.sin(t * 4.2 + (key === 'll' ? 2 : 0)) * 14;
       if (key === 'll') r[2] = -r[2];
       if (key === 'head') r = [r[0] + breathe * 1.2, r[1], r[2]];
       const R = rot(r);
