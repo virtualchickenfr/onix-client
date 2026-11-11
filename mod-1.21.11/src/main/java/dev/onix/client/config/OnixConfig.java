@@ -93,7 +93,7 @@ public class OnixConfig {
     // Loading screens
     public final BoolSetting loadingScreens = new BoolSetting("loadingScreens", "Onix Loading Screens", true)
             .describe("Replaces resource loading, world loading, connecting and saving screens.");
-    public final ModeSetting loadingStyle = new ModeSetting("loadingStyle", "Animation", "eDEX", "Gem", "Orbit", "Minimal");
+    public final ModeSetting loadingStyle = new ModeSetting("loadingStyle", "Animation", "Minimal", "Gem", "Orbit");
     public final BoolSetting loadingTips = new BoolSetting("loadingTips", "Show Tips", true);
     public final BoolSetting fallTransition = new BoolSetting("fallTransition", "Fall Transition", true)
             .describe("Joining a world: your character falls and sinks into the deep while it loads.");

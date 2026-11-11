@@ -74,15 +74,15 @@ public final class DevTest {
         then(30, () -> snap(mc, "00e_intro_done"));
         then(2, () -> { if (mc.screen != null) mc.screen.keyPressed(new KeyEvent(com.mojang.blaze3d.platform.InputConstants.KEY_RIGHT, 0, 0)); });
         then(2, () -> design("Onix"));
-        // eDEX style resource loading screen (F3 + T)
+        // resource loading screen (F3 + T)
         then(2, () -> mc.reloadResourcePacks());
-        then(6, () -> snap(mc, "00z1_edex_loading"));
-        then(14, () -> snap(mc, "00z2_edex_loading"));
+        then(6, () -> snap(mc, "00z1_loading"));
+        then(14, () -> snap(mc, "00z2_loading"));
         then(80, () -> snap(mc, "01_title_onix"));
-        // cinematic title: the splash, the burst when entering, then the menu with the player
+        // cinematic title: the splash, the burst when entering, then the menu with the player falling into the sunken scene
         then(2, () -> { if (mc.screen != null) mc.screen.keyPressed(new KeyEvent(com.mojang.blaze3d.platform.InputConstants.KEY_SPACE, 0, 0)); });
         then(12, () -> snap(mc, "01a_cinematic_enter"));
-        then(18, () -> snap(mc, "01a2_cinematic_walk"));
+        then(18, () -> snap(mc, "01a2_cinematic_fall"));
         then(60, () -> snap(mc, "01b_cinematic_menu"));
         for (String id : List.of("Carbon", "Voxel", "Portal", "Classic")) {
             then(2, () -> design(id));

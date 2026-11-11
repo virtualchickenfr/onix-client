@@ -33,13 +33,8 @@ public final class LoadingAnimation {
         return OnixClient.CONFIG == null || OnixClient.CONFIG.loadingScreens.isOn();
     }
 
-    /** The eDEX-UI style terminal loading screen (the default). */
-    public static boolean edex() {
-        return style().equals("eDEX");
-    }
-
     private static String style() {
-        return OnixClient.CONFIG == null ? "eDEX" : OnixClient.CONFIG.loadingStyle.get();
+        return OnixClient.CONFIG == null ? "Minimal" : OnixClient.CONFIG.loadingStyle.get();
     }
 
     private static boolean tips() {
@@ -60,10 +55,6 @@ public final class LoadingAnimation {
      * @param text     false while fonts are not loaded yet (resource-loading overlay)
      */
     public static void render(GuiGraphics ctx, String title, String detail, float progress, float alpha, boolean text) {
-        if (edex()) {
-            EdexLoading.screen(ctx, title, detail, progress, alpha);
-            return;
-        }
         int w = ctx.guiWidth();
         int h = ctx.guiHeight();
         Theme.refresh();
@@ -86,10 +77,6 @@ public final class LoadingAnimation {
 
     /** Only the spinner and the bar, for screens that draw their own text (e.g. "Saving world"). */
     public static void backgroundOnly(GuiGraphics ctx, float progress, float alpha) {
-        if (edex()) {
-            EdexLoading.backgroundOnly(ctx, progress, alpha);
-            return;
-        }
         int w = ctx.guiWidth();
         int h = ctx.guiHeight();
         Theme.refresh();

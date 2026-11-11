@@ -509,52 +509,10 @@ public class OnixTitleScreen extends Screen {
         return t * t * (3 - 2 * t);
     }
 
-    private static final Identifier CINE_BG = Identifier.fromNamespaceAndPath("onix", "textures/gui/cinematic_bg.png");
-    private static final Identifier CINE_LIGHT = Identifier.fromNamespaceAndPath("onix", "textures/gui/cinematic_light.png");
-    private static final int BG_W = 1600;
-    private static final int BG_H = 900;
-    private float parX;
-    private float parY;
-
-    /**
-     * A clean studio picture (tools/cinematic_bg.py) with light falling in from the top right. Interactive: the picture
-     * and the light beams follow the mouse at different depths and drift slowly on their own.
-     */
+    /** The sunken scene (same as the launcher's start screen): a dark teal void, light from above, drifting dust. */
     private void renderCinematicBackground(GuiGraphics ctx, int mouseX, int mouseY, float time) {
-        // the mouse offset eases in, so the picture glides instead of jumping
-        float tx = (mouseX - width / 2f) / Math.max(1, width / 2f);
-        float ty = (mouseY - height / 2f) / Math.max(1, height / 2f);
-        parX += (tx - parX) * 0.06f;
-        parY += (ty - parY) * 0.06f;
-        float cover = Math.max(width / (float) BG_W, height / (float) BG_H);
-        // base picture: slow breathing zoom, small parallax
-        float zoom = cover * (1.07f + 0.012f * (float) Math.sin(time * 0.08f));
-        int w = Math.round(BG_W * zoom);
-        int h = Math.round(BG_H * zoom);
-        int x = Math.round((width - w) / 2f - parX * width * 0.012f);
-        int y = Math.round((height - h) / 2f - parY * height * 0.012f);
-        ctx.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, CINE_BG, x, y, 0f, 0f, w, h, BG_W, BG_H, BG_W, BG_H, 0xFFFFFFFF);
-        // light beams: closer to the camera, so they move more; they sway and breathe a little
-        float lz = cover * 1.12f;
-        int lw = Math.round(BG_W * lz);
-        int lh = Math.round(BG_H * lz);
-        int lx = Math.round((width - lw) / 2f - parX * width * 0.035f + (float) Math.sin(time * 0.21f) * width * 0.006f);
-        int ly = Math.round((height - lh) / 2f - parY * height * 0.03f);
-        float breathe = 0.82f + 0.18f * (float) Math.sin(time * 0.5f);
-        int la = Math.round(255 * breathe * (entered ? 1f : 0.45f));
-        ctx.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, CINE_LIGHT, lx, ly, 0f, 0f, lw, lh, BG_W, BG_H, BG_W, BG_H, (la << 24) | 0xFFFFFF);
+        FallTransition.drawVoid(ctx, width, height, time);
         if (!entered) ctx.fill(0, 0, width, height, 0x99000000);
-        // dust drifting through the light
-        if (OnixClient.CONFIG == null || OnixClient.CONFIG.menuParticles.isOn()) particles.render(ctx, width, height, 0.3f * (entered ? 1f : 0.4f));
-    }
-
-    private void light(GuiGraphics ctx, float cx, float cy, float radius, int color, float strength) {
-        SoftShapes.glow(ctx, cx, cy, radius, radius, Theme.withAlpha(color, Math.min(255, Math.round(strength * 18))));
-    }
-
-    private void vignette(GuiGraphics ctx) {
-        // a bit bigger than the screen so the middle stays clear and the corners go dark
-        SoftShapes.vignette(ctx, -width / 8, -height / 8, width + width / 4, height + height / 4, 0xD0000000);
     }
 
     private void logo(GuiGraphics ctx, float cx, float cy, float size, float alpha, float spin) {
@@ -670,39 +628,31 @@ public class OnixTitleScreen extends Screen {
             areas.add(new Area(Math.round(menuX - w / 2f), y - 4, Math.round(menuX + w / 2f), y + 12, () -> go(action)));
         }
 
-        // ---- the player walks in from the right, turns to you; the wardrobe pill under it
-        float walkT = (since - 0.7f) / 1.7f;                 // 0..1 while walking in
-        float walk = Math.max(0f, Math.min(1f, walkT));
-        float arrive = 1 - (1 - walk) * (1 - walk);           // slows down at the end
-        float skinA = smooth((since - 0.7f) / 0.35f);
+        // ---- the player falls in from above, backwards and upside down, and floats there in the deep; wardrobe pill under it
+        float fall = smooth((since - 0.5f) / 1.8f);
+        float skinA = smooth((since - 0.5f) / 0.35f);
         if (skinWidget != null) {
             int sh = Math.max(110, Math.min(240, Math.round(height * 0.52f)));
-            int sw = Math.round(sh * 0.55f);
-            float sxC = width * 0.76f;
-            float startX = width + sw;                          // just outside the right edge
-            float walkingX = startX + (sxC - startX) * arrive;
-            boolean walking = walkT < 1f;
-            float stride = walking ? 1f - smooth((walkT - 0.8f) / 0.2f) : 0f;   // legs settle as they arrive
-            float phase = since * 9f;
-            float bob = walking ? Math.abs((float) Math.sin(phase)) * -3f * stride : (float) Math.sin(time * 1.4f) * 2.5f;
-            int sx = Math.round(walkingX - sw / 2f);
-            int sy = Math.round(height / 2f - sh / 2f - 6 + bob);
+            int sw = Math.round(sh * 1.1f);                    // room for the tilted body
+            float sxC = width * 0.74f + (float) Math.sin(time * 0.5f) * 4f;
+            float restY = height / 2f - 6 + (float) Math.sin(time * 0.8f) * 4f;
+            float cy = -sh + (restY + sh) * fall;
+            int sx = Math.round(sxC - sw / 2f);
+            int sy = Math.round(cy - sh / 2f);
             skinWidget.setRectangle(sw, sh, sx, sy);
             skinWidget.visible = skinOn && skinA > 0.02f;
-            poseSkin(walking, walkT, stride, phase, time);
+            FallTransition.pose(skinWidget, since);
             if (skinWidget.visible) {
-                float here = smooth((walkT - 0.6f) / 0.4f);      // name, light and pill appear as they arrive
-                SoftShapes.glow(ctx, sxC, height / 2f, sw * 1.6f, sh * 0.75f, Theme.withAlpha(Theme.themeAccent(), Math.round(35 * here)));
-                // soft shadow on the "floor" under the feet, moving with them
-                SoftShapes.glow(ctx, walkingX, sy + sh - 1, sw * 0.45f, 5, Theme.withAlpha(0xFF000000, Math.round(160 * skinA)));
+                float here = smooth((since - 1.6f) / 0.6f);        // name, light and pill appear once it floats
+                SoftShapes.glow(ctx, sxC, cy, sw * 0.7f, sh * 0.6f, Theme.withAlpha(0xFF6FD2DC, Math.round(30 * skinA)));
                 skinA = here;
                 String name = minecraft.getUser().getName();
-                centered(ctx, Theme.bold(name), sxC, sy - 14, 1f, a(WHITE, skinA));
+                centered(ctx, Theme.bold(name), sxC, Math.round(restY - sh / 2f) - 14, 1f, a(WHITE, skinA));
                 // wardrobe pill
                 String label = "Wardrobe";
                 int pw = Theme.boldWidth(label) + 30;
                 int px = Math.round(sxC - pw / 2f);
-                int py = sy + sh + 10;
+                int py = Math.round(restY + sh / 2f) + 10;
                 boolean hov = Theme.inside(mouseX, mouseY, px, py, px + pw, py + 18);
                 float h = hoverAnim("cine:wardrobe", hov);
                 glassPill(ctx, px, py, px + pw, py + 18, skinA, h);
@@ -780,33 +730,6 @@ public class OnixTitleScreen extends Screen {
         }
     }
 
-    private boolean skinTurned;
-
-    /** Walk cycle while walking in (side view), then a smooth turn to the front and a calm idle. */
-    private void poseSkin(boolean walking, float walkT, float stride, float phase, float time) {
-        var acc = (dev.onix.client.mixin.PlayerSkinWidgetAccessor) skinWidget;
-        float swing = (float) Math.cos(phase) * 0.9f * stride;
-        float armIdle = walking ? 0f : (float) Math.sin(time * 1.2f) * 0.04f;
-        for (var model : new net.minecraft.client.model.player.PlayerModel[]{acc.onix$wide(), acc.onix$slim()}) {
-            model.rightLeg.xRot = swing;
-            model.leftLeg.xRot = -swing;
-            model.rightArm.xRot = -swing * 0.8f;
-            model.leftArm.xRot = swing * 0.8f;
-            model.rightArm.zRot = 0.05f + armIdle;
-            model.leftArm.zRot = -0.05f - armIdle;
-            model.head.xRot = 0f;
-        }
-        if (walking) {
-            // facing the way they walk (to the left), turning towards you over the last steps
-            float turn = smooth((walkT - 0.7f) / 0.3f);
-            acc.onix$setRotationY(-90f + (30f + 90f) * turn);
-            acc.onix$setRotationX(-5f);
-            skinTurned = false;
-        } else if (!skinTurned) {
-            acc.onix$setRotationY(30f);
-            skinTurned = true;
-        }
-    }
 
     /** Dark liquid glass: see-through black, light top edge, a little shine when hovered. */
     private void glassPill(GuiGraphics ctx, int x1, int y1, int x2, int y2, float alpha, float hover) {

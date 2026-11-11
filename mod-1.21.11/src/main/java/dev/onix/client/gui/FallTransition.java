@@ -47,27 +47,7 @@ public final class FallTransition {
         int h = ctx.guiHeight();
         float u = h / 100f;
 
-        // the void: dark teal, lighter where the light comes from
-        ctx.fillGradient(0, 0, w, Math.round(h * 0.45f), 0xFF0F3A44, 0xFF08232B);
-        ctx.fillGradient(0, Math.round(h * 0.45f), w, h, 0xFF08232B, 0xFF020709);
-        // light from above: a haze at the top and swaying beams
-        SoftShapes.glow(ctx, w / 2f, -10 * u, w * 0.55f, 70 * u, 0x5578D2DC);
-        float sway = (float) Math.sin(t * 0.5f) * 2 * u;
-        for (int i = 0; i < 5; i++) {
-            float x = w / 2f + (i - 2) * 9 * u + sway * (i % 2 == 1 ? 1 : -1);
-            float bw = (4 + i) * u;
-            ctx.fillGradient(Math.round(x - bw / 2), 0, Math.round(x + bw / 2), Math.round(h * 0.88f),
-                    a(0x96E1EB, 0.07f + 0.03f * (float) Math.sin(t * 1.1f + i)), 0x0096E1EB);
-        }
-        // dust drifting slowly in the light, three depths
-        for (int i = 0; i < 80; i++) {
-            float z = 0.4f + (i % 3) * 0.3f;
-            float x = ((rnd(i) * w + (float) Math.sin(t * 0.4f + i) * 3 * u * z) % w + w) % w;
-            float y = ((rnd(i + 7) * h - t * (2 + 3 * z) * u) % h + h) % h;
-            float near = clamp(1 - Math.abs(x - w / 2f) / (45 * u));
-            int s = z > 0.9f ? 2 : 1;
-            ctx.fill(Math.round(x), Math.round(y), Math.round(x) + s, Math.round(y) + s, a(0xC8F5FA, (0.25f + 0.5f * near) * z * (0.4f + 0.6f * rnd(i + 3))));
-        }
+        drawVoid(ctx, w, h, t);
 
         // the character: drops into view, then sinks slowly away (smaller, darker), turning as it goes
         float enter = smooth(t / 1.2f);
@@ -100,31 +80,62 @@ public final class FallTransition {
         }
     }
 
+    /** The scene without the figure: the dark teal void, light falling in from above, dust drifting in it. */
+    public static void drawVoid(GuiGraphics ctx, int w, int h, float t) {
+        float u = h / 100f;
+        // the void: dark teal, lighter where the light comes from
+        ctx.fillGradient(0, 0, w, Math.round(h * 0.45f), 0xFF0F3A44, 0xFF08232B);
+        ctx.fillGradient(0, Math.round(h * 0.45f), w, h, 0xFF08232B, 0xFF020709);
+        // light from above: a haze at the top and swaying beams
+        SoftShapes.glow(ctx, w / 2f, -10 * u, w * 0.55f, 70 * u, 0x5578D2DC);
+        float sway = (float) Math.sin(t * 0.5f) * 2 * u;
+        for (int i = 0; i < 5; i++) {
+            float x = w / 2f + (i - 2) * 9 * u + sway * (i % 2 == 1 ? 1 : -1);
+            float bw = (4 + i) * u;
+            ctx.fillGradient(Math.round(x - bw / 2), 0, Math.round(x + bw / 2), Math.round(h * 0.88f),
+                    a(0x96E1EB, 0.07f + 0.03f * (float) Math.sin(t * 1.1f + i)), 0x0096E1EB);
+        }
+        // dust drifting slowly in the light, three depths
+        for (int i = 0; i < 80; i++) {
+            float z = 0.4f + (i % 3) * 0.3f;
+            float x = ((rnd(i) * w + (float) Math.sin(t * 0.4f + i) * 3 * u * z) % w + w) % w;
+            float y = ((rnd(i + 7) * h - t * (2 + 3 * z) * u) % h + h) % h;
+            float near = clamp(1 - Math.abs(x - w / 2f) / (45 * u));
+            int s = z > 0.9f ? 2 : 1;
+            ctx.fill(Math.round(x), Math.round(y), Math.round(x) + s, Math.round(y) + s, a(0xC8F5FA, (0.25f + 0.5f * near) * z * (0.4f + 0.6f * rnd(i + 3))));
+        }
+
+    }
+
+    /** Puts a player figure into the sunken pose for time t: falling backwards, upside down, arms reaching up, turning. */
+    public static void pose(PlayerSkinWidget widget, float t) {
+        var acc = (PlayerSkinWidgetAccessor) widget;
+        float drift = (float) Math.sin(t * 1.3f) * 0.12f;
+        float legDrift = (float) Math.sin(t * 1.1f) * 0.1f;
+        for (PlayerModel model : new PlayerModel[]{acc.onix$wide(), acc.onix$slim()}) {
+            model.rightArm.xRot = -0.66f + drift;
+            model.leftArm.xRot = -0.31f - drift;
+            model.rightArm.zRot = 0.49f;
+            model.leftArm.zRot = -0.59f;
+            model.rightLeg.xRot = -1.54f + legDrift;
+            model.leftLeg.xRot = -0.38f - legDrift;
+            model.rightLeg.zRot = 0.07f;
+            model.leftLeg.zRot = -0.1f;
+            model.head.xRot = 0.45f;
+            // upside down and tilted: X 180 + Y 180 turn it over facing you, the body's own roll tilts it
+            model.root().zRot = (float) Math.toRadians(28 + t * 7 + Math.sin(t * 0.9f) * 3);
+        }
+        acc.onix$setRotationX(180f + (float) Math.sin(t * 0.6f) * 6f);
+        acc.onix$setRotationY(180f + 35f + t * 6f);
+    }
+
     private static void drawFigure(Minecraft mc, GuiGraphics ctx, int x, int y, int w, int h, float t) {
         try {
             if (figure == null) {
                 figure = new PlayerSkinWidget(w, h, mc.getEntityModels(), mc.getSkinManager().createLookup(mc.getGameProfile(), false));
             }
             figure.setRectangle(w, h, x, y);
-            var acc = (PlayerSkinWidgetAccessor) figure;
-            float drift = (float) Math.sin(t * 1.3f) * 0.12f;
-            float legDrift = (float) Math.sin(t * 1.1f) * 0.1f;
-            for (PlayerModel model : new PlayerModel[]{acc.onix$wide(), acc.onix$slim()}) {
-                // falling backwards: arms reaching up for the light, one knee pulled up
-                model.rightArm.xRot = -0.66f + drift;
-                model.leftArm.xRot = -0.31f - drift;
-                model.rightArm.zRot = 0.49f;
-                model.leftArm.zRot = -0.59f;
-                model.rightLeg.xRot = -1.54f + legDrift;
-                model.leftLeg.xRot = -0.38f - legDrift;
-                model.rightLeg.zRot = 0.07f;
-                model.leftLeg.zRot = -0.1f;
-                model.head.xRot = 0.45f;
-                // upside down and tilted: X 180 + Y 180 turn it over facing you, the body's own roll tilts it
-                model.root().zRot = (float) Math.toRadians(28 + t * 7 + Math.sin(t * 0.9f) * 3);
-            }
-            acc.onix$setRotationX(180f + (float) Math.sin(t * 0.6f) * 6f);
-            acc.onix$setRotationY(180f + 35f + t * 6f);
+            pose(figure, t);
             figure.render(ctx, 0, 0, 0f);
         } catch (RuntimeException e) {
             figure = null;
