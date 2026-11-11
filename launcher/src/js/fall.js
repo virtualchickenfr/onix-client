@@ -56,18 +56,24 @@ const Fall = (() => {
         g.setTransform(1, 0, 0, 1, 0, 0);
         g.clearRect(0, 0, W, H);
 
-        // the void: fades in, turns deep blue once the figure has gone under
+        // an evening sky over calm water; once the figure is under, the view follows it into the deep
         const sink = clamp01((p - 0.5) / 0.35);
-        const bg = g.createLinearGradient(0, 0, 0, H);
-        bg.addColorStop(0, `rgba(${10 - 6 * sink},${10 + 6 * sink},${14 + 22 * sink},1)`);
-        bg.addColorStop(1, `rgba(2,${3 + 4 * sink},${6 + 14 * sink},1)`);
-        g.globalAlpha = clamp01(p / 0.12) * (1 - clamp01((p - 0.88) / 0.12));
-        g.fillStyle = bg;
-        g.fillRect(0, 0, W, H);
-        const light = g.createRadialGradient(W / 2, -H * 0.1, 0, W / 2, -H * 0.1, H * 0.9);
-        light.addColorStop(0, `rgba(180,205,255,${0.16 * (1 - sink)})`);
-        light.addColorStop(1, 'rgba(180,205,255,0)');
-        g.fillStyle = light;
+        const surfaceAt = H * 0.64 - sink * H * 0.76;
+        g.globalAlpha = clamp01(p / 0.1) * (1 - clamp01((p - 0.88) / 0.12));
+        const sky = g.createLinearGradient(0, 0, 0, Math.max(1, surfaceAt));
+        sky.addColorStop(0, '#1b2440');
+        sky.addColorStop(1, '#6b5a8e');
+        g.fillStyle = sky;
+        g.fillRect(0, 0, W, Math.max(0, surfaceAt));
+        const sea = g.createLinearGradient(0, Math.max(0, surfaceAt), 0, H);
+        sea.addColorStop(0, sink > 0.6 ? '#123c63' : '#1e5b8c');
+        sea.addColorStop(1, '#03101f');
+        g.fillStyle = sea;
+        g.fillRect(0, Math.max(0, surfaceAt), W, H);
+        const glow = g.createRadialGradient(W / 2, surfaceAt, 0, W / 2, surfaceAt, W * 0.45);
+        glow.addColorStop(0, `rgba(255,201,160,${0.28 * (1 - sink)})`);
+        glow.addColorStop(1, 'rgba(255,201,160,0)');
+        g.fillStyle = glow;
         g.fillRect(0, 0, W, H);
 
         // speed streaks rushing upwards while falling
@@ -79,7 +85,7 @@ const Fall = (() => {
         }
 
         // the surface: a soft line where the figure lands, with rings spreading from the splash
-        const surfaceY = H * 0.64;
+        const surfaceY = surfaceAt;
         const splash = clamp01((p - 0.44) / 0.5);
         if (p > 0.38) {
           const line = g.createLinearGradient(0, 0, W, 0);
@@ -100,11 +106,27 @@ const Fall = (() => {
           }
         }
 
+        // the splash: a short white flash and droplets flying up from where it hits
+        const since = (p - 0.46) * DURATION / 1000;
+        if (since > 0 && since < 1.2) {
+          g.fillStyle = `rgba(255,255,255,${0.25 * Math.max(0, 1 - since / 0.3)})`;
+          g.fillRect(0, 0, W, H);
+          for (let i = 0; i < 30; i++) {
+            const ang = (200 + ((i * 41.7) % 140)) * Math.PI / 180;
+            const sp = (120 + ((i * 41.7) % 160)) * dpr;
+            const x = W / 2 + Math.cos(ang) * sp * since;
+            const y = H * 0.64 - sink * H * 0.76 + Math.sin(ang) * sp * since + 420 * dpr * since * since;
+            if (y > surfaceY + 2) continue;
+            g.fillStyle = `rgba(242,250,255,${0.85 * (1 - since / 1.2)})`;
+            g.fillRect(x, y, (1 + (i % 2)) * dpr, (2 + (i % 2)) * dpr);
+          }
+        }
+
         // the figure: falls in from above (accelerating), passes the surface and sinks, smaller and softer
         const fall = easeIn(clamp01(p / 0.46));
         const under = ease(clamp01((p - 0.46) / 0.42));
         const size = Math.min(W, H) * 0.5 * (1 - 0.45 * under);
-        const cy = -size + (surfaceY - size * 0.1 + size) * fall + under * H * 0.18;
+        const cy = -size + (H * 0.64 - size * 0.1 + size) * fall + under * H * 0.02;
         Skin3D.draw(figure, px, slim, 'fall', t, { view: [-18 + 30 * under, 30 + t * 140, Math.sin(t * 3) * 8] });
         g.save();
         g.globalAlpha = 1 - under * 0.95;
@@ -117,7 +139,7 @@ const Fall = (() => {
         g.restore();
         if (under > 0) {
           g.fillStyle = `rgba(8,22,48,${0.35 * under})`;
-          g.fillRect(0, surfaceY, W, H - surfaceY);
+          g.fillRect(0, Math.max(0, surfaceY), W, H - Math.max(0, surfaceY));
         }
 
         if (p < 1) requestAnimationFrame(frame);

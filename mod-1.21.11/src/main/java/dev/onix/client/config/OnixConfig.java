@@ -99,6 +99,8 @@ public class OnixConfig {
             .describe("Joining a world: your character falls and sinks into the deep while it loads.");
 
     // HUD
+    public final ModeSetting hudStyle = new ModeSetting("hudStyle", "HUD Style", "Glass", "Solid", "Minimal")
+            .describe("Glass: dark see-through panels with a light rim. Solid: plain boxes. Minimal: only the text.");
     public final BoolSetting hideHudInDebug = new BoolSetting("hideHudInDebug", "Hide HUD on F3 Screen", true);
     public final BoolSetting snapping = new BoolSetting("snapping", "Snap in HUD Editor", true)
             .describe("Elements snap to screen edges, the center and each other.");
@@ -150,7 +152,7 @@ public class OnixConfig {
     }
 
     public List<Setting<?, ?>> hudSettings() {
-        return List.of(hideHudInDebug, snapping, snapDistance, editorGrid);
+        return List.of(hudStyle, hideHudInDebug, snapping, snapDistance, editorGrid);
     }
 
     public List<Setting<?, ?>> notificationSettings() {
@@ -173,7 +175,7 @@ public class OnixConfig {
         return List.of(theme, titleBackground, backgroundSlideshow, slideshowSeconds, backgroundMotion,
                 menuStyle, menuScale, menuAnimations, language, clickSounds, menuParticles, backgroundDim, tooltips, customMainMenu,
                 onixServer, socialOn, shareServer, nameTagLooks, lightMode, buttonStyle, carbonButtons, menuSkin, menuDesign, menuCharacter, titleDesign, loadingScreens, loadingStyle, loadingTips, fallTransition,
-                hideHudInDebug, snapping, snapDistance, editorGrid,
+                hudStyle, hideHudInDebug, snapping, snapDistance, editorGrid,
                 notifications, notificationSound, notificationTime, notificationPosition,
                 ruleNotes, rulesOnJoin, rulesSkip, autoSwitchProfiles, introDone, cinematicSet, cinematicSet2, cleanSet, edexSet, roundSet, roundSet2, mobileSet, fontSet, menuGlass);
     }

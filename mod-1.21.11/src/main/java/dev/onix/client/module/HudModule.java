@@ -131,9 +131,38 @@ public abstract class HudModule extends Module {
         return padding.getInt();
     }
 
+    /** The look of every HUD element (Design › HUD › HUD Style). */
+    protected static String hudStyle() {
+        return dev.onix.client.OnixClient.CONFIG == null ? "Glass" : dev.onix.client.OnixClient.CONFIG.hudStyle.get();
+    }
+
+    /** A small panel inside an element (a key of Keystrokes, …): glass in the Glass style, flat otherwise. */
+    protected void panel(GuiGraphics ctx, int x1, int y1, int x2, int y2, int r, int color) {
+        if (hudStyle().equals("Glass")) {
+            gg.carbon.client.ui.R2D.rrect(ctx, x1, y1, x2 - x1, y2 - y1, r, color);
+            gg.carbon.client.ui.R2D.outline(ctx, x1, y1, x2 - x1, y2 - y1, r, 0.6f, 0x26FFFFFF);
+        } else {
+            Theme.round(ctx, x1, y1, x2, y2, r, color);
+        }
+    }
+
     /** Background and border as configured. */
     protected void drawBackground(GuiGraphics ctx, int w, int h) {
         int r = cornerRadius.getInt();
+        String style = hudStyle();
+        if (style.equals("Minimal")) return;
+        if (style.equals("Glass") && background.isOn()) {
+            // dark glass: the configured colour a little deeper, a light rim (or the border colour) and a sheen on top
+            int fill = backgroundColor.color();
+            int alpha = Math.min(255, Math.round(((fill >>> 24) & 0xFF) * 1.15f) + 12);
+            int glass = alpha << 24 | (Theme.lerpColor(fill | 0xFF000000, 0xFF0B0C12, 0.35f) & 0xFFFFFF);
+            int rim = border.isOn() ? borderColor.color() : 0x2EFFFFFF;
+            // smooth, anti-aliased shapes at the screen's real pixel size (follow the element's scale)
+            gg.carbon.client.ui.R2D.rrect(ctx, 0, 0, w, h, r, glass);
+            gg.carbon.client.ui.R2D.outline(ctx, 0, 0, w, h, r, 0.6f, rim);
+            if (w > 2 * r + 4) ctx.fill(r + 1, 1, w - r - 1, 2, 0x14FFFFFF);
+            return;
+        }
         if (border.isOn()) {
             Theme.round(ctx, 0, 0, w, h, r, borderColor.color());
             if (background.isOn()) {
@@ -156,7 +185,8 @@ public abstract class HudModule extends Module {
 
     protected int drawText(GuiGraphics ctx, String s, int x, int y, int color) {
         Component text = hudText(s);
-        ctx.drawString(Theme.font(), text, x, y, color, textShadow.isOn());
+        // without a panel the text needs its shadow to stay readable
+        ctx.drawString(Theme.font(), text, x, y, color, textShadow.isOn() || hudStyle().equals("Minimal"));
         return x + Theme.font().width(text);
     }
 

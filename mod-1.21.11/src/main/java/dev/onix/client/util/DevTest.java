@@ -196,20 +196,6 @@ public final class DevTest {
         });
         then(40, () -> snap(mc, "09m2_menu_german"));
         then(2, () -> OnixClient.CONFIG.language.set("English"));
-        // emotes: the wheel, then a wave and a dance on your own character (front view)
-        then(2, () -> {
-            var em = OnixClient.MODULES.get(dev.onix.client.module.impl.visual.EmotesModule.class);
-            em.setEnabled(true);
-            em.openWheel();
-        });
-        then(10, () -> snap(mc, "09h_emote_wheel"));
-        then(2, () -> {
-            mc.setScreen(null);
-            OnixClient.MODULES.get(dev.onix.client.module.impl.visual.EmotesModule.class).play(0);
-        });
-        then(14, () -> snap(mc, "09h_emote_wave"));
-        then(2, () -> OnixClient.MODULES.get(dev.onix.client.module.impl.visual.EmotesModule.class).play(2));
-        then(16, () -> snap(mc, "09h_emote_dance"));
         // the fall transition of world loading (with your skin)
         then(2, () -> mc.setScreen(new net.minecraft.client.gui.screens.Screen(net.minecraft.network.chat.Component.literal("Fall")) {
             @Override
@@ -217,8 +203,9 @@ public final class DevTest {
                 dev.onix.client.gui.FallTransition.render(this, ctx, "Loading world", "Preparing spawn area · 42%", 0.42f);
             }
         }));
-        then(20, () -> snap(mc, "09g0_fall_dropping"));
-        then(50, () -> snap(mc, "09g0_fall_sinking"));
+        then(14, () -> snap(mc, "09g0_fall_air"));
+        then(12, () -> snap(mc, "09g0_fall_splash"));
+        then(50, () -> snap(mc, "09g0_fall_underwater"));
         then(2, () -> mc.setScreen(null));
         // performance: frames per second with no modules vs. every HUD, combat and visual module
         java.util.List<dev.onix.client.module.Module> before = new java.util.ArrayList<>();

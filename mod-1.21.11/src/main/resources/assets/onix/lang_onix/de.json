@@ -354,6 +354,7 @@
  "desc.fog": "Weicherer oder kein Sichtweiten-Nebel, dünnerer Umgebungsnebel und weitere Wolken.",
  "name.discord": "Discord-Status",
  "desc.discord": "Zeigt auf deinem Discord-Profil, dass du Onix spielst und wo.",
- "name.emotes": "Emotes",
- "desc.emotes": "Ein Emote-Rad: winken, klatschen, tanzen, salutieren, jubeln und mehr (nur du siehst sie)."
+ "ui.HUD Style": "HUD-Stil",
+ "ui.Glass: dark see-through panels with a light rim. Solid: plain boxes. Minimal: only the text.": "Glas: dunkle, durchscheinende Flächen mit hellem Rand. Solid: einfache Kästen. Minimal: nur der Text.",
+ "ui.Fall Transition": "Fall-Übergang"
 }

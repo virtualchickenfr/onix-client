@@ -110,7 +110,7 @@ public class KeystrokesModule extends HudModule {
 
     private float key(GuiGraphics ctx, int i, KeyMapping b, String text, int x, int y, int w, int h, float dt) {
         float t = anim(i, b.isDown(), dt);
-        Theme.round(ctx, x, y, x + w, y + h, cornerRadius.getInt(), Theme.lerpColor(idleColor.color(), pressedColor.color(), t));
+        panel(ctx, x, y, x + w, y + h, cornerRadius.getInt(), Theme.lerpColor(idleColor.color(), pressedColor.color(), t));
         if (!text.isEmpty()) {
             int c = Theme.lerpColor(textColor.color(), pressedTextColor.color(), t);
             ctx.drawString(Theme.font(), hudText(text), x + (w - textWidth(text)) / 2 + 1, y + (h - 8) / 2 + 1, c, textShadow.isOn() && t < 0.5f);
@@ -121,7 +121,7 @@ public class KeystrokesModule extends HudModule {
     private void mouse(GuiGraphics ctx, int i, KeyMapping b, String text, int cps, int x, int y, int w, float dt) {
         int k = key();
         float t = anim(i, b.isDown(), dt);
-        Theme.round(ctx, x, y, x + w, y + k, cornerRadius.getInt(), Theme.lerpColor(idleColor.color(), pressedColor.color(), t));
+        panel(ctx, x, y, x + w, y + k, cornerRadius.getInt(), Theme.lerpColor(idleColor.color(), pressedColor.color(), t));
         int c = Theme.lerpColor(textColor.color(), pressedTextColor.color(), t);
         if (showCps.isOn()) {
             ctx.drawString(Theme.font(), hudText(text), x + (w - textWidth(text)) / 2 + 1, y + k / 2 - 8, c, false);

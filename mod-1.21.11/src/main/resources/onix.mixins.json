@@ -43,8 +43,7 @@
     "PlayerSkinWidgetAccessor",
     "ScreenTitleAccessor",
     "HotbarSlideMixin",
-    "FogDistanceMixin",
-    "PlayerModelEmoteMixin"
+    "FogDistanceMixin"
   ],
   "injectors": {
     "defaultRequire": 0
