@@ -48,7 +48,8 @@
     "ItemEntityRenderStateMixin",
     "MotionBlurMixin",
     "ChatComponentAccessor",
-    "ChatCopyMixin"
+    "ChatCopyMixin",
+    "OverlayTextureAccessor"
   ],
   "injectors": {
     "defaultRequire": 0

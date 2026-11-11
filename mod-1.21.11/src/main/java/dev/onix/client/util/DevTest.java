@@ -144,6 +144,16 @@ public final class DevTest {
                 if (m instanceof HudModule && List.of("fps", "coords", "keystrokes", "mousestrokes", "cps", "armor", "minimap").contains(id)) m.setEnabled(true);
             }
         });
+        then(0, () -> {
+            // a waypoint ahead: its light beam in the world and its marker on the minimap
+            var wp = OnixClient.MODULES.get(dev.onix.client.module.impl.hud.WaypointsModule.class);
+            wp.setEnabled(true);
+            if (mc.player != null) {
+                var p = mc.player.blockPosition();
+                var look = mc.player.getLookAngle();
+                wp.add("Test", p.getX() + (int) Math.round(look.x * 14), p.getY(), p.getZ() + (int) Math.round(look.z * 14));
+            }
+        });
         then(200, () -> snap(mc, "07_hud"));
         then(2, () -> OnixClient.MODULES.get(dev.onix.client.module.impl.visual.SmallCapsModule.class).setEnabled(true));
         then(20, () -> snap(mc, "07b_small_caps"));
@@ -274,6 +284,7 @@ public final class DevTest {
             OnixClient.MODULES.get(dev.onix.client.module.impl.visual.JumpCirclesModule.class).setEnabled(false);
             OnixClient.MODULES.get(dev.onix.client.module.impl.visual.ImpactFxModule.class).setEnabled(true);
             OnixClient.MODULES.get(dev.onix.client.module.impl.visual.HaloModule.class).setEnabled(true);
+            OnixClient.MODULES.get(dev.onix.client.module.impl.combat.HitColorModule.class).setEnabled(true);
             if (mc.player != null) mc.player.setXRot(20f);
             dev.onix.client.module.impl.pack.Events.fire(dev.onix.client.module.impl.pack.Events.Event.HIT, mc.player);
         });

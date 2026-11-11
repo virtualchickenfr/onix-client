@@ -82,6 +82,7 @@ public class ModuleManager {
         register(new NoHurtCamModule());
         register(new LowHealthWarningModule());
         register(new DamageFlashModule());
+        register(new HitColorModule());
         register(new TotemWarningModule());
         register(new ReachDisplayModule());
         register(new ComboCounterModule());

@@ -52,7 +52,7 @@ public class MinimapModule extends HudModule {
     private boolean dirty;
 
     public MinimapModule() {
-        super("minimap", "Minimap", "A map of the area around you, with players and waypoints.", Category.HUD, false, Anchor.TOP_RIGHT, -4, 4);
+        super("minimap", "Minimap", "A map of the area around you, with players and waypoints.", Category.HUD, false, Anchor.BOTTOM_RIGHT, -4, -4);
         tags("map", "radar", "navigation", "xaero", "journeymap");
         useRoundCorners();
     }
@@ -300,8 +300,23 @@ public class MinimapModule extends HudModule {
     }
 
     private static void diamond(GuiGraphics ctx, float x, float y, float r, int color) {
-        GuiTriangles.draw(ctx, new float[]{x, y - r, x + r, y, x - r, y, x - r, y, x + r, y, x, y + r},
-                new int[]{color, color, color, color, color, color});
+        tris(ctx, new float[]{x, y - r, x + r, y, x - r, y, x - r, y, x + r, y, x, y + r}, color);
+    }
+
+    /** Filled triangles in one colour, drawn with both windings (the GUI pipeline culls one side). */
+    private static void tris(GuiGraphics ctx, float[] xy, int color) {
+        int n = xy.length / 2;
+        float[] both = new float[xy.length * 2];
+        System.arraycopy(xy, 0, both, 0, xy.length);
+        for (int t = 0; t < n; t += 3) {
+            for (int k = 0; k < 3; k++) {
+                both[xy.length + (t + k) * 2] = xy[(t + 2 - k) * 2];
+                both[xy.length + (t + k) * 2 + 1] = xy[(t + 2 - k) * 2 + 1];
+            }
+        }
+        int[] colors = new int[n * 2];
+        java.util.Arrays.fill(colors, color);
+        GuiTriangles.draw(ctx, both, colors);
     }
 
     private void arrow(GuiGraphics ctx, float x, float y, float angle) {
@@ -322,10 +337,8 @@ public class MinimapModule extends HudModule {
             rim[i * 2] = x + px * c - py * s;
             rim[i * 2 + 1] = y + px * s + py * c;
         }
-        GuiTriangles.draw(ctx, new float[]{rim[0], rim[1], rim[2], rim[3], rim[4], rim[5], rim[0], rim[1], rim[4], rim[5], rim[6], rim[7]},
-                new int[]{edge, edge, edge, edge, edge, edge});
-        GuiTriangles.draw(ctx, new float[]{t[0], t[1], t[2], t[3], t[4], t[5], t[0], t[1], t[4], t[5], t[6], t[7]},
-                new int[]{col, col, col, col, col, col});
+        tris(ctx, new float[]{rim[0], rim[1], rim[2], rim[3], rim[4], rim[5], rim[0], rim[1], rim[4], rim[5], rim[6], rim[7]}, edge);
+        tris(ctx, new float[]{t[0], t[1], t[2], t[3], t[4], t[5], t[0], t[1], t[4], t[5], t[6], t[7]}, col);
     }
 
     private static double lerp(float t, double a, double b) {

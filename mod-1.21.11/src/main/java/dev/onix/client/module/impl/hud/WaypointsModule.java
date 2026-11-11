@@ -28,6 +28,9 @@ public class WaypointsModule extends TextHudModule {
     private final NumberSetting maxShown = add(new NumberSetting("max", "Max Shown", 5, 1, 20, 1));
     private final BoolSetting arrows = add(new BoolSetting("arrows", "Direction Arrows", true));
     private final BoolSetting thisDimension = add(new BoolSetting("thisDim", "Only This Dimension", true));
+    private final BoolSetting beams = add(new BoolSetting("beams", "Light Beams In World", true)
+            .describe("A beam of light marks each waypoint, visible from far away (also shown on the Minimap)."));
+    private final dev.onix.client.setting.ColorSetting beamColor = add(new dev.onix.client.setting.ColorSetting("beamColor", "Beam Color", 0xFFFFD34D));
     private final TextSetting data = add(new TextSetting("data", "Data", "[]", 100_000).hidden());
 
     private final List<Waypoint> waypoints = new ArrayList<>();
@@ -36,6 +39,33 @@ public class WaypointsModule extends TextHudModule {
     public WaypointsModule() {
         super("waypoints", "Waypoints", "Mark places with a key and see how far away they are.", Category.HUD, false, Anchor.MIDDLE_LEFT, 4, 0);
         tags("markers", "home", "base", "navigation");
+    }
+
+    @Override
+    public void init() {
+        net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents.AFTER_ENTITIES.register(context -> {
+            if (!isEnabled() || !beams.isOn() || mc().player == null || context.consumers() == null || context.matrices() == null) return;
+            load();
+            var cam = dev.onix.client.render.WorldDraw.camera(context);
+            var vc = context.consumers().getBuffer(net.minecraft.client.renderer.rendertype.RenderTypes.lightning());
+            int c = beamColor.color();
+            float pulse = 0.85f + 0.15f * (float) Math.sin(System.currentTimeMillis() / 500.0);
+            for (Waypoint w : waypoints) {
+                if (!w.dimension().equals(dimension())) continue;
+                double dx = w.x() + 0.5 - cam.x, dy = w.y() - cam.y, dz = w.z() + 0.5 - cam.z;
+                double dist = Math.sqrt(dx * dx + dz * dz);
+                // far away: drawn at most 160 blocks out in the right direction (and a bit wider), so it is not clipped
+                double k = dist > 160 ? 160 / dist : 1;
+                float widen = (float) Math.max(1, dist / 160);
+                double x = dx * k, z = dz * k, y = dy * k;
+                dev.onix.client.render.FxDraw.band(context.matrices(), vc, x, y, z, 0.12f * widen, 220f,
+                        dev.onix.client.render.FxDraw.withAlpha(0xFFFFFFFF, 0.85f * pulse), dev.onix.client.render.FxDraw.withAlpha(c, 0f), 12);
+                dev.onix.client.render.FxDraw.band(context.matrices(), vc, x, y, z, 0.4f * widen, 220f,
+                        dev.onix.client.render.FxDraw.withAlpha(c, 0.35f * pulse), dev.onix.client.render.FxDraw.withAlpha(c, 0f), 16);
+                dev.onix.client.render.FxDraw.ringBoth(context.matrices(), vc, x, y + 0.02, z, 0.2f * widen, 0.9f * widen,
+                        dev.onix.client.render.FxDraw.withAlpha(c, 0.5f * pulse), dev.onix.client.render.FxDraw.withAlpha(c, 0f), 32);
+            }
+        });
     }
 
     private String dimension() {
@@ -86,8 +116,7 @@ public class WaypointsModule extends TextHudModule {
         if (addKey.poll()) {
             var p = mc().player.blockPosition();
             String name = namePrefix.get() + " " + (waypoints.size() + 1);
-            waypoints.add(new Waypoint(name, p.getX(), p.getY(), p.getZ(), dimension()));
-            save();
+            add(name, p.getX(), p.getY(), p.getZ());
             Notifications.show("Waypoint added", name + " at " + p.getX() + ", " + p.getY() + ", " + p.getZ());
         }
         if (removeKey.poll() && !waypoints.isEmpty()) {
@@ -99,6 +128,13 @@ public class WaypointsModule extends TextHudModule {
                 Notifications.show("Waypoint removed", nearest.name());
             }
         }
+    }
+
+    /** Adds a waypoint in this dimension. */
+    public void add(String name, int x, int y, int z) {
+        load();
+        waypoints.add(new Waypoint(name, x, y, z, dimension()));
+        save();
     }
 
     /** Waypoints in this dimension as {x, z} block positions (for the minimap), also while the HUD list is off. */
