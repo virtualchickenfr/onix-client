@@ -44,8 +44,11 @@ public class MinimapModule extends HudModule {
     private final dev.onix.client.setting.KeybindSetting mapKey = add(new dev.onix.client.setting.KeybindSetting("mapKey", "World Map Key", 77)
             .describe("Opens the big map of everything you explored (default M)."));
 
-    private final Long2ObjectOpenHashMap<int[]> chunks = new Long2ObjectOpenHashMap<>();
-    private final Long2LongOpenHashMap readAt = new Long2LongOpenHashMap();
+    /** Explored chunks per server and dimension, so the map is still there when you come back. */
+    private final java.util.Map<String, Long2ObjectOpenHashMap<int[]>> worlds = new java.util.HashMap<>();
+    private final java.util.Map<String, Long2LongOpenHashMap> worldsReadAt = new java.util.HashMap<>();
+    private Long2ObjectOpenHashMap<int[]> chunks = new Long2ObjectOpenHashMap<>();
+    private Long2LongOpenHashMap readAt = new Long2LongOpenHashMap();
     private final Identifier textureId = Identifier.fromNamespaceAndPath("onix", "minimap");
     private DynamicTexture texture;
     private ClientLevel cachedLevel;
@@ -71,13 +74,27 @@ public class MinimapModule extends HudModule {
 
     @Override
     public void onTick() {
-        ClientLevel level = mc().level;
-        var player = mc().player;
-        if (level == null || player == null) return;
-        if (mapKey.poll() && mc().screen == null) mc().setScreen(new dev.onix.client.gui.WorldMapScreen(this));
-        // the world map: every chunk the game has loaded, slowly, a couple per tick
-        int rd = Math.max(2, mc().options.getEffectiveRenderDistance());
-        scan(level, player.getBlockX(), player.getBlockY(), player.getBlockZ(), rd, 2, 30_000);
+        if (mapKey.poll() && mc().screen == null && mc().level != null) mc().setScreen(new dev.onix.client.gui.WorldMapScreen(this));
+    }
+
+    @Override
+    public void init() {
+        // the world map fills in the background (a couple of chunks per tick), also while the minimap is hidden
+        net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            ClientLevel level = client.level;
+            var player = client.player;
+            if (level == null || player == null) return;
+            int rd = Math.max(2, client.options.getEffectiveRenderDistance());
+            scan(level, player.getBlockX(), player.getBlockY(), player.getBlockZ(), rd, 2, 30_000);
+        });
+    }
+
+    /** Which map the chunks belong to: the server (or singleplayer world) and the dimension. */
+    private String worldKey(ClientLevel level) {
+        var server = mc().getCurrentServer();
+        String where = server != null ? server.ip : mc().getSingleplayerServer() != null
+                ? "sp:" + mc().getSingleplayerServer().getWorldData().getLevelName() : "?";
+        return where + "|" + level.dimension().identifier();
     }
 
     /** The colour of a block on the map (0 = not explored). */
@@ -99,8 +116,6 @@ public class MinimapModule extends HudModule {
 
     @Override
     protected void onDisable() {
-        chunks.clear();
-        readAt.clear();
         if (texture != null) {
             texture.close();
             mc().getTextureManager().release(textureId);
@@ -174,8 +189,10 @@ public class MinimapModule extends HudModule {
      */
     private boolean scan(ClientLevel level, int px, int py, int pz, int radius, int budget, long maxAge) {
         if (level != cachedLevel) {
-            chunks.clear();
-            readAt.clear();
+            String key = worldKey(level);
+            chunks = worlds.computeIfAbsent(key, k -> new Long2ObjectOpenHashMap<>());
+            readAt = worldsReadAt.computeIfAbsent(key, k -> new Long2LongOpenHashMap());
+            readAt.clear();                // re-read everything once: blocks may have changed while you were away
             cachedLevel = level;
             originX = Integer.MIN_VALUE;
         }

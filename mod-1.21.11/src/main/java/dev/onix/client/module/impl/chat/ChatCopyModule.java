@@ -21,21 +21,23 @@ public class ChatCopyModule extends Module {
         tags("copy", "clipboard", "chat");
     }
 
-    /** Called when the chat screen is clicked; true when a message was copied (the click is used up). */
-    public static boolean tryCopy() {
-        if (OnixClient.MODULES == null) return false;
+    /**
+     * Called when the chat screen is clicked at (x, y) in GUI coordinates; true when a message was copied (the click
+     * is used up). Ctrl comes from the click's modifier keys, or from the keyboard where the click has none.
+     */
+    public static boolean onClick(double x, double y, int button, int modifiers) {
+        if (button != 0 || OnixClient.MODULES == null) return false;
         ChatCopyModule m = OnixClient.MODULES.get(ChatCopyModule.class);
         if (m == null || !m.isEnabled()) return false;
         Minecraft mc = Minecraft.getInstance();
-        long window = mc.getWindow().handle();
-        boolean ctrl = GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_CONTROL) == GLFW.GLFW_PRESS
-                || GLFW.glfwGetKey(window, GLFW.GLFW_KEY_RIGHT_CONTROL) == GLFW.GLFW_PRESS
-                || GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_SUPER) == GLFW.GLFW_PRESS;
-        if (!ctrl) return false;
-        var win = mc.getWindow();
-        double mx = mc.mouseHandler.xpos() * win.getGuiScaledWidth() / Math.max(1, win.getScreenWidth());
-        double my = mc.mouseHandler.ypos() * win.getGuiScaledHeight() / Math.max(1, win.getScreenHeight());
-        return m.copyAt(mc, mx, my);
+        boolean ctrl = (modifiers & (GLFW.GLFW_MOD_CONTROL | GLFW.GLFW_MOD_SUPER)) != 0;
+        if (!ctrl) {
+            long window = mc.getWindow().handle();
+            ctrl = GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_CONTROL) == GLFW.GLFW_PRESS
+                    || GLFW.glfwGetKey(window, GLFW.GLFW_KEY_RIGHT_CONTROL) == GLFW.GLFW_PRESS
+                    || GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_SUPER) == GLFW.GLFW_PRESS;
+        }
+        return ctrl && m.copyAt(mc, x, y);
     }
 
     /** Copies the message at (mx, my) in GUI coordinates; true when there was one. */

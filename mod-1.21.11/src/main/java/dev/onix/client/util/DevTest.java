@@ -380,6 +380,12 @@ public final class DevTest {
             cmd(mc, "execute as @p at @s run fill ~-4 ~ ~-12 ~-2 ~4 ~-10 minecraft:oak_log");
         });
         then(60, () -> snap(mc, "09i1_minimap_terrain"));
+        then(2, () -> OnixClient.MODULES.get(dev.onix.client.module.impl.hud.MinimapModule.class).setEnabled(false));
+        then(2, () -> cmd(mc, "execute as @p at @s run fill ~-20 ~-1 ~16 ~-12 ~-1 ~22 minecraft:red_wool"));
+        then(60, () -> OnixClient.LOGGER.info("[devtest] world map while the minimap is off: red wool = {}",
+                Integer.toHexString(OnixClient.MODULES.get(dev.onix.client.module.impl.hud.MinimapModule.class).colorAt(
+                        mc.player.getBlockX() - 16, mc.player.getBlockZ() + 19))));
+        then(2, () -> OnixClient.MODULES.get(dev.onix.client.module.impl.hud.MinimapModule.class).setEnabled(true));
         then(2, () -> mc.setScreen(new dev.onix.client.gui.WorldMapScreen(OnixClient.MODULES.get(dev.onix.client.module.impl.hud.MinimapModule.class))));
         then(20, () -> snap(mc, "09i1b_world_map"));
         then(2, () -> mc.screen.mouseScrolled(mc.getWindow().getGuiScaledWidth() / 2.0, mc.getWindow().getGuiScaledHeight() / 2.0, 0, 1));
@@ -429,13 +435,33 @@ public final class DevTest {
             }
         });
         then(10, () -> {
-            var copy = OnixClient.MODULES.get(dev.onix.client.module.impl.chat.ChatCopyModule.class);
+            // a real Ctrl + left click on the newest chat line, through the chat screen like a mouse click
             double scale = mc.options.chatScale().get();
             int bottom = (int) Math.floor((mc.getWindow().getGuiScaledHeight() - 40) / scale);
             int lh = (int) (9 * (mc.options.chatLineSpacing().get() + 1.0));
-            String text = copy.messageAt(mc, 20, (bottom - lh / 2.0) * scale);
-            OnixClient.LOGGER.info("[devtest] chat copy got: {}", text);
-            copy.copyAt(mc, 20, (bottom - lh / 2.0) * scale);
+            double x = 20, y = (bottom - lh / 2.0) * scale;
+            mc.keyboardHandler.setClipboard("");
+            try {
+                boolean used = false;
+                for (var method : mc.screen.getClass().getMethods()) {
+                    if (!method.getName().equals("mouseClicked")) continue;
+                    var types = method.getParameterTypes();
+                    if (types.length == 2 && !types[0].isPrimitive()) {
+                        // 1.21.9+: mouseClicked(MouseButtonEvent(x, y, MouseButtonInfo(button 0, Ctrl)), false)
+                        Class<?> info = Class.forName("net.minecraft.client.input.MouseButtonInfo");
+                        Object buttonInfo = info.getConstructor(int.class, int.class).newInstance(0, org.lwjgl.glfw.GLFW.GLFW_MOD_CONTROL);
+                        Object event = types[0].getConstructor(double.class, double.class, info).newInstance(x, y, buttonInfo);
+                        used = (boolean) method.invoke(mc.screen, event, false);
+                    } else if (types.length == 3 && types[0] == double.class) {
+                        // older: the copy reads Ctrl from the keyboard, which a test cannot press
+                        used = dev.onix.client.module.impl.chat.ChatCopyModule.onClick(x, y, 0, org.lwjgl.glfw.GLFW.GLFW_MOD_CONTROL);
+                    } else continue;
+                    break;
+                }
+                OnixClient.LOGGER.info("[devtest] chat copy click used = {}, clipboard = {}", used, mc.keyboardHandler.getClipboard());
+            } catch (ReflectiveOperationException e) {
+                OnixClient.LOGGER.warn("[devtest] chat copy click", e);
+            }
         });
         then(10, () -> snap(mc, "09i4_chat_copy"));
         then(2, () -> mc.setScreen(null));
