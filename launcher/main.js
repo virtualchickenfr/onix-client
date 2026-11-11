@@ -236,19 +236,10 @@ function smokeTest(dir) {
   win.webContents.on('console-message', (_e, level, message) => fs.appendFileSync(path.join(dir, 'console.txt'), `${level} ${message}\n`));
   win.webContents.once('did-finish-load', async () => {
     const t0 = Date.now();
-    for (const at of [120, 400, 800, 1200, 1700, 2400, 4000]) {
+    for (const at of [300, 1000, 1800, 2600, 3400, 4600]) {
       await wait(Math.max(0, at - (Date.now() - t0)));
       await shot(`boot-${String(at).padStart(4, '0')}`);
     }
-    await win.webContents.executeJavaScript(`(() => {
-      edexTerm.open(); state = 'preparing';
-      for (const l of ['Starting profile "Default"', 'Sign-in and Java ready after 0.2 s', 'Fabric and mods ready after 0.1 s']) edexTerm.log(l);
-      edexTerm.label('Starting Minecraft');
-      edexTerm.log('[16:01:02] [main/INFO] (FabricLoader/GameProvider) Loading Minecraft 1.21.11 with Fabric Loader 0.19.3');
-      return true;
-    })()`).catch((err) => fs.writeFileSync(path.join(dir, 'term-error.txt'), String(err)));
-    await wait(700);
-    await shot('launch-terminal');
     app.exit(0);
   });
 }

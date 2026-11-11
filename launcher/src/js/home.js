@@ -98,8 +98,6 @@ playBtn.addEventListener('click', async () => {
   setProgress(null);
   const quick = pendingQuickPlay;
   pendingQuickPlay = null;
-  // your character falls and sinks away while the game gets ready (js/fall.js)
-  if (typeof Fall !== 'undefined') Fall.play({ px: homeSkin.px, slim: homeSkin.slim });
   const res = await api.launch(undefined, quick);
   if (!res.ok) {
     state = 'idle';

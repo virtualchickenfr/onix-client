@@ -5,7 +5,7 @@ name: Android app
 # releases/latest/download/onix-android.json and offer the update.
 on:
   push:
-    paths: ['android/**', 'launcher/package.json', 'launcher/build/icon.png', '.github/workflows/android.yml']
+    paths: ['android/**', 'launcher/src/**', 'launcher/package.json', 'launcher/build/icon.png', '.github/workflows/android.yml']
   workflow_dispatch:
 
 permissions:
