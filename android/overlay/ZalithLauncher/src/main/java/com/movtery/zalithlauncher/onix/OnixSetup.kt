@@ -90,6 +90,30 @@ object OnixSetup {
         Logging.i("Onix Setup", "Created the version $name (Minecraft $mc, Fabric $loader)")
     }
 
+    private const val GL4ES = "8b52d82d-8f6d-4d3a-a767-dc93f8b72fc7"
+    private const val VULKAN_ZINK = "0fa435e2-46df-45c9-906c-b29606aaef00"
+
+    /**
+     * Minecraft 1.17+ needs OpenGL 3.2, which GL4ES (the app's default renderer) cannot give: such a version would not
+     * start. While it still uses GL4ES it is switched to Vulkan Zink when the phone supports it (changeable in its settings).
+     */
+    @JvmStatic
+    fun preferModernRenderer(context: android.content.Context, version: Version) {
+        runCatching {
+            val info = version.getVersionInfo() ?: return
+            val parts = info.minecraftVersion.split(".").mapNotNull { it.toIntOrNull() }
+            if (parts.size < 2 || (parts[0] == 1 && parts[1] < 17)) return
+            val config = version.getVersionConfig()
+            val current = config.getRenderer().ifEmpty { AllSettings.renderer.getValue() }
+            if (current != GL4ES && current != "opengles2" && current.isNotEmpty()) return
+            val zink = com.movtery.zalithlauncher.renderer.Renderers.getCompatibleRenderers(context).second
+                .find { it.getUniqueIdentifier() == VULKAN_ZINK } ?: return
+            config.setRenderer(zink.getUniqueIdentifier())
+            config.save()
+            Logging.i("Onix Setup", "${version.getVersionName()}: renderer set to ${zink.getRendererName()} (Minecraft ${info.minecraftVersion} needs OpenGL 3.2)")
+        }.onFailure { e -> Logging.e("Onix Setup", "Renderer: " + Tools.printToString(e)) }
+    }
+
     /** Before a launch (call it off the UI thread): newest Onix mod and Fabric API for Fabric versions. */
     @JvmStatic
     fun syncMods(version: Version) {

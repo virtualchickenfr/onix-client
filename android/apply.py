@@ -27,8 +27,13 @@ APP_ID = 'dev.onix.android'
 
 
 def version():
+    """versionCode/-Name: every CI build counts up (ONIX_BUILD_NUMBER = the workflow's run number), so the app
+    always finds a newer build as an update; local builds use the launcher version only."""
     name = json.load(open(os.path.join(ROOT, 'launcher', 'package.json')))['version']
     parts = [int(p) for p in re.findall(r'\d+', name)[:3]] + [0, 0, 0]
+    build = os.environ.get('ONIX_BUILD_NUMBER', '').strip()
+    if build.isdigit():
+        return 10000000 + int(build), f'{name}-b{build}'
     return parts[0] * 1000000 + parts[1] * 1000 + parts[2], name
 
 

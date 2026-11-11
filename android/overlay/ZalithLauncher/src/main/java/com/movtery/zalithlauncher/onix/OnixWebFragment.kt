@@ -200,6 +200,8 @@ class OnixWebFragment : Fragment() {
                 true
             }
             "launch" -> {
+                VersionsManager.getVersions().find { it.getVersionName() == a.getString(0) }
+                    ?.let { OnixSetup.preferModernRenderer(requireContext(), it) }
                 VersionsManager.saveCurrentVersion(a.getString(0))
                 ui { EventBus.getDefault().post(LaunchGameEvent()) }
                 true

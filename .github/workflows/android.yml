@@ -15,6 +15,10 @@ concurrency:
   group: android-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  # every build gets a higher versionCode, so installed apps offer it as an update
+  ONIX_BUILD_NUMBER: ${{ github.run_number }}
+
 jobs:
   apk:
     runs-on: ubuntu-22.04
@@ -113,10 +117,9 @@ jobs:
           git commit -q -m "Android screenshots for ${GITHUB_SHA::8}"
           git push -f "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" android-screens
 
-  # only main (or a manual run) adds the app to a release; other branches keep it as a build artifact
+  # every successful build goes onto the release of the current launcher version: installed apps update themselves
   publish:
     needs: apk
-    if: github.ref_name == github.event.repository.default_branch || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -132,28 +135,23 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           read code name < <(python3 android/apply.py --version)
-          tag="v$name"
+          tag="v$(python3 -c "import json; print(json.load(open('launcher/package.json'))['version'])")"
           ls -la apks
           if ! gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo "No release $tag yet – the APKs are only kept as build artifacts."
             exit 0
           fi
-          draft=$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json isDraft -q .isDraft)
-          has=$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json assets -q '.assets[].name' | grep -c '^onix-android.json$' || true)
-          # a manual run may replace the app of a published release (pushes to main never do)
-          if [ "$draft" != "true" ] && [ "$has" != "0" ] && [ "$GITHUB_EVENT_NAME" != "workflow_dispatch" ]; then
-            echo "$tag is published and already has the app – not replacing it."
-            exit 0
-          fi
+          # fixed names: releases/latest/download/Onix-Android-arm64-v8a.apk always is the newest app
           all=$(ls apks/*.apk | grep -v -- '-arm64-v8a.apk' | head -1)
           arm=$(ls apks/*-arm64-v8a.apk | head -1)
-          cp "$all" "apks/Onix-Android-$name.apk"
-          cp "$arm" "apks/Onix-Android-$name-arm64-v8a.apk"
+          cp "$all" apks/Onix-Android.apk
+          cp "$arm" apks/Onix-Android-arm64-v8a.apk
           base="https://github.com/$GITHUB_REPOSITORY/releases/download/$tag"
           cat > apks/onix-android.json <<EOF
           {"versionCode": $code, "versionName": "$name",
-           "apk": {"all": "$base/Onix-Android-$name.apk", "arm64-v8a": "$base/Onix-Android-$name-arm64-v8a.apk"}}
+           "apk": {"all": "$base/Onix-Android.apk", "arm64-v8a": "$base/Onix-Android-arm64-v8a.apk"}}
           EOF
           cat apks/onix-android.json
-          gh release upload "$tag" "apks/Onix-Android-$name.apk" "apks/Onix-Android-$name-arm64-v8a.apk" apks/onix-android.json \
-            --repo "$GITHUB_REPOSITORY" --clobber
+          # the APKs first, the version file last: an app never sees a version whose file is not there yet
+          gh release upload "$tag" apks/Onix-Android.apk apks/Onix-Android-arm64-v8a.apk --repo "$GITHUB_REPOSITORY" --clobber
+          gh release upload "$tag" apks/onix-android.json --repo "$GITHUB_REPOSITORY" --clobber
