@@ -141,9 +141,9 @@ public class OnixClient implements ClientModInitializer {
             // remember the server you play on for "Rejoin" on the title screen
             var server = client.getCurrentServer();
             if (client.level != null && server != null && !client.isLocalServer() && server.ip != null && !server.ip.isBlank()) {
-                String last = server.name + "\n" + server.ip;
-                if (!last.equals(CONFIG.lastServer.get())) {
-                    CONFIG.lastServer.set(last);
+                if (!server.ip.equals(CONFIG.lastServer.get()) || !server.name.equals(CONFIG.lastServerName.get())) {
+                    CONFIG.lastServer.set(server.ip);
+                    CONFIG.lastServerName.set(server.name == null ? "" : server.name);
                     CONFIG.save();
                 }
             }

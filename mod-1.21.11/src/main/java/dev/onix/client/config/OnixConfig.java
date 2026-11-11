@@ -73,8 +73,9 @@ public class OnixConfig {
                     + "Empty = the server built into this Onix version.");
 
 
-    /** The last multiplayer server you played on ("name\nip"), for the Rejoin button on the title screen. */
+    /** The last multiplayer server you played on, for the Rejoin button on the title screen. */
     public final TextSetting lastServer = new TextSetting("lastServer", "Last Server", "", 300).hidden();
+    public final TextSetting lastServerName = new TextSetting("lastServerName", "Last Server Name", "", 100).hidden();
 
     // Design
     public final BoolSetting lightMode = new BoolSetting("lightMode", "Light Mode", false)
@@ -180,7 +181,7 @@ public class OnixConfig {
                 onixServer, socialOn, shareServer, nameTagLooks, lightMode, buttonStyle, carbonButtons, menuSkin, menuDesign, menuCharacter, titleDesign, loadingScreens, loadingStyle, loadingTips, fallTransition,
                 hudStyle, hideHudInDebug, snapping, snapDistance, editorGrid,
                 notifications, notificationSound, notificationTime, notificationPosition,
-                ruleNotes, rulesOnJoin, rulesSkip, autoSwitchProfiles, introDone, cinematicSet, cinematicSet2, cleanSet, edexSet, roundSet, roundSet2, mobileSet, fontSet, menuGlass, lastServer);
+                ruleNotes, rulesOnJoin, rulesSkip, autoSwitchProfiles, introDone, cinematicSet, cinematicSet2, cleanSet, edexSet, roundSet, roundSet2, mobileSet, fontSet, menuGlass, lastServer, lastServerName);
     }
 
     public float menuScaleFactor() {

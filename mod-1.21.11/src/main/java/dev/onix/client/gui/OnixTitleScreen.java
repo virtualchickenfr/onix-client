@@ -35,11 +35,8 @@ public class OnixTitleScreen extends Screen {
 
     /** "Rejoin <server>": straight back onto the last multiplayer server you played on. */
     private Item rejoinItem() {
-        String last = OnixClient.CONFIG.lastServer.get();
-        int nl = last.indexOf('\n');
-        if (nl < 0) return null;
-        String name = last.substring(0, nl).trim();
-        String ip = last.substring(nl + 1).trim();
+        String ip = OnixClient.CONFIG.lastServer.get().trim();
+        String name = OnixClient.CONFIG.lastServerName.get().trim();
         if (ip.isEmpty()) return null;
         String label = "Rejoin " + (name.isEmpty() || name.length() > 22 ? ip : name);
         if (label.length() > 30) label = label.substring(0, 29) + "…";

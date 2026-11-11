@@ -78,7 +78,10 @@ public final class DevTest {
         then(2, () -> { if (mc.screen != null) mc.screen.keyPressed(new KeyEvent(com.mojang.blaze3d.platform.InputConstants.KEY_RIGHT, 0, 0)); });
         then(30, () -> snap(mc, "00e_intro_done"));
         then(2, () -> { if (mc.screen != null) mc.screen.keyPressed(new KeyEvent(com.mojang.blaze3d.platform.InputConstants.KEY_RIGHT, 0, 0)); });
-        then(0, () -> OnixClient.CONFIG.lastServer.set("Hypixel\nmc.hypixel.net"));
+        then(0, () -> {
+            OnixClient.CONFIG.lastServer.set("mc.hypixel.net");
+            OnixClient.CONFIG.lastServerName.set("Hypixel");
+        });
         then(2, () -> design("Onix"));
         // resource loading screen (F3 + T)
         then(2, () -> mc.reloadResourcePacks());
@@ -396,11 +399,16 @@ public final class DevTest {
             OnixClient.MODULES.get(dev.onix.client.module.impl.combat.HitColorModule.class).setEnabled(true);
             cmd(mc, "kill @e[type=minecraft:item]");
             if (mc.player != null) mc.player.setXRot(10f);
-            cmd(mc, "execute as @p at @s run summon minecraft:zombie ~ ~ ~4 {NoAI:1b,Silent:1b,PersistenceRequired:1b}");
+            cmd(mc, "execute as @p at @s run summon minecraft:husk ~ ~ ~4 {NoAI:1b,Silent:1b,PersistenceRequired:1b}");
         });
-        then(10, () -> cmd(mc, "damage @e[type=minecraft:zombie,limit=1] 1 minecraft:generic"));
-        then(4, () -> snap(mc, "09i3_hit_color"));
-        then(2, () -> cmd(mc, "kill @e[type=minecraft:zombie]"));
+        then(10, () -> cmd(mc, "damage @e[type=minecraft:husk,limit=1] 1 minecraft:generic"));
+        then(2, () -> {
+            var overlay = ((dev.onix.client.mixin.OverlayTextureAccessor) mc.gameRenderer.overlayTexture()).onix$texture().getPixels();
+            OnixClient.LOGGER.info("[devtest] hit colour overlay pixel: {}", overlay == null ? "none" : Integer.toHexString(overlay.getPixel(0, 0)));
+            snap(mc, "09i3_hit_color");
+        });
+        then(3, () -> snap(mc, "09i3b_hit_color"));
+        then(2, () -> cmd(mc, "kill @e[type=minecraft:husk]"));
         // ---- chat copy: copy the newest chat line (as if it was Ctrl + clicked) and show it
         then(2, () -> {
             mc.gui.getChat().addMessage(net.minecraft.network.chat.Component.literal("Onix Chat Copy test: GG everyone"));
