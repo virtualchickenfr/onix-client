@@ -121,6 +121,7 @@ public class ModuleManager {
         register(new dev.onix.client.module.impl.visual.SmoothHotbarModule());
         register(new dev.onix.client.module.impl.visual.FogModule());
         register(new dev.onix.client.module.impl.utility.DiscordPresenceModule());
+        register(new dev.onix.client.module.impl.visual.EmotesModule());
         register(new NametagsModule());
         register(new OnixBadgeModule());
         register(new CustomSkyModule());
