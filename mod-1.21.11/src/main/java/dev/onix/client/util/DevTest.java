@@ -272,6 +272,23 @@ public final class DevTest {
         then(3, () -> snap(mc, "09e3_impact_crit"));
         then(2, () -> dev.onix.client.module.impl.pack.Events.fire(dev.onix.client.module.impl.pack.Events.Event.KILL, mc.player));
         then(6, () -> snap(mc, "09e4_impact_kill_halo"));
+        // combat text: damage numbers and the streak announcer
+        then(2, () -> {
+            var ct = OnixClient.MODULES.get(dev.onix.client.module.impl.combat.CombatTextModule.class);
+            ct.setEnabled(true);
+            ct.demo(mc.player);
+        });
+        then(4, () -> snap(mc, "09e5_combat_text"));
+        // death screens: every style in its preview
+        for (String style : dev.onix.client.module.impl.visual.DeathScreensModule.STYLES) {
+            then(2, () -> {
+                var ds = OnixClient.MODULES.get(dev.onix.client.module.impl.visual.DeathScreensModule.class);
+                ds.setStyle(style);
+                ds.openPreview();
+            });
+            then(40, () -> snap(mc, "09f_death_" + style.toLowerCase(java.util.Locale.ROOT)));
+        }
+        then(2, () -> mc.setScreen(null));
         then(30, () -> {
             OnixClient.MODULES.get(dev.onix.client.module.impl.visual.ImpactFxModule.class).setEnabled(false);
             OnixClient.MODULES.get(dev.onix.client.module.impl.visual.HaloModule.class).setEnabled(false);

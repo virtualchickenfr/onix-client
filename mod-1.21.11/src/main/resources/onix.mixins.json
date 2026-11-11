@@ -40,7 +40,8 @@
     "TotemPopMixin",
     "FontSetMixin",
     "FramerateLimitMixin",
-    "PlayerSkinWidgetAccessor"
+    "PlayerSkinWidgetAccessor",
+    "ScreenTitleAccessor"
   ],
   "injectors": {
     "defaultRequire": 0

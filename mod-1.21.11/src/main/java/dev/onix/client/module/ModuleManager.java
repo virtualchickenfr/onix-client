@@ -115,6 +115,9 @@ public class ModuleManager {
         register(new dev.onix.client.module.impl.visual.ImpactFxModule());
         register(new dev.onix.client.module.impl.visual.HaloModule());
         register(new dev.onix.client.module.impl.visual.RainRipplesModule());
+        register(new dev.onix.client.module.impl.visual.DeathScreensModule());
+        register(new dev.onix.client.module.impl.combat.CombatTextModule());
+        register(new dev.onix.client.module.impl.visual.DespawnTimerModule());
         register(new NametagsModule());
         register(new OnixBadgeModule());
         register(new CustomSkyModule());
