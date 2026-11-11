@@ -46,7 +46,9 @@
     "FogDistanceMixin",
     "ItemEntityRendererMixin",
     "ItemEntityRenderStateMixin",
-    "MotionBlurMixin"
+    "MotionBlurMixin",
+    "ChatComponentAccessor",
+    "ChatCopyMixin"
   ],
   "injectors": {
     "defaultRequire": 0

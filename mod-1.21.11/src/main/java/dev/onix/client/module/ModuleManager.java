@@ -145,6 +145,7 @@ public class ModuleManager {
         register(new SensitivitySwitchModule());
         // Chat
         register(new ChatCleanerModule());
+        register(new ChatCopyModule());
         register(new ChatTimestampsModule());
         register(new ChatMentionsModule());
         register(new ChatHistoryModule());
