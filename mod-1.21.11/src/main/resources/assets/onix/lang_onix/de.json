@@ -347,5 +347,11 @@
  "name.combattext": "Kampf-Text",
  "desc.combattext": "Schadenszahlen über deinen Zielen und Ansagen für Kill-Serien.",
  "name.despawntimer": "Despawn-Timer",
- "desc.despawntimer": "Ein Countdown über liegenden Items, bis sie verschwinden."
+ "desc.despawntimer": "Ein Countdown über liegenden Items, bis sie verschwinden.",
+ "name.smoothhotbar": "Weiche Hotbar",
+ "desc.smoothhotbar": "Der Auswahlrahmen der Hotbar gleitet zum gewählten Slot.",
+ "name.fog": "Nebel & Wolken",
+ "desc.fog": "Weicherer oder kein Sichtweiten-Nebel, dünnerer Umgebungsnebel und weitere Wolken.",
+ "name.discord": "Discord-Status",
+ "desc.discord": "Zeigt auf deinem Discord-Profil, dass du Onix spielst und wo."
 }

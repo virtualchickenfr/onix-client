@@ -41,7 +41,9 @@
     "FontSetMixin",
     "FramerateLimitMixin",
     "PlayerSkinWidgetAccessor",
-    "ScreenTitleAccessor"
+    "ScreenTitleAccessor",
+    "HotbarSlideMixin",
+    "FogDistanceMixin"
   ],
   "injectors": {
     "defaultRequire": 0

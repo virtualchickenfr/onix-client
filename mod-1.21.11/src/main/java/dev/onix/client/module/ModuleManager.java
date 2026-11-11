@@ -118,6 +118,9 @@ public class ModuleManager {
         register(new dev.onix.client.module.impl.visual.DeathScreensModule());
         register(new dev.onix.client.module.impl.combat.CombatTextModule());
         register(new dev.onix.client.module.impl.visual.DespawnTimerModule());
+        register(new dev.onix.client.module.impl.visual.SmoothHotbarModule());
+        register(new dev.onix.client.module.impl.visual.FogModule());
+        register(new dev.onix.client.module.impl.utility.DiscordPresenceModule());
         register(new NametagsModule());
         register(new OnixBadgeModule());
         register(new CustomSkyModule());
