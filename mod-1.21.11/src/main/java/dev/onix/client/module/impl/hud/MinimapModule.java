@@ -41,6 +41,8 @@ public class MinimapModule extends HudModule {
     private final BoolSetting waypoints = add(new BoolSetting("waypoints", "Show Waypoints", true));
     private final BoolSetting coords = add(new BoolSetting("coords", "Coordinates Below", true));
     private final ColorSetting arrowColor = add(ColorSetting.accent("arrowColor", "Your Arrow"));
+    private final dev.onix.client.setting.KeybindSetting mapKey = add(new dev.onix.client.setting.KeybindSetting("mapKey", "World Map Key", 77)
+            .describe("Opens the big map of everything you explored (default M)."));
 
     private final Long2ObjectOpenHashMap<int[]> chunks = new Long2ObjectOpenHashMap<>();
     private final Long2LongOpenHashMap readAt = new Long2LongOpenHashMap();
@@ -65,6 +67,34 @@ public class MinimapModule extends HudModule {
     @Override
     public int getHeight() {
         return size.getInt() + (coords.isOn() ? 12 : 0);
+    }
+
+    @Override
+    public void onTick() {
+        ClientLevel level = mc().level;
+        var player = mc().player;
+        if (level == null || player == null) return;
+        if (mapKey.poll() && mc().screen == null) mc().setScreen(new dev.onix.client.gui.WorldMapScreen(this));
+        // the world map: every chunk the game has loaded, slowly, a couple per tick
+        int rd = Math.max(2, mc().options.getEffectiveRenderDistance());
+        scan(level, player.getBlockX(), player.getBlockY(), player.getBlockZ(), rd, 2, 30_000);
+    }
+
+    /** The colour of a block on the map (0 = not explored). */
+    public int colorAt(int x, int z) {
+        int[] c = chunks.get((long) (x >> 4) << 32 | ((z >> 4) & 0xFFFFFFFFL));
+        return c == null ? 0 : c[(z & 15) * 16 + (x & 15)];
+    }
+
+    /** The y of the top block for a waypoint placed on the map (the player's y when unknown). */
+    public int heightAt(int x, int z) {
+        ClientLevel level = mc().level;
+        if (level == null || !level.hasChunk(x >> 4, z >> 4)) return mc().player == null ? 64 : mc().player.getBlockY();
+        return level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+    }
+
+    public int arrowColor() {
+        return arrowColor.color();
     }
 
     @Override
@@ -138,7 +168,11 @@ public class MinimapModule extends HudModule {
         return Integer.MIN_VALUE;
     }
 
-    private void update(ClientLevel level, int px, int py, int pz) {
+    /**
+     * Reads the missing or oldest loaded chunks within radius (in chunks) around you, nearest first, at most budget of
+     * them. The two rings around you refresh faster, so placed blocks show up quickly. True when something was read.
+     */
+    private boolean scan(ClientLevel level, int px, int py, int pz, int radius, int budget, long maxAge) {
         if (level != cachedLevel) {
             chunks.clear();
             readAt.clear();
@@ -147,41 +181,41 @@ public class MinimapModule extends HudModule {
         }
         boolean cave = level.dimensionType().hasCeiling();
         long now = System.currentTimeMillis();
-        // read the missing or oldest chunks nearest to you first, a few per frame
-        int budget = 6;
-        int half = N / 2;
-        int cx0 = (px - half) >> 4, cx1 = (px + half) >> 4;
-        int cz0 = (pz - half) >> 4, cz1 = (pz + half) >> 4;
         int pcx = px >> 4, pcz = pz >> 4;
-        for (int r = 0; r <= Math.max(cx1 - cx0, cz1 - cz0) && budget > 0; r++) {
+        boolean read = false;
+        for (int r = 0; r <= radius && budget > 0; r++) {
             for (int cx = pcx - r; cx <= pcx + r && budget > 0; cx++) {
                 for (int cz = pcz - r; cz <= pcz + r && budget > 0; cz++) {
-                    if (Math.max(Math.abs(cx - pcx), Math.abs(cz - pcz)) != r) continue;
-                    if (cx < cx0 || cx > cx1 || cz < cz0 || cz > cz1 || !level.hasChunk(cx, cz)) continue;
+                    if (Math.max(Math.abs(cx - pcx), Math.abs(cz - pcz)) != r || !level.hasChunk(cx, cz)) continue;
                     long key = (long) cx << 32 | (cz & 0xFFFFFFFFL);
                     long at = readAt.getOrDefault(key, 0L);
-                    // the nearby chunks refresh more often, so placed blocks show up quickly
-                    long maxAge = r <= 1 ? 700 : REFRESH_MS;
-                    if (at != 0 && now - at < maxAge) continue;
+                    long age = r <= 1 ? 700 : maxAge;
+                    if (at != 0 && now - at < age) continue;
                     chunks.put(key, readChunk(level, cx, cz, py, cave));
                     readAt.put(key, now);
                     budget--;
-                    dirty = true;
+                    read = true;
                 }
             }
         }
-        // forget chunks far away
-        if (chunks.size() > 600) {
+        // keep what you explored (about 1 KB a chunk); only far away chunks go once there are very many
+        if (chunks.size() > 12_000) {
             var it = chunks.keySet().iterator();
             while (it.hasNext()) {
                 long key = it.nextLong();
                 int cx = (int) (key >> 32), cz = (int) key;
-                if (Math.abs(cx - pcx) > 10 || Math.abs(cz - pcz) > 10) {
+                if (Math.abs(cx - pcx) > 48 || Math.abs(cz - pcz) > 48) {
                     it.remove();
                     readAt.remove(key);
                 }
             }
         }
+        return read;
+    }
+
+    private void update(ClientLevel level, int px, int py, int pz) {
+        int half = N / 2;
+        if (scan(level, px, py, pz, (half >> 4) + 1, 6, REFRESH_MS)) dirty = true;
         int ox = px - half, oz = pz - half;
         if (ox != originX || oz != originZ) {
             originX = ox;
@@ -299,12 +333,12 @@ public class MinimapModule extends HudModule {
         return new float[]{rx, ry};
     }
 
-    private static void diamond(GuiGraphics ctx, float x, float y, float r, int color) {
+    public static void diamond(GuiGraphics ctx, float x, float y, float r, int color) {
         tris(ctx, new float[]{x, y - r, x + r, y, x - r, y, x - r, y, x + r, y, x, y + r}, color);
     }
 
     /** Filled triangles in one colour, drawn with both windings (the GUI pipeline culls one side). */
-    private static void tris(GuiGraphics ctx, float[] xy, int color) {
+    public static void tris(GuiGraphics ctx, float[] xy, int color) {
         int n = xy.length / 2;
         float[] both = new float[xy.length * 2];
         System.arraycopy(xy, 0, both, 0, xy.length);
@@ -319,7 +353,7 @@ public class MinimapModule extends HudModule {
         GuiTriangles.draw(ctx, both, colors);
     }
 
-    private void arrow(GuiGraphics ctx, float x, float y, float angle) {
+    public void arrow(GuiGraphics ctx, float x, float y, float angle) {
         float s = (float) Math.sin(angle), c = (float) Math.cos(angle);
         float[] pts = {0, -5.5f, 4, 4, 0, 2, -4, 4};   // tip, right, notch, left
         float[] t = new float[8];

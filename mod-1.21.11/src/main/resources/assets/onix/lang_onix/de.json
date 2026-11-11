@@ -112,7 +112,7 @@
  "desc.chatcopy": "Strg + Klick auf eine Chatnachricht kopiert sie.",
  "desc.motionblur": "Weiche Bewegungsunschärfe beim Umschauen, wie in PvP-Montagen.",
  "desc.itemphysics": "Gedroppte Items liegen flach auf dem Boden statt zu schweben und sich zu drehen.",
- "desc.minimap": "Eine Karte der Umgebung mit Spielern und Wegpunkten.",
+ "desc.minimap": "Eine Karte der Umgebung mit Spielern und Wegpunkten – Taste M öffnet die große Weltkarte.",
  "name.coords": "Koordinaten",
  "desc.coords": "Deine Position, Richtung und Nether-Koordinaten.",
  "name.countdown": "Countdown",

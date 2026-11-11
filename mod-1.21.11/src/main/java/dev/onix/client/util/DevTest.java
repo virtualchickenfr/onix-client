@@ -380,6 +380,13 @@ public final class DevTest {
             cmd(mc, "execute as @p at @s run fill ~-4 ~ ~-12 ~-2 ~4 ~-10 minecraft:oak_log");
         });
         then(60, () -> snap(mc, "09i1_minimap_terrain"));
+        then(2, () -> mc.setScreen(new dev.onix.client.gui.WorldMapScreen(OnixClient.MODULES.get(dev.onix.client.module.impl.hud.MinimapModule.class))));
+        then(20, () -> snap(mc, "09i1b_world_map"));
+        then(2, () -> mc.screen.mouseScrolled(mc.getWindow().getGuiScaledWidth() / 2.0, mc.getWindow().getGuiScaledHeight() / 2.0, 0, 1));
+        then(2, () -> mc.screen.mouseScrolled(mc.getWindow().getGuiScaledWidth() / 2.0, mc.getWindow().getGuiScaledHeight() / 2.0, 0, 1));
+        then(2, () -> mc.screen.mouseScrolled(mc.getWindow().getGuiScaledWidth() / 2.0, mc.getWindow().getGuiScaledHeight() / 2.0, 0, 1));
+        then(20, () -> snap(mc, "09i1c_world_map_zoomed"));
+        then(2, () -> mc.setScreen(null));
         // ---- item physics: drop some items in front of you and look down at them
         then(2, () -> {
             OnixClient.MODULES.get(dev.onix.client.module.impl.visual.ItemPhysicsModule.class).setEnabled(true);
