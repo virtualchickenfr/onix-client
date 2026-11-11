@@ -37,7 +37,7 @@ public class WaypointsModule extends TextHudModule {
     private String loaded = "";
 
     public WaypointsModule() {
-        super("waypoints", "Waypoints", "Mark places with a key and see how far away they are.", Category.HUD, false, Anchor.MIDDLE_LEFT, 4, 0);
+        super("waypoints", "Waypoints", "Mark places with a key and see how far away they are.", Category.HUD, false, Anchor.MIDDLE_LEFT, 4, 44);
         tags("markers", "home", "base", "navigation");
     }
 

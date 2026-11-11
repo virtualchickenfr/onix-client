@@ -33,6 +33,23 @@ public class OnixTitleScreen extends Screen {
     private static final int GREY = 0xFFA1A1AA;
     private static final int DIM = 0xFF6B6B76;
 
+    /** "Rejoin <server>": straight back onto the last multiplayer server you played on. */
+    private Item rejoinItem() {
+        String last = OnixClient.CONFIG.lastServer.get();
+        int nl = last.indexOf('\n');
+        if (nl < 0) return null;
+        String name = last.substring(0, nl).trim();
+        String ip = last.substring(nl + 1).trim();
+        if (ip.isEmpty()) return null;
+        String label = "Rejoin " + (name.isEmpty() || name.length() > 22 ? ip : name);
+        if (label.length() > 30) label = label.substring(0, 29) + "…";
+        return new Item(label, "server", () -> {
+            var data = new net.minecraft.client.multiplayer.ServerData(name.isEmpty() ? ip : name, ip, net.minecraft.client.multiplayer.ServerData.Type.OTHER);
+            net.minecraft.client.gui.screens.ConnectScreen.startConnecting(this, minecraft,
+                    net.minecraft.client.multiplayer.resolver.ServerAddress.parseString(ip), data, false, null);
+        }, true);
+    }
+
     private record Item(String label, String icon, Runnable action, boolean primary) {
         Item {
             label = dev.onix.client.util.I18n.ui(label);
@@ -78,6 +95,8 @@ public class OnixTitleScreen extends Screen {
         items.clear();
         items.add(new Item("Singleplayer", "world", () -> minecraft.setScreen(new SelectWorldScreen(this)), true));
         items.add(new Item("Multiplayer", "server", () -> minecraft.setScreen(new JoinMultiplayerScreen(this)), true));
+        Item rejoinItem = rejoinItem();
+        if (rejoinItem != null) items.add(rejoinItem);
         items.add(new Item("Modules", "all", () -> minecraft.setScreen(OnixClient.CONFIG.menuStyle.is("Clean") ? new gg.carbon.client.screen.ClickGui(this) : new OnixMenuScreen(this)), false));
         items.add(new Item("Cosmetics", "cosmetics", () -> minecraft.setScreen(new OnixMenuScreen(this, OnixMenuScreen.View.COSMETICS)), false));
         items.add(new Item("Profiles", "profile", () -> minecraft.setScreen(new OnixMenuScreen(this, OnixMenuScreen.View.PROFILES)), false));
@@ -86,6 +105,8 @@ public class OnixTitleScreen extends Screen {
         cineItems.clear();
         cineItems.add(new Item("Singleplayer", "world", () -> minecraft.setScreen(new SelectWorldScreen(this)), true));
         cineItems.add(new Item("Multiplayer", "server", () -> minecraft.setScreen(new JoinMultiplayerScreen(this)), true));
+        Item rejoin = rejoinItem();
+        if (rejoin != null) cineItems.add(rejoin);
         cineItems.add(new Item("Minecraft Settings", "settings", () -> minecraft.setScreen(new OptionsScreen(this, minecraft.options)), false));
         cineItems.add(new Item("Client", "all", () -> minecraft.setScreen(OnixClient.CONFIG.menuStyle.is("Clean") ? new gg.carbon.client.screen.ClickGui(this) : new OnixMenuScreen(this)), false));
         cineItems.add(new Item("Quit Game", "power", () -> minecraft.stop(), false));
@@ -591,12 +612,12 @@ public class OnixTitleScreen extends Screen {
         int top = Math.round(height / 2f - 40);
         int hovered = -1;
         for (int i = 0; i < cineItems.size(); i++) {
-            int y = top + i * step + (i >= 2 ? 6 : 0);
+            int y = top + i * step + (cineItems.get(i).primary() ? 0 : 6);
             int w = Math.max(110, Theme.boldWidth(cineItems.get(i).label()) + 30);
             if (Theme.inside(mouseX, mouseY, Math.round(menuX - w / 2f), y - 4, Math.round(menuX + w / 2f), y + 12)) hovered = i;
         }
         if (hovered >= 0) {
-            int y = top + hovered * step + (hovered >= 2 ? 6 : 0);
+            int y = top + hovered * step + (cineItems.get(hovered).primary() ? 0 : 6);
             float w = Math.max(110, Theme.boldWidth(cineItems.get(hovered).label()) + 30);
             if (Float.isNaN(hoverY)) {
                 hoverY = y;
@@ -617,7 +638,7 @@ public class OnixTitleScreen extends Screen {
             Item item = cineItems.get(i);
             float ia = smooth((since - 0.55f - i * 0.07f) / 0.4f);
             if (ia <= 0.01f) continue;
-            int y = top + i * step + (i >= 2 ? 6 : 0) + Math.round((1 - ia) * 8);
+            int y = top + i * step + (item.primary() ? 0 : 6) + Math.round((1 - ia) * 8);
             boolean hov = i == hovered;
             float h = hoverAnim("cine:" + item.label(), hov);
             int color = Theme.lerpColor(0xFFB4B4BC, WHITE, h);

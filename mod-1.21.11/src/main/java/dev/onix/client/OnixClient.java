@@ -138,6 +138,15 @@ public class OnixClient implements ClientModInitializer {
                         ? new gg.carbon.client.screen.ClickGui(null) : new OnixMenuScreen(null));
             }
             while (CWT_KEY.consumeClick()) CwtMode.toggle();
+            // remember the server you play on for "Rejoin" on the title screen
+            var server = client.getCurrentServer();
+            if (client.level != null && server != null && !client.isLocalServer() && server.ip != null && !server.ip.isBlank()) {
+                String last = server.name + "\n" + server.ip;
+                if (!last.equals(CONFIG.lastServer.get())) {
+                    CONFIG.lastServer.set(last);
+                    CONFIG.save();
+                }
+            }
             LauncherInbox.tick();
             OnixBadgeModule badge = MODULES.get(OnixBadgeModule.class);
             boolean badgeOn = badge != null && badge.isEnabled();

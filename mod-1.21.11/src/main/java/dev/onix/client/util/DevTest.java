@@ -74,6 +74,7 @@ public final class DevTest {
         then(30, () -> snap(mc, "00e_intro_done"));
         then(2, () -> { if (mc.screen != null) mc.screen.keyPressed(new KeyEvent(com.mojang.blaze3d.platform.InputConstants.KEY_RIGHT, 0, 0)); });
         then(2, () -> design("Onix"));
+        then(0, () -> OnixClient.CONFIG.lastServer.set("Hypixel\nmc.hypixel.net"));
         // resource loading screen (F3 + T)
         then(2, () -> mc.reloadResourcePacks());
         then(6, () -> snap(mc, "00z1_loading"));
