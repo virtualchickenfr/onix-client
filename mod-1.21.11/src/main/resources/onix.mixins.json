@@ -43,7 +43,9 @@
     "PlayerSkinWidgetAccessor",
     "ScreenTitleAccessor",
     "HotbarSlideMixin",
-    "FogDistanceMixin"
+    "FogDistanceMixin",
+    "ItemEntityRendererMixin",
+    "ItemEntityRenderStateMixin"
   ],
   "injectors": {
     "defaultRequire": 0
