@@ -284,7 +284,8 @@ void main() {
    * Runs the scene in `canvas` until `finish()` is called. `skin()` returns {px, slim} once your skin is known (or
    * null); the figure waits for it a moment so it never swaps mid-fall. Returns { finish(): Promise }.
    * opts.loop (seconds): the figure falls in again after that long, endlessly (the website's header);
-   * opts.y (0..1, default 0.46) and opts.scale (default 1): where the figure floats and how big it is.
+   * opts.y (0..1, default 0.46) and opts.scale (default 1): where the figure floats and how big it is;
+   * opts.waitSkin (seconds, default 0.9): how long to wait for the skin before a plain one is used.
    */
   function boot(canvas, skin, opts = {}) {
     const g = canvas.getContext('2d');
@@ -342,7 +343,7 @@ void main() {
       if (!who) {
         const s = skin && skin();
         if (s && s.px) who = { px: s.px, slim: !!s.slim };
-        else if (t > 0.9) who = { px: plainSkin(), slim: false };
+        else if (t > (opts.waitSkin || 0.9)) who = { px: plainSkin(), slim: false };
         if (who) fallStart = t;
       }
       if (who) {

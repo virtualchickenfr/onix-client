@@ -14,6 +14,10 @@ concurrency:
   group: website
   cancel-in-progress: true
 
+env:
+  # the Minecraft player whose skin the falling figure on the start page wears
+  SITE_SKIN: carbon2834
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -29,6 +33,18 @@ jobs:
           mkdir -p site/js
           cp launcher/src/js/fall.js launcher/src/js/skin3d.js site/js/
           touch site/.nojekyll
+
+      - name: The figure's skin (Minecraft player ${{ env.SITE_SKIN }})
+        continue-on-error: true
+        run: |
+          # the skin and whether it is the slim (Alex) model, from Mojang's public profile API
+          uuid=$(curl -fsSL "https://api.mojang.com/users/profiles/minecraft/$SITE_SKIN" | jq -r .id)
+          tex=$(curl -fsSL "https://sessionserver.mojang.com/session/minecraft/profile/$uuid" | jq -r '.properties[] | select(.name=="textures") | .value' | base64 -d)
+          url=$(echo "$tex" | jq -r .textures.SKIN.url)
+          model=$(echo "$tex" | jq -r '.textures.SKIN.metadata.model // "classic"')
+          curl -fsSL "$url" -o site/img/skin.png
+          printf '{"name": "%s", "slim": %s}\n' "$SITE_SKIN" "$([ "$model" = slim ] && echo true || echo false)" > site/img/skin.json
+          cat site/img/skin.json
           ls -R site | head -40
 
       - name: Push to gh-pages

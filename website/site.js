@@ -26,7 +26,21 @@ const REPO = 'virtualchickenfr/onix-client';
   put(32, 48, 16, 16, [26, 34, 40]); put(32, 60, 16, 1, [95, 208, 218]); put(36, 61, 4, 3, [214, 168, 128]);
   put(0, 16, 16, 16, [60, 66, 74]); put(0, 28, 16, 4, [235, 238, 240]);
   put(16, 48, 16, 16, [60, 66, 74]); put(16, 60, 16, 4, [235, 238, 240]);
-  Fall.boot(canvas, () => ({ px, slim: false }), { loop: 9, y: 0.27, scale: 0.62 });
+  // the skin of the player named in .github/workflows/website.yml (img/skin.png); the drawn outfit if it cannot load
+  let skin = null;
+  const started = performance.now();
+  fetch('img/skin.json').then((r) => (r.ok ? r.json() : null)).catch(() => null).then((info) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        skin = { px: Skin3D.pixels(img), slim: !!(info && info.slim) };
+      } catch {
+        skin = null;
+      }
+    };
+    img.src = 'img/skin.png';
+  });
+  Fall.boot(canvas, () => skin || (performance.now() - started > 1500 ? { px, slim: false } : null), { loop: 9, y: 0.27, scale: 0.62, waitSkin: 2 });
 })();
 
 // ---------------------------------------------------------------- navigation
