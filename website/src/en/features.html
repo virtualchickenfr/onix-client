@@ -1,0 +1,19 @@
+  <section class="page-head">
+    <p class="eyebrow">Features</p>
+    <h1>{{MODULE_COUNT}} modules</h1>
+    <p class="lead">Turn each module on by itself and set it up the way you like. In game, Right Shift opens the Onix menu.</p>
+  </section>
+
+  <main class="section modules">
+    <div class="filter">
+      <label class="search" for="mod-search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+        <input id="mod-search" type="search" placeholder="Search modules, e.g. zoom, minimap, CPS …" autocomplete="off">
+      </label>
+      <div class="chips" role="group" aria-label="{{CATEGORY_LABEL}}">
+{{MODULE_CHIPS}}
+      </div>
+    </div>
+    <p class="no-results" id="no-results" hidden>No module found. Try another word.</p>
+{{MODULE_GROUPS}}
+  </main>

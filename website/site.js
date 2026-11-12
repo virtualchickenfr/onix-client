@@ -5,6 +5,8 @@
    image viewer. Every page works without this script; it only adds to it. */
 
 const REPO = 'virtualchickenfr/onix-client';
+const DE = document.documentElement.lang === 'de';
+const ROOT = document.body.dataset.root || '';      // '../' on the German pages in de/
 
 // ---------------------------------------------------------------- the header scene (start page)
 (() => {
@@ -29,7 +31,7 @@ const REPO = 'virtualchickenfr/onix-client';
   // the skin of the player named in .github/workflows/website.yml (img/skin.png); the drawn outfit if it cannot load
   let skin = null;
   const started = performance.now();
-  fetch('img/skin.json').then((r) => (r.ok ? r.json() : null)).catch(() => null).then((info) => {
+  fetch(ROOT + 'img/skin.json').then((r) => (r.ok ? r.json() : null)).catch(() => null).then((info) => {
     const img = new Image();
     img.onload = () => {
       try {
@@ -38,7 +40,7 @@ const REPO = 'virtualchickenfr/onix-client';
         skin = null;
       }
     };
-    img.src = 'img/skin.png';
+    img.src = ROOT + 'img/skin.png';
   });
   Fall.boot(canvas, () => skin || (performance.now() - started > 1500 ? { px, slim: false } : null), { loop: 9, y: 0.27, scale: 0.62, waitSkin: 2, light: 2.2, tint: 0.45 });
 })();
@@ -80,7 +82,7 @@ const OS_NAMES = { windows: 'Windows', mac: 'macOS', linux: 'Linux', android: 'A
 async function setUpDownloads() {
   const os = detectOs();
   const label = document.getElementById('main-download-label');
-  if (label && OS_NAMES[os]) label.textContent = `Für ${OS_NAMES[os]} herunterladen`;
+  if (label && OS_NAMES[os]) label.textContent = DE ? `Für ${OS_NAMES[os]} herunterladen` : `Download for ${OS_NAMES[os]}`;
   document.querySelectorAll('.dl, .steps article').forEach((d) => d.classList.toggle('current', d.dataset.os === os));
   const version = document.getElementById('version');
   if (!version && !document.querySelector('.dl, [data-jar]')) return;
@@ -95,7 +97,7 @@ async function setUpDownloads() {
   if (!releases.length) return;
   const latest = releases[0];
   const latestVersion = latest.tag_name.replace(/^v/, '');
-  if (version) version.textContent = `Version ${latestVersion} · ${new Date(latest.published_at).toLocaleDateString('de-DE')}`;
+  if (version) version.textContent = `Version ${latestVersion} · ${new Date(latest.published_at).toLocaleDateString(DE ? 'de-DE' : 'en-US', DE ? undefined : { year: 'numeric', month: 'long', day: 'numeric' })}`;
   // a file from the newest release that has it (a build for one system can arrive later than the others)
   const find = (test) => {
     for (const r of releases) {

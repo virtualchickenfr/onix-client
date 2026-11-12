@@ -1,35 +1,37 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Onix Download</title>
-  <meta name="description" content="Onix für Windows, macOS, Linux und Android herunterladen, mit Installationsanleitung.">
+  <meta name="description" content="Download Onix for Windows, macOS, Linux and Android, with install steps.">
   <meta property="og:title" content="Onix Download">
-  <meta property="og:description" content="Onix für Windows, macOS, Linux und Android herunterladen, mit Installationsanleitung.">
+  <meta property="og:description" content="Download Onix for Windows, macOS, Linux and Android, with install steps.">
   <meta property="og:image" content="img/menu.jpg">
   <meta name="theme-color" content="#071d23">
+  <link rel="alternate" hreflang="de" href="de/download.html">
   <link rel="icon" href="img/favicon.png">
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="page-download">
+<body class="page-download" data-root="">
   <header class="nav">
     <a class="brand" href="index.html"><img src="img/icon.png" alt="" width="28" height="28"><span>Onix</span></a>
-    <button class="menu-btn" type="button" aria-label="Menü" aria-expanded="false" aria-controls="site-nav">
+    <button class="menu-btn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="site-nav">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
     </button>
     <nav id="site-nav">
-      <a href="funktionen.html">Funktionen</a>
-      <a href="neuigkeiten.html">Neuigkeiten</a>
-      <a href="hilfe.html">Hilfe</a>
+      <a href="features.html">Features</a>
+      <a href="news.html">What's new</a>
+      <a href="help.html">Help</a>
       <a href="download.html" aria-current="page" class="nav-cta">Download</a>
+      <a class="lang" href="de/download.html" hreflang="de" lang="de">Deutsch</a>
     </nav>
   </header>
 
 <section class="page-head">
     <p class="eyebrow">Download</p>
-    <h1>Onix herunterladen</h1>
-    <p class="lead">Der Launcher installiert Minecraft, Fabric, Onix und die Performance-Mods und hält alles aktuell.</p>
+    <h1>Download Onix</h1>
+    <p class="lead">The launcher installs Minecraft, Fabric, Onix and the performance mods and keeps everything up to date.</p>
     <p class="version" id="version">&nbsp;</p>
   </section>
 
@@ -42,7 +44,7 @@
         </a>
         <a class="dl" data-os="mac" href="https://github.com/virtualchickenfr/onix-client/releases/latest">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3c-1 .1-2.3.8-3 1.7-.7.8-1.2 2-1 3.1 1.1.1 2.3-.6 3-1.5.7-.9 1.1-2 1-3.3zM19.5 16.6c-.5 1.2-.8 1.7-1.5 2.7-1 1.4-2.3 3.1-4 3.1-1.5 0-1.9-1-3.9-1s-2.5 1-4 1c-1.7 0-2.9-1.6-3.9-3C.7 15.6.4 11 2 8.4 3.2 6.6 5 5.5 6.7 5.5c1.7 0 2.8 1 4.2 1 1.4 0 2.2-1 4.2-1 1.5 0 3.1.8 4.2 2.3-3.7 2-3.1 7.3.2 8.8z"/></svg>
-          <b>macOS</b><span class="dl-file">Apple-Chip &amp; Intel (.dmg)</span>
+          <b>macOS</b><span class="dl-file">Apple chip &amp; Intel (.dmg)</span>
         </a>
         <a class="dl" data-os="linux" href="https://github.com/virtualchickenfr/onix-client/releases/latest">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c-2.2 0-3.5 1.9-3.5 4.6 0 1.6-.5 2.7-1.5 4.2C5.6 12.9 4 15 4 17.4 4 20 6.4 22 12 22s8-2 8-4.6c0-2.4-1.6-4.5-3-6.6-1-1.5-1.5-2.6-1.5-4.2C15.5 3.9 14.2 2 12 2z"/><circle cx="10.4" cy="7" r=".9"/><circle cx="13.6" cy="7" r=".9"/></svg>
@@ -56,57 +58,57 @@
     </section>
 
     <section class="section tight">
-      <h2>Installieren</h2>
+      <h2>Install</h2>
       <div class="steps">
         <article data-os="windows">
           <h3>Windows</h3>
           <ol>
-            <li>Lade <b>Onix-Client-Setup.exe</b> herunter und starte sie.</li>
-            <li>Zeigt Windows „Der Computer wurde durch Windows geschützt“, klick auf <b>Weitere Informationen</b> und dann <b>Trotzdem ausführen</b>. Der Installer ist nicht von Microsoft signiert.</li>
-            <li>Der Launcher öffnet sich. Melde dich mit deinem Microsoft-Konto an und klick auf <b>Spielen</b>.</li>
+            <li>Download <b>Onix-Client-Setup.exe</b> and run it.</li>
+            <li>If Windows says “Windows protected your PC”, click <b>More info</b> and then <b>Run anyway</b>. The installer is not signed by Microsoft.</li>
+            <li>The launcher opens. Sign in with your Microsoft account and click <b>Play</b>.</li>
           </ol>
         </article>
         <article data-os="mac">
           <h3>macOS</h3>
           <ol>
-            <li>Öffne die <b>.dmg</b> und zieh Onix Client in den Ordner <b>Programme</b>.</li>
-            <li>Beim ersten Start meldet macOS, dass die App nicht geprüft werden kann. Öffne <b>Systemeinstellungen → Datenschutz &amp; Sicherheit</b> und klick bei Onix Client auf <b>Dennoch öffnen</b>.</li>
-            <li>Anmelden, auf <b>Spielen</b> klicken.</li>
+            <li>Open the <b>.dmg</b> and drag Onix Client into <b>Applications</b>.</li>
+            <li>On the first start macOS says the app cannot be checked. Open <b>System Settings → Privacy &amp; Security</b> and click <b>Open Anyway</b> next to Onix Client.</li>
+            <li>Sign in and click <b>Play</b>.</li>
           </ol>
         </article>
         <article data-os="linux">
           <h3>Linux</h3>
           <ol>
-            <li>Lade das <b>AppImage</b> herunter.</li>
-            <li>Mach es ausführbar: Rechtsklick → Eigenschaften → „Als Programm ausführen“, oder im Terminal <code>chmod +x Onix-Client-*.AppImage</code>.</li>
-            <li>Starten, anmelden, auf <b>Spielen</b> klicken.</li>
+            <li>Download the <b>AppImage</b>.</li>
+            <li>Make it executable: right click → Properties → “Allow executing file as program”, or in a terminal <code>chmod +x Onix-Client-*.AppImage</code>.</li>
+            <li>Start it, sign in and click <b>Play</b>.</li>
           </ol>
         </article>
         <article data-os="android">
           <h3>Android</h3>
           <ol>
-            <li>Lade <b>Onix-Android.apk</b> auf dem Handy herunter und öffne sie.</li>
-            <li>Erlaube deinem Browser einmal, Apps zu installieren (Android fragt automatisch danach).</li>
-            <li>Onix öffnen, anmelden, auf <b>Spielen</b> tippen. Neue Versionen installiert die App selbst.</li>
+            <li>Download <b>Onix-Android.apk</b> on your phone and open it.</li>
+            <li>Allow your browser to install apps once (Android asks you on its own).</li>
+            <li>Open Onix, sign in and tap <b>Play</b>. The app installs new versions by itself.</li>
           </ol>
         </article>
       </div>
     </section>
 
     <section class="section tight">
-      <h2>Was du brauchst</h2>
+      <h2>What you need</h2>
       <ul class="needs">
-        <li><b>Minecraft Java Edition</b><span>Ein eigener, gekaufter Account. Die Anmeldung läuft über Microsoft.</span></li>
-        <li><b>4 GB Arbeitsspeicher</b><span>Empfohlen 8 GB. Wie viel Minecraft bekommt, stellst du im Launcher pro Profil ein.</span></li>
-        <li><b>Internet beim ersten Start</b><span>Der Launcher lädt Minecraft und die Mods einmal herunter. Java bringt er selbst mit.</span></li>
-        <li><b>Android 8 oder neuer</b><span>Für die Handy-App. Ein aktuelles Gerät mit 6 GB Arbeitsspeicher läuft am besten.</span></li>
+        <li><b>Minecraft Java Edition</b><span>Your own, bought account. You sign in with Microsoft.</span></li>
+        <li><b>4 GB of memory</b><span>8 GB recommended. You choose how much Minecraft gets per profile in the launcher.</span></li>
+        <li><b>Internet on the first start</b><span>The launcher downloads Minecraft and the mods once. It brings its own Java.</span></li>
+        <li><b>Android 8 or newer</b><span>For the phone app. A recent device with 6 GB of memory runs best.</span></li>
       </ul>
     </section>
 
     <section class="section tight">
-      <h2>Nur der Mod</h2>
-      <p class="sub">Du nutzt schon einen eigenen Launcher mit Fabric? Dann nimm einfach die passende .jar für deine Minecraft-Version und leg sie in den Ordner <code>mods</code>. Fabric API wird gebraucht.</p>
-      <div class="jar-table" role="table" aria-label="Onix-Mod pro Minecraft-Version">
+      <h2>Just the mod</h2>
+      <p class="sub">Already using your own launcher with Fabric? Take the .jar for your Minecraft version and put it in the <code>mods</code> folder. Fabric API is needed.</p>
+      <div class="jar-table" role="table" aria-label="The Onix mod per Minecraft version">
         <a role="row" data-jar="1.21.11" href="https://github.com/virtualchickenfr/onix-client/releases/latest"><span>Minecraft 1.21.11</span><span class="jar-name">onix-client-…+1.21.11.jar</span></a>
         <a role="row" data-jar="1.21.10" href="https://github.com/virtualchickenfr/onix-client/releases/latest"><span>Minecraft 1.21.10</span><span class="jar-name">onix-client-…+1.21.10.jar</span></a>
         <a role="row" data-jar="1.21.8" href="https://github.com/virtualchickenfr/onix-client/releases/latest"><span>Minecraft 1.21.8</span><span class="jar-name">onix-client-…+1.21.8.jar</span></a>
@@ -120,8 +122,8 @@
 
   <footer>
     <div class="foot-brand"><img src="img/icon.png" alt="" width="22" height="22"><span>Onix Client</span></div>
-    <p class="foot-links"><a href="index.html">Start</a> · <a href="funktionen.html">Funktionen</a> · <a href="download.html">Download</a> · <a href="neuigkeiten.html">Neuigkeiten</a> · <a href="hilfe.html">Hilfe</a> · <a href="https://github.com/virtualchickenfr/onix-client">GitHub</a></p>
-    <p>Kein offizielles Minecraft-Produkt. Nicht von Mojang oder Microsoft genehmigt oder mit ihnen verbunden.</p>
+    <p class="foot-links"><a href="index.html">Home</a> · <a href="features.html">Features</a> · <a href="download.html">Download</a> · <a href="news.html">What's new</a> · <a href="help.html">Help</a> · <a href="https://github.com/virtualchickenfr/onix-client">GitHub</a> · <a href="de/download.html" lang="de">Deutsch</a></p>
+    <p>Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft.</p>
   </footer>
 
   <script src="site.js"></script>
