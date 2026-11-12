@@ -186,8 +186,8 @@ public final class FallTransition {
             model.leftArm.yRot = 0f;
             model.rightArm.zRot = 0.17f;
             model.leftArm.zRot = -0.17f;
-            model.rightLeg.xRot = -1.43f + legDrift;
-            model.leftLeg.xRot = -1.68f - legDrift;
+            model.rightLeg.xRot = -0.98f + legDrift;
+            model.leftLeg.xRot = -1.15f - legDrift;
             model.rightLeg.zRot = 0.07f;
             model.leftLeg.zRot = -0.07f;
             model.head.xRot = -0.52f;      // looking up at the light

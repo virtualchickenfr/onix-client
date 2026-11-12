@@ -18,7 +18,7 @@ const Skin3D = (() => {
     // the Play transition: arms up, legs apart, falling (not picked as a home pose)
     fall: { head: [-22, 0, 0], ra: [-12, 0, 148], la: [-12, 0, 148], rl: [16, 0, 12], ll: [-10, 0, 12], flail: true },
     // the sunken transition: falling backwards in the water, arms and legs stretched up towards the light, looking up
-    sunken: { head: [-30, 0, 0], ra: [-95, 0, 10], la: [-82, 0, 10], rl: [-82, 0, 4], ll: [-96, 0, 4], drift: true },
+    sunken: { head: [-30, 0, 0], ra: [-95, 0, 10], la: [-82, 0, 10], rl: [-56, 0, 4], ll: [-66, 0, 4], drift: true },
   };
   const POSE_NAMES = Object.keys(POSES).filter((p) => p !== 'fall' && p !== 'sunken');
 
