@@ -74,6 +74,5 @@ if (project.hasProperty('perfMods')) {
 		modLocalRuntime 'maven.modrinth:lithium:Ow7wA0kG'
 		modLocalRuntime 'maven.modrinth:badoptimizations:Q3Dusz2j'
 		modLocalRuntime 'maven.modrinth:scalablelux:PV9KcrYQ'
-		modLocalRuntime 'maven.modrinth:krypton:O9LmWYR7'
 	}
 }
