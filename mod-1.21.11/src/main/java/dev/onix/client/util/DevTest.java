@@ -93,6 +93,24 @@ public final class DevTest {
         then(12, () -> snap(mc, "01a_cinematic_enter"));
         then(18, () -> snap(mc, "01a2_cinematic_fall"));
         then(60, () -> snap(mc, "01b_cinematic_menu"));
+        // with Essential installed (devtest.yml, -Pessential): its buttons on the Onix title screen open its screens
+        then(0, () -> OnixClient.LOGGER.info("[devtest] essential present = {}", dev.onix.client.gui.EssentialLink.present()));
+        for (String what : new String[]{"friends", "wardrobe", "pictures"}) {
+            then(2, () -> {
+                if (!dev.onix.client.gui.EssentialLink.present()) return;
+                switch (what) {
+                    case "friends" -> dev.onix.client.gui.EssentialLink.friends();
+                    case "wardrobe" -> dev.onix.client.gui.EssentialLink.wardrobe();
+                    default -> dev.onix.client.gui.EssentialLink.pictures();
+                }
+            });
+            then(60, () -> {
+                if (!dev.onix.client.gui.EssentialLink.present()) return;
+                OnixClient.LOGGER.info("[devtest] essential {} opened: {}", what, mc.screen == null ? "nothing" : mc.screen.getClass().getName());
+                snap(mc, "01e_essential_" + what);
+                design("Onix");
+            });
+        }
         for (String id : List.of("Carbon", "Voxel", "Portal", "Classic")) {
             then(2, () -> design(id));
             then(90, () -> snap(mc, "02_title_" + id.toLowerCase(Locale.ROOT)));
@@ -260,6 +278,30 @@ public final class DevTest {
             snap(mc, "09n_all_modules_on");
             for (var m : OnixClient.MODULES.all()) m.setEnabled(false);
             for (var m : before) m.setEnabled(true);
+        });
+        // FPS benchmark without the frame cap: the same scene three times, the middle value counts
+        // (compared between the normal dev test and the one with the performance mods, devtest.yml)
+        int[] bench = new int[3];
+        then(2, () -> {
+            mc.options.framerateLimit().set(260);
+            mc.options.enableVsync().set(false);
+            if (mc.player != null) {
+                mc.player.setYRot(30f);
+                mc.player.setXRot(10f);
+            }
+        });
+        for (int i = 0; i < 3; i++) {
+            final int k = i;
+            then(40, () -> PerfProbe.start());
+            then(100, () -> bench[k] = PerfProbe.stop());
+        }
+        then(2, () -> {
+            int[] sorted = bench.clone();
+            java.util.Arrays.sort(sorted);
+            OnixClient.LOGGER.info("[devtest] bench: {} fps uncapped (runs {}, {}, {}; mods: {})", sorted[1], bench[0], bench[1], bench[2],
+                    net.fabricmc.loader.api.FabricLoader.getInstance().getAllMods().stream().map(c -> c.getMetadata().getId())
+                            .filter(id -> List.of("sodium", "lithium", "badoptimizations", "scalablelux", "essential").contains(id)).toList());
+            mc.options.framerateLimit().set(30);
         });
         then(2, () -> mc.setScreen(new OnixMenuScreen(null, OnixMenuScreen.View.MODULES)));
         then(30, () -> snap(mc, "09h_pack_menu_count"));

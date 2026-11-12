@@ -20,7 +20,10 @@ jobs:
             branch: devtest-results
           - dir: mod-1.21.11
             branch: devtest-results-perfmods
-            perfmods: true
+            gradleArgs: -PperfMods
+          - dir: mod-1.21.11
+            branch: devtest-results-essential
+            gradleArgs: -Pessential
           - dir: ports/build/mod-1.21.10
             port: '1.21.10'
             branch: devtest-results-1.21.10
@@ -76,7 +79,7 @@ jobs:
           echo 'resourcePacks:["vanilla","fabric","file/onix-test-pack"]' >> run/options.txt
           Xvfb :99 -screen 0 1280x720x24 > /dev/null 2>&1 &
           export DISPLAY=:99
-          ./gradlew runDevtest ${{ matrix.perfmods && '-PperfMods' || '' }} --no-daemon --stacktrace > devtest.log 2>&1 &
+          ./gradlew runDevtest ${{ matrix.gradleArgs }} --no-daemon --stacktrace > devtest.log 2>&1 &
           gradle_pid=$!
           mkdir -p diag
           # the test stops the game itself; meanwhile take a screen capture and thread dumps every 3 minutes

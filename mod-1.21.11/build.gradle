@@ -76,3 +76,16 @@ if (project.hasProperty('perfMods')) {
 		modLocalRuntime 'maven.modrinth:scalablelux:PV9KcrYQ'
 	}
 }
+
+// Dev test with the Essential mod installed (devtest.yml, -Pessential): its buttons on Onix's title screen.
+if (project.hasProperty('essential')) {
+	repositories {
+		exclusiveContent {
+			forRepository { maven { name = 'Modrinth'; url = 'https://api.modrinth.com/maven' } }
+			filter { includeGroup 'maven.modrinth' }
+		}
+	}
+	dependencies {
+		modLocalRuntime 'maven.modrinth:essential:Ebucxmaa'
+	}
+}
