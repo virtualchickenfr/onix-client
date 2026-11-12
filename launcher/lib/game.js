@@ -27,6 +27,10 @@ const MANAGED_MODS = [
   { project: 'entityculling', id: 'entityculling', name: 'EntityCulling', performance: true },
   // faster game start and less memory; only a full release, and simply left out on versions it does not support yet
   { project: 'modernfix', id: 'modernfix', name: 'ModernFix', performance: true, optional: true },
+  // fewer needless updates (light map, sky, particles) and a much faster light engine; tested together with Onix
+  // (mod-1.21.11/build.gradle -PperfMods); left out on versions they do not support
+  { project: 'badoptimizations', id: 'badoptimizations', name: 'BadOptimizations', performance: true, optional: true },
+  { project: 'scalablelux', id: 'scalablelux', name: 'ScalableLux', performance: true, optional: true },
 ];
 
 const MANIFEST = '.onix-managed.json';

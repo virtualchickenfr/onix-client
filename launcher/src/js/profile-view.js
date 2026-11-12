@@ -540,7 +540,7 @@ function renderPvSettings() {
       el('h4', { text: 'Game' }),
       el('label', { class: 'field' }, [el('span', {}, ['Memory ', ramOut]), ram]),
       field('Join on launch', server),
-      el('div', { class: 'field inline' }, [el('span', { text: 'Performance pack (Sodium, Lithium, FerriteCore, ImmediatelyFast, EntityCulling)' }), el('label', { class: 'switch' }, [perf, el('i')])]),
+      el('div', { class: 'field inline' }, [el('span', { text: 'Performance pack (Sodium, Lithium, FerriteCore, ImmediatelyFast, EntityCulling, BadOptimizations, ScalableLux)' }), el('label', { class: 'switch' }, [perf, el('i')])]),
       el('div', { class: 'field inline' }, [el('span', { text: 'Shaders on strong PCs (Iris + Complementary Reimagined; the Onix module Shaders switches them)' }), el('label', { class: 'switch' }, [shade, el('i')])]),
     ]),
     el('section', { class: 'pv-card' }, [
