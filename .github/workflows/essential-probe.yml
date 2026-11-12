@@ -12,6 +12,6 @@ jobs:
       - name: Performance mods for 1.21.11
         run: |
           for p in sodium lithium ferrite-core immediatelyfast entityculling modernfix badoptimizations scalablelux moreculling c2me-fabric krypton noisium; do
-            v=$(curl -s "https://api.modrinth.com/v2/project/$p/version?loaders=%5B%22fabric%22%5D&game_versions=%5B%221.21.11%22%5D" | jq -r '[.[] | select(.version_type=="release")][0] | (.version_number // "none") + " deps=" + ([.dependencies[]? | select(.dependency_type=="required") | .project_id] | join(","))')
+            v=$(curl -s "https://api.modrinth.com/v2/project/$p/version?loaders=%5B%22fabric%22%5D&game_versions=%5B%221.21.11%22%5D" | jq -r '[.[] | select(.version_type=="release")][0] | (.version_number // "none") + " id=" + (.id // "-") + " deps=" + ([.dependencies[]? | select(.dependency_type=="required") | .project_id] | join(","))')
             echo "$p: $v"
           done
