@@ -1,0 +1,26 @@
+name: Essential probe
+# Development helper: downloads the Essential mod (Fabric, 1.21.11) and lists how it adds its main menu buttons,
+# so Onix's own title screen can show them too. Run by hand (Actions → Essential probe).
+on:
+  workflow_dispatch:
+  push:
+    paths: ['.github/essential-probe-trigger']
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download and inspect
+        run: |
+          set -e
+          url=$(curl -s 'https://api.modrinth.com/v2/project/essential/version?loaders=%5B%22fabric%22%5D&game_versions=%5B%221.21.11%22%5D' | jq -r '.[0].files[0].url')
+          echo "jar: $url"
+          curl -sL "$url" -o essential.jar
+          mkdir x && cd x && unzip -q ../essential.jar
+          echo "== top level"; ls
+          echo "== fabric.mod.json"; cat fabric.mod.json | head -60
+          echo "== nested jars"; find . -name '*.jar' | head -20
+          for j in $(find . -name '*.jar'); do mkdir -p "n/$(basename $j)"; (cd "n/$(basename $j)" && unzip -qo "../../$j" || true); done
+          echo "== mixin configs"; find . -name '*mixins*.json' | head -20
+          echo "== title screen mixins"; grep -rl "TitleScreen\|class_442" --include='*.json' . | head; grep -rho '"[A-Za-z_.$]*TitleScreen[A-Za-z_$]*"' --include='*.json' . | sort -u | head -30
+          echo "== classes about the main menu"
+          find . -name '*.class' | grep -i -E 'mainmenu|titlescreen|menu/|wardrobe|socialmenu|screenshotbrowser|EssentialAPI|GuiUtil|MenuButton' | sed 's/\$.*//' | sort -u | head -120
