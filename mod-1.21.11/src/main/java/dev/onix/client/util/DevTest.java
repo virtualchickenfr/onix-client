@@ -61,6 +61,14 @@ public final class DevTest {
     private static void build(Minecraft mc) {
         until(() -> mc.getOverlay() == null && (mc.screen instanceof OnixTitleScreen || mc.screen instanceof CarbonMainMenu || mc.screen instanceof TitleScreen
                 || mc.screen instanceof dev.onix.client.gui.WelcomeScreen));
+        then(0, () -> {
+            // every module with its category, names and descriptions (English and German), for the website's module list
+            for (var m : OnixClient.MODULES.all()) {
+                OnixClient.LOGGER.info("[devtest] module\t{}\t{}\t{}\t{}\t{}\t{}", m.getId(), m.getCategory().name(),
+                        m.englishName(), dev.onix.client.util.I18n.german("name." + m.getId(), m.englishName()),
+                        m.englishDescription(), dev.onix.client.util.I18n.german("desc." + m.getId(), m.englishDescription()));
+            }
+        });
         then(20, () -> {
             mc.options.pauseOnLostFocus = false;
             // the lyrics lookup over the real internet (LRCLIB), checked again further down
