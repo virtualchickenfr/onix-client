@@ -1,0 +1,294 @@
+id	category	name_en	name_de	desc_en	desc_de
+fps	HUD	FPS	FPS	Frames per second with optional min, max and average.	Bilder pro Sekunde, optional mit Minimum, Maximum und Durchschnitt.
+framegraph	HUD	Frame Graph	Frame-Graph	Live graph of frame times to spot stutters.	Live-Grafik der Frame-Zeiten, um Ruckler zu finden.
+cps	HUD	CPS	CPS	Clicks per second for left and right mouse button.	Klicks pro Sekunde für linke und rechte Maustaste.
+ping	HUD	Ping	Ping	Your latency to the server.	Deine Verzögerung zum Server.
+tps	HUD	TPS	TPS	Estimated server ticks per second (20 = no lag).	Geschätzte Server-Ticks pro Sekunde (20 = kein Lag).
+coords	HUD	Coordinates	Koordinaten	Your position, direction and nether coordinates.	Deine Position, Richtung und Nether-Koordinaten.
+direction	HUD	Direction	Richtung	Cardinal direction plus exact yaw and pitch.	Himmelsrichtung plus genauer Yaw und Pitch.
+biome	HUD	Biome	Biom	The biome you are standing in.	Das Biom, in dem du stehst.
+chunkinfo	HUD	Chunk Info	Chunk-Info	Chunk and region coordinates, handy for farms and builds.	Chunk- und Region-Koordinaten, praktisch für Farmen und Bauten.
+lightlevel	HUD	Light Level	Lichtlevel	Block and sky light where you stand.	Block- und Himmelslicht, wo du stehst.
+speed	HUD	Speed	Geschwindigkeit	How fast you are moving.	Wie schnell du dich bewegst.
+falldistance	HUD	Fall Distance	Fallhöhe	How far you have fallen – turns red when it will hurt.	Wie tief du gefallen bist – wird rot, wenn es wehtut.
+clock	HUD	Clock	Uhr	Real-world time.	Die echte Uhrzeit.
+date	HUD	Date	Datum	Today's date.	Das heutige Datum.
+gametime	HUD	Game Time	Spielzeit	Minecraft time of day as a clock.	Die Minecraft-Tageszeit als Uhr.
+day	HUD	Day Counter	Tageszähler	How many Minecraft days have passed in this world.	Wie viele Minecraft-Tage in dieser Welt vergangen sind.
+moonphase	HUD	Moon Phase	Mondphase	Current moon phase.	Die aktuelle Mondphase.
+weatherdisplay	HUD	Weather	Wetter	Current weather in the world.	Das aktuelle Wetter in der Welt.
+memory	HUD	Memory	Arbeitsspeicher	Java memory (RAM) used by the game.	Java-Speicher (RAM), den das Spiel nutzt.
+server	HUD	Server Address	Server-Adresse	The server you are playing on.	Der Server, auf dem du spielst.
+playercount	HUD	Player Count	Spieleranzahl	Number of players in the tab list.	Anzahl der Spieler in der Tab-Liste.
+sessiontime	HUD	Session Time	Session-Zeit	How long you have been playing.	Wie lange du schon spielst.
+stopwatch	HUD	Stopwatch	Stoppuhr	Time anything with a key – parkour, speedruns, farms.	Stopp alles mit einer Taste – Parkour, Speedruns, Farmen.
+countdown	HUD	Countdown	Countdown	A timer that counts down and alerts you.	Ein Timer, der herunterzählt und dich erinnert.
+keystrokes	HUD	Keystrokes	Keystrokes	Shows WASD, mouse buttons and space bar as you press them.	Zeigt WASD, Maustasten und Leertaste, wenn du sie drückst.
+armor	HUD	Armor Status	Rüstungsstatus	Your armor and held items with durability.	Deine Rüstung und gehaltene Items mit Haltbarkeit.
+effects	HUD	Potion Effects	Trank-Effekte	Active effects with level and time left.	Aktive Effekte mit Stufe und Restzeit.
+helditem	HUD	Held Item	Gehaltenes Item	Name, durability and total count of the item in your hand.	Name, Haltbarkeit und Gesamtanzahl des Items in deiner Hand.
+compass	HUD	Compass	Kompass	A horizontal compass strip.	Ein waagerechter Kompassstreifen.
+minimap	HUD	Minimap	Minimap	A map of the area around you, with players and waypoints.	Eine Karte der Umgebung mit Spielern und Wegpunkten – Taste M öffnet die große Weltkarte.
+inventory	HUD	Inventory Viewer	Inventar-Anzeige	Your inventory on screen at all times.	Dein Inventar immer auf dem Bildschirm.
+hunger	HUD	Hunger	Hunger	Food level, hidden saturation and exhaustion.	Hunger, versteckte Sättigung und Erschöpfung.
+health	HUD	Health	Leben	Your exact health as a number.	Dein genaues Leben als Zahl.
+experience	HUD	Experience	Erfahrung	Level, progress and points.	Level, Fortschritt und Punkte.
+air	HUD	Air	Luft	Remaining breath underwater.	Verbleibende Luft unter Wasser.
+packdisplay	HUD	Pack Display	Pack-Anzeige	Which resource packs are active.	Welche Ressourcenpakete aktiv sind.
+watermark	HUD	Watermark	Wasserzeichen	Client name with optional FPS and time.	Client-Name, optional mit FPS und Uhrzeit.
+modulelist	HUD	Module List	Modul-Liste	A list of all enabled modules.	Eine Liste aller aktiven Module.
+deathcoords	HUD	Death Coordinates	Todes-Koordinaten	Remembers where you died so you can get your items back.	Merkt sich, wo du gestorben bist, damit du deine Items zurückholst.
+waypoints	HUD	Waypoints	Wegpunkte	Mark places with a key and see how far away they are.	Markiere Orte mit einer Taste und sieh, wie weit sie entfernt sind.
+elytra	HUD	Elytra Info	Elytra-Info	Speed, altitude, pitch and durability while gliding.	Geschwindigkeit, Höhe, Neigung und Haltbarkeit beim Gleiten.
+mount	HUD	Mount Info	Reittier-Info	Speed, jump height and health of the horse you ride.	Geschwindigkeit, Sprunghöhe und Leben deines Pferdes.
+durabilitywarning	HUD	Durability Warning	Haltbarkeits-Warnung	Alerts you before your gear breaks.	Warnt dich, bevor deine Ausrüstung kaputtgeht.
+pickups	HUD	Pickup Notifier	Aufsammel-Anzeige	Shows the items you just picked up.	Zeigt die Items, die du gerade aufgesammelt hast.
+blockinfo	HUD	Block Info	Block-Info	Details about the block you are looking at.	Details zu dem Block, den du ansiehst.
+customtext	HUD	Custom Text	Eigener Text	Your own text with live placeholders.	Dein eigener Text mit Live-Platzhaltern.
+togglesprint	COMBAT	Toggle Sprint	Toggle Sprint	Tap sprint once instead of holding it.	Einmal Sprinten tippen statt gedrückt halten.
+togglesneak	COMBAT	Toggle Sneak	Toggle Sneak	Tap sneak once instead of holding it.	Einmal Schleichen tippen statt gedrückt halten.
+hiteffects	COMBAT	Hit Effects	Treffer-Effekte	Extra particles every time you hit.	Zusätzliche Partikel bei jedem Treffer.
+killeffects	COMBAT	Kill Effects	Kill-Effekte	Particles and a sound when your target dies.	Partikel und ein Ton, wenn dein Gegner stirbt.
+hitsound	COMBAT	Hit Sound	Treffer-Sound	Plays a sound whenever you land a hit.	Spielt einen Ton, wenn du triffst.
+crosshair	COMBAT	Crosshair	Fadenkreuz	A custom crosshair with styles, colors and dynamic gap.	Ein eigenes Fadenkreuz mit Stilen, Farben und dynamischem Abstand.
+nohurtcam	COMBAT	No Hurt Cam	Kein Hurt-Cam	Less camera shake when hit, and calmer screen effects.	Weniger Kamerawackeln bei Treffern und ruhigere Bildschirmeffekte.
+lowhealth	COMBAT	Low Health Warning	Wenig-Leben-Warnung	Red screen edges when you are about to die.	Rote Bildschirmränder, wenn du gleich stirbst.
+damageflash	COMBAT	Damage Flash	Schadens-Blitz	Screen flash when you take damage.	Der Bildschirm blitzt, wenn du Schaden bekommst.
+hitcolor	COMBAT	Hit Color	Trefferfarbe	Pick the colour entities flash when they get hit.	Wähle die Farbe, in der Spieler und Mobs bei einem Treffer aufleuchten.
+totemwarning	COMBAT	Totem Warning	Totem-Warnung	Reminds you to put a totem in your off hand.	Erinnert dich, ein Totem in die Zweithand zu nehmen.
+reach	COMBAT	Reach Display	Reichweiten-Anzeige	Distance of your last hit.	Entfernung deines letzten Treffers.
+combo	COMBAT	Combo Counter	Combo-Zähler	Hits in a row without getting hit back.	Treffer in Folge, ohne selbst getroffen zu werden.
+targethud	COMBAT	Target HUD	Ziel-HUD	Health and info about the player you are fighting.	Leben und Infos zu dem Spieler, mit dem du kämpfst.
+sessionstats	COMBAT	Session Stats	Session-Statistik	Kills, deaths and K/D since you started playing.	Kills, Tode und K/D seit Spielbeginn.
+cooldown	COMBAT	Cooldown Indicator	Cooldown-Anzeige	Shows your attack cooldown under the crosshair.	Zeigt deinen Angriffs-Cooldown unter dem Fadenkreuz.
+itemcooldowns	COMBAT	Item Cooldowns	Item-Cooldowns	Cooldown bars for pearls, shields and more.	Cooldown-Balken für Perlen, Schilde und mehr.
+arrows	COMBAT	Arrow Counter	Pfeil-Zähler	How many arrows you carry.	Wie viele Pfeile du dabei hast.
+totems	COMBAT	Totem Counter	Totem-Zähler	Totems of Undying in your inventory.	Totems der Unsterblichkeit in deinem Inventar.
+pearls	COMBAT	Pearl Counter	Perlen-Zähler	Ender pearls in your inventory.	Enderperlen in deinem Inventar.
+gapples	COMBAT	Golden Apple Counter	Goldapfel-Zähler	Golden apples in your inventory.	Goldene Äpfel in deinem Inventar.
+pots	COMBAT	Potion Counter	Trank-Zähler	Healing or other potions in your inventory.	Heil- oder andere Tränke in deinem Inventar.
+blocks	COMBAT	Block Counter	Block-Zähler	Placeable blocks you carry – great for bridging.	Platzierbare Blöcke, die du dabei hast – ideal zum Bridgen.
+resources	COMBAT	Resource Counter	Ressourcen-Zähler	Iron, gold, diamonds or emeralds you carry – for Bedwars and more.	Eisen, Gold, Diamanten oder Smaragde – für Bedwars und mehr.
+customcounter	COMBAT	Custom Item Counter	Eigener Item-Zähler	Count any item you choose.	Zählt ein beliebiges Item deiner Wahl.
+atmosphere	VISUAL	Atmosphere	Atmosphäre	Animated sky tint, color grading and ambient particles.	Animierte Himmelsfärbung, Color Grading und Umgebungspartikel.
+fullbright	VISUAL	Fullbright	Fullbright	See in caves and at night without torches.	Sieh in Höhlen und nachts ohne Fackeln.
+weather	VISUAL	Weather Changer	Wetter-Wechsler	Choose the weather you see – client-side only.	Wähle das Wetter, das du siehst – nur bei dir.
+timechanger	VISUAL	Time Changer	Zeit-Wechsler	Set your own time of day and moon – client-side only.	Stell deine eigene Tageszeit und den Mond ein – nur bei dir.
+trail	VISUAL	Trail	Spur	Leave a particle trail behind you.	Hinterlässt eine Partikelspur hinter dir.
+jumpcircles	VISUAL	Jump Circles	Sprung-Kreise	Rings spread out on the ground where you jump and land.	Ringe breiten sich auf dem Boden aus, wo du springst und landest.
+smallcaps	VISUAL	Small Caps	Kapitälchen	All text in small capital letters.	Alle Texte in kleinen Großbuchstaben.
+tnttimer	VISUAL	TNT Timer	TNT-Timer	A countdown above lit TNT until it explodes.	Ein Countdown über gezündetem TNT bis zur Explosion.
+songlyrics	HUD	Song Lyrics	Songtexte	Synced lyrics of your Spotify song, animated in the world like a music edit.	Synchronisierte Lyrics deines Spotify-Songs, animiert in der Welt wie ein Music-Edit.
+handaura	VISUAL	Hand Aura	Hand-Aura	A glow and sparks around the item in your hand.	Ein Leuchten und Funken um das Item in deiner Hand.
+swinganimation	VISUAL	Swing Animation	Schlag-Animation	Change how your hand swings in first person.	Ändert, wie deine Hand in der ersten Person schwingt.
+weaponinspect	VISUAL	Weapon Inspect	Waffen-Inspektion	Press a key to inspect the item in your hand.	Drück eine Taste, um das Item in deiner Hand anzusehen.
+colorgrading	VISUAL	Color Grading	Color Grading	Give the world a cinematic colour look with tint and vignette.	Gib der Welt einen Kino-Look mit Farbton und Vignette.
+customglint	VISUAL	Custom Glint	Eigener Glanz	Give the enchantment glint your own colour.	Gib dem Verzauberungsglanz deine eigene Farbe.
+totemspirit	VISUAL	Totem Spirit	Totem-Geist	A rising spirit effect when a totem pops.	Ein aufsteigender Geist-Effekt, wenn ein Totem poppt.
+impactfx	VISUAL	Impact FX	Impact FX	Glowing rings, ground splashes, crit stars and a light pillar on kills.	Leuchtende Ringe, Boden-Splashes, Crit-Sterne und eine Lichtsäule bei Kills.
+halo	VISUAL	Halo	Heiligenschein	A glowing ring floats above your head.	Ein leuchtender Ring schwebt über deinem Kopf.
+rainripples	VISUAL	Rain Ripples	Regen-Ringe	Raindrops leave little rings on the ground and on water.	Regentropfen hinterlassen kleine Ringe auf dem Boden und auf Wasser.
+deathscreens	VISUAL	Death Screens	Todesbildschirme	Animated death screens in five styles: cinematic, glitch, arcade, energy and ink.	Animierte Todesbildschirme in fünf Stilen: Kino, Glitch, Arcade, Energie und Tinte.
+combattext	COMBAT	Combat Text	Kampf-Text	Damage numbers above your targets and a kill streak announcer.	Schadenszahlen über deinen Zielen und Ansagen für Kill-Serien.
+despawntimer	VISUAL	Despawn Timer	Despawn-Timer	A countdown above dropped items until they vanish.	Ein Countdown über liegenden Items, bis sie verschwinden.
+smoothhotbar	VISUAL	Smooth Hotbar	Weiche Hotbar	The hotbar's selection frame glides to the selected slot.	Der Auswahlrahmen der Hotbar gleitet zum gewählten Slot.
+fog	VISUAL	Fog & Clouds	Nebel & Wolken	Softer or no distance fog, thinner environment fog and farther clouds.	Weicherer oder kein Sichtweiten-Nebel, dünnerer Umgebungsnebel und weitere Wolken.
+discord	UTILITY	Discord Status	Discord-Status	Shows on your Discord profile that you play Onix and where.	Zeigt auf deinem Discord-Profil, dass du Onix spielst und wo.
+nametags	VISUAL	Nametags	Namensschilder	Your own nametag in F5 and health next to names.	Dein eigenes Namensschild in F5 und Leben neben Namen.
+badge	VISUAL	Onix Badge	Onix-Abzeichen	An Onix logo next to every player who uses Onix – including you.	Ein Onix-Logo neben jedem Spieler, der Onix nutzt – auch bei dir.
+customsky	VISUAL	Custom Sky	Eigener Himmel	Pick from many skies, with separate day and night skies.	Wähle aus vielen Himmeln, getrennt für Tag und Nacht.
+lowfire	VISUAL	Low Fire	Wenig Feuer	Less fire covering your screen.	Weniger Feuer auf deinem Bildschirm.
+itemphysics	VISUAL	Item Physics	Item-Physik	Dropped items lie flat on the ground instead of floating and spinning.	Gedroppte Items liegen flach auf dem Boden statt zu schweben und sich zu drehen.
+motionblur	VISUAL	Motion Blur	Motion Blur	Smooth blur when you turn, like in PvP montages.	Weiche Bewegungsunschärfe beim Umschauen, wie in PvP-Montagen.
+blockoutline	VISUAL	Block Outline	Block-Umrandung	Color and fill for the block selection outline.	Farbe und Füllung der Blockauswahl.
+chunkborders	VISUAL	Chunk Borders	Chunk-Grenzen	Show chunk borders without F3 + G, in your own colors.	Chunk-Grenzen ohne F3 + G, in deinen Farben.
+hitboxes	VISUAL	Hitboxes	Hitboxen	Entity hitboxes with colors per type.	Hitboxen von Entities mit Farben pro Typ.
+viewmodel	VISUAL	Hand View Model	Hand-Ansicht	Position, size and rotation of held items.	Position, Größe und Drehung gehaltener Items.
+overlays	VISUAL	Overlays	Overlays	Remove pumpkin blur, portal swirl and other overlays.	Entfernt Kürbis-Unschärfe, Portal-Wirbel und andere Overlays.
+scoreboard	VISUAL	Scoreboard	Scoreboard	Hide, move, fade or shrink the sidebar scoreboard.	Seiten-Scoreboard ausblenden, verschieben, verblassen oder verkleinern.
+bossbar	VISUAL	Boss Bar	Bossleiste	Hide, move, fade or resize boss bars.	Bossleisten ausblenden, verschieben, verblassen oder skalieren.
+tablist	VISUAL	Tab List	Tab-Liste	Numeric, colored ping in the player list.	Ping als farbige Zahl in der Spielerliste.
+zoom	CAMERA	Zoom	Zoom	Zoom in with a key; scroll to adjust.	Mit einer Taste heranzoomen, mit dem Mausrad anpassen.
+freelook	CAMERA	Freelook	Freelook	Look around your character while moving straight.	Schau dich um deine Figur um, während du geradeaus läufst.
+perspective	CAMERA	Perspective Key	Perspektiven-Taste	Quick look behind or at yourself, and a custom F5 cycle.	Schneller Blick nach hinten oder auf dich selbst und ein eigener F5-Wechsel.
+cameratweaks	CAMERA	Camera Tweaks	Kamera-Tweaks	Third-person distance, clipping and shoulder view.	Abstand in der dritten Person, Clipping und Schulterblick.
+fov	CAMERA	FOV Effects	FOV-Effekte	Stop the FOV from changing when you sprint and set fixed FOVs.	Verhindert, dass sich das Sichtfeld beim Sprinten ändert, und setzt feste FOVs.
+sensitivity	CAMERA	Sensitivity Switch	Empfindlichkeits-Wechsel	A second mouse sensitivity on a key.	Eine zweite Mausempfindlichkeit auf einer Taste.
+chatcleaner	CHAT	Chat Cleaner	Chat-Aufräumer	Hide repeated messages, empty and separator lines.	Blendet wiederholte Nachrichten, leere Zeilen und Trennlinien aus.
+chatcopy	CHAT	Chat Copy	Chat kopieren	Ctrl + click a chat message to copy it.	Strg + Klick auf eine Chatnachricht kopiert sie.
+timestamps	CHAT	Chat Timestamps	Chat-Zeitstempel	Shows when each message arrived.	Zeigt, wann jede Nachricht ankam.
+mentions	CHAT	Chat Mentions	Chat-Erwähnungen	Highlight and sound when someone mentions you.	Hervorhebung und Ton, wenn dich jemand erwähnt.
+chathistory	CHAT	Chat History & Size	Chat-Verlauf & Größe	Scroll back further than 100 lines and size the chat box.	Weiter als 100 Zeilen zurückscrollen und die Chatbox anpassen.
+chatfilter	CHAT	Chat Filter	Chat-Filter	Hide or censor messages with certain words.	Blendet Nachrichten mit bestimmten Wörtern aus oder zensiert sie.
+macros	CHAT	Chat Macros	Chat-Makros	Bind messages and commands to keys.	Nachrichten und Befehle auf Tasten legen.
+autogg	CHAT	Auto GG	Auto GG	Sends "gg" automatically when a game ends.	Schreibt automatisch „gg“, wenn eine Runde endet.
+autotool	UTILITY	Auto Tool	Auto-Werkzeug	Picks the best tool from your hotbar while mining.	Nimmt beim Abbauen das beste Werkzeug aus deiner Hotbar.
+panic	UTILITY	Panic	Panik	Turn every module off instantly with one key.	Schaltet alle Module mit einer Taste sofort aus.
+autorespawn	UTILITY	Auto Respawn	Auto-Respawn	Skip the death screen.	Überspringt den Todesbildschirm.
+autoreconnect	UTILITY	Auto Reconnect	Auto-Reconnect	Reconnect button and automatic reconnect after a kick.	Reconnect-Knopf und automatisches Neuverbinden nach einem Kick.
+copycoords	UTILITY	Copy Coordinates	Koordinaten kopieren	One key copies your position to the clipboard.	Eine Taste kopiert deine Position in die Zwischenablage.
+tooltips	UTILITY	Item Tooltips	Item-Tooltips	More information in item tooltips.	Mehr Infos in Item-Tooltips.
+autoscreenshot	UTILITY	Auto Screenshot	Auto-Screenshot	Saves a screenshot when you win – or whenever chat says your words.	Macht einen Screenshot, wenn du gewinnst – oder wenn deine Wörter im Chat stehen.
+tabout	UTILITY	Tab-out Alerts	Tab-out-Hinweise	Flashes the taskbar and plays a sound when something happens while you are tabbed out.	Lässt die Taskleiste blinken und spielt einen Ton, wenn etwas passiert, während du rausgetabbt bist.
+friends	UTILITY	Friends	Freunde	Join and leave alerts for your friends, and a star next to their chat messages.	Join- und Leave-Hinweise für deine Freunde und ein Stern neben ihren Nachrichten.
+streamer	UTILITY	Streamer Mode	Streamer-Modus	Hides coordinates, waypoints and the server address while you stream or record.	Versteckt Koordinaten, Wegpunkte und Server-Adresse beim Streamen oder Aufnehmen.
+extrakeys	UTILITY	Extra Keybinds	Extra-Tastenbelegung	Give any action a second and third key – mouse side buttons included.	Gib jeder Aktion eine zweite und dritte Taste – auch Maus-Seitentasten.
+keybindprofiles	UTILITY	Keybind Profiles	Tastenbelegungs-Profile	Save your key bindings as profiles – PvP, building, elytra – and switch with one key.	Speichere Tastenbelegungen als Profile – PvP, Bauen, Elytra – und wechsle mit einer Taste.
+unfocusedfps	PERFORMANCE	Unfocused FPS	FPS im Hintergrund	Saves power by limiting FPS when you tab out.	Spart Strom, indem FPS begrenzt werden, wenn du rausgetabbt bist.
+backgroundmute	PERFORMANCE	Background Mute	Hintergrund-Stumm	Mute or lower sound when you tab out.	Ton stumm oder leiser, wenn du rausgetabbt bist.
+performance	PERFORMANCE	Performance Preset	Performance-Preset	One switch for FPS-friendly video settings.	Ein Schalter für FPS-freundliche Grafikeinstellungen.
+entitydistance	PERFORMANCE	Entity Distance	Entity-Distanz	Render entities closer or further away.	Entities näher oder weiter weg rendern.
+renderdistance	PERFORMANCE	Render Distance Switch	Sichtweiten-Wechsel	Toggle between two render distances.	Zwischen zwei Sichtweiten umschalten.
+shaders	PERFORMANCE	Shaders	Shader	Turns the shader pack on and off (needs Iris; the launcher's one-click shaders add it).	Schaltet das Shaderpack an und aus (braucht Iris, das der Launcher auf starken PCs installiert).
+mousestrokes	HUD	Mousestrokes	Mousestrokes	Shows your mouse movement as a dot on a pad (from Carbon).	Zeigt deine Mausbewegung als Punkt auf einem Pad (aus Carbon).
+darkmode	VISUAL	Dark Mode	Dunkelmodus	A dark coat of paint for every container screen (from Carbon).	Ein dunkler Anstrich für alle Container-Bildschirme (aus Carbon).
+titletweaker	VISUAL	Title Tweaker	Titel-Anpassung	Scale or hide on-screen titles (from Carbon).	Titel auf dem Bildschirm skalieren oder ausblenden (aus Carbon).
+autoperspective	CAMERA	Auto Perspective	Auto-Perspektive	Third person while flying or riding (from Carbon).	Dritte Person beim Fliegen oder Reiten (aus Carbon).
+shulkertooltips	UTILITY	Shulker Preview	Shulker-Vorschau	See inside shulker boxes in the tooltip (from Carbon).	Sieh in Shulkerkisten im Tooltip (aus Carbon).
+dropprevention	UTILITY	Drop Prevention	Drop-Schutz	Stops you from accidentally dropping valuable items (from Carbon).	Verhindert, dass du wertvolle Items aus Versehen fallen lässt (aus Carbon).
+toastcontrol	UTILITY	Toast Control	Toast-Kontrolle	Hides notification toasts like new recipes (from Carbon).	Blendet Hinweis-Toasts wie neue Rezepte aus (aus Carbon).
+particlelimiter	PERFORMANCE	Particle Limiter	Partikel-Limit	Reduces the number of particles for more FPS (from Carbon).	Weniger Partikel für mehr FPS (aus Carbon).
+cb_afk	UTILITY	AFK Reminder	AFK Reminder	Reminds you when you haven't moved for 5 minutes.	Reminds you when you haven't moved for 5 minutes.
+cb_break	UTILITY	Break Reminder	Break Reminder	Reminds you to take a short break every hour.	Reminds you to take a short break every hour.
+cb_blindness	COMBAT	Blindness Alert	Blindness Alert	Warns when you are blinded.	Warns when you are blinded.
+cb_darkness	UTILITY	Darkness Alert	Darkness Alert	Warns when a warden's darkness hits you.	Warns when a warden's darkness hits you.
+cb_levitation	COMBAT	Levitation Alert	Levitation Alert	Warns when you start levitating.	Warns when you start levitating.
+cb_creeper	UTILITY	Creeper Warning	Creeper Warning	Warns when a creeper is close.	Warns when a creeper is close.
+cb_hostile	UTILITY	Hostile Mob Warning	Hostile Mob Warning	Warns when any hostile mob gets close.	Warns when any hostile mob gets close.
+cb_phantom	UTILITY	Phantom Warning	Phantom Warning	Warns when phantoms are around.	Warns when phantoms are around.
+cb_warden	UTILITY	Warden Warning	Warden Warning	Warns when a warden is nearby.	Warns when a warden is nearby.
+cb_tnt	UTILITY	TNT Warning	TNT Warning	Warns about lit TNT close to you.	Warns about lit TNT close to you.
+cb_dimension	UTILITY	Dimension Change	Dimension Change	Tells you which dimension you just entered.	Tells you which dimension you just entered.
+cb_drowning	UTILITY	Drowning Warning	Drowning Warning	Warns when you are running out of air.	Warns when you are running out of air.
+cb_elytra	UTILITY	Elytra Warning	Elytra Warning	Warns when your elytra is nearly broken.	Warns when your elytra is nearly broken.
+cb_fall	UTILITY	Fall Warning	Fall Warning	Warns when a fall is getting dangerous.	Warns when a fall is getting dangerous.
+cb_burning	UTILITY	Burning Warning	Burning Warning	Warns when you catch fire.	Warns when you catch fire.
+cb_freezing	UTILITY	Freezing Warning	Freezing Warning	Warns when powder snow starts freezing you.	Warns when powder snow starts freezing you.
+cb_hunger	UTILITY	Hunger Warning	Hunger Warning	Warns when your food bar runs low.	Warns when your food bar runs low.
+cb_lava	UTILITY	Lava Warning	Lava Warning	Warns when there is lava right next to you.	Warns when there is lava right next to you.
+cb_levelup	UTILITY	Level Up Alert	Level Up Alert	Tells you when you reach a new XP level.	Tells you when you reach a new XP level.
+cb_memory	PERFORMANCE	Memory Warning	Memory Warning	Warns when Minecraft is close to running out of memory.	Warns when Minecraft is close to running out of memory.
+cb_lowfps	PERFORMANCE	Low FPS Warning	Low FPS Warning	Warns when your frame rate drops below 30.	Warns when your frame rate drops below 30.
+cb_pingspike	UTILITY	Ping Spike Warning	Ping Spike Warning	Warns when your ping goes above 250 ms.	Warns when your ping goes above 250 ms.
+cb_radar	COMBAT	Player Radar	Player Radar	Tells you whenever a new player enters your render distance.	Tells you whenever a new player enters your render distance.
+cb_proximity	COMBAT	Player Proximity	Player Proximity	Warns when another player comes within 10 blocks.	Warns when another player comes within 10 blocks.
+cb_offhandtotem	COMBAT	Offhand Totem Missing	Offhand Totem Missing	Warns when your offhand holds no totem but you still carry one.	Warns when your offhand holds no totem but you still carry one.
+cb_void	UTILITY	Void Warning	Void Warning	Warns when you fall towards the void.	Warns when you fall towards the void.
+cb_armorwarn	COMBAT	Armor Warning	Armor Warning	Warns you when a piece of armor is about to break.	Warns you when a piece of armor is about to break.
+cb_spawn	HUD	Spawn Indicator	Spawn Indicator	Whether hostile mobs can spawn where you stand (block light 0).	Whether hostile mobs can spawn where you stand (block light 0).
+cb_nearby	HUD	Nearby Players	Nearby Players	Players within render distance.	Players within render distance.
+cb_targetblock	HUD	Target Block	Target Block	The block under your crosshair.	The block under your crosshair.
+cb_targetdistance	HUD	Target Distance	Target Distance	Distance to what you are looking at.	Distance to what you are looking at.
+cb_targetentity	HUD	Target Entity	Target Entity	The entity under your crosshair.	The entity under your crosshair.
+cb_border	HUD	Border Distance	Border Distance	Distance to the world border.	Distance to the world border.
+cb_food	HUD	Food Items	Food Items	How much food you carry.	How much food you carry.
+cb_jumpreset	COMBAT	Jump Reset	Jump Reset	How many ticks after a hit you jumped (0-2 is a good reset).	How many ticks after a hit you jumped (0-2 is a good reset).
+cb_distance	HUD	Distance Travelled	Distance Travelled	Distance you moved this session.	Distance you moved this session.
+cb_topspeed	HUD	Top Speed	Top Speed	The fastest you moved this session.	The fastest you moved this session.
+cb_damagetaken	HUD	Damage Taken	Damage Taken	Health points lost this session.	Health points lost this session.
+cb_hidejoin	CHAT	Hide Join Messages	Hide Join Messages	Hides "player joined / left the game" messages.	Hides "player joined / left the game" messages.
+cb_hidedeaths	CHAT	Hide Death Messages	Hide Death Messages	Hides other players' death messages.	Hides other players' death messages.
+cb_hideadvancements	CHAT	Hide Advancements	Hide Advancements	Hides "has made the advancement" messages.	Hides "has made the advancement" messages.
+cb_linkfilter	CHAT	Link Filter	Link Filter	Hides player messages that contain links or server ads.	Hides player messages that contain links or server ads.
+cb_antispam	CHAT	Anti Spam	Anti Spam	Hides a message that was already shown in the last 10 seconds.	Hides a message that was already shown in the last 10 seconds.
+cb_hideshouting	CHAT	Hide Shouting	Hide Shouting	Hides player messages written mostly in capital letters.	Hides player messages written mostly in capital letters.
+cb_hideplayerchat	CHAT	Hide Player Chat	Hide Player Chat	Hides all player chat but keeps server and system messages.	Hides all player chat but keeps server and system messages.
+cb_mentionping	CHAT	Mention Ping	Mention Ping	Plays a sound when someone writes your name.	Plays a sound when someone writes your name.
+cb_keywordalert	CHAT	Keyword Alert	Keyword Alert	Alerts you when chosen words appear in chat.	Alerts you when chosen words appear in chat.
+cb_friendalert	CHAT	Friend Join Alert	Friend Join Alert	Alerts you when one of your friends joins.	Alerts you when one of your friends joins.
+cb_chatsounds	CHAT	Chat Sounds	Chat Sounds	Plays a soft sound for every player message.	Plays a soft sound for every player message.
+cb_whisperalert	CHAT	Whisper Alert	Whisper Alert	Alerts you when you receive a private message.	Alerts you when you receive a private message.
+cb_chatlogger	CHAT	Chat Logger	Chat Logger	Saves every chat message to logs/onix-chat.log.	Saves every chat message to logs/onix-chat.log.
+cb_calculator	CHAT	Chat Calculator	Chat Calculator	Type =5*64 in chat: only you see the result, nothing is sent.	Type =5*64 in chat: only you see the result, nothing is sent.
+cb_chatvisibility	UTILITY	Chat Visibility Key	Chat Visibility Key	Cycles chat between shown, commands only and hidden.	Cycles chat between shown, commands only and hidden.
+cb_clearchat	UTILITY	Clear Chat	Clear Chat	Clears all chat messages.	Clears all chat messages.
+cb_copyblockpos	UTILITY	Copy Block Position	Copy Block Position	Copies the coordinates of the block you are looking at.	Copies the coordinates of the block you are looking at.
+cb_copyip	UTILITY	Copy Server IP	Copy Server IP	Copies the address of the server you are on.	Copies the address of the server you are on.
+cb_copytp	UTILITY	Copy Teleport Command	Copy Teleport Command	Copies a /tp command for your exact position and rotation.	Copies a /tp command for your exact position and rotation.
+cb_snapaxis	UTILITY	Snap To Axis	Snap To Axis	Snaps your view to the nearest direction (great for building straight).	Snaps your view to the nearest direction (great for building straight).
+cb_mute	UTILITY	Mute Key	Mute Key	Mutes and unmutes all game sound.	Mutes and unmutes all game sound.
+cb_rdup	UTILITY	Render Distance +	Render Distance +	Increases the render distance by 2 chunks.	Increases the render distance by 2 chunks.
+cb_rddown	UTILITY	Render Distance -	Render Distance -	Decreases the render distance by 2 chunks.	Decreases the render distance by 2 chunks.
+cb_fullscreen	UTILITY	Fullscreen Key	Fullscreen Key	Toggles fullscreen on a key of your choice.	Toggles fullscreen on a key of your choice.
+cb_togglehud	UTILITY	Toggle HUD	Toggle HUD	Hides or shows the whole HUD (like F1).	Hides or shows the whole HUD (like F1).
+cb_autotext	UTILITY	Auto Text	Auto Text	Sends a chat message or command with a hotkey.	Sends a chat message or command with a hotkey.
+cb_noclouds	PERFORMANCE	No Clouds	No Clouds	Hides the clouds.	Hides the clouds.
+cb_nobobbing	CAMERA	No View Bobbing	No View Bobbing	Stops the camera from bobbing while you walk.	Stops the camera from bobbing while you walk.
+cb_vsyncoff	PERFORMANCE	VSync Off	VSync Off	Turns off vertical sync for lower input delay.	Turns off vertical sync for lower input delay.
+cb_unlimitedfps	PERFORMANCE	Unlimited FPS	Unlimited FPS	Removes the frame rate limit.	Removes the frame rate limit.
+cb_subtitles	VISUAL	Subtitles	Subtitles	Always shows sound subtitles.	Always shows sound subtitles.
+cb_noshadows	PERFORMANCE	No Entity Shadows	No Entity Shadows	Removes the round shadows under mobs and players.	Removes the round shadows under mobs and players.
+cb_hidelightning	VISUAL	Hide Lightning Flash	Hide Lightning Flash	Stops lightning from flashing the sky.	Stops lightning from flashing the sky.
+cb_darkloading	VISUAL	Dark Loading Screen	Dark Loading Screen	Uses a black instead of a red loading screen.	Uses a black instead of a red loading screen.
+cb_nochatcolors	CHAT	No Chat Colors	No Chat Colors	Shows chat messages without color codes.	Shows chat messages without color codes.
+cb_contrastoutline	VISUAL	High Contrast Outline	High Contrast Outline	Makes the block selection outline easier to see.	Makes the block selection outline easier to see.
+cb_nosmoothlighting	PERFORMANCE	No Smooth Lighting	No Smooth Lighting	Turns off ambient occlusion for more FPS.	Turns off ambient occlusion for more FPS.
+cb_nobiomeblend	PERFORMANCE	No Biome Blend	No Biome Blend	Disables color blending between biomes (faster chunk building).	Disables color blending between biomes (faster chunk building).
+cb_nomipmaps	PERFORMANCE	No Mipmaps	No Mipmaps	Disables mipmaps for slightly more FPS.	Disables mipmaps for slightly more FPS.
+cb_minparticles	PERFORMANCE	Minimal Particles	Minimal Particles	Sets particles to minimal.	Sets particles to minimal.
+cb_nonausea	VISUAL	No Nausea Warp	No Nausea Warp	Removes the nausea and portal screen distortion.	Removes the nausea and portal screen distortion.
+cb_nodarknesspulse	VISUAL	No Darkness Pulse	No Darkness Pulse	Removes the pulsing of the warden's darkness effect.	Removes the pulsing of the warden's darkness effect.
+cb_nomenublur	PERFORMANCE	No Menu Blur	No Menu Blur	Removes the background blur behind menus.	Removes the background blur behind menus.
+cb_hotbarattack	COMBAT	Hotbar Attack Indicator	Hotbar Attack Indicator	Shows the attack cooldown next to the hotbar.	Shows the attack cooldown next to the hotbar.
+cb_chatscale	CHAT	Chat Scale	Chat Scale	Size of the chat.	Size of the chat.
+cb_chatwidth	CHAT	Chat Width	Chat Width	Width of the chat box.	Width of the chat box.
+cb_chatopacity	CHAT	Chat Opacity	Chat Opacity	Transparency of chat text.	Transparency of chat text.
+cb_chatspacing	CHAT	Chat Line Spacing	Chat Line Spacing	Space between chat lines.	Space between chat lines.
+cb_textbackground	CHAT	Text Background	Text Background	Opacity of the background behind chat text.	Opacity of the background behind chat text.
+cb_chatdelay	CHAT	Chat Delay	Chat Delay	Delays incoming chat messages to make spam readable.	Delays incoming chat messages to make spam readable.
+cb_glintspeed	VISUAL	Glint Speed	Glint Speed	Speed of the enchantment glint animation.	Speed of the enchantment glint animation.
+cb_glintstrength	VISUAL	Glint Strength	Glint Strength	Brightness of the enchantment glint.	Brightness of the enchantment glint.
+cb_toastduration	UTILITY	Toast Duration	Toast Duration	How long toasts and notifications stay on screen.	How long toasts and notifications stay on screen.
+cb_cloudrange	PERFORMANCE	Cloud Range	Cloud Range	How far away clouds are drawn.	How far away clouds are drawn.
+cb_renderlock	PERFORMANCE	Render Distance Lock	Render Distance Lock	Holds the render distance at a fixed value.	Holds the render distance at a fixed value.
+cb_simulationlock	PERFORMANCE	Simulation Distance	Simulation Distance	Holds the simulation distance at a fixed value.	Holds the simulation distance at a fixed value.
+cb_swaccuracy	COMBAT	Sword Accuracy	Sword Accuracy	How many of your sword swings actually hit.	How many of your sword swings actually hit.
+cb_swdamage	COMBAT	Sword Damage	Sword Damage	Damage of a full hit with your sword (strength and sharpness included).	Damage of a full hit with your sword (strength and sharpness included).
+cb_swdealt	COMBAT	Damage Dealt	Damage Dealt	Total damage your sword dealt this session.	Total damage your sword dealt this session.
+cb_swdps	COMBAT	Sword DPS	Sword DPS	Your damage per second when every hit is fully charged.	Your damage per second when every hit is fully charged.
+cb_swenchants	COMBAT	Sword Enchants	Sword Enchants	Lists the enchantments on the sword you hold.	Lists the enchantments on the sword you hold.
+cb_swenemy	COMBAT	Enemy Sword	Enemy Sword	Shows your target's sword, its Sharpness level and durability.	Shows your target's sword, its Sharpness level and durability.
+cb_swinterval	COMBAT	Hit Interval	Hit Interval	Time between your last two sword hits.	Time between your last two sword hits.
+cb_swhitstokill	COMBAT	Hits To Kill	Hits To Kill	Estimates how many full hits your target still needs (after armor).	Estimates how many full hits your target still needs (after armor).
+cb_swknockback	COMBAT	Knockback Ready	Knockback Ready	Shows when your next hit gives extra sprint knockback.	Shows when your next hit gives extra sprint knockback.
+cb_swlasthit	COMBAT	Last Hit	Last Hit	Shows how much damage your last hit really dealt.	Shows how much damage your last hit really dealt.
+cb_swsweep	COMBAT	Sweep Ready	Sweep Ready	Shows when your next sword hit will be a sweeping attack.	Shows when your next sword hit will be a sweeping attack.
+cb_swdefense	COMBAT	Target Defense	Target Defense	Shows how much your target's armor reduces your hits.	Shows how much your target's armor reduces your hits.
+cb_swchargesound	COMBAT	Charge Ready Sound	Charge Ready Sound	Plays a soft tick the moment your sword is fully charged again.	Plays a soft tick the moment your sword is fully charged again.
+cb_swcombosound	COMBAT	Combo Sound	Combo Sound	A note that climbs higher with every hit of your combo.	A note that climbs higher with every hit of your combo.
+cb_swcritsound	COMBAT	Crit Sound	Crit Sound	Plays a crunchy sound when you land a critical hit.	Plays a crunchy sound when you land a critical hit.
+cb_chargebar	COMBAT	Charge Bar	Aufladebalken	A small bar that fills up as your sword hit recharges.	Ein kleiner Balken, der sich füllt, während dein Schwertschlag auflädt.
+cb_popcounter	COMBAT	Pop Counter	Pop Counter	Counts the totems every player pops and shows it in chat.	Counts the totems every player pops and shows it in chat.
+cb_armorbreak	COMBAT	Armor Break Alert	Armor Break Alert	Tells you when an enemy's armor piece is about to break.	Tells you when an enemy's armor piece is about to break.
+cb_combattimer	COMBAT	Combat Timer	Combat Timer	Counts down your combat tag after every hit you deal or take.	Counts down your combat tag after every hit you deal or take.
+cb_crystalspeed	COMBAT	Crystal Speed	Crystal Speed	Shows how many crystals you place per second.	Shows how many crystals you place per second.
+cb_enemyarmor	COMBAT	Enemy Armor	Enemy Armor	Shows the durability of your target's helmet, chestplate, leggings and boots.	Shows the durability of your target's helmet, chestplate, leggings and boots.
+cb_enemyhands	COMBAT	Enemy Hands	Enemy Hands	Shows what your target holds, e.g. whether there is a totem in the offhand.	Shows what your target holds, e.g. whether there is a totem in the offhand.
+cb_hurttime	COMBAT	Hurt Time	Hurt Time	Shows whether your target can take full damage again (hurt ticks left).	Shows whether your target can take full damage again (hurt ticks left).
+cb_lastpop	COMBAT	Last Pop	Last Pop	Shows how long ago you and the last enemy popped a totem.	Shows how long ago you and the last enemy popped a totem.
+cb_pearlalert	COMBAT	Pearl Alert	Pearl Alert	Tells you when an enemy throws an ender pearl and from where.	Tells you when an enemy throws an ender pearl and from where.
+cb_surround	COMBAT	Surround Check	Surround Check	Shows whether you stand in a safe obsidian or bedrock hole and which sides are open.	Shows whether you stand in a safe obsidian or bedrock hole and which sides are open.
+cb_targethole	COMBAT	Target Hole	Target Hole	Shows whether your target is in a hole, burrowed, or which sides are open.	Shows whether your target is in a hole, burrowed, or which sides are open.
+cb_anchoralert	COMBAT	Anchor Alert	Anchor Alert	Warns you when an enemy places or charges a respawn anchor near you.	Warns you when an enemy places or charges a respawn anchor near you.
+cb_bowalert	COMBAT	Bow Alert	Bow Alert	Warns you when a nearby enemy is drawing a bow or crossbow.	Warns you when a nearby enemy is drawing a bow or crossbow.
+cb_combatlog	COMBAT	Combat Log Detector	Combat Log Detector	Tells you when a player you were fighting leaves the server.	Tells you when a player you were fighting leaves the server.
+cb_enemyeating	COMBAT	Enemy Eating	Enemy Eating	Tells you when a nearby enemy starts eating a golden apple or drinking a potion.	Tells you when a nearby enemy starts eating a golden apple or drinking a potion.
+cb_enemylow	COMBAT	Enemy Low Health	Enemy Low Health	Tells you when your target is low, so you can go in for the kill.	Tells you when your target is low, so you can go in for the kill.
+cb_groundheight	COMBAT	Ground Height	Ground Height	Shows how high above the ground you are while in the air (for mace hits).	Shows how high above the ground you are while in the air (for mace hits).
+cb_lowpotions	COMBAT	Low Potions Alert	Low Potions Alert	Tells you when you are running out of healing potions.	Tells you when you are running out of healing potions.
+cb_macedanger	COMBAT	Mace Danger	Mace Danger	Warns you when an enemy with a mace is falling towards you from above.	Warns you when an enemy with a mace is falling towards you from above.
+cb_splashalert	COMBAT	Splash Potion Alert	Splash Potion Alert	Warns you when someone throws a splash potion near you.	Warns you when someone throws a splash potion near you.
+cb_targetshield	COMBAT	Target Shield	Target Shield	Shows whether your target holds a shield and is blocking right now.	Shows whether your target holds a shield and is blocking right now.
+cb_shieldstatus	COMBAT	Shield Status	Shield Status	Shows your shield's durability and how long it stays disabled after an axe hit.	Shows your shield's durability and how long it stays disabled after an axe hit.
+cb_maceinfo	COMBAT	Mace Info	Mace Info	Shows your mace's durability and its Density, Breach and Wind Burst levels.	Shows your mace's durability and its Density, Breach and Wind Burst levels.
+cb_smashcounter	COMBAT	Smash Counter	Smash Counter	Counts your mace smash hits and your highest smash this session.	Counts your mace smash hits and your highest smash this session.
+cb_smashpredict	COMBAT	Smash Predict	Smash Predict	Predicts your smash damage on the player below you after their armor.	Predicts your smash damage on the player below you after their armor.
+cb_smashsound	COMBAT	Smash Sound	Smash Sound	Plays a heavy impact sound when you land a mace smash.	Plays a heavy impact sound when you land a mace smash.
+cb_targetbelow	COMBAT	Target Below	Target Below	Shows the player under you and how far you would fall onto them.	Shows the player under you and how far you would fall onto them.
+cb_hitparticles	VISUAL	Hit Particles	Hit Particles	Extra crit and magic particles when you hit something.	Extra crit and magic particles when you hit something.
+cb_reachcircle	VISUAL	Reach Circle	Reichweitenkreis	A ring on the ground showing your attack reach.	Ein Ring am Boden zeigt deine Angriffsreichweite.
+cb_landingspot	VISUAL	Landing Spot	Landepunkt	Marks the block you will land on while you fall or fly.	Markiert den Block, auf dem du beim Fallen oder Fliegen landest.
+cb_trajectories	VISUAL	Trajectories	Flugbahnen	Shows where your pearl, bow shot, trident, potion or snowball will fly and land.	Zeigt, wohin Perle, Pfeil, Dreizack, Trank oder Schneeball fliegen und landen.
+cb_lightlevels	VISUAL	Light Levels	Lichtlevel	Marks the ground where mobs can spawn so you know where to put torches.	Markiert den Boden, wo Mobs spawnen können, damit du weißt, wo Fackeln hin müssen.
+cb_logoutspots	VISUAL	Logout Spots	Logout-Punkte	Marks where players logged out with a box (their name is in the Logout List).	Markiert mit einer Box, wo Spieler sich ausgeloggt haben.
+cb_logoutlist	HUD	Logout List	Logout-Liste	Lists who logged out near you, where and how long ago.	Zeigt, wer sich in deiner Nähe ausgeloggt hat, wo und wann.

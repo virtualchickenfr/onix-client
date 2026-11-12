@@ -2,39 +2,42 @@
 <html lang="de">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Onix Client – Minecraft-Client für PC und Handy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Onix Client</title>
   <meta name="description" content="Onix ist ein kostenloser Minecraft-Client mit über 180 Modulen, Minimap, Motion Blur, mehr FPS und einem Launcher für Windows, macOS, Linux und Android.">
   <meta property="og:title" content="Onix Client">
-  <meta property="og:description" content="Über 180 Module, Minimap, Motion Blur, mehr FPS – für PC und Handy. Kostenlos.">
+  <meta property="og:description" content="Onix ist ein kostenloser Minecraft-Client mit über 180 Modulen, Minimap, Motion Blur, mehr FPS und einem Launcher für Windows, macOS, Linux und Android.">
   <meta property="og:image" content="img/menu.jpg">
   <meta name="theme-color" content="#071d23">
   <link rel="icon" href="img/favicon.png">
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="page-index">
   <header class="nav">
-    <a class="brand" href="#top"><img src="img/icon.png" alt="" width="28" height="28"><span>Onix</span></a>
-    <nav>
-      <a href="#features">Funktionen</a>
-      <a href="#screens">Bilder</a>
-      <a href="#faq">FAQ</a>
-      <a class="nav-cta" href="#download">Download</a>
+    <a class="brand" href="index.html"><img src="img/icon.png" alt="" width="28" height="28"><span>Onix</span></a>
+    <button class="menu-btn" type="button" aria-label="Menü" aria-expanded="false" aria-controls="site-nav">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    <nav id="site-nav">
+      <a href="funktionen.html">Funktionen</a>
+      <a href="neuigkeiten.html">Neuigkeiten</a>
+      <a href="hilfe.html">Hilfe</a>
+      <a href="download.html" class="nav-cta">Download</a>
     </nav>
   </header>
 
-  <section class="hero" id="top">
+<section class="hero" id="top">
     <canvas class="hero-scene" id="scene" aria-hidden="true"></canvas>
     <div class="hero-text">
       <p class="eyebrow">Minecraft 1.21.1 – 1.21.11 · Fabric</p>
       <h1>Onix Client</h1>
-      <p class="lead">Über 180 Module, Minimap und Weltkarte, Motion Blur und mehr FPS.<br>Für PC und Handy. Kostenlos.</p>
+      <p class="lead">293 Module, Minimap und Weltkarte, Motion Blur und mehr FPS.<br>Für PC und Handy. Kostenlos.</p>
       <div class="hero-buttons">
-        <a class="btn primary" id="main-download" href="#download">
+        <a class="btn primary" id="main-download" href="download.html">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11"/><path d="m7 11 5 5 5-5"/><path d="M5 20h14"/></svg>
           <span id="main-download-label">Herunterladen</span>
         </a>
-        <a class="btn ghost" href="#features">Was Onix kann</a>
+        <a class="btn ghost" href="funktionen.html">Alle Funktionen</a>
       </div>
       <p class="version" id="version">&nbsp;</p>
     </div>
@@ -42,13 +45,13 @@
 
   <main>
     <section class="stats">
-      <div><b>180+</b><span>Module</span></div>
+      <div><b>293</b><span>Module</span></div>
       <div><b>7</b><span>Minecraft-Versionen</span></div>
       <div><b>4</b><span>Plattformen</span></div>
       <div><b>0 €</b><span>für immer</span></div>
     </section>
 
-    <section class="section" id="features">
+    <section class="section">
       <h2>Alles drin, was du brauchst</h2>
       <p class="sub">Einschalten, fertig. Jedes Modul lässt sich einzeln anpassen und frei auf dem Bildschirm verschieben.</p>
       <div class="features">
@@ -65,17 +68,12 @@
         <article>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4M5 8h6M4 16h7"/><circle cx="16" cy="12" r="5"/></svg>
           <h3>Motion Blur</h3>
-          <p>Weiche Bewegungsunschärfe beim Umschauen, in drei Stärken – wie in PvP-Montagen.</p>
-        </article>
-        <article>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"/><path d="M5 21h14"/><path d="M8 17h8"/><circle cx="12" cy="4" r="1.5"/></svg>
-          <h3>Wegpunkte</h3>
-          <p>Markiere Orte mit einer Taste. Ein Lichtstrahl zeigt sie in der Welt, die Entfernung steht im HUD.</p>
+          <p>Weiche Bewegungsunschärfe beim Umschauen, in drei Stärken, wie in PvP-Montagen.</p>
         </article>
         <article>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14.5 4.5 5 5L9 20H4v-5z"/><path d="m4 20 4-1"/></svg>
           <h3>PvP-Module</h3>
-          <p>Keystrokes, CPS, Reach, Combo, Trefferfarbe, Crosshair-Editor, Toggle Sprint und mehr – ohne Cheats.</p>
+          <p>Keystrokes, CPS, Reach, Combo, Trefferfarbe, Crosshair-Editor, Toggle Sprint und mehr. Ohne Cheats.</p>
         </article>
         <article>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18c2-6 6-9 8-9s6 3 8 9"/><path d="M8 6a4 4 0 0 1 8 0"/></svg>
@@ -83,29 +81,20 @@
           <p>Item-Physik, Treffer- und Kill-Effekte, Halo, Sprungringe, Todesbildschirme und eigene Himmel.</p>
         </article>
         <article>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v10H7z"/><path d="M4 12h3M17 12h3M12 4v3M12 17v3"/></svg>
-          <h3>Kosmetik</h3>
-          <p>Umhänge, Hüte, Flügel und Namensstile, die andere Onix-Spieler sehen.</p>
-        </article>
-        <article>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h7"/><path d="m16 15 3 3-3 3"/></svg>
-          <h3>Chat-Werkzeuge</h3>
-          <p>Strg + Klick kopiert Nachrichten, Spam wird ausgeblendet, Erwähnungen leuchten auf, Zeitstempel auf Wunsch.</p>
-        </article>
-        <article>
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18h2"/></svg>
           <h3>Auch auf dem Handy</h3>
           <p>Die Onix-App für Android startet Minecraft mit Onix, mit dem gleichen Launcher und Auto-Updates.</p>
         </article>
       </div>
+      <p class="more"><a class="btn ghost" href="funktionen.html">Alle 293 Module ansehen</a></p>
     </section>
 
     <section class="section" id="screens">
       <h2>So sieht Onix aus</h2>
-      <p class="sub">Echte Aufnahmen aus dem Spiel.</p>
+      <p class="sub">Echte Aufnahmen aus dem Spiel. Klick auf ein Bild, um es groß zu sehen.</p>
       <div class="gallery">
         <figure class="wide"><img src="img/menu.jpg" alt="Das Onix-Hauptmenü unter Wasser" loading="lazy"><figcaption>Das Hauptmenü</figcaption></figure>
-        <figure><img src="img/modules.jpg" alt="Das Modul-Menü" loading="lazy"><figcaption>Über 180 Module</figcaption></figure>
+        <figure><img src="img/modules.jpg" alt="Das Modul-Menü" loading="lazy"><figcaption>Modul-Menü</figcaption></figure>
         <figure><img src="img/minimap.jpg" alt="Minimap im Spiel" loading="lazy"><figcaption>Minimap</figcaption></figure>
         <figure><img src="img/worldmap.jpg" alt="Die Weltkarte" loading="lazy"><figcaption>Weltkarte</figcaption></figure>
         <figure><img src="img/itemphysics.jpg" alt="Items liegen flach auf dem Boden" loading="lazy"><figcaption>Item-Physik</figcaption></figure>
@@ -116,65 +105,17 @@
       </div>
     </section>
 
-    <section class="section" id="download">
-      <h2>Herunterladen</h2>
-      <p class="sub" id="download-sub">Der Launcher installiert Minecraft, Fabric, Onix und die Performance-Mods und hält alles aktuell.</p>
-      <div class="downloads">
-        <a class="dl" data-os="windows" href="https://github.com/virtualchickenfr/onix-client/releases/latest">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5.5 10.5 4.5v7H3zM12 4.3 21 3v8.5h-9zM3 12.5h7.5v7L3 18.5zM12 12.5h9V21l-9-1.3z"/></svg>
-          <b>Windows</b><span class="dl-file">Installer (.exe)</span>
-        </a>
-        <a class="dl" data-os="mac" href="https://github.com/virtualchickenfr/onix-client/releases/latest">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3c-1 .1-2.3.8-3 1.7-.7.8-1.2 2-1 3.1 1.1.1 2.3-.6 3-1.5.7-.9 1.1-2 1-3.3zM19.5 16.6c-.5 1.2-.8 1.7-1.5 2.7-1 1.4-2.3 3.1-4 3.1-1.5 0-1.9-1-3.9-1s-2.5 1-4 1c-1.7 0-2.9-1.6-3.9-3C.7 15.6.4 11 2 8.4 3.2 6.6 5 5.5 6.7 5.5c1.7 0 2.8 1 4.2 1 1.4 0 2.2-1 4.2-1 1.5 0 3.1.8 4.2 2.3-3.7 2-3.1 7.3.2 8.8z"/></svg>
-          <b>macOS</b><span class="dl-file">Apple-Chip &amp; Intel (.dmg)</span>
-        </a>
-        <a class="dl" data-os="linux" href="https://github.com/virtualchickenfr/onix-client/releases/latest">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c-2.2 0-3.5 1.9-3.5 4.6 0 1.6-.5 2.7-1.5 4.2C5.6 12.9 4 15 4 17.4 4 20 6.4 22 12 22s8-2 8-4.6c0-2.4-1.6-4.5-3-6.6-1-1.5-1.5-2.6-1.5-4.2C15.5 3.9 14.2 2 12 2z"/><circle cx="10.4" cy="7" r=".9"/><circle cx="13.6" cy="7" r=".9"/></svg>
-          <b>Linux</b><span class="dl-file">AppImage</span>
-        </a>
-        <a class="dl" data-os="android" href="https://github.com/virtualchickenfr/onix-client/releases/latest/download/Onix-Android.apk">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 10h14v8a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"/><path d="M6.5 9a5.5 5.5 0 0 1 11 0"/><path d="m8 4 1.3 2M16 4l-1.3 2"/><circle cx="9.5" cy="7" r=".7"/><circle cx="14.5" cy="7" r=".7"/></svg>
-          <b>Android</b><span class="dl-file">App (.apk)</span>
-        </a>
-      </div>
-      <p class="note">Nur den Onix-Mod für Fabric? Die .jar-Dateien für jede Minecraft-Version liegen auf der <a href="https://github.com/virtualchickenfr/onix-client/releases/latest">Release-Seite</a>.</p>
-    </section>
-
-    <section class="section" id="faq">
-      <h2>Fragen &amp; Antworten</h2>
-      <div class="faq">
-        <details>
-          <summary>Kostet Onix etwas?</summary>
-          <p>Nein. Onix, der Launcher und die Android-App sind kostenlos. Du brauchst nur einen eigenen Minecraft-Account (Java Edition).</p>
-        </details>
-        <details>
-          <summary>Kann ich damit auf Servern wie Hypixel spielen?</summary>
-          <p>Onix enthält keine Cheats, Makros oder Aimbots – nur Anzeigen, Optik und Komfort. Halte dich trotzdem immer an die Regeln des jeweiligen Servers.</p>
-        </details>
-        <details>
-          <summary>Welche Minecraft-Versionen werden unterstützt?</summary>
-          <p>Minecraft 1.21.1 bis 1.21.11 mit Fabric (1.21.1, 1.21.4, 1.21.6, 1.21.7, 1.21.8, 1.21.10 und 1.21.11). Im Launcher wählst du die Version pro Profil.</p>
-        </details>
-        <details>
-          <summary>Bekomme ich Updates automatisch?</summary>
-          <p>Ja. Launcher und Handy-App suchen bei jedem Start nach einer neuen Version und installieren sie.</p>
-        </details>
-        <details>
-          <summary>Läuft Onix zusammen mit anderen Mods?</summary>
-          <p>Ja, du kannst eigene Fabric-Mods im Launcher hinzufügen, zum Beispiel von Modrinth. Mit Essential zeigt das Onix-Hauptmenü auch dessen Freunde, Garderobe und Bilder.</p>
-        </details>
-        <details>
-          <summary>Ist Onix sicher?</summary>
-          <p>Der komplette Quellcode liegt offen auf <a href="https://github.com/virtualchickenfr/onix-client">GitHub</a>. Alle Downloads werden dort automatisch aus diesem Code gebaut.</p>
-        </details>
-      </div>
+    <section class="section cta">
+      <h2>Bereit?</h2>
+      <p class="sub">Launcher herunterladen, mit deinem Minecraft-Account anmelden, auf Spielen klicken. Den Rest richtet Onix ein.</p>
+      <p class="more"><a class="btn primary" href="download.html">Zum Download</a></p>
     </section>
   </main>
 
   <footer>
     <div class="foot-brand"><img src="img/icon.png" alt="" width="22" height="22"><span>Onix Client</span></div>
+    <p class="foot-links"><a href="index.html">Start</a> · <a href="funktionen.html">Funktionen</a> · <a href="download.html">Download</a> · <a href="neuigkeiten.html">Neuigkeiten</a> · <a href="hilfe.html">Hilfe</a> · <a href="https://github.com/virtualchickenfr/onix-client">GitHub</a></p>
     <p>Kein offizielles Minecraft-Produkt. Nicht von Mojang oder Microsoft genehmigt oder mit ihnen verbunden.</p>
-    <p><a href="https://github.com/virtualchickenfr/onix-client">GitHub</a> · <a href="https://github.com/virtualchickenfr/onix-client/releases">Alle Versionen</a></p>
   </footer>
 
   <script src="js/skin3d.js"></script>

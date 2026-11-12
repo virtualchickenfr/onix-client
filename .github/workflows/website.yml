@@ -4,7 +4,7 @@ name: Website
 # to the branch gh-pages. GitHub Pages serves that branch (Settings → Pages → Deploy from a branch → gh-pages, / (root)).
 on:
   push:
-    paths: ['website/**', 'launcher/src/js/fall.js', 'launcher/src/js/skin3d.js', '.github/workflows/website.yml']
+    paths: ['website/**', 'tools/build_website.py', 'mod-1.21.11/src/main/resources/assets/onix/lang_onix/de.json', 'launcher/src/js/fall.js', 'launcher/src/js/skin3d.js', '.github/workflows/website.yml']
   workflow_dispatch:
 
 permissions:
@@ -22,8 +22,10 @@ jobs:
 
       - name: Build the site
         run: |
+          python3 tools/build_website.py
           mkdir -p site
           cp -r website/. site/
+          rm -rf site/src site/data
           mkdir -p site/js
           cp launcher/src/js/fall.js launcher/src/js/skin3d.js site/js/
           touch site/.nojekyll

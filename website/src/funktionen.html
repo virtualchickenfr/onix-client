@@ -1,0 +1,19 @@
+  <section class="page-head">
+    <p class="eyebrow">Funktionen</p>
+    <h1>{{MODULE_COUNT}} Module</h1>
+    <p class="lead">Jedes Modul schaltest du einzeln ein und stellst es nach deinem Geschmack ein. Im Spiel öffnet Rechts-Shift das Onix-Menü.</p>
+  </section>
+
+  <main class="section modules">
+    <div class="filter">
+      <label class="search" for="mod-search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+        <input id="mod-search" type="search" placeholder="Modul suchen, z. B. Zoom, Minimap, CPS …" autocomplete="off">
+      </label>
+      <div class="chips" role="group" aria-label="Kategorie">
+{{MODULE_CHIPS}}
+      </div>
+    </div>
+    <p class="no-results" id="no-results" hidden>Kein Modul gefunden. Versuch ein anderes Wort.</p>
+{{MODULE_GROUPS}}
+  </main>
