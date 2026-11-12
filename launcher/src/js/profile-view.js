@@ -510,7 +510,7 @@ function renderPvSettings() {
   const perf = el('input', { type: 'checkbox' });
   perf.checked = p.performanceMods;
   const shade = el('input', { type: 'checkbox' });
-  shade.checked = p.shaders !== false;
+  shade.checked = p.shaders === true;
 
   const save = el('button', {
     class: 'btn primary',
@@ -526,6 +526,7 @@ function renderPvSettings() {
         quickJoin: server.value.trim(),
         performanceMods: perf.checked,
         shaders: shade.checked,
+        shadersChosen: true,
       });
       if (res && res.ok === false) return toast(res.error, true);
       profileState = res && res.ok ? res.value : res;

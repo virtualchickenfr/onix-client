@@ -41,8 +41,11 @@ class Profiles {
       ramMb: Number(p.ramMb) || this.defaults.ramMb,
       quickJoin: typeof p.quickJoin === 'string' ? p.quickJoin.trim() : '',
       performanceMods: p.performanceMods !== false,
-      // shaders (Iris + Complementary Reimagined) are set up on the first start of a Fabric profile
-      shaders: p.shaders !== false,
+      // shaders (Iris + Complementary Reimagined) are only set up when switched on for the profile; off by default
+      // (1.1.22: profiles from before, where they were on automatically, start with them off – shadersChosen marks
+      // a profile whose switch was set since)
+      shaders: p.shadersChosen === true && p.shaders === true,
+      shadersChosen: true,
       mcVersion: versions.isSupported(p.mcVersion) ? p.mcVersion : versions.DEFAULT,
       // Fabric (with Onix) by default; Quilt, NeoForge, Forge and Vanilla run without the Onix mod
       loader: LOADER_IDS.includes(p.loader) ? p.loader : 'fabric',

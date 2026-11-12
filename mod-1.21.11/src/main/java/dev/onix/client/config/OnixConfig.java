@@ -75,6 +75,8 @@ public class OnixConfig {
 
     /** The last multiplayer server you played on, for the Rejoin button on the title screen. */
     public final TextSetting lastServer = new TextSetting("lastServer", "Last Server", "", 300).hidden();
+    /** 1.1.22: shaders were switched off once (they are no longer on automatically). */
+    public final BoolSetting shadersOffSet = new BoolSetting("shadersOffSet", "Shaders Off Set", false).hidden();
     public final TextSetting lastServerName = new TextSetting("lastServerName", "Last Server Name", "", 100).hidden();
 
     // Design
@@ -181,7 +183,7 @@ public class OnixConfig {
                 onixServer, socialOn, shareServer, nameTagLooks, lightMode, buttonStyle, carbonButtons, menuSkin, menuDesign, menuCharacter, titleDesign, loadingScreens, loadingStyle, loadingTips, fallTransition,
                 hudStyle, hideHudInDebug, snapping, snapDistance, editorGrid,
                 notifications, notificationSound, notificationTime, notificationPosition,
-                ruleNotes, rulesOnJoin, rulesSkip, autoSwitchProfiles, introDone, cinematicSet, cinematicSet2, cleanSet, edexSet, roundSet, roundSet2, mobileSet, fontSet, menuGlass, lastServer, lastServerName);
+                ruleNotes, rulesOnJoin, rulesSkip, autoSwitchProfiles, introDone, cinematicSet, cinematicSet2, cleanSet, edexSet, roundSet, roundSet2, mobileSet, fontSet, menuGlass, lastServer, lastServerName, shadersOffSet);
     }
 
     public float menuScaleFactor() {

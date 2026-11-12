@@ -253,7 +253,7 @@ async function ensureMods(root, settings, report, log, throttle = true, mc = MC_
  * Minecraft version of the profile only brings the matching Iris. Never stops the game from starting.
  */
 async function ensureDefaultShaders(gameDir, settings, report, log, mc) {
-  if (settings.shaders === false || !settings.performanceMods) return; // Iris needs Sodium from the performance pack
+  if (settings.shaders !== true || !settings.performanceMods) return; // off by default; Iris needs Sodium from the performance pack
   const shaders = require('./shaders');
   // shaders halve the frame rate: only PCs with a strong graphics card get them (the Onix module Shaders switches them)
   const gpu = shaders.gpuInfo();
