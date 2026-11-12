@@ -285,7 +285,9 @@ void main() {
    * null); the figure waits for it a moment so it never swaps mid-fall. Returns { finish(): Promise }.
    * opts.loop (seconds): the figure falls in again after that long, endlessly (the website's header);
    * opts.y (0..1, default 0.46) and opts.scale (default 1): where the figure floats and how big it is;
-   * opts.waitSkin (seconds, default 0.9): how long to wait for the skin before a plain one is used.
+   * opts.waitSkin (seconds, default 0.9): how long to wait for the skin before a plain one is used;
+   * opts.light (default 1) and opts.tint (default 1): more light from above and less water colour on the figure
+   * (for dark skins).
    */
   function boot(canvas, skin, opts = {}) {
     const g = canvas.getContext('2d');
@@ -367,15 +369,15 @@ void main() {
         lg.clearRect(0, 0, FW, FH);
         lg.drawImage(figure, 0, 0);
         lg.globalCompositeOperation = 'source-atop';
-        lg.fillStyle = `rgba(10,60,72,${0.12 + 0.45 * sink})`;
+        lg.fillStyle = `rgba(10,60,72,${(0.12 + 0.45 * sink) * (opts.tint ?? 1)})`;
         lg.fillRect(0, 0, FW, FH);
         lg.save();
         lg.translate(centre.cx, centre.cy);
         lg.rotate(-roll);                        // "up" on screen, in the figure's own frame
         const sun = lg.createLinearGradient(0, -FH * 0.4, 0, FH * 0.4);
-        sun.addColorStop(0, `rgba(190,245,250,${0.38 * (1 - sink)})`);
+        sun.addColorStop(0, `rgba(190,245,250,${Math.min(0.9, 0.38 * (opts.light || 1)) * (1 - 0.6 * sink)})`);
         sun.addColorStop(0.5, 'rgba(190,245,250,0)');
-        sun.addColorStop(1, `rgba(2,16,20,${0.35 + 0.2 * sink})`);
+        sun.addColorStop(1, `rgba(2,16,20,${(0.35 + 0.2 * sink) * (opts.tint ?? 1)})`);
         lg.fillStyle = sun;
         lg.fillRect(-FW, -FH, FW * 2, FH * 2);
         lg.restore();
@@ -400,7 +402,7 @@ void main() {
         g.save();
         g.translate(cx, cy);
         g.rotate(roll);
-        g.globalAlpha = 1 - 0.5 * sink;
+        g.globalAlpha = 1 - 0.5 * sink * (opts.tint ?? 1);
         if (sink > 0.3) g.filter = `blur(${((sink - 0.3) * 3 * dpr).toFixed(1)}px)`;
         g.drawImage(lit, -centre.cx * scale, -centre.cy * scale, FW * scale, FH * scale);
         g.restore();

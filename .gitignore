@@ -12,3 +12,5 @@ server/data/
 ports/build/
 __pycache__/
 website/js/
+website/img/skin.png
+website/img/skin.json

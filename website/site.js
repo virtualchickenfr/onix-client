@@ -40,7 +40,7 @@ const REPO = 'virtualchickenfr/onix-client';
     };
     img.src = 'img/skin.png';
   });
-  Fall.boot(canvas, () => skin || (performance.now() - started > 1500 ? { px, slim: false } : null), { loop: 9, y: 0.27, scale: 0.62, waitSkin: 2 });
+  Fall.boot(canvas, () => skin || (performance.now() - started > 1500 ? { px, slim: false } : null), { loop: 9, y: 0.27, scale: 0.62, waitSkin: 2, light: 2.2, tint: 0.45 });
 })();
 
 // ---------------------------------------------------------------- navigation
