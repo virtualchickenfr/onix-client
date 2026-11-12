@@ -9,23 +9,9 @@ jobs:
   probe:
     runs-on: ubuntu-latest
     steps:
-      - name: Download and inspect
+      - name: Performance mods for 1.21.11
         run: |
-          set -e
-          url=$(curl -s 'https://api.modrinth.com/v2/project/essential/version?loaders=%5B%22fabric%22%5D&game_versions=%5B%221.21.11%22%5D' | jq -r '.[0].files[0].url')
-          echo "jar: $url"
-          curl -sL "$url" -o essential.jar
-          mkdir x && cd x && unzip -q ../essential.jar
-          for j in $(find . -name '*.jar'); do mkdir -p "n/$(basename $j)"; (cd "n/$(basename $j)" && unzip -qo "../../$j" || true); done
-          E=$(ls -d n/essential-*.jar | grep -v loader | head -1)
-          cd "$E"
-          for c in gg.essential.gui.friends.SocialMenu gg.essential.gui.wardrobe.Wardrobe gg.essential.gui.screenshot.components.ScreenshotBrowser gg.essential.gui.menu.RightSideBarNew gg.essential.gui.menu.LeftSideBar gg.essential.gui.menu.AccountManager; do
-            echo "=== $c"; javap -p -cp . $c | grep -E "public|<init>" | grep -E "<init>|static .*open|Companion" | head -12
+          for p in sodium lithium ferrite-core immediatelyfast entityculling modernfix badoptimizations scalablelux moreculling c2me-fabric krypton noisium; do
+            v=$(curl -s "https://api.modrinth.com/v2/project/$p/version?loaders=%5B%22fabric%22%5D&game_versions=%5B%221.21.11%22%5D" | jq -r '[.[] | select(.version_type=="release")][0] | (.version_number // "none") + " deps=" + ([.dependencies[]? | select(.dependency_type=="required") | .project_id] | join(","))')
+            echo "$p: $v"
           done
-          echo "=== which screens the side bars open"
-          for c in gg.essential.gui.menu.RightSideBarNew gg.essential.gui.menu.LeftSideBar; do
-            javap -c -p -cp . $c | grep -oE '(new|invokestatic|invokespecial) +#[0-9]+ +// (class|Method) gg/essential/gui/[A-Za-z/]+[^ ]*' | sed 's/.*\/\/ //' | sort -u | head -40
-          done
-          echo "=== settings screen"
-          find . -name '*.class' | grep -iE 'gui/(vigilance|settings|essentialsettings|elementa/state)|EssentialSettings|SettingsGui' | head -10
-          grep -rl --include='*.class' 'SettingsGui\|settingsGui' gg/essential/gui/menu | head
