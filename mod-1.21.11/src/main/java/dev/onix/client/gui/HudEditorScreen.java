@@ -119,16 +119,8 @@ public class HudEditorScreen extends Screen {
         }
         ctx.fill(width / 2, 0, width / 2 + 1, height, 0x10FFFFFF);
         ctx.fill(0, height / 2, width, height / 2 + 1, 0x10FFFFFF);
-    }
-
-    @Override
-    public void render(GuiGraphics ctx, int mouseX, int mouseY, float delta) {
-        // the buttons step aside while an element is dragged, so they never cover the element being placed
-        for (var child : children()) if (child instanceof net.minecraft.client.gui.components.AbstractWidget w) w.visible = dragging == null;
-        super.render(ctx, mouseX, mouseY, delta);
         if (dragging != null && guideX != null) ctx.fill(guideX, 0, guideX + 1, height, Theme.withAlpha(Theme.accent(), 210));
         if (dragging != null && guideY != null) ctx.fill(0, guideY, width, guideY + 1, Theme.withAlpha(Theme.accent(), 210));
-
         HudModule hovered = dragging != null ? dragging : at(mouseX, mouseY);
         for (HudModule hud : enabled()) {
             hud.renderAtPosition(ctx, true);
@@ -138,6 +130,15 @@ public class HudEditorScreen extends Screen {
             Theme.outline(ctx, x - 2, y - 2, x + hud.getScaledWidth() + 2, y + hud.getScaledHeight() + 2,
                     active ? Theme.accent() : Theme.withAlpha(0xFFFFFFFF, 40));
         }
+    }
+
+    @Override
+    public void render(GuiGraphics ctx, int mouseX, int mouseY, float delta) {
+        // the buttons step aside while an element is dragged, so they never cover the element being placed
+        for (var child : children()) if (child instanceof net.minecraft.client.gui.components.AbstractWidget w) w.visible = dragging == null;
+        // the HUD elements are drawn with the background (renderBackground), so the buttons stay on top of them
+        super.render(ctx, mouseX, mouseY, delta);
+        HudModule hovered = dragging != null ? dragging : at(mouseX, mouseY);
         HudModule label = hovered != null ? hovered : selected;
         if (label != null) {
             String text = label.getName() + "  " + label.scaleSetting().display();

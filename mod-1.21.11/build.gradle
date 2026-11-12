@@ -70,10 +70,10 @@ if (project.hasProperty('perfMods')) {
 		}
 	}
 	dependencies {
-		modLocalRuntime 'maven.modrinth:sodium:mc1.21.11-0.8.14-fabric'
-		modLocalRuntime 'maven.modrinth:lithium:mc1.21.11-0.21.4-fabric'
-		modLocalRuntime 'maven.modrinth:badoptimizations:2.4.1'
-		modLocalRuntime 'maven.modrinth:scalablelux:0.1.6+fabric.c25518a'
-		modLocalRuntime 'maven.modrinth:krypton:0.2.10'
+		modLocalRuntime 'maven.modrinth:sodium:rkdTcxoT'
+		modLocalRuntime 'maven.modrinth:lithium:Ow7wA0kG'
+		modLocalRuntime 'maven.modrinth:badoptimizations:Q3Dusz2j'
+		modLocalRuntime 'maven.modrinth:scalablelux:PV9KcrYQ'
+		modLocalRuntime 'maven.modrinth:krypton:O9LmWYR7'
 	}
 }
