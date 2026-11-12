@@ -365,7 +365,7 @@
  "name.rainripples": "Regen-Ringe",
  "desc.rainripples": "Regentropfen hinterlassen kleine Ringe auf dem Boden und auf Wasser.",
  "name.shaders": "Shader",
- "desc.shaders": "Schaltet das Shaderpack an und aus (braucht Iris, das der Launcher auf starken PCs installiert).",
+ "desc.shaders": "Schaltet das Shaderpack an und aus (braucht Iris; die Ein-Klick-Shader im Launcher bringen es mit).",
  "name.deathscreens": "Todesbildschirme",
  "desc.deathscreens": "Animierte Todesbildschirme in fünf Stilen: Kino, Glitch, Arcade, Energie und Tinte.",
  "name.combattext": "Kampf-Text",
