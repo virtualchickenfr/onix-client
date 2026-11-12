@@ -26,6 +26,14 @@ jobs:
           export ONIX_SMOKE_DIR="$PWD/smoke"
           timeout 120 xvfb-run -a -s "-screen 0 1280x800x24" npx electron . --no-sandbox --disable-gpu > smoke-log.txt 2>&1 || true
           ls smoke; tail -n 30 smoke-log.txt
+          # the silent start with the system: no window, and it must quit by itself
+          start=$(date +%s)
+          set +e
+          timeout 90 xvfb-run -a -s "-screen 0 1280x800x24" npx electron . --no-sandbox --disable-gpu --background-update > smoke/background-log.txt 2>&1
+          code=$?
+          set -e
+          echo "background start: exit $code after $(( $(date +%s) - start )) s" | tee -a smoke/background-log.txt
+          [ "$code" != 124 ] || { echo "::error::The background start did not quit by itself"; exit 1; }
       - name: Push results
         if: always()
         run: |
