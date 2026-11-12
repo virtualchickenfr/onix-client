@@ -182,6 +182,8 @@ public final class DevTest {
             }
         });
         then(200, () -> snap(mc, "07_hud"));
+        then(0, () -> { mc.gui.getChat().clearMessages(false); mc.getToastManager().clear(); });
+        then(4, () -> snap(mc, "07a_hud_clean"));
         then(2, () -> OnixClient.MODULES.get(dev.onix.client.module.impl.visual.SmallCapsModule.class).setEnabled(true));
         then(20, () -> snap(mc, "07b_small_caps"));
         then(2, () -> OnixClient.MODULES.get(dev.onix.client.module.impl.visual.SmallCapsModule.class).setEnabled(false));
@@ -421,7 +423,9 @@ public final class DevTest {
             cmd(mc, "execute as @p at @s run fill ~4 ~-1 ~6 ~12 ~-1 ~14 minecraft:sand");
             cmd(mc, "execute as @p at @s run fill ~-4 ~ ~-12 ~-2 ~4 ~-10 minecraft:oak_log");
         });
-        then(60, () -> snap(mc, "09i1_minimap_terrain"));
+        then(60, () -> mc.getToastManager().clear());
+        then(0, () -> { mc.gui.getChat().clearMessages(false); mc.getToastManager().clear(); });
+        then(4, () -> snap(mc, "09i1_minimap_terrain"));
         then(2, () -> OnixClient.MODULES.get(dev.onix.client.module.impl.hud.MinimapModule.class).setEnabled(false));
         then(2, () -> cmd(mc, "execute as @p at @s run fill ~-20 ~-1 ~16 ~-12 ~-1 ~22 minecraft:red_wool"));
         then(60, () -> OnixClient.LOGGER.info("[devtest] world map while the minimap is off: red wool = {}",
@@ -447,7 +451,9 @@ public final class DevTest {
                         + " {Item:{id:\"minecraft:" + item + "\",count:1},PickupDelay:32767}");
             }
         });
-        then(60, () -> snap(mc, "09i2_item_physics"));
+        then(60, () -> mc.getToastManager().clear());
+        then(0, () -> { mc.gui.getChat().clearMessages(false); mc.getToastManager().clear(); });
+        then(4, () -> snap(mc, "09i2_item_physics"));
         // ---- hit colour: a zombie in front of you gets hit
         then(2, () -> {
             OnixClient.MODULES.get(dev.onix.client.module.impl.visual.ItemPhysicsModule.class).setEnabled(false);

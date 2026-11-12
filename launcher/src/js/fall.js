@@ -142,8 +142,9 @@ const Fall = (() => {
   /**
    * Runs the scene in `canvas` until `finish()` is called. `skin()` returns {px, slim} once your skin is known (or
    * null); the figure waits for it a moment so it never swaps mid-fall. Returns { finish(): Promise }.
+   * opts.loop (seconds): the figure falls in again after that long, endlessly (the website's header).
    */
-  function boot(canvas, skin) {
+  function boot(canvas, skin, opts = {}) {
     const g = canvas.getContext('2d');
     const FW = 600, FH = 600;
     const figure = document.createElement('canvas');
@@ -190,6 +191,10 @@ const Fall = (() => {
         if (who) fallStart = t;
       }
       if (who) {
+        if (opts.loop && t - fallStart > opts.loop) {
+          fallStart = t;
+          nextBubble = 0;
+        }
         const f = t - fallStart;
         // drops in from above, slows down as the water takes it, then sinks slowly and gets smaller and darker
         const enter = 1 - Math.pow(1 - clamp01(f / 1.6), 3);
