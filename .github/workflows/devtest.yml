@@ -21,9 +21,6 @@ jobs:
           - dir: mod-1.21.11
             branch: devtest-results-perfmods
             gradleArgs: -PperfMods
-          - dir: mod-1.21.11
-            branch: devtest-results-essential
-            gradleArgs: -Pessential
           - dir: ports/build/mod-1.21.10
             port: '1.21.10'
             branch: devtest-results-1.21.10
