@@ -124,8 +124,8 @@ def module_list():
             continue
         chips.append(f'<button class="chip" data-cat="{key}" type="button">{name} <span>{len(mods)}</span></button>')
         cards = '\n'.join(
-            f'        <li data-search="{html.escape((r[2] + " " + r[3] + " " + r[4] + " " + r[5]).lower())}">'
-            f'<b>{html.escape(r[3])}</b><span>{html.escape(r[5])}</span></li>' for r in mods)
+            # the English name too, so a search for "Freelook" or "Keystrokes" finds it
+            f'<li data-en="{html.escape(r[2].lower())}"><b>{html.escape(r[3])}</b><span>{html.escape(r[5])}</span></li>' for r in mods)
         out.append(f'''    <section class="mod-group" data-cat="{key}">
       <h2>{name} <span class="count">{len(mods)}</span></h2>
       <p class="group-about">{about}</p>

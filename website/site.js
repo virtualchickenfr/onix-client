@@ -129,7 +129,8 @@ setUpDownloads();
       let inGroup = 0;
       const catOk = category === 'all' || g.dataset.cat === category;
       for (const li of g.querySelectorAll('li')) {
-        const ok = catOk && words.every((w) => li.dataset.search.includes(w));
+        const text = li.dataset.search || (li.dataset.search = (li.dataset.en + ' ' + li.textContent).toLowerCase());
+        const ok = catOk && words.every((w) => text.includes(w));
         li.hidden = !ok;
         if (ok) inGroup++;
       }
