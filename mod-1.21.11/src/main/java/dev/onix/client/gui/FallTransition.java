@@ -7,9 +7,10 @@ import net.minecraft.client.gui.components.PlayerSkinWidget;
 import net.minecraft.client.model.player.PlayerModel;
 
 /**
- * The world loading transition – "sunken" (the same scene as the launcher's Play transition): a dark teal void, soft
- * light from above with dust drifting in it, and your own Minecraft character falling backwards through it in slow
- * motion, on its back, arms and legs stretched up towards the light, while the world loads.
+ * The world loading transition – "sunken" (the same scene as the launcher's start screen): under water, the surface
+ * shimmering far above and light falling in through it, specks drifting, and your own Minecraft character falling
+ * backwards through it in slow motion, on its back, arms and legs stretched up towards the light, a trail of air
+ * bubbles rising from it, while the world loads.
  */
 public final class FallTransition {
     private FallTransition() {}
@@ -49,17 +50,18 @@ public final class FallTransition {
 
         drawVoid(ctx, w, h, t);
 
-        // the character: drops into view, then sinks slowly away (smaller, darker), turning as it goes
-        float enter = smooth(t / 1.2f);
-        float sink = clamp((t - 0.8f) / 4f);
-        int fh = Math.round(Math.min(h * 0.7f, 320) * (1f - 0.42f * sink));
+        // the character: drops in, slows down as the water takes it, then sinks slowly, smaller and darker
+        float enter = 1 - (float) Math.pow(1 - clamp(t / 1.6f), 3);
+        float sink = smooth((t - 1.2f) / 4.5f);
+        int fh = Math.round(Math.min(h * 0.72f, 330) * (1f - 0.35f * sink));
         int fw = Math.round(fh * 1.3f);                         // the figure lies on its back: wide
-        float cx = w / 2f + (float) Math.sin(t * 0.7f) * 2.5f * u;
-        float cy = -fh * 0.15f + (h * 0.5f + fh * 0.15f) * enter + sink * 8 * u;
-        SoftShapes.glow(ctx, cx, cy, fw * 0.6f, fh * 0.5f, a(0x6FD2DC, 0.12f * (1 - sink)));
+        float cx = w / 2f + (float) Math.sin(t * 0.45f) * 1.5f * u;
+        float cy = -fh * 0.4f + (h * 0.46f + fh * 0.4f) * enter + sink * 8 * u + (float) Math.sin(t * 0.9f) * 0.6f * u;
+        // light from the surface falls on it: a soft bright halo behind, the water's colour over it as it sinks
+        SoftShapes.glow(ctx, cx, cy - fh * 0.15f, fw * 0.55f, fh * 0.5f, a(0x8FE3EA, 0.16f * (1 - sink)));
         drawFigure(Minecraft.getInstance(), ctx, Math.round(cx - fw / 2f), Math.round(cy - fh / 2f), fw, fh, t);
-        // the deep swallows it: a teal veil over the figure that thickens as it sinks
-        SoftShapes.glow(ctx, cx, cy, fw * 0.55f, fh * 0.55f, a(0x08343E, 0.15f + 0.6f * sink));
+        SoftShapes.glow(ctx, cx, cy, fw * 0.5f, fh * 0.55f, a(0x0A3C48, 0.1f + 0.45f * sink));
+        bubbles(ctx, t, cx, cy, fh, u);
 
         // vignette and one clean line of text with a thin progress line
         SoftShapes.vignette(ctx, 0, 0, w, h, a(0x000406, 0.75f));
@@ -80,31 +82,89 @@ public final class FallTransition {
         }
     }
 
-    /** The scene without the figure: the dark teal void, light falling in from above, dust drifting in it. */
+    /** The water without the figure: deep teal, the shimmering surface far above, light rays and drifting specks. */
     public static void drawVoid(GuiGraphics ctx, int w, int h, float t) {
         float u = h / 100f;
-        // the void: dark teal, lighter where the light comes from
-        ctx.fillGradient(0, 0, w, Math.round(h * 0.45f), 0xFF0F3A44, 0xFF08232B);
-        ctx.fillGradient(0, Math.round(h * 0.45f), w, h, 0xFF08232B, 0xFF020709);
-        // light from above: a haze at the top and swaying beams
-        SoftShapes.glow(ctx, w / 2f, -10 * u, w * 0.55f, 70 * u, 0x5578D2DC);
-        float sway = (float) Math.sin(t * 0.5f) * 2 * u;
-        for (int i = 0; i < 5; i++) {
-            float x = w / 2f + (i - 2) * 9 * u + sway * (i % 2 == 1 ? 1 : -1);
-            float bw = (4 + i) * u;
-            ctx.fillGradient(Math.round(x - bw / 2), 0, Math.round(x + bw / 2), Math.round(h * 0.88f),
-                    a(0x96E1EB, 0.07f + 0.03f * (float) Math.sin(t * 1.1f + i)), 0x0096E1EB);
+        ctx.fillGradient(0, 0, w, Math.round(h * 0.3f), 0xFF16505A, 0xFF0C3039);
+        ctx.fillGradient(0, Math.round(h * 0.3f), w, Math.round(h * 0.7f), 0xFF0C3039, 0xFF061A20);
+        ctx.fillGradient(0, Math.round(h * 0.7f), w, h, 0xFF061A20, 0xFF02080A);
+        // the surface: a bright glow at the top with soft streaks of light moving like waves
+        SoftShapes.glow(ctx, w / 2f, -18 * u, w * 0.6f, 75 * u, 0x6896E6EB);
+        for (int i = 0; i < 22; i++) {
+            float x = (rnd(i) * 1.4f - 0.2f) * w + (float) Math.sin(t * 0.35f + i * 1.7f) * 6 * u;
+            float y = (1.5f + rnd(i + 40) * 9) * u + (float) Math.sin(t * 0.8f + i) * 0.6f * u;
+            float len = (4 + rnd(i + 9) * 10) * u;
+            float alpha = 0.04f + 0.05f * (0.5f + 0.5f * (float) Math.sin(t * 1.6f + i * 2.3f));
+            float th = Math.max(1, (0.4f + rnd(i + 3) * 0.5f) * u);
+            gg.carbon.client.ui.R2D.rrect(ctx, x - len / 2, y - th / 2, len, th, th / 2, a(0xC8FAFF, alpha));
         }
-        // dust drifting slowly in the light, three depths
-        for (int i = 0; i < 80; i++) {
-            float z = 0.4f + (i % 3) * 0.3f;
-            float x = ((rnd(i) * w + (float) Math.sin(t * 0.4f + i) * 3 * u * z) % w + w) % w;
-            float y = ((rnd(i + 7) * h - t * (2 + 3 * z) * u) % h + h) % h;
-            float near = clamp(1 - Math.abs(x - w / 2f) / (45 * u));
-            int s = z > 0.9f ? 2 : 1;
-            ctx.fill(Math.round(x), Math.round(y), Math.round(x) + s, Math.round(y) + s, a(0xC8F5FA, (0.25f + 0.5f * near) * z * (0.4f + 0.6f * rnd(i + 3))));
+        // light rays from the surface: soft wedges that sway and breathe
+        for (int i = 0; i < 7; i++) {
+            float base = w / 2f + (i - 3) * 11 * u + (float) Math.sin(t * 0.22f + i * 1.3f) * 4 * u;
+            float lean = (float) Math.sin(t * 0.17f + i) * 6 * u;
+            float top = (1.2f + (i % 3) * 0.6f) * u;
+            float bottom = (9 + (i % 4) * 4) * u;
+            float reach = h * (0.75f + 0.15f * rnd(i + 20));
+            float alpha = 0.06f + 0.035f * (float) Math.sin(t * 0.9f + i * 1.9f);
+            int c0 = a(0xAAF0F5, alpha), c1 = a(0x96E1EB, 0);
+            quad(ctx, base - top, 0, base + top, 0, base + lean + bottom, reach, base + lean - bottom, reach, c0, c0, c1, c1);
         }
+        // specks drifting in the water, three depths, brighter in the light
+        for (int i = 0; i < 90; i++) {
+            float z = 0.35f + (i % 3) * 0.3f;
+            float x = ((rnd(i) * w + (float) Math.sin(t * 0.3f + i) * 4 * u * z) % w + w) % w;
+            float y = ((rnd(i + 7) * h - t * (1.2f + 2.5f * z) * u) % h + h) % h;
+            float light = clamp(1 - Math.abs(x - w / 2f) / (50 * u)) * clamp(1 - y / h * 0.8f);
+            float r = z > 0.9f ? 1.2f : 0.8f;
+            gg.carbon.client.ui.R2D.rrect(ctx, x - r, y - r, r * 2, r * 2, r, a(0xCDF8FC, (0.12f + 0.55f * light) * z * (0.4f + 0.6f * rnd(i + 3))));
+        }
+    }
 
+    /** A four-cornered shape with a colour per corner (both windings: the GUI pipeline culls one side). */
+    private static void quad(GuiGraphics ctx, float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3,
+                             int c0, int c1, int c2, int c3) {
+        GuiTriangles.draw(ctx, new float[]{x0, y0, x1, y1, x2, y2, x0, y0, x2, y2, x3, y3, x0, y0, x2, y2, x1, y1, x0, y0, x3, y3, x2, y2},
+                new int[]{c0, c1, c2, c0, c2, c3, c0, c2, c1, c0, c3, c2});
+    }
+
+    /** Air bubbles rising from the face and hands: born now and then, wobbling, growing a little, fading. */
+    private static final java.util.List<float[]> BUBBLES = new java.util.ArrayList<>();   // x, y, r, speed, wobble, seed, life, age
+    private static float lastT = -1;
+    private static float nextBubble;
+
+    private static void bubbles(GuiGraphics ctx, float t, float cx, float cy, float fh, float u) {
+        float dt = lastT < 0 || t < lastT ? 0 : Math.min(0.05f, t - lastT);
+        if (t < lastT) {
+            BUBBLES.clear();
+            nextBubble = 0;
+        }
+        lastT = t;
+        if (t > 0.6f && t > nextBubble) {
+            int n = 1 + (int) (rnd(t * 13) * 2);
+            for (int k = 0; k < n; k++) {
+                BUBBLES.add(new float[]{cx + (rnd(t * 7 + k) - 0.3f) * fh * 0.4f, cy - fh * 0.2f + (rnd(t * 3 + k) - 0.5f) * fh * 0.1f,
+                        0.35f + rnd(t * 5 + k) * 0.8f, 4 + rnd(t * 11 + k) * 4, 3 + rnd(k + t) * 3, rnd(t + k * 9) * 6,
+                        2.2f + rnd(t * 17 + k) * 1.6f, 0});
+            }
+            nextBubble = t + 0.3f + rnd(t * 19) * 0.6f;
+        }
+        for (int i = BUBBLES.size() - 1; i >= 0; i--) {
+            float[] b = BUBBLES.get(i);
+            b[7] += dt;
+            float age = b[7];
+            b[1] -= (b[3] + age * 0.6f) * u * dt;
+            float alpha = clamp(1 - age / b[6]) * clamp(age * 4);
+            if (alpha <= 0.01f || b[1] < -10) {
+                BUBBLES.remove(i);
+                continue;
+            }
+            float x = b[0] + (float) Math.sin(age * b[4] + b[5]) * 0.8f * u;
+            float r = Math.max(1.2f, b[2] * u * (1 + age * 0.12f));
+            gg.carbon.client.ui.R2D.rrect(ctx, x - r, b[1] - r, r * 2, r * 2, r, a(0xBEF5FF, 0.1f * alpha));
+            gg.carbon.client.ui.R2D.outline(ctx, x - r, b[1] - r, r * 2, r * 2, r, Math.max(0.6f, r * 0.22f), a(0xD2FAFF, 0.55f * alpha));
+            float hr = r * 0.28f;
+            gg.carbon.client.ui.R2D.rrect(ctx, x - r * 0.35f - hr, b[1] - r * 0.35f - hr, hr * 2, hr * 2, hr, a(0xFFFFFF, 0.75f * alpha));
+        }
     }
 
     /**
