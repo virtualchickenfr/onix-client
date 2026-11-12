@@ -30,6 +30,14 @@ async function initSettings() {
     api.setSettings({ autoUpdate: auto.checked });
     toast(auto.checked ? 'The launcher checks for updates when it starts' : 'Automatic update checks are off – use Check now');
   });
+  const startupUpdate = $('#set-startup-update');
+  if (startupUpdate) {
+    startupUpdate.checked = s.updateAtStartup !== false;
+    startupUpdate.addEventListener('change', () => {
+      api.setSettings({ updateAtStartup: startupUpdate.checked });
+      toast(startupUpdate.checked ? 'Onix updates in the background when your PC starts' : 'No more updates when the PC starts');
+    });
+  }
   const java = $('#set-java');
   java.value = s.javaPath || '';
   java.addEventListener('change', () => api.setSettings({ javaPath: java.value.trim() }));

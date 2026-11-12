@@ -106,6 +106,36 @@ function installNow() {
   return true;
 }
 
+/**
+ * For the silent start with the system (lib/startupupdate.js): checks, lets the download finish and resolves with
+ * 'ready' (downloaded), 'latest', 'disabled', 'error' or 'timeout'.
+ */
+function waitForUpdate(timeoutMs) {
+  return new Promise((resolve) => {
+    if (!ready) return resolve('disabled');
+    if (process.platform === 'darwin') return resolve('disabled');   // unsigned macOS builds cannot replace themselves
+    let done = false;
+    const finish = (v) => {
+      if (!done) {
+        done = true;
+        resolve(v);
+      }
+    };
+    autoUpdater.once('update-downloaded', () => finish('ready'));
+    autoUpdater.once('update-not-available', () => finish('latest'));
+    autoUpdater.once('error', () => finish(state.status === 'ready' ? 'ready' : 'error'));
+    setTimeout(() => finish(state.status === 'ready' ? 'ready' : 'timeout'), timeoutMs).unref();
+    autoUpdater.checkForUpdates().catch(() => finish('error'));
+  });
+}
+
+/** Installs the downloaded update silently and does not start the launcher afterwards. */
+function installQuietly() {
+  set({ status: 'installing' });
+  setImmediate(() => autoUpdater.quitAndInstall(true, false));
+  return true;
+}
+
 function openDownload() {
   const url = releasesUrl();
   if (!url) throw new Error('No download page is set for this launcher.');
@@ -113,4 +143,4 @@ function openDownload() {
   return true;
 }
 
-module.exports = { init, check, install, installNow, openDownload, view, releasesUrl };
+module.exports = { init, check, install, installNow, installQuietly, waitForUpdate, openDownload, view, releasesUrl };

@@ -54,6 +54,8 @@ const DEFAULT_SETTINGS = {
   background: 'carbon',
   onixServer: '',
   autoUpdate: true,
+  // starts silently with the computer, installs a new version and quits (lib/startupupdate.js)
+  updateAtStartup: true,
 };
 
 /** Writes design choices into config/onix/client.json of every profile, so game and launcher match. */
@@ -266,11 +268,21 @@ function safe(fn) {
   };
 }
 
+// started with the computer (lib/startupupdate.js): silent, no window, quits by itself
+const BACKGROUND = require('./lib/startupupdate').isBackgroundStart(process.argv);
+
 // one launcher: a second start (for example from a desktop shortcut) hands its arguments to the open window
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
   app.on('second-instance', (_e, argv) => {
+    if (argv.includes(require('./lib/startupupdate').ARG)) return;   // the silent start finds the launcher already open
+    if (BACKGROUND && !win) {
+      // the user opened Onix while the silent update was running: become the normal launcher
+      app.relaunch({ args: process.argv.slice(1).filter((a) => a !== require('./lib/startupupdate').ARG) });
+      app.exit(0);
+      return;
+    }
     const req = shortcuts.launchArgs(argv);
     if (win) {
       if (win.isMinimized()) win.restore();
@@ -335,6 +347,7 @@ app.whenReady().then(() => {
     if (value && typeof value.theme === 'string') sync.theme = value.theme;
     if (value && typeof value.background === 'string') sync.titleBackground = value.background;
     if (value && typeof value.onixServer === 'string') sync.onixServer = value.onixServer.trim();
+    if (value && typeof value.updateAtStartup === 'boolean') require('./lib/startupupdate').register(value.updateAtStartup);
     if (Object.keys(sync).length) {
       try {
         syncClientSettings(sync);
@@ -1018,6 +1031,21 @@ app.whenReady().then(() => {
   ipcMain.handle('update:install', safe(() => updater.install(running)));
   ipcMain.handle('update:installNow', safe(() => updater.installNow()));
   ipcMain.handle('update:download', safe(() => updater.openDownload()));
+
+  const startup = require('./lib/startupupdate');
+  if (BACKGROUND) {
+    // started with the computer: no window, update quietly, then quit
+    if (process.platform === 'darwin' && app.dock) app.dock.hide();
+    updater.init(() => {}, () => false, () => false);
+    const page = updater.releasesUrl();
+    const slug = page ? page.replace(/^https:\/\/github\.com\//, '').replace(/\/releases\/latest$/, '') : null;
+    const mods = require('./lib/modupdate');
+    if (app.isPackaged && slug) mods.init(app.getPath('userData'), slug, app.getVersion(), versions.DEFAULT, () => {});
+    startup.run({ updater, modCheck: () => mods.check(true), log: (m) => console.log('[background update]', m) });
+    return;
+  }
+  // keep the start with the system in step with the setting (the installed path can change with an update)
+  startup.register(settings().updateAtStartup !== false);
 
   createWindow();
   updater.init((v) => send('update:status', v), () => settings().autoUpdate !== false, () => running);
