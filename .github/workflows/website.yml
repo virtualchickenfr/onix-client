@@ -37,12 +37,25 @@ jobs:
       - name: The figure's skin (Minecraft player ${{ env.SITE_SKIN }})
         continue-on-error: true
         run: |
-          # the skin and whether it is the slim (Alex) model, from Mojang's public profile API
-          uuid=$(curl -fsSL "https://api.mojang.com/users/profiles/minecraft/$SITE_SKIN" | jq -r .id)
-          tex=$(curl -fsSL "https://sessionserver.mojang.com/session/minecraft/profile/$uuid" | jq -r '.properties[] | select(.name=="textures") | .value' | base64 -d)
-          url=$(echo "$tex" | jq -r .textures.SKIN.url)
-          model=$(echo "$tex" | jq -r '.textures.SKIN.metadata.model // "classic"')
-          curl -fsSL "$url" -o site/img/skin.png
+          # the skin and whether it is the slim (Alex) model: Mojang's public profile API (with retries, it limits
+          # shared CI addresses), then playerdb.co, then mc-heads.net (no model information there)
+          get() { for i in 1 2 3 4; do curl -fsSL -m 20 "$1" && return 0; sleep $((i * 5)); done; return 1; }
+          url=""; model=classic
+          if uuid=$(get "https://api.mojang.com/users/profiles/minecraft/$SITE_SKIN" | jq -er .id) &&
+             tex=$(get "https://sessionserver.mojang.com/session/minecraft/profile/$uuid" | jq -er '.properties[] | select(.name=="textures") | .value' | base64 -d); then
+            url=$(echo "$tex" | jq -r .textures.SKIN.url)
+            model=$(echo "$tex" | jq -r '.textures.SKIN.metadata.model // "classic"')
+          elif pdb=$(get "https://playerdb.co/api/player/minecraft/$SITE_SKIN"); then
+            uuid=$(echo "$pdb" | jq -r .data.player.raw_id)
+            tex=$(echo "$pdb" | jq -r '.data.player.properties[]? | select(.name=="textures") | .value' | base64 -d 2>/dev/null || true)
+            url=$(echo "$tex" | jq -r '.textures.SKIN.url // empty' 2>/dev/null || true)
+            model=$(echo "$tex" | jq -r '.textures.SKIN.metadata.model // "classic"' 2>/dev/null || echo classic)
+            [ -n "$url" ] || url=$(echo "$pdb" | jq -r '.data.player.skin_texture // empty')
+          fi
+          [ -n "$url" ] || url="https://mc-heads.net/skin/$SITE_SKIN"
+          echo "skin: $url ($model)"
+          get "$url" > site/img/skin.png
+          file site/img/skin.png
           printf '{"name": "%s", "slim": %s}\n' "$SITE_SKIN" "$([ "$model" = slim ] && echo true || echo false)" > site/img/skin.json
           cat site/img/skin.json
           ls -R site | head -40
