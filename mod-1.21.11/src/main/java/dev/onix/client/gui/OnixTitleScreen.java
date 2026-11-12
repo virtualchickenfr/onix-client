@@ -739,10 +739,40 @@ public class OnixTitleScreen extends Screen {
                 tipX = bx + size / 2;
             }
         }
+        // Essential installed: its friends, wardrobe and pictures in a second pill (Essential only adds them to vanilla's menu)
+        int tipY = y0 + size + 12;
+        if (EssentialLink.present()) {
+            List<Tool> essential = List.of(
+                    new Tool("profile", "Essential Friends", EssentialLink::friends),
+                    new Tool("cosmetics", "Essential Wardrobe", EssentialLink::wardrobe),
+                    new Tool("visual", "Essential Pictures", EssentialLink::pictures));
+            String label = "Essential";
+            int lw = Theme.width(label);
+            int ew = lw + 10 + essential.size() * size + (essential.size() - 1) * gap + 8;
+            int ex = x0 + w - ew;
+            int ey = y0 + size + 12;
+            glassPill(ctx, ex, ey, ex + ew, ey + size + 8, alpha, 0);
+            Theme.text(ctx, label, ex + 8, ey + 8, a(0xFFB4B4BC, alpha));
+            for (int i = 0; i < essential.size(); i++) {
+                Tool t = essential.get(i);
+                int bx = ex + lw + 14 + i * (size + gap);
+                int by = ey + 4;
+                boolean hov = Theme.inside(mouseX, mouseY, bx, by, bx + size, by + size);
+                float h = hoverAnim("essential:" + t.icon(), hov);
+                if (h > 0.01f) gg.carbon.client.ui.R2D.rrect(ctx, bx, by, size, size, size / 2f, a(0x26FFFFFF, h * alpha));
+                drawIcon(ctx, t.icon(), bx + 4, by + 4, 7, a(Theme.lerpColor(0xFFB4B4BC, WHITE, h), alpha));
+                areas.add(new Area(bx, by, bx + size, by + size, t.action()));
+                if (hov) {
+                    tip = t.label();
+                    tipX = bx + size / 2;
+                }
+            }
+            tipY = ey + size + 12;
+        }
         if (tip != null) {
             int tw = Theme.width(tip) + 12;
             int tx = Math.min(width - 6 - tw, tipX - tw / 2);
-            int ty = y0 + size + 12;
+            int ty = tipY;
             Theme.round(ctx, tx, ty, tx + tw, ty + 14, 7, a(0xE00B0B0E, alpha));
             Theme.text(ctx, tip, tx + 6, ty + 3, a(WHITE, alpha));
         }
