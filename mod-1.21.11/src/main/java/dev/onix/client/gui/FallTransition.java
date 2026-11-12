@@ -84,6 +84,9 @@ public final class FallTransition {
 
     /** The water without the figure: deep teal, the shimmering surface far above, light rays and drifting specks. */
     public static void drawVoid(GuiGraphics ctx, int w, int h, float t) {
+        // the shader water (caustics, shafts, specks) when the graphics card runs it; this simpler water otherwise
+        WaterScene.request();
+        if (WaterScene.drawn()) return;
         float u = h / 100f;
         ctx.fillGradient(0, 0, w, Math.round(h * 0.3f), 0xFF16505A, 0xFF0C3039);
         ctx.fillGradient(0, Math.round(h * 0.3f), w, Math.round(h * 0.7f), 0xFF0C3039, 0xFF061A20);
