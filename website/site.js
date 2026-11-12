@@ -1,7 +1,7 @@
 'use strict';
 
 /* The Onix website: the sunken scene behind the header (the same as the launcher's start screen, js/fall.js),
-   download links to the newest release for your system, an image viewer and gentle reveals while scrolling. */
+   download links to the newest release for your system and an image viewer. */
 
 const REPO = 'virtualchickenfr/onix-client';
 
@@ -90,7 +90,7 @@ async function setUpDownloads() {
 }
 setUpDownloads();
 
-// ---------------------------------------------------------------- navigation, viewer, reveals
+// ---------------------------------------------------------------- navigation and image viewer
 const nav = document.querySelector('.nav');
 const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 40);
 window.addEventListener('scroll', onScroll, { passive: true });
@@ -115,19 +115,3 @@ document.querySelectorAll('.gallery figure').forEach((fig) => {
     document.body.append(viewer);
   });
 });
-
-if ('IntersectionObserver' in window) {
-  const io = new IntersectionObserver((entries) => {
-    for (const e of entries) {
-      if (e.isIntersecting) {
-        e.target.classList.add('shown');
-        io.unobserve(e.target);
-      }
-    }
-  }, { rootMargin: '0px 0px -8% 0px' });
-  document.querySelectorAll('.stats, .features article, .gallery figure, .dl, .faq details, .section h2, .sub').forEach((el, i) => {
-    el.classList.add('reveal');
-    el.style.transitionDelay = `${(i % 3) * 60}ms`;
-    io.observe(el);
-  });
-}
