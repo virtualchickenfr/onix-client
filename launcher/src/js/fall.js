@@ -142,7 +142,8 @@ const Fall = (() => {
   /**
    * Runs the scene in `canvas` until `finish()` is called. `skin()` returns {px, slim} once your skin is known (or
    * null); the figure waits for it a moment so it never swaps mid-fall. Returns { finish(): Promise }.
-   * opts.loop (seconds): the figure falls in again after that long, endlessly (the website's header).
+   * opts.loop (seconds): the figure falls in again after that long, endlessly (the website's header);
+   * opts.y (0..1, default 0.46) and opts.scale (default 1): where the figure floats and how big it is.
    */
   function boot(canvas, skin, opts = {}) {
     const g = canvas.getContext('2d');
@@ -199,9 +200,9 @@ const Fall = (() => {
         // drops in from above, slows down as the water takes it, then sinks slowly and gets smaller and darker
         const enter = 1 - Math.pow(1 - clamp01(f / 1.6), 3);
         const sink = smooth((f - 1.2) / 4.5);
-        const size = Math.min(W, H) * (1.1 - 0.35 * sink);
+        const size = Math.min(W, H) * (1.1 - 0.35 * sink) * (opts.scale || 1);
         const cx = W / 2 + Math.sin(f * 0.45) * 1.5 * U;
-        const cy = -size * 0.4 + (H * 0.46 + size * 0.4) * enter + sink * 8 * U + Math.sin(f * 0.9) * 0.6 * U;
+        const cy = -size * 0.4 + (H * (opts.y || 0.46) + size * 0.4) * enter + sink * 8 * U + Math.sin(f * 0.9) * 0.6 * U;
         const roll = (80 + Math.sin(f * 0.5) * 5) * Math.PI / 180;      // on its back, limbs up
 
         Skin3D.draw(figure, who.px, who.slim, 'sunken', f, { view: [6 + Math.sin(f * 0.5) * 3, 70 + Math.sin(f * 0.3) * 10, 0] });

@@ -1,0 +1,40 @@
+name: Website
+
+# Builds the Onix website (website/ + the launcher's sunken scene, launcher/src/js/fall.js and skin3d.js) and pushes it
+# to the branch gh-pages. GitHub Pages serves that branch (Settings → Pages → Deploy from a branch → gh-pages, / (root)).
+on:
+  push:
+    paths: ['website/**', 'launcher/src/js/fall.js', 'launcher/src/js/skin3d.js', '.github/workflows/website.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: website
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the site
+        run: |
+          mkdir -p site
+          cp -r website/. site/
+          mkdir -p site/js
+          cp launcher/src/js/fall.js launcher/src/js/skin3d.js site/js/
+          touch site/.nojekyll
+          ls -R site | head -40
+
+      - name: Push to gh-pages
+        run: |
+          cd site
+          git init -q -b gh-pages
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Website of ${GITHUB_SHA::8}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" gh-pages

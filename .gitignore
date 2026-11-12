@@ -11,3 +11,4 @@ server/data/
 *.args
 ports/build/
 __pycache__/
+website/js/
