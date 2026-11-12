@@ -16,11 +16,14 @@ jobs:
           echo "jar: $url"
           curl -sL "$url" -o essential.jar
           mkdir x && cd x && unzip -q ../essential.jar
-          echo "== top level"; ls
-          echo "== fabric.mod.json"; cat fabric.mod.json | head -60
-          echo "== nested jars"; find . -name '*.jar' | head -20
           for j in $(find . -name '*.jar'); do mkdir -p "n/$(basename $j)"; (cd "n/$(basename $j)" && unzip -qo "../../$j" || true); done
-          echo "== mixin configs"; find . -name '*mixins*.json' | head -20
-          echo "== title screen mixins"; grep -rl "TitleScreen\|class_442" --include='*.json' . | head; grep -rho '"[A-Za-z_.$]*TitleScreen[A-Za-z_$]*"' --include='*.json' . | sort -u | head -30
-          echo "== classes about the main menu"
-          find . -name '*.class' | grep -i -E 'mainmenu|titlescreen|menu/|wardrobe|socialmenu|screenshotbrowser|EssentialAPI|GuiUtil|MenuButton' | sed 's/\$.*//' | sort -u | head -120
+          E=$(ls -d n/essential-*.jar | grep -v loader | head -1)
+          cd "$E"
+          echo "== classes that use the title screen (class_442)"
+          grep -rl --include='*.class' 'class_442' . | head -40
+          echo "== mixins on the title screen"
+          grep -o '"[^"]*TitleScreen[^"]*"' mixins.essential.json mixins.essential.refmap.json | sort -u | head -20
+          echo "== GuiUtil / EssentialAPI / InitMainMenuEvent"
+          javap -p -cp . gg.essential.api.utils.GuiUtil | head -40
+          javap -p -cp . gg.essential.event.essential.InitMainMenuEvent | head -20
+          for c in $(grep -rl --include='*.class' 'class_442' . | head -12); do echo "--- $c"; javap -c -p -cp . "$(echo ${c#./} | sed 's/\.class$//; s#/#.#g')" 2>/dev/null | grep -n 'class_442' | head -6; done
