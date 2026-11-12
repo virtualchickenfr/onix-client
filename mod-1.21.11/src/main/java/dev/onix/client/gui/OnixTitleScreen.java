@@ -651,7 +651,7 @@ public class OnixTitleScreen extends Screen {
         float skinA = smooth((since - 0.5f) / 0.35f);
         if (skinWidget != null) {
             int sh = Math.max(110, Math.min(240, Math.round(height * 0.52f)));
-            int sw = Math.round(sh * 0.8f);
+            int sw = Math.round(sh * 1.3f);
             float sxC = width * 0.74f + (float) Math.sin(time * 0.5f) * 4f;
             float restY = height / 2f - 6 + (float) Math.sin(time * 0.8f) * 4f;
             float cy = -sh + (restY + sh) * fall;

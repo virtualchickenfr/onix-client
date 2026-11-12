@@ -2,8 +2,8 @@
 
 /*
  * The start screen – "sunken": a dark teal void, soft light falling in from above with dust drifting in it, and your
- * Minecraft character sinking through it in slow motion, always looking up at the light with both arms stretched up
- * towards it, turning slowly as it sinks away into the dark. It runs while the launcher loads; then the launcher fades in.
+ * Minecraft character falling backwards through it in slow motion, on its back, arms and legs stretched up towards
+ * the light and looking up at it, turning slowly as it sinks away into the dark. It runs while the launcher loads; then the launcher fades in.
  */
 const Fall = (() => {
   const clamp01 = (x) => Math.min(1, Math.max(0, x));
@@ -114,8 +114,8 @@ const Fall = (() => {
         const size = Math.min(W, H) * (1.05 - 0.4 * sink);
         const cx = W / 2 + Math.sin(f * 0.7) * 2.5 * U;
         const cy = -size * 0.15 + (H * 0.42 + size * 0.15) * enter + sink * 6 * U;
-        const roll = Math.sin(f * 0.7) * 5 * Math.PI / 180;           // upright, swaying gently in the water
-        Skin3D.draw(figure, who.px, who.slim, 'sunken', f, { view: [8 + Math.sin(f * 0.6) * 3, 24 + Math.sin(f * 0.35) * 14, 0] });
+        const roll = (80 + Math.sin(f * 0.7) * 6) * Math.PI / 180;      // on its back, limbs up
+        Skin3D.draw(figure, who.px, who.slim, 'sunken', f, { view: [6 + Math.sin(f * 0.6) * 3, 70 + Math.sin(f * 0.35) * 12, 0] });
         tg.clearRect(0, 0, 420, 520);
         tg.globalCompositeOperation = 'source-over';
         tg.drawImage(figure, 0, 0);

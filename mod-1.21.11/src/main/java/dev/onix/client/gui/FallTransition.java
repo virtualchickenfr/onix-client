@@ -8,8 +8,8 @@ import net.minecraft.client.model.player.PlayerModel;
 
 /**
  * The world loading transition – "sunken" (the same scene as the launcher's Play transition): a dark teal void, soft
- * light from above with dust drifting in it, and your own Minecraft character sinking through it in slow motion, always
- * looking up at the light with both arms stretched up towards it, while the world loads.
+ * light from above with dust drifting in it, and your own Minecraft character falling backwards through it in slow
+ * motion, on its back, arms and legs stretched up towards the light, while the world loads.
  */
 public final class FallTransition {
     private FallTransition() {}
@@ -53,7 +53,7 @@ public final class FallTransition {
         float enter = smooth(t / 1.2f);
         float sink = clamp((t - 0.8f) / 4f);
         int fh = Math.round(Math.min(h * 0.7f, 320) * (1f - 0.42f * sink));
-        int fw = Math.round(fh * 0.8f);
+        int fw = Math.round(fh * 1.3f);                         // the figure lies on its back: wide
         float cx = w / 2f + (float) Math.sin(t * 0.7f) * 2.5f * u;
         float cy = -fh * 0.15f + (h * 0.5f + fh * 0.15f) * enter + sink * 8 * u;
         SoftShapes.glow(ctx, cx, cy, fw * 0.6f, fh * 0.5f, a(0x6FD2DC, 0.12f * (1 - sink)));
@@ -107,34 +107,37 @@ public final class FallTransition {
 
     }
 
-    /** Puts a player figure into the sunken pose for time t: sinking upright, looking up, both arms stretched up. */
+    /**
+     * Puts a player figure into the sunken pose for time t: falling backwards on its back, arms and legs stretched up
+     * towards the light, looking up at it, turning slowly.
+     */
     public static void pose(PlayerSkinWidget widget, float t) {
         var acc = (PlayerSkinWidgetAccessor) widget;
-        float drift = (float) Math.sin(t * 1.3f) * 0.08f;
+        float drift = (float) Math.sin(t * 1.3f) * 0.1f;
         float legDrift = (float) Math.sin(t * 1.1f) * 0.1f;
         for (PlayerModel model : new PlayerModel[]{acc.onix$wide(), acc.onix$slim()}) {
-            // both arms stretched up towards the light, a little apart and forward, swaying slowly in the water
-            model.rightArm.xRot = -2.85f;
-            model.leftArm.xRot = -2.85f;
+            // arms and legs forward – with the body lying back they point up to the light
+            model.rightArm.xRot = -1.66f + drift;
+            model.leftArm.xRot = -1.43f - drift;
             model.rightArm.yRot = 0f;
             model.leftArm.yRot = 0f;
-            model.rightArm.zRot = 0.32f + drift;
-            model.leftArm.zRot = -0.32f + drift;
-            model.rightLeg.xRot = 0.1f + legDrift;
-            model.leftLeg.xRot = -0.14f - legDrift;
-            model.rightLeg.zRot = 0.08f;
-            model.leftLeg.zRot = -0.08f;
-            // always looking up at the light
-            model.head.xRot = -0.7f;
+            model.rightArm.zRot = 0.17f;
+            model.leftArm.zRot = -0.17f;
+            model.rightLeg.xRot = -1.43f + legDrift;
+            model.leftLeg.xRot = -1.68f - legDrift;
+            model.rightLeg.zRot = 0.07f;
+            model.leftLeg.zRot = -0.07f;
+            model.head.xRot = -0.52f;      // looking up at the light
             model.head.yRot = 0f;
-            // the raised arms reach above the head: the whole body a little smaller and lower, so it stays in the frame
+            // the whole body falls backwards (on its back), a little smaller so the lying figure stays in the frame
             var root = model.root();
-            root.zRot = (float) Math.toRadians(Math.sin(t * 0.7f) * 5);
+            root.xRot = -1.4f + (float) Math.sin(t * 0.7f) * 0.1f;
+            root.zRot = 0f;
             root.xScale = root.yScale = root.zScale = 0.8f;
-            root.y = 3f;
+            root.y = 6f;
         }
-        acc.onix$setRotationX(-8f + (float) Math.sin(t * 0.6f) * 3f);
-        acc.onix$setRotationY(20f + (float) Math.sin(t * 0.35f) * 18f);
+        acc.onix$setRotationX(-6f + (float) Math.sin(t * 0.6f) * 3f);
+        acc.onix$setRotationY(70f + (float) Math.sin(t * 0.35f) * 12f);
     }
 
     private static void drawFigure(Minecraft mc, GuiGraphics ctx, int x, int y, int w, int h, float t) {
