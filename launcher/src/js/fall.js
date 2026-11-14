@@ -299,6 +299,10 @@ void main() {
     lit.width = FW;
     lit.height = FH;
     const lg = lit.getContext('2d');
+    const wobble = document.createElement('canvas');
+    wobble.width = FW;
+    wobble.height = FH;
+    const wg = wobble.getContext('2d');
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     const start = performance.now();
     const bubbles = [];
@@ -360,9 +364,10 @@ void main() {
         const size = Math.min(W, H) * (1.1 - 0.35 * sink) * (opts.scale || 1);
         const cx = W / 2 + Math.sin(f * 0.45) * 1.5 * U;
         const cy = -size * 0.4 + (H * (opts.y || 0.46) + size * 0.4) * enter + sink * 8 * U + Math.sin(f * 0.9) * 0.6 * U;
-        const roll = (80 + Math.sin(f * 0.5) * 5) * Math.PI / 180;      // on its back, limbs up
+        // leaning back in the water, slowly tumbling a little (two waves, so it never repeats exactly)
+        const roll = (68 + Math.sin(f * 0.33) * 8 + Math.sin(f * 0.71) * 3) * Math.PI / 180;
 
-        Skin3D.draw(figure, who.px, who.slim, 'sunken', f, { view: [6 + Math.sin(f * 0.5) * 3, 70 + Math.sin(f * 0.3) * 10, 0] });
+        Skin3D.draw(figure, who.px, who.slim, 'sunken', f, { view: [10 + Math.sin(f * 0.5) * 3, 46 + Math.sin(f * 0.23) * 14, Math.sin(f * 0.41) * 4] });
         if (!centre || frameNo++ % 12 === 0) centre = bounds(figure);
         // light from the surface: a bright top edge, a cool shadow below, the colour of the water over everything
         lg.globalCompositeOperation = 'source-over';
@@ -404,7 +409,14 @@ void main() {
         g.rotate(roll);
         g.globalAlpha = 1 - 0.5 * sink * (opts.tint ?? 1);
         if (sink > 0.3) g.filter = `blur(${((sink - 0.3) * 3 * dpr).toFixed(1)}px)`;
-        g.drawImage(lit, -centre.cx * scale, -centre.cy * scale, FW * scale, FH * scale);
+        // seen through moving water: each band of the figure shifts a little sideways, the bands drift (refraction)
+        wg.clearRect(0, 0, FW, FH);
+        const amp = 1.6 + 1.6 * sink;
+        for (let y = 0; y < FH; y += 3) {
+          const dx = Math.sin(y * 0.03 + f * 1.8) * amp + Math.sin(y * 0.083 - f * 1.1) * amp * 0.35;
+          wg.drawImage(lit, 0, y, FW, 3, dx, y, FW, 3);
+        }
+        g.drawImage(wobble, -centre.cx * scale, -centre.cy * scale, FW * scale, FH * scale);
         g.restore();
         g.filter = 'none';
 

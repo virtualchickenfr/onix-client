@@ -171,36 +171,41 @@ public final class FallTransition {
     }
 
     /**
-     * Puts a player figure into the sunken pose for time t: falling backwards on its back, arms and legs stretched up
-     * towards the light, looking up at it, turning slowly.
+     * Puts a player figure into the sunken pose for time t: floating backwards in the water, arms spread softly up
+     * towards the light, legs loose, head tilted back, every limb drifting slowly on its own.
      */
     public static void pose(PlayerSkinWidget widget, float t) {
         var acc = (PlayerSkinWidgetAccessor) widget;
-        float drift = (float) Math.sin(t * 1.3f) * 0.1f;
-        float legDrift = (float) Math.sin(t * 1.1f) * 0.1f;
+        // floating: two slow, unrelated waves per limb, so the movement never looks like a loop
+        float raX = (float) (Math.sin(t * 0.9) * 0.14 + Math.sin(t * 2.1) * 0.05);
+        float laX = (float) (Math.sin(t * 0.9 + 2.3) * 0.14 + Math.sin(t * 2.1 + 3.9) * 0.05);
+        float raZ = (float) Math.sin(t * 0.7) * 0.1f, laZ = (float) Math.sin(t * 0.7 + 2.3) * 0.1f;
+        float kick = (float) (Math.sin(t * 0.8) * 0.12 + Math.sin(t * 1.9) * 0.035);   // the legs move against each other
         for (PlayerModel model : new PlayerModel[]{acc.onix$wide(), acc.onix$slim()}) {
-            // arms and legs forward – with the body lying back they point up to the light
-            model.rightArm.xRot = -1.66f + drift;
-            model.leftArm.xRot = -1.43f - drift;
+            // arms spread softly up towards the light, one higher than the other
+            model.rightArm.xRot = -2.09f + raX;
+            model.leftArm.xRot = -1.36f + laX;
             model.rightArm.yRot = 0f;
             model.leftArm.yRot = 0f;
-            model.rightArm.zRot = 0.17f;
-            model.leftArm.zRot = -0.17f;
-            model.rightLeg.xRot = -0.98f + legDrift;
-            model.leftLeg.xRot = -1.15f - legDrift;
-            model.rightLeg.zRot = 0.07f;
-            model.leftLeg.zRot = -0.07f;
-            model.head.xRot = -0.52f;      // looking up at the light
-            model.head.yRot = 0f;
-            // the whole body falls backwards (on its back), a little smaller so the lying figure stays in the frame
+            model.rightArm.zRot = 0.70f + raZ;
+            model.leftArm.zRot = -0.91f - laZ;
+            // legs loose and a little apart, a slow lazy kick
+            model.rightLeg.xRot = -0.87f + kick;
+            model.leftLeg.xRot = -0.49f - kick;
+            model.rightLeg.zRot = 0.21f + (float) Math.sin(t * 0.6) * 0.05f;
+            model.leftLeg.zRot = -0.31f - (float) Math.sin(t * 0.6 + 1.6) * 0.05f;
+            // head tilted back, looking up at the light, drifting a little
+            model.head.xRot = -0.59f + (float) Math.sin(t * 0.5) * 0.07f;
+            model.head.yRot = (float) Math.sin(t * 0.37) * 0.12f;
+            // the body leans back in the water and tumbles slowly; a little smaller so it stays in the frame
             var root = model.root();
-            root.xRot = -1.4f + (float) Math.sin(t * 0.7f) * 0.1f;
-            root.zRot = 0f;
+            root.xRot = -1.19f + (float) (Math.sin(t * 0.33) * 0.14 + Math.sin(t * 0.71) * 0.05);
+            root.zRot = (float) Math.sin(t * 0.41) * 0.07f;
             root.xScale = root.yScale = root.zScale = 0.8f;
             root.y = 6f;
         }
-        acc.onix$setRotationX(-6f + (float) Math.sin(t * 0.6f) * 3f);
-        acc.onix$setRotationY(70f + (float) Math.sin(t * 0.35f) * 12f);
+        acc.onix$setRotationX(-10f + (float) Math.sin(t * 0.5f) * 3f);
+        acc.onix$setRotationY(50f + (float) Math.sin(t * 0.23f) * 14f);
     }
 
     private static void drawFigure(Minecraft mc, GuiGraphics ctx, int x, int y, int w, int h, float t) {
