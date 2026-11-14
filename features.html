@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Onix Features</title>
+  <meta name="description" content="Every Onix module: HUD, combat, visuals, camera, chat, utility and performance – with search.">
+  <meta property="og:title" content="Onix Features">
+  <meta property="og:description" content="Every Onix module: HUD, combat, visuals, camera, chat, utility and performance – with search.">
+  <meta property="og:image" content="img/menu.jpg">
+  <meta name="theme-color" content="#071d23">
+  <link rel="alternate" hreflang="de" href="de/features.html">
+  <link rel="icon" href="img/favicon.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="page-features" data-root="">
+  <header class="nav">
+    <a class="brand" href="index.html"><img src="img/icon.png" alt="" width="28" height="28"><span>Onix</span></a>
+    <button class="menu-btn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="site-nav">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    <nav id="site-nav">
+      <a href="features.html" aria-current="page">Features</a>
+      <a href="news.html">What's new</a>
+      <a href="help.html">Help</a>
+      <a href="download.html" class="nav-cta">Download</a>
+      <a class="lang" href="de/features.html" hreflang="de" lang="de">Deutsch</a>
+    </nav>
+  </header>
+
+<section class="page-head">
+    <p class="eyebrow">Features</p>
+    <h1>293 modules</h1>
+    <p class="lead">Turn each module on by itself and set it up the way you like. In game, Right Shift opens the Onix menu.</p>
+  </section>
+
+  <main class="section modules">
+    <div class="filter">
+      <label class="search" for="mod-search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+        <input id="mod-search" type="search" placeholder="Search modules, e.g. zoom, minimap, CPS …" autocomplete="off">
+      </label>
+      <div class="chips" role="group" aria-label="Category">
+<button class="chip active" data-cat="all" type="button">All <span>293</span></button>
+<button class="chip" data-cat="HUD" type="button">HUD <span>59</span></button>
+<button class="chip" data-cat="COMBAT" type="button">Combat <span>77</span></button>
+<button class="chip" data-cat="VISUAL" type="button">Visuals <span>51</span></button>
+<button class="chip" data-cat="CAMERA" type="button">Camera <span>8</span></button>
+<button class="chip" data-cat="CHAT" type="button">Chat <span>29</span></button>
+<button class="chip" data-cat="UTILITY" type="button">Utility <span>48</span></button>
+<button class="chip" data-cat="PERFORMANCE" type="button">Performance <span>21</span></button>
+      </div>
+    </div>
+    <p class="no-results" id="no-results" hidden>No module found. Try another word.</p>
+    <section class="mod-group" data-cat="HUD">
+      <h2>HUD <span class="count">59</span></h2>
+      <p class="group-about">Displays on your screen, free to move and resize.</p>
+      <ul class="mod-list">
+<li data-en="luft"><b>Air</b><span>Remaining breath underwater.</span></li>
+<li data-en="rüstungsstatus"><b>Armor Status</b><span>Your armor and held items with durability.</span></li>
+<li data-en="biom"><b>Biome</b><span>The biome you are standing in.</span></li>
+<li data-en="block-info"><b>Block Info</b><span>Details about the block you are looking at.</span></li>
+<li data-en="abstand zur weltgrenze"><b>Border Distance</b><span>Distance to the world border.</span></li>
+<li data-en="chunk-info"><b>Chunk Info</b><span>Chunk and region coordinates, handy for farms and builds.</span></li>
+<li data-en="uhr"><b>Clock</b><span>Real-world time.</span></li>
+<li data-en="kompass"><b>Compass</b><span>A horizontal compass strip.</span></li>
+<li data-en="koordinaten"><b>Coordinates</b><span>Your position, direction and nether coordinates.</span></li>
+<li data-en="countdown"><b>Countdown</b><span>A timer that counts down and alerts you.</span></li>
+<li data-en="cps"><b>CPS</b><span>Clicks per second for left and right mouse button.</span></li>
+<li data-en="eigener text"><b>Custom Text</b><span>Your own text with live placeholders.</span></li>
+<li data-en="erlittener schaden"><b>Damage Taken</b><span>Health points lost this session.</span></li>
+<li data-en="datum"><b>Date</b><span>Today&#x27;s date.</span></li>
+<li data-en="tageszähler"><b>Day Counter</b><span>How many Minecraft days have passed in this world.</span></li>
+<li data-en="todes-koordinaten"><b>Death Coordinates</b><span>Remembers where you died so you can get your items back.</span></li>
+<li data-en="richtung"><b>Direction</b><span>Cardinal direction plus exact yaw and pitch.</span></li>
+<li data-en="zurückgelegte strecke"><b>Distance Travelled</b><span>Distance you moved this session.</span></li>
+<li data-en="haltbarkeits-warnung"><b>Durability Warning</b><span>Alerts you before your gear breaks.</span></li>
+<li data-en="elytra-info"><b>Elytra Info</b><span>Speed, altitude, pitch and durability while gliding.</span></li>
+<li data-en="erfahrung"><b>Experience</b><span>Level, progress and points.</span></li>
+<li data-en="fallhöhe"><b>Fall Distance</b><span>How far you have fallen – turns red when it will hurt.</span></li>
+<li data-en="essen im inventar"><b>Food Items</b><span>How much food you carry.</span></li>
+<li data-en="fps"><b>FPS</b><span>Frames per second with optional min, max and average.</span></li>
+<li data-en="frame-graph"><b>Frame Graph</b><span>Live graph of frame times to spot stutters.</span></li>
+<li data-en="spielzeit"><b>Game Time</b><span>Minecraft time of day as a clock.</span></li>
+<li data-en="leben"><b>Health</b><span>Your exact health as a number.</span></li>
+<li data-en="gehaltenes item"><b>Held Item</b><span>Name, durability and total count of the item in your hand.</span></li>
+<li data-en="hunger"><b>Hunger</b><span>Food level, hidden saturation and exhaustion.</span></li>
+<li data-en="inventar-anzeige"><b>Inventory Viewer</b><span>Your inventory on screen at all times.</span></li>
+<li data-en="keystrokes"><b>Keystrokes</b><span>Shows WASD, mouse buttons and space bar as you press them.</span></li>
+<li data-en="lichtlevel"><b>Light Level</b><span>Block and sky light where you stand.</span></li>
+<li data-en="logout-liste"><b>Logout List</b><span>Lists who logged out near you, where and how long ago.</span></li>
+<li data-en="arbeitsspeicher"><b>Memory</b><span>Java memory (RAM) used by the game.</span></li>
+<li data-en="minimap"><b>Minimap</b><span>A map of the area around you, with players and waypoints.</span></li>
+<li data-en="modul-liste"><b>Module List</b><span>A list of all enabled modules.</span></li>
+<li data-en="mondphase"><b>Moon Phase</b><span>Current moon phase.</span></li>
+<li data-en="reittier-info"><b>Mount Info</b><span>Speed, jump height and health of the horse you ride.</span></li>
+<li data-en="mousestrokes"><b>Mousestrokes</b><span>Shows your mouse movement as a dot on a pad (from Carbon).</span></li>
+<li data-en="spieler in sichtweite"><b>Nearby Players</b><span>Players within render distance.</span></li>
+<li data-en="pack-anzeige"><b>Pack Display</b><span>Which resource packs are active.</span></li>
+<li data-en="aufsammel-anzeige"><b>Pickup Notifier</b><span>Shows the items you just picked up.</span></li>
+<li data-en="ping"><b>Ping</b><span>Your latency to the server.</span></li>
+<li data-en="spieleranzahl"><b>Player Count</b><span>Number of players in the tab list.</span></li>
+<li data-en="trank-effekte"><b>Potion Effects</b><span>Active effects with level and time left.</span></li>
+<li data-en="server-adresse"><b>Server Address</b><span>The server you are playing on.</span></li>
+<li data-en="session-zeit"><b>Session Time</b><span>How long you have been playing.</span></li>
+<li data-en="songtexte"><b>Song Lyrics</b><span>Synced lyrics of your Spotify song, animated in the world like a music edit.</span></li>
+<li data-en="spawn-anzeige"><b>Spawn Indicator</b><span>Whether hostile mobs can spawn where you stand (block light 0).</span></li>
+<li data-en="geschwindigkeit"><b>Speed</b><span>How fast you are moving.</span></li>
+<li data-en="stoppuhr"><b>Stopwatch</b><span>Time anything with a key – parkour, speedruns, farms.</span></li>
+<li data-en="ziel-block"><b>Target Block</b><span>The block under your crosshair.</span></li>
+<li data-en="ziel-entfernung"><b>Target Distance</b><span>Distance to what you are looking at.</span></li>
+<li data-en="ziel-wesen"><b>Target Entity</b><span>The entity under your crosshair.</span></li>
+<li data-en="höchstgeschwindigkeit"><b>Top Speed</b><span>The fastest you moved this session.</span></li>
+<li data-en="tps"><b>TPS</b><span>Estimated server ticks per second (20 = no lag).</span></li>
+<li data-en="wasserzeichen"><b>Watermark</b><span>Client name with optional FPS and time.</span></li>
+<li data-en="wegpunkte"><b>Waypoints</b><span>Mark places with a key and see how far away they are.</span></li>
+<li data-en="wetter"><b>Weather</b><span>Current weather in the world.</span></li>
+      </ul>
+    </section>
+    <section class="mod-group" data-cat="COMBAT">
+      <h2>Combat <span class="count">77</span></h2>
+      <p class="group-about">For PvP: displays, hit feedback and comfort – no cheats.</p>
+      <ul class="mod-list">
+<li data-en="anker-alarm"><b>Anchor Alert</b><span>Warns you when an enemy places or charges a respawn anchor near you.</span></li>
+<li data-en="rüstungsbruch-alarm"><b>Armor Break Alert</b><span>Tells you when an enemy&#x27;s armor piece is about to break.</span></li>
+<li data-en="rüstungs-warnung"><b>Armor Warning</b><span>Warns you when a piece of armor is about to break.</span></li>
+<li data-en="pfeil-zähler"><b>Arrow Counter</b><span>How many arrows you carry.</span></li>
+<li data-en="blindheits-alarm"><b>Blindness Alert</b><span>Warns when you are blinded.</span></li>
+<li data-en="block-zähler"><b>Block Counter</b><span>Placeable blocks you carry – great for bridging.</span></li>
+<li data-en="bogen-alarm"><b>Bow Alert</b><span>Warns you when a nearby enemy is drawing a bow or crossbow.</span></li>
+<li data-en="aufladebalken"><b>Charge Bar</b><span>A small bar that fills up as your sword hit recharges.</span></li>
+<li data-en="aufgeladen-ton"><b>Charge Ready Sound</b><span>Plays a soft tick the moment your sword is fully charged again.</span></li>
+<li data-en="combat-log-erkennung"><b>Combat Log Detector</b><span>Tells you when a player you were fighting leaves the server.</span></li>
+<li data-en="kampf-text"><b>Combat Text</b><span>Damage numbers above your targets and a kill streak announcer.</span></li>
+<li data-en="kampf-timer"><b>Combat Timer</b><span>Counts down your combat tag after every hit you deal or take.</span></li>
+<li data-en="combo-zähler"><b>Combo Counter</b><span>Hits in a row without getting hit back.</span></li>
+<li data-en="combo-ton"><b>Combo Sound</b><span>A note that climbs higher with every hit of your combo.</span></li>
+<li data-en="cooldown-anzeige"><b>Cooldown Indicator</b><span>Shows your attack cooldown under the crosshair.</span></li>
+<li data-en="krit-ton"><b>Crit Sound</b><span>Plays a crunchy sound when you land a critical hit.</span></li>
+<li data-en="fadenkreuz"><b>Crosshair</b><span>A custom crosshair with styles, colors and dynamic gap.</span></li>
+<li data-en="kristall-tempo"><b>Crystal Speed</b><span>Shows how many crystals you place per second.</span></li>
+<li data-en="eigener item-zähler"><b>Custom Item Counter</b><span>Count any item you choose.</span></li>
+<li data-en="verursachter schaden"><b>Damage Dealt</b><span>Total damage your sword dealt this session.</span></li>
+<li data-en="schadens-blitz"><b>Damage Flash</b><span>Screen flash when you take damage.</span></li>
+<li data-en="gegner-rüstung"><b>Enemy Armor</b><span>Shows the durability of your target&#x27;s helmet, chestplate, leggings and boots.</span></li>
+<li data-en="gegner isst"><b>Enemy Eating</b><span>Tells you when a nearby enemy starts eating a golden apple or drinking a potion.</span></li>
+<li data-en="gegner-hände"><b>Enemy Hands</b><span>Shows what your target holds, e.g. whether there is a totem in the offhand.</span></li>
+<li data-en="gegner fast besiegt"><b>Enemy Low Health</b><span>Tells you when your target is low, so you can go in for the kill.</span></li>
+<li data-en="gegner-schwert"><b>Enemy Sword</b><span>Shows your target&#x27;s sword, its Sharpness level and durability.</span></li>
+<li data-en="goldapfel-zähler"><b>Golden Apple Counter</b><span>Golden apples in your inventory.</span></li>
+<li data-en="höhe über boden"><b>Ground Height</b><span>Shows how high above the ground you are while in the air (for mace hits).</span></li>
+<li data-en="trefferfarbe"><b>Hit Color</b><span>Pick the colour entities flash when they get hit.</span></li>
+<li data-en="treffer-effekte"><b>Hit Effects</b><span>Extra particles every time you hit.</span></li>
+<li data-en="schlag-abstand"><b>Hit Interval</b><span>Time between your last two sword hits.</span></li>
+<li data-en="treffer-sound"><b>Hit Sound</b><span>Plays a sound whenever you land a hit.</span></li>
+<li data-en="treffer bis zum kill"><b>Hits To Kill</b><span>Estimates how many full hits your target still needs (after armor).</span></li>
+<li data-en="angriffsanzeige an der hotbar"><b>Hotbar Attack Indicator</b><span>Shows the attack cooldown next to the hotbar.</span></li>
+<li data-en="treffer-pause"><b>Hurt Time</b><span>Shows whether your target can take full damage again (hurt ticks left).</span></li>
+<li data-en="item-cooldowns"><b>Item Cooldowns</b><span>Cooldown bars for pearls, shields and more.</span></li>
+<li data-en="jump reset"><b>Jump Reset</b><span>How many ticks after a hit you jumped (0-2 is a good reset).</span></li>
+<li data-en="kill-effekte"><b>Kill Effects</b><span>Particles and a sound when your target dies.</span></li>
+<li data-en="rückstoß bereit"><b>Knockback Ready</b><span>Shows when your next hit gives extra sprint knockback.</span></li>
+<li data-en="letzter treffer"><b>Last Hit</b><span>Shows how much damage your last hit really dealt.</span></li>
+<li data-en="letztes totem"><b>Last Pop</b><span>Shows how long ago you and the last enemy popped a totem.</span></li>
+<li data-en="schwebe-alarm"><b>Levitation Alert</b><span>Warns when you start levitating.</span></li>
+<li data-en="wenig-leben-warnung"><b>Low Health Warning</b><span>Red screen edges when you are about to die.</span></li>
+<li data-en="tränke-alarm"><b>Low Potions Alert</b><span>Tells you when you are running out of healing potions.</span></li>
+<li data-en="streitkolben-gefahr"><b>Mace Danger</b><span>Warns you when an enemy with a mace is falling towards you from above.</span></li>
+<li data-en="streitkolben-info"><b>Mace Info</b><span>Shows your mace&#x27;s durability and its Density, Breach and Wind Burst levels.</span></li>
+<li data-en="kein hurt-cam"><b>No Hurt Cam</b><span>Less camera shake when hit, and calmer screen effects.</span></li>
+<li data-en="totem fehlt in der zweithand"><b>Offhand Totem Missing</b><span>Warns when your offhand holds no totem but you still carry one.</span></li>
+<li data-en="perlen-alarm"><b>Pearl Alert</b><span>Tells you when an enemy throws an ender pearl and from where.</span></li>
+<li data-en="perlen-zähler"><b>Pearl Counter</b><span>Ender pearls in your inventory.</span></li>
+<li data-en="spieler in der nähe"><b>Player Proximity</b><span>Warns when another player comes within 10 blocks.</span></li>
+<li data-en="spieler-radar"><b>Player Radar</b><span>Tells you whenever a new player enters your render distance.</span></li>
+<li data-en="totem-zähler"><b>Pop Counter</b><span>Counts the totems every player pops and shows it in chat.</span></li>
+<li data-en="trank-zähler"><b>Potion Counter</b><span>Healing or other potions in your inventory.</span></li>
+<li data-en="reichweiten-anzeige"><b>Reach Display</b><span>Distance of your last hit.</span></li>
+<li data-en="ressourcen-zähler"><b>Resource Counter</b><span>Iron, gold, diamonds or emeralds you carry – for Bedwars and more.</span></li>
+<li data-en="session-statistik"><b>Session Stats</b><span>Kills, deaths and K/D since you started playing.</span></li>
+<li data-en="schild-status"><b>Shield Status</b><span>Shows your shield&#x27;s durability and how long it stays disabled after an axe hit.</span></li>
+<li data-en="schmetter-zähler"><b>Smash Counter</b><span>Counts your mace smash hits and your highest smash this session.</span></li>
+<li data-en="schmetter-vorhersage"><b>Smash Predict</b><span>Predicts your smash damage on the player below you after their armor.</span></li>
+<li data-en="schmetter-ton"><b>Smash Sound</b><span>Plays a heavy impact sound when you land a mace smash.</span></li>
+<li data-en="wurftrank-alarm"><b>Splash Potion Alert</b><span>Warns you when someone throws a splash potion near you.</span></li>
+<li data-en="loch-check"><b>Surround Check</b><span>Shows whether you stand in a safe obsidian or bedrock hole and which sides are open.</span></li>
+<li data-en="schwungangriff bereit"><b>Sweep Ready</b><span>Shows when your next sword hit will be a sweeping attack.</span></li>
+<li data-en="schwert-trefferquote"><b>Sword Accuracy</b><span>How many of your sword swings actually hit.</span></li>
+<li data-en="schwert-schaden"><b>Sword Damage</b><span>Damage of a full hit with your sword (strength and sharpness included).</span></li>
+<li data-en="schwert-dps"><b>Sword DPS</b><span>Your damage per second when every hit is fully charged.</span></li>
+<li data-en="schwert-verzauberungen"><b>Sword Enchants</b><span>Lists the enchantments on the sword you hold.</span></li>
+<li data-en="ziel unter dir"><b>Target Below</b><span>Shows the player under you and how far you would fall onto them.</span></li>
+<li data-en="ziel-verteidigung"><b>Target Defense</b><span>Shows how much your target&#x27;s armor reduces your hits.</span></li>
+<li data-en="ziel im loch"><b>Target Hole</b><span>Shows whether your target is in a hole, burrowed, or which sides are open.</span></li>
+<li data-en="ziel-hud"><b>Target HUD</b><span>Health and info about the player you are fighting.</span></li>
+<li data-en="ziel-schild"><b>Target Shield</b><span>Shows whether your target holds a shield and is blocking right now.</span></li>
+<li data-en="toggle sneak"><b>Toggle Sneak</b><span>Tap sneak once instead of holding it.</span></li>
+<li data-en="toggle sprint"><b>Toggle Sprint</b><span>Tap sprint once instead of holding it.</span></li>
+<li data-en="totem-zähler"><b>Totem Counter</b><span>Totems of Undying in your inventory.</span></li>
+<li data-en="totem-warnung"><b>Totem Warning</b><span>Reminds you to put a totem in your off hand.</span></li>
+      </ul>
+    </section>
+    <section class="mod-group" data-cat="VISUAL">
+      <h2>Visuals <span class="count">51</span></h2>
+      <p class="group-about">Effects, skies, particles and everything that changes how the game looks.</p>
+      <ul class="mod-list">
+<li data-en="atmosphäre"><b>Atmosphere</b><span>Animated sky tint, color grading and ambient particles.</span></li>
+<li data-en="block-umrandung"><b>Block Outline</b><span>Color and fill for the block selection outline.</span></li>
+<li data-en="bossleiste"><b>Boss Bar</b><span>Hide, move, fade or resize boss bars.</span></li>
+<li data-en="chunk-grenzen"><b>Chunk Borders</b><span>Show chunk borders without F3 + G, in your own colors.</span></li>
+<li data-en="color grading"><b>Color Grading</b><span>Give the world a cinematic colour look with tint and vignette.</span></li>
+<li data-en="eigener glanz"><b>Custom Glint</b><span>Give the enchantment glint your own colour.</span></li>
+<li data-en="eigener himmel"><b>Custom Sky</b><span>Pick from many skies, with separate day and night skies.</span></li>
+<li data-en="dunkler ladebildschirm"><b>Dark Loading Screen</b><span>Uses a black instead of a red loading screen.</span></li>
+<li data-en="dunkelmodus"><b>Dark Mode</b><span>A dark coat of paint for every container screen (from Carbon).</span></li>
+<li data-en="todesbildschirme"><b>Death Screens</b><span>Animated death screens in five styles: cinematic, glitch, arcade, energy and ink.</span></li>
+<li data-en="despawn-timer"><b>Despawn Timer</b><span>A countdown above dropped items until they vanish.</span></li>
+<li data-en="nebel &amp; wolken"><b>Fog &amp; Clouds</b><span>Softer or no distance fog, thinner environment fog and farther clouds.</span></li>
+<li data-en="fullbright"><b>Fullbright</b><span>See in caves and at night without torches.</span></li>
+<li data-en="glanz-tempo"><b>Glint Speed</b><span>Speed of the enchantment glint animation.</span></li>
+<li data-en="glanz-stärke"><b>Glint Strength</b><span>Brightness of the enchantment glint.</span></li>
+<li data-en="heiligenschein"><b>Halo</b><span>A glowing ring floats above your head.</span></li>
+<li data-en="hand-aura"><b>Hand Aura</b><span>A glow and sparks around the item in your hand.</span></li>
+<li data-en="hand-ansicht"><b>Hand View Model</b><span>Position, size and rotation of held items.</span></li>
+<li data-en="kein blitz-flackern"><b>Hide Lightning Flash</b><span>Stops lightning from flashing the sky.</span></li>
+<li data-en="kontrastreicher rahmen"><b>High Contrast Outline</b><span>Makes the block selection outline easier to see.</span></li>
+<li data-en="treffer-partikel"><b>Hit Particles</b><span>Extra crit and magic particles when you hit something.</span></li>
+<li data-en="hitboxen"><b>Hitboxes</b><span>Entity hitboxes with colors per type.</span></li>
+<li data-en="impact fx"><b>Impact FX</b><span>Glowing rings, ground splashes, crit stars and a light pillar on kills.</span></li>
+<li data-en="item-physik"><b>Item Physics</b><span>Dropped items lie flat on the ground instead of floating and spinning.</span></li>
+<li data-en="sprung-kreise"><b>Jump Circles</b><span>Rings spread out on the ground where you jump and land.</span></li>
+<li data-en="landepunkt"><b>Landing Spot</b><span>Marks the block you will land on while you fall or fly.</span></li>
+<li data-en="lichtlevel"><b>Light Levels</b><span>Marks the ground where mobs can spawn so you know where to put torches.</span></li>
+<li data-en="logout-punkte"><b>Logout Spots</b><span>Marks where players logged out with a box (their name is in the Logout List).</span></li>
+<li data-en="wenig feuer"><b>Low Fire</b><span>Less fire covering your screen.</span></li>
+<li data-en="motion blur"><b>Motion Blur</b><span>Smooth blur when you turn, like in PvP montages.</span></li>
+<li data-en="namensschilder"><b>Nametags</b><span>Your own nametag in F5 and health next to names.</span></li>
+<li data-en="kein dunkelheits-pulsieren"><b>No Darkness Pulse</b><span>Removes the pulsing of the warden&#x27;s darkness effect.</span></li>
+<li data-en="kein übelkeits-effekt"><b>No Nausea Warp</b><span>Removes the nausea and portal screen distortion.</span></li>
+<li data-en="onix-abzeichen"><b>Onix Badge</b><span>An Onix logo next to every player who uses Onix – including you.</span></li>
+<li data-en="overlays"><b>Overlays</b><span>Remove pumpkin blur, portal swirl and other overlays.</span></li>
+<li data-en="regen-ringe"><b>Rain Ripples</b><span>Raindrops leave little rings on the ground and on water.</span></li>
+<li data-en="reichweitenkreis"><b>Reach Circle</b><span>A ring on the ground showing your attack reach.</span></li>
+<li data-en="scoreboard"><b>Scoreboard</b><span>Hide, move, fade or shrink the sidebar scoreboard.</span></li>
+<li data-en="kapitälchen"><b>Small Caps</b><span>All text in small capital letters.</span></li>
+<li data-en="weiche hotbar"><b>Smooth Hotbar</b><span>The hotbar&#x27;s selection frame glides to the selected slot.</span></li>
+<li data-en="untertitel"><b>Subtitles</b><span>Always shows sound subtitles.</span></li>
+<li data-en="schlag-animation"><b>Swing Animation</b><span>Change how your hand swings in first person.</span></li>
+<li data-en="tab-liste"><b>Tab List</b><span>Numeric, colored ping in the player list.</span></li>
+<li data-en="zeit-wechsler"><b>Time Changer</b><span>Set your own time of day and moon – client-side only.</span></li>
+<li data-en="titel-anpassung"><b>Title Tweaker</b><span>Scale or hide on-screen titles (from Carbon).</span></li>
+<li data-en="tnt-timer"><b>TNT Timer</b><span>A countdown above lit TNT until it explodes.</span></li>
+<li data-en="totem-geist"><b>Totem Spirit</b><span>A rising spirit effect when a totem pops.</span></li>
+<li data-en="spur"><b>Trail</b><span>Leave a particle trail behind you.</span></li>
+<li data-en="flugbahnen"><b>Trajectories</b><span>Shows where your pearl, bow shot, trident, potion or snowball will fly and land.</span></li>
+<li data-en="waffen-inspektion"><b>Weapon Inspect</b><span>Press a key to inspect the item in your hand.</span></li>
+<li data-en="wetter-wechsler"><b>Weather Changer</b><span>Choose the weather you see – client-side only.</span></li>
+      </ul>
+    </section>
+    <section class="mod-group" data-cat="CAMERA">
+      <h2>Camera <span class="count">8</span></h2>
+      <p class="group-about">Zoom, freelook, perspectives and field of view.</p>
+      <ul class="mod-list">
+<li data-en="auto-perspektive"><b>Auto Perspective</b><span>Third person while flying or riding (from Carbon).</span></li>
+<li data-en="kamera-tweaks"><b>Camera Tweaks</b><span>Third-person distance, clipping and shoulder view.</span></li>
+<li data-en="fov-effekte"><b>FOV Effects</b><span>Stop the FOV from changing when you sprint and set fixed FOVs.</span></li>
+<li data-en="freelook"><b>Freelook</b><span>Look around your character while moving straight.</span></li>
+<li data-en="kein kamerawackeln"><b>No View Bobbing</b><span>Stops the camera from bobbing while you walk.</span></li>
+<li data-en="perspektiven-taste"><b>Perspective Key</b><span>Quick look behind or at yourself, and a custom F5 cycle.</span></li>
+<li data-en="empfindlichkeits-wechsel"><b>Sensitivity Switch</b><span>A second mouse sensitivity on a key.</span></li>
+<li data-en="zoom"><b>Zoom</b><span>Zoom in with a key; scroll to adjust.</span></li>
+      </ul>
+    </section>
+    <section class="mod-group" data-cat="CHAT">
+      <h2>Chat <span class="count">29</span></h2>
+      <p class="group-about">Tools for the chat.</p>
+      <ul class="mod-list">
+<li data-en="anti-spam"><b>Anti Spam</b><span>Hides a message that was already shown in the last 10 seconds.</span></li>
+<li data-en="auto gg"><b>Auto GG</b><span>Sends &quot;gg&quot; automatically when a game ends.</span></li>
+<li data-en="chat-rechner"><b>Chat Calculator</b><span>Type =5*64 in chat: only you see the result, nothing is sent.</span></li>
+<li data-en="chat-aufräumer"><b>Chat Cleaner</b><span>Hide repeated messages, empty and separator lines.</span></li>
+<li data-en="chat kopieren"><b>Chat Copy</b><span>Ctrl + click a chat message to copy it.</span></li>
+<li data-en="chat-verzögerung"><b>Chat Delay</b><span>Delays incoming chat messages to make spam readable.</span></li>
+<li data-en="chat-filter"><b>Chat Filter</b><span>Hide or censor messages with certain words.</span></li>
+<li data-en="chat-verlauf &amp; größe"><b>Chat History &amp; Size</b><span>Scroll back further than 100 lines and size the chat box.</span></li>
+<li data-en="chat-zeilenabstand"><b>Chat Line Spacing</b><span>Space between chat lines.</span></li>
+<li data-en="chat-protokoll"><b>Chat Logger</b><span>Saves every chat message to logs/onix-chat.log.</span></li>
+<li data-en="chat-makros"><b>Chat Macros</b><span>Bind messages and commands to keys.</span></li>
+<li data-en="chat-erwähnungen"><b>Chat Mentions</b><span>Highlight and sound when someone mentions you.</span></li>
+<li data-en="chat-deckkraft"><b>Chat Opacity</b><span>Transparency of chat text.</span></li>
+<li data-en="chat-größe"><b>Chat Scale</b><span>Size of the chat.</span></li>
+<li data-en="chat-töne"><b>Chat Sounds</b><span>Plays a soft sound for every player message.</span></li>
+<li data-en="chat-zeitstempel"><b>Chat Timestamps</b><span>Shows when each message arrived.</span></li>
+<li data-en="chat-breite"><b>Chat Width</b><span>Width of the chat box.</span></li>
+<li data-en="freunde-alarm"><b>Friend Join Alert</b><span>Alerts you when one of your friends joins.</span></li>
+<li data-en="fortschritte ausblenden"><b>Hide Advancements</b><span>Hides &quot;has made the advancement&quot; messages.</span></li>
+<li data-en="todesnachrichten ausblenden"><b>Hide Death Messages</b><span>Hides other players&#x27; death messages.</span></li>
+<li data-en="beitritte ausblenden"><b>Hide Join Messages</b><span>Hides &quot;player joined / left the game&quot; messages.</span></li>
+<li data-en="spieler-chat ausblenden"><b>Hide Player Chat</b><span>Hides all player chat but keeps server and system messages.</span></li>
+<li data-en="schreien ausblenden"><b>Hide Shouting</b><span>Hides player messages written mostly in capital letters.</span></li>
+<li data-en="stichwort-alarm"><b>Keyword Alert</b><span>Alerts you when chosen words appear in chat.</span></li>
+<li data-en="link-filter"><b>Link Filter</b><span>Hides player messages that contain links or server ads.</span></li>
+<li data-en="erwähnungs-ton"><b>Mention Ping</b><span>Plays a sound when someone writes your name.</span></li>
+<li data-en="keine chat-farben"><b>No Chat Colors</b><span>Shows chat messages without color codes.</span></li>
+<li data-en="text-hintergrund"><b>Text Background</b><span>Opacity of the background behind chat text.</span></li>
+<li data-en="flüster-alarm"><b>Whisper Alert</b><span>Alerts you when you receive a private message.</span></li>
+      </ul>
+    </section>
+    <section class="mod-group" data-cat="UTILITY">
+      <h2>Utility <span class="count">48</span></h2>
+      <p class="group-about">Small helpers for everyday play.</p>
+      <ul class="mod-list">
+<li data-en="afk-erinnerung"><b>AFK Reminder</b><span>Reminds you when you haven&#x27;t moved for 5 minutes.</span></li>
+<li data-en="auto-reconnect"><b>Auto Reconnect</b><span>Reconnect button and automatic reconnect after a kick.</span></li>
+<li data-en="auto-respawn"><b>Auto Respawn</b><span>Skip the death screen.</span></li>
+<li data-en="auto-screenshot"><b>Auto Screenshot</b><span>Saves a screenshot when you win – or whenever chat says your words.</span></li>
+<li data-en="auto-text"><b>Auto Text</b><span>Sends a chat message or command with a hotkey.</span></li>
+<li data-en="auto-werkzeug"><b>Auto Tool</b><span>Picks the best tool from your hotbar while mining.</span></li>
+<li data-en="pausen-erinnerung"><b>Break Reminder</b><span>Reminds you to take a short break every hour.</span></li>
+<li data-en="feuer-warnung"><b>Burning Warning</b><span>Warns when you catch fire.</span></li>
+<li data-en="chat-sichtbarkeit per taste"><b>Chat Visibility Key</b><span>Cycles chat between shown, commands only and hidden.</span></li>
+<li data-en="chat leeren"><b>Clear Chat</b><span>Clears all chat messages.</span></li>
+<li data-en="block-position kopieren"><b>Copy Block Position</b><span>Copies the coordinates of the block you are looking at.</span></li>
+<li data-en="koordinaten kopieren"><b>Copy Coordinates</b><span>One key copies your position to the clipboard.</span></li>
+<li data-en="server-ip kopieren"><b>Copy Server IP</b><span>Copies the address of the server you are on.</span></li>
+<li data-en="teleport-befehl kopieren"><b>Copy Teleport Command</b><span>Copies a /tp command for your exact position and rotation.</span></li>
+<li data-en="creeper-warnung"><b>Creeper Warning</b><span>Warns when a creeper is close.</span></li>
+<li data-en="dunkelheits-alarm"><b>Darkness Alert</b><span>Warns when a warden&#x27;s darkness hits you.</span></li>
+<li data-en="dimensionswechsel"><b>Dimension Change</b><span>Tells you which dimension you just entered.</span></li>
+<li data-en="discord-status"><b>Discord Status</b><span>Shows on your Discord profile that you play Onix and where.</span></li>
+<li data-en="drop-schutz"><b>Drop Prevention</b><span>Stops you from accidentally dropping valuable items (from Carbon).</span></li>
+<li data-en="ertrinken-warnung"><b>Drowning Warning</b><span>Warns when you are running out of air.</span></li>
+<li data-en="elytren-warnung"><b>Elytra Warning</b><span>Warns when your elytra is nearly broken.</span></li>
+<li data-en="extra-tastenbelegung"><b>Extra Keybinds</b><span>Give any action a second and third key – mouse side buttons included.</span></li>
+<li data-en="fall-warnung"><b>Fall Warning</b><span>Warns when a fall is getting dangerous.</span></li>
+<li data-en="frost-warnung"><b>Freezing Warning</b><span>Warns when powder snow starts freezing you.</span></li>
+<li data-en="freunde"><b>Friends</b><span>Join and leave alerts for your friends, and a star next to their chat messages.</span></li>
+<li data-en="vollbild-taste"><b>Fullscreen Key</b><span>Toggles fullscreen on a key of your choice.</span></li>
+<li data-en="monster-warnung"><b>Hostile Mob Warning</b><span>Warns when any hostile mob gets close.</span></li>
+<li data-en="hunger-warnung"><b>Hunger Warning</b><span>Warns when your food bar runs low.</span></li>
+<li data-en="item-tooltips"><b>Item Tooltips</b><span>More information in item tooltips.</span></li>
+<li data-en="tastenbelegungs-profile"><b>Keybind Profiles</b><span>Save your key bindings as profiles – PvP, building, elytra – and switch with one key.</span></li>
+<li data-en="lava-warnung"><b>Lava Warning</b><span>Warns when there is lava right next to you.</span></li>
+<li data-en="level-up-hinweis"><b>Level Up Alert</b><span>Tells you when you reach a new XP level.</span></li>
+<li data-en="stumm-taste"><b>Mute Key</b><span>Mutes and unmutes all game sound.</span></li>
+<li data-en="panik"><b>Panic</b><span>Turn every module off instantly with one key.</span></li>
+<li data-en="phantom-warnung"><b>Phantom Warning</b><span>Warns when phantoms are around.</span></li>
+<li data-en="ping-warnung"><b>Ping Spike Warning</b><span>Warns when your ping goes above 250 ms.</span></li>
+<li data-en="sichtweite +"><b>Render Distance +</b><span>Increases the render distance by 2 chunks.</span></li>
+<li data-en="sichtweite −"><b>Render Distance -</b><span>Decreases the render distance by 2 chunks.</span></li>
+<li data-en="shulker-vorschau"><b>Shulker Preview</b><span>See inside shulker boxes in the tooltip (from Carbon).</span></li>
+<li data-en="an achse ausrichten"><b>Snap To Axis</b><span>Snaps your view to the nearest direction (great for building straight).</span></li>
+<li data-en="streamer-modus"><b>Streamer Mode</b><span>Hides coordinates, waypoints and the server address while you stream or record.</span></li>
+<li data-en="tab-out-hinweise"><b>Tab-out Alerts</b><span>Flashes the taskbar and plays a sound when something happens while you are tabbed out.</span></li>
+<li data-en="tnt-warnung"><b>TNT Warning</b><span>Warns about lit TNT close to you.</span></li>
+<li data-en="toast-kontrolle"><b>Toast Control</b><span>Hides notification toasts like new recipes (from Carbon).</span></li>
+<li data-en="hinweis-dauer"><b>Toast Duration</b><span>How long toasts and notifications stay on screen.</span></li>
+<li data-en="hud ein/aus"><b>Toggle HUD</b><span>Hides or shows the whole HUD (like F1).</span></li>
+<li data-en="leere-warnung"><b>Void Warning</b><span>Warns when you fall towards the void.</span></li>
+<li data-en="wärter-warnung"><b>Warden Warning</b><span>Warns when a warden is nearby.</span></li>
+      </ul>
+    </section>
+    <section class="mod-group" data-cat="PERFORMANCE">
+      <h2>Performance <span class="count">21</span></h2>
+      <p class="group-about">More FPS and fewer stutters.</p>
+      <ul class="mod-list">
+<li data-en="hintergrund-stumm"><b>Background Mute</b><span>Mute or lower sound when you tab out.</span></li>
+<li data-en="wolken-reichweite"><b>Cloud Range</b><span>How far away clouds are drawn.</span></li>
+<li data-en="entity-distanz"><b>Entity Distance</b><span>Render entities closer or further away.</span></li>
+<li data-en="fps-warnung"><b>Low FPS Warning</b><span>Warns when your frame rate drops below 30.</span></li>
+<li data-en="speicher-warnung"><b>Memory Warning</b><span>Warns when Minecraft is close to running out of memory.</span></li>
+<li data-en="minimale partikel"><b>Minimal Particles</b><span>Sets particles to minimal.</span></li>
+<li data-en="kein biom-übergang"><b>No Biome Blend</b><span>Disables color blending between biomes (faster chunk building).</span></li>
+<li data-en="keine wolken"><b>No Clouds</b><span>Hides the clouds.</span></li>
+<li data-en="keine wesen-schatten"><b>No Entity Shadows</b><span>Removes the round shadows under mobs and players.</span></li>
+<li data-en="keine menü-unschärfe"><b>No Menu Blur</b><span>Removes the background blur behind menus.</span></li>
+<li data-en="keine mipmaps"><b>No Mipmaps</b><span>Disables mipmaps for slightly more FPS.</span></li>
+<li data-en="keine weiche beleuchtung"><b>No Smooth Lighting</b><span>Turns off ambient occlusion for more FPS.</span></li>
+<li data-en="partikel-limit"><b>Particle Limiter</b><span>Reduces the number of particles for more FPS (from Carbon).</span></li>
+<li data-en="performance-preset"><b>Performance Preset</b><span>One switch for FPS-friendly video settings.</span></li>
+<li data-en="sichtweite festhalten"><b>Render Distance Lock</b><span>Holds the render distance at a fixed value.</span></li>
+<li data-en="sichtweiten-wechsel"><b>Render Distance Switch</b><span>Toggle between two render distances.</span></li>
+<li data-en="shader"><b>Shaders</b><span>Turns the shader pack on and off (needs Iris; the launcher&#x27;s one-click shaders add it).</span></li>
+<li data-en="simulationsdistanz"><b>Simulation Distance</b><span>Holds the simulation distance at a fixed value.</span></li>
+<li data-en="fps im hintergrund"><b>Unfocused FPS</b><span>Saves power by limiting FPS when you tab out.</span></li>
+<li data-en="unbegrenzte fps"><b>Unlimited FPS</b><span>Removes the frame rate limit.</span></li>
+<li data-en="vsync aus"><b>VSync Off</b><span>Turns off vertical sync for lower input delay.</span></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <div class="foot-brand"><img src="img/icon.png" alt="" width="22" height="22"><span>Onix Client</span></div>
+    <p class="foot-links"><a href="index.html">Home</a> · <a href="features.html">Features</a> · <a href="download.html">Download</a> · <a href="news.html">What's new</a> · <a href="help.html">Help</a> · <a href="https://github.com/virtualchickenfr/onix-client">GitHub</a> · <a href="de/features.html" lang="de">Deutsch</a></p>
+    <p>Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft.</p>
+  </footer>
+
+  <script src="site.js"></script>
+</body>
+</html>
