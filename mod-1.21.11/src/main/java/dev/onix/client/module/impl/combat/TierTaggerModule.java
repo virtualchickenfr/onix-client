@@ -179,8 +179,9 @@ public class TierTaggerModule extends Module {
         if (r == null) return null;
         int tier = r.retired && r.peakTier > 0 ? r.peakTier : r.tier;
         int pos = r.retired && r.peakTier > 0 ? r.peakPos : r.pos;
+        final int rgb = r.retired ? 0xA0A0A0 : color(tier, pos);
         String text = (r.retired ? "R" : "") + (pos == 0 ? "H" : "L") + "T" + tier;
-        MutableComponent c = Component.literal(text).withStyle(s -> s.withColor(TextColor.fromRgb(r.retired ? 0xA0A0A0 : color(tier, pos))).withBold(false).withItalic(false));
+        MutableComponent c = Component.literal(text).withStyle(s -> s.withColor(TextColor.fromRgb(rgb)).withBold(false).withItalic(false));
         if (!shortName.isEmpty()) c.append(Component.literal(" " + shortName).withStyle(s -> s.withColor(TextColor.fromRgb(0x9A9AA6))));
         return c;
     }
