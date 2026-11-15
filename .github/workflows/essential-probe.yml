@@ -1,6 +1,5 @@
 name: Essential probe
-# Development helper: downloads the Essential mod (Fabric, 1.21.11) and lists how it adds its main menu buttons,
-# so Onix's own title screen can show them too. Run by hand (Actions → Essential probe).
+# Development helper for fetches the sandbox cannot make (here: the MCTiers API used by the Tier Tagger module).
 on:
   workflow_dispatch:
   push:
@@ -9,9 +8,13 @@ jobs:
   probe:
     runs-on: ubuntu-latest
     steps:
-      - name: Performance mods for 1.21.11
+      - name: MCTiers API
         run: |
-          for p in sodium lithium ferrite-core immediatelyfast entityculling modernfix badoptimizations scalablelux moreculling c2me-fabric krypton noisium; do
-            v=$(curl -s "https://api.modrinth.com/v2/project/$p/version?loaders=%5B%22fabric%22%5D&game_versions=%5B%221.21.11%22%5D" | jq -r '[.[] | select(.version_type=="release")][0] | (.version_number // "none") + " id=" + (.id // "-") + " deps=" + ([.dependencies[]? | select(.dependency_type=="required") | .project_id] | join(","))')
-            echo "$p: $v"
+          for u in "https://mctiers.com/api/v2/mode/list" "https://mctiers.com/api/v2/profile/by-name/Marlowww" "https://mctiers.com/api/profile/by-name/Marlowww" "https://mctiers.com/api/search_profile/Marlowww" "https://mctiers.com/api/v2/overall?count=3" "https://mctiers.com/api/rankings/sword?count=2"; do
+            echo "=== $u"; curl -s -m 20 -w "\nHTTP %{http_code}\n" "$u" | head -c 1500; echo
           done
+      - name: TierTagger reference (API use only)
+        run: |
+          git clone -q --depth 1 https://github.com/uku3lig/tiertagger tt || exit 0
+          grep -rhoE "https?://[a-zA-Z0-9./_{}%-]+" tt --include=*.java --include=*.kt | sort -u | head -30
+          grep -rn "pos\b\|peak" tt --include=*.java | head -20
