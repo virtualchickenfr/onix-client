@@ -125,6 +125,7 @@ public class ModuleManager {
         register(new dev.onix.client.module.impl.utility.DiscordPresenceModule());
         register(new NametagsModule());
         register(new OnixBadgeModule());
+        register(new dev.onix.client.module.impl.combat.TierTaggerModule());
         register(new CustomSkyModule());
         register(new LowFireModule());
         register(new ItemPhysicsModule());

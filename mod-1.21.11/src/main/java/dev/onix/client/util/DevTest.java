@@ -520,6 +520,23 @@ public final class DevTest {
             }
         });
         then(10, () -> snap(mc, "09i4_chat_copy"));
+        then(1, () -> {
+            // Tier Tagger: a tag from given rankings, and a real lookup on the tier list (Notch is not ranked: 404)
+            var tiers = OnixClient.MODULES.get(dev.onix.client.module.impl.combat.TierTaggerModule.class);
+            tiers.setEnabled(true);
+            java.util.UUID fake = java.util.UUID.fromString("11111111-2222-4333-8444-555555555555");
+            tiers.debugPut(fake, "{\"sword\":{\"tier\":3,\"pos\":0,\"peak_tier\":2,\"peak_pos\":1,\"attained\":0,\"retired\":false},"
+                    + "\"uhc\":{\"tier\":2,\"pos\":1,\"peak_tier\":null,\"peak_pos\":null,\"attained\":0,\"retired\":false},"
+                    + "\"axe\":{\"tier\":1,\"pos\":0,\"peak_tier\":1,\"peak_pos\":0,\"attained\":0,\"retired\":true}}");
+            var tag = tiers.tag(fake);
+            OnixClient.LOGGER.info("[devtest] tiertagger best = {}", tag == null ? "none" : tag.getString());
+            tiers.tag(java.util.UUID.fromString("069a79f4-44e9-4726-a5be-fca90e38aaf5"));
+        });
+        then(80, () -> {
+            var tiers = OnixClient.MODULES.get(dev.onix.client.module.impl.combat.TierTaggerModule.class);
+            OnixClient.LOGGER.info("[devtest] tiertagger lookup Notch = {}", tiers.debugState(java.util.UUID.fromString("069a79f4-44e9-4726-a5be-fca90e38aaf5")));
+            tiers.setEnabled(false);
+        });
         then(2, () -> mc.setScreen(null));
         then(2, () -> {
             OnixClient.MODULES.get(dev.onix.client.module.impl.visual.TntTimerModule.class).setEnabled(false);

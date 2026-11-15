@@ -23,6 +23,8 @@ public abstract class EntityRendererMixin {
         if (tags != null) text = tags.decorate(entity, text);
         OnixBadgeModule badge = OnixClient.MODULES.get(OnixBadgeModule.class);
         if (badge != null) text = badge.decorateNametag(entity, text);
+        dev.onix.client.module.impl.combat.TierTaggerModule tiers = OnixClient.MODULES.get(dev.onix.client.module.impl.combat.TierTaggerModule.class);
+        if (tiers != null) text = tiers.decorateNametag(entity, text);
         state.displayName = text;
     }
 }

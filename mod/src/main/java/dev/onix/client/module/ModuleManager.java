@@ -104,6 +104,7 @@ public class ModuleManager {
         register(new TrailModule());
         register(new NametagsModule());
         register(new OnixBadgeModule());
+        register(new dev.onix.client.module.impl.combat.TierTaggerModule());
         register(new CustomSkyModule());
         register(new LowFireModule());
         register(new BlockOutlineModule());

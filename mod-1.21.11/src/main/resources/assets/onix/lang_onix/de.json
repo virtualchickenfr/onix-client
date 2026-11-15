@@ -267,6 +267,8 @@
  "desc.nametags": "Dein eigenes Namensschild in F5 und Leben neben Namen.",
  "name.badge": "Onix-Abzeichen",
  "desc.badge": "Ein Onix-Logo neben jedem Spieler, der Onix nutzt – auch bei dir.",
+ "name.tiertagger": "Tier Tagger",
+ "desc.tiertagger": "Zeigt den PvP-Tier (MCTiers) jedes Spielers neben seinem Namen – zum Beispiel HT3 in Sword.",
  "name.overlays": "Overlays",
  "desc.overlays": "Entfernt Kürbis-Unschärfe, Portal-Wirbel und andere Overlays.",
  "name.scoreboard": "Scoreboard",

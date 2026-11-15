@@ -292,3 +292,4 @@ cb_trajectories	VISUAL	Trajectories	Flugbahnen	Shows where your pearl, bow shot,
 cb_lightlevels	VISUAL	Light Levels	Lichtlevel	Marks the ground where mobs can spawn so you know where to put torches.	Markiert den Boden, wo Mobs spawnen können, damit du weißt, wo Fackeln hin müssen.
 cb_logoutspots	VISUAL	Logout Spots	Logout-Punkte	Marks where players logged out with a box (their name is in the Logout List).	Markiert mit einer Box, wo Spieler sich ausgeloggt haben.
 cb_logoutlist	HUD	Logout List	Logout-Liste	Lists who logged out near you, where and how long ago.	Zeigt, wer sich in deiner Nähe ausgeloggt hat, wo und wann.
+tiertagger	COMBAT	Tier Tagger	Tier Tagger	Shows the PvP tier (MCTiers) of every player next to their name – for example HT3 in Sword.	Zeigt den PvP-Tier (MCTiers) jedes Spielers neben seinem Namen – zum Beispiel HT3 in Sword.
