@@ -8,13 +8,14 @@ jobs:
   probe:
     runs-on: ubuntu-latest
     steps:
-      - name: MCTiers API
-        run: |
-          for u in "https://mctiers.com/api/v2/mode/list" "https://mctiers.com/api/v2/profile/by-name/Marlowww" "https://mctiers.com/api/profile/by-name/Marlowww" "https://mctiers.com/api/search_profile/Marlowww" "https://mctiers.com/api/v2/overall?count=3" "https://mctiers.com/api/rankings/sword?count=2"; do
-            echo "=== $u"; curl -s -m 20 -w "\nHTTP %{http_code}\n" "$u" | head -c 1500; echo
-          done
-      - name: TierTagger reference (API use only)
+      - name: TierTagger reference (API routes only)
         run: |
           git clone -q --depth 1 https://github.com/uku3lig/tiertagger tt || exit 0
-          grep -rhoE "https?://[a-zA-Z0-9./_{}%-]+" tt --include=*.java --include=*.kt | sort -u | head -30
-          grep -rn "pos\b\|peak" tt --include=*.java | head -20
+          grep -rn "api\|\"/\|uuid\|mode\|GameMode\|icon" tt/common/src/main/java --include=*.java | grep -iv "import " | head -80
+          cat tt/common/src/main/java/net/uku3lig/tiertagger/model/PlayerInfo.java | head -60
+      - name: MCTiers API
+        run: |
+          U=069a79f444e94726a5befca90e38aaf5
+          for u in "https://mctiers.net/api/profile/$U" "https://mctiers.net/api/v2/profile/$U" "https://mctiers.net/api/search_profile/Notch" "https://mctiers.net/api/v2/mode/list" "https://mctiers.net/api/rankings/sword?count=1" "https://subtiers.net/api/profile/$U"; do
+            echo "=== $u"; curl -sL -m 20 -w "\nHTTP %{http_code}\n" "$u" | head -c 1500; echo
+          done
