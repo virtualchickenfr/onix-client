@@ -59,7 +59,10 @@ public final class FallTransition {
         float cy = -fh * 0.4f + (h * 0.46f + fh * 0.4f) * enter + sink * 8 * u + (float) Math.sin(t * 0.9f) * 0.6f * u;
         // light from the surface falls on it: a soft bright halo behind, the water's colour over it as it sinks
         SoftShapes.glow(ctx, cx, cy - fh * 0.15f, fw * 0.55f, fh * 0.5f, a(0x8FE3EA, 0.16f * (1 - sink)));
-        drawFigure(Minecraft.getInstance(), ctx, Math.round(cx - fw / 2f), Math.round(cy - fh / 2f), fw, fh, t);
+        float vy = lastCyT >= 0 && t > lastCyT && t - lastCyT < 0.5f ? (cy - lastCy) / Math.max(1, fh) / (t - lastCyT) : 0;
+        lastCy = cy;
+        lastCyT = t;
+        drawFigure(Minecraft.getInstance(), ctx, Math.round(cx - fw / 2f), Math.round(cy - fh / 2f), fw, fh, t, vy);
         SoftShapes.glow(ctx, cx, cy, fw * 0.5f, fh * 0.55f, a(0x0A3C48, 0.1f + 0.45f * sink));
         bubbles(ctx, t, cx, cy, fh, u);
 
@@ -175,7 +178,56 @@ public final class FallTransition {
      * towards the light, legs loose, head tilted back, every limb drifting slowly on its own.
      */
     public static void pose(PlayerSkinWidget widget, float t) {
+        pose(widget, t, 0f);
+    }
+
+    /** One limb on a spring (degrees): water drag and turning pull it, it lags behind and swings out softly. */
+    private static final class Spring {
+        final float k, d;
+        float x, vx, z, vz;
+
+        Spring(float k, float d) {
+            this.k = k;
+            this.d = d;
+        }
+
+        void step(float tx, float tz, float dt) {
+            vx += ((tx - x) * k - vx * d) * dt;
+            x += vx * dt;
+            vz += ((tz - z) * k - vz * d) * dt;
+            z += vz * dt;
+        }
+    }
+
+    // arms loose, legs firmer, the head firmest, so nothing moves in lockstep (the same as the launcher's js/fall.js)
+    private static final Spring RA = new Spring(16, 2.6f), LA = new Spring(13, 2.2f), RL = new Spring(24, 4.2f),
+            LL = new Spring(21, 3.8f), HEAD = new Spring(38, 6.5f);
+    private static float springT = -1, springRoll;
+
+    private static float clampDeg(float v, float lo, float hi) {
+        return Math.max(lo, Math.min(hi, v));
+    }
+
+    /** As above; vy is how fast the figure sinks right now (figure heights per second; it drags the limbs up). */
+    public static void pose(PlayerSkinWidget widget, float t, float vy) {
         var acc = (PlayerSkinWidgetAccessor) widget;
+        float bodyRoll = (float) Math.toDegrees(-1.19f + (float) (Math.sin(t * 0.33) * 0.14 + Math.sin(t * 0.71) * 0.05));
+        float dtS = t - springT;
+        if (springT < 0 || dtS <= 0 || dtS > 0.5f) {
+            for (Spring sp : new Spring[]{RA, LA, RL, LL, HEAD}) sp.x = sp.vx = sp.z = sp.vz = 0;
+        } else {
+            float step = Math.min(dtS, 1 / 30f);
+            float v = clampDeg(vy, -1, 4);
+            float w = clampDeg((bodyRoll - springRoll) / dtS, -60, 60);
+            RA.step(clampDeg(v * 30 + w * 0.9f + (float) Math.sin(t * 1.7) * 4, -40, 60), clampDeg(v * 14 + (float) Math.sin(t * 1.3) * 3, -10, 40), step);
+            LA.step(clampDeg(v * 26 + w * 0.8f + (float) Math.sin(t * 1.5 + 2) * 4, -40, 60), clampDeg(v * 16 + (float) Math.sin(t * 1.1 + 1) * 3, -10, 40), step);
+            RL.step(clampDeg(-v * 30 - w * 0.6f + (float) Math.sin(t * 1.2 + 1) * 3, -50, 25), clampDeg(v * 8, -5, 20), step);
+            LL.step(clampDeg(-v * 26 - w * 0.5f + (float) Math.sin(t * 1.4 + 3) * 3, -50, 25), clampDeg(v * 10, -5, 20), step);
+            HEAD.step(clampDeg(-v * 14 + w * 0.3f, -30, 15), 0, step);
+        }
+        springT = t;
+        springRoll = bodyRoll;
+        float rad = (float) (Math.PI / 180);
         // floating: two slow, unrelated waves per limb, so the movement never looks like a loop
         float raX = (float) (Math.sin(t * 0.9) * 0.14 + Math.sin(t * 2.1) * 0.05);
         float laX = (float) (Math.sin(t * 0.9 + 2.3) * 0.14 + Math.sin(t * 2.1 + 3.9) * 0.05);
@@ -183,19 +235,19 @@ public final class FallTransition {
         float kick = (float) (Math.sin(t * 0.8) * 0.12 + Math.sin(t * 1.9) * 0.035);   // the legs move against each other
         for (PlayerModel model : new PlayerModel[]{acc.onix$wide(), acc.onix$slim()}) {
             // arms spread softly up towards the light, one higher than the other
-            model.rightArm.xRot = -2.09f + raX;
-            model.leftArm.xRot = -1.36f + laX;
+            model.rightArm.xRot = -2.09f + raX + RA.x * rad;
+            model.leftArm.xRot = -1.36f + laX + LA.x * rad;
             model.rightArm.yRot = 0f;
             model.leftArm.yRot = 0f;
-            model.rightArm.zRot = 0.70f + raZ;
-            model.leftArm.zRot = -0.91f - laZ;
+            model.rightArm.zRot = 0.70f + raZ + RA.z * rad;
+            model.leftArm.zRot = -0.91f - laZ - LA.z * rad;
             // legs loose and a little apart, a slow lazy kick
-            model.rightLeg.xRot = -0.87f + kick;
-            model.leftLeg.xRot = -0.49f - kick;
-            model.rightLeg.zRot = 0.21f + (float) Math.sin(t * 0.6) * 0.05f;
-            model.leftLeg.zRot = -0.31f - (float) Math.sin(t * 0.6 + 1.6) * 0.05f;
+            model.rightLeg.xRot = -0.87f + kick + RL.x * rad;
+            model.leftLeg.xRot = -0.49f - kick + LL.x * rad;
+            model.rightLeg.zRot = 0.21f + (float) Math.sin(t * 0.6) * 0.05f + RL.z * rad;
+            model.leftLeg.zRot = -0.31f - (float) Math.sin(t * 0.6 + 1.6) * 0.05f - LL.z * rad;
             // head tilted back, looking up at the light, drifting a little
-            model.head.xRot = -0.59f + (float) Math.sin(t * 0.5) * 0.07f;
+            model.head.xRot = -0.59f + (float) Math.sin(t * 0.5) * 0.07f + HEAD.x * rad;
             model.head.yRot = (float) Math.sin(t * 0.37) * 0.12f;
             // the body leans back in the water and tumbles slowly; a little smaller so it stays in the frame
             var root = model.root();
@@ -208,13 +260,15 @@ public final class FallTransition {
         acc.onix$setRotationY(50f + (float) Math.sin(t * 0.23f) * 14f);
     }
 
-    private static void drawFigure(Minecraft mc, GuiGraphics ctx, int x, int y, int w, int h, float t) {
+    private static float lastCy, lastCyT = -1;
+
+    private static void drawFigure(Minecraft mc, GuiGraphics ctx, int x, int y, int w, int h, float t, float vy) {
         try {
             if (figure == null) {
                 figure = new PlayerSkinWidget(w, h, mc.getEntityModels(), mc.getSkinManager().createLookup(mc.getGameProfile(), false));
             }
             figure.setRectangle(w, h, x, y);
-            pose(figure, t);
+            pose(figure, t, vy);
             figure.render(ctx, 0, 0, 0f);
         } catch (RuntimeException e) {
             figure = null;

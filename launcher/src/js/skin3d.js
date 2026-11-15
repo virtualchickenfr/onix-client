@@ -83,7 +83,10 @@ const Skin3D = (() => {
 
   const LIGHT = (() => { const l = [-0.35, -0.7, -0.62]; const n = Math.hypot(...l); return l.map((x) => x / n); })();
 
-  /** Draws the figure. t in seconds for the idle motion; opts.view = [rx, ry, rz] turns the whole figure. */
+  /**
+   * Draws the figure. t in seconds for the idle motion; opts.view = [rx, ry, rz] turns the whole figure;
+   * opts.add = { ra: [x, y, z], … } adds rotations (degrees) to single parts.
+   */
   function draw(canvas, px, slim, poseName, t, opts = {}) {
     const ctx = canvas.getContext('2d');
     const W = canvas.width;
@@ -98,6 +101,9 @@ const Skin3D = (() => {
     const P = parts(slim);
     for (const [key, part] of Object.entries(P)) {
       let r = key === 'body' ? [0, 0, 0] : pose[key].slice();
+      // extra rotation from outside (the water scene's limb springs, js/fall.js); z is outward for both sides
+      const add = opts.add && opts.add[key];
+      if (add) r = [r[0] + add[0], r[1] + add[1], r[2] + add[2]];
       if (key === 'ra' || key === 'la') {
         r[2] += breathe * 2.5;
         if (pose.wave && key === 'ra') r[2] -= Math.sin(t * 7) * 14;

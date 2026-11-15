@@ -47,6 +47,8 @@ public class OnixTitleScreen extends Screen {
         }, true);
     }
 
+    private float fallPrevCy, fallPrevT = -1;
+
     private record Item(String label, String icon, Runnable action, boolean primary) {
         Item {
             label = dev.onix.client.util.I18n.ui(label);
@@ -659,7 +661,10 @@ public class OnixTitleScreen extends Screen {
             int sy = Math.round(cy - sh / 2f);
             skinWidget.setRectangle(sw, sh, sx, sy);
             skinWidget.visible = skinOn && skinA > 0.02f;
-            FallTransition.pose(skinWidget, since);
+            float vy = fallPrevT >= 0 && since > fallPrevT && since - fallPrevT < 0.5f ? (cy - fallPrevCy) / Math.max(1, sh) / (since - fallPrevT) : 0;
+            fallPrevCy = cy;
+            fallPrevT = since;
+            FallTransition.pose(skinWidget, since, vy);
             if (skinWidget.visible) {
                 float here = smooth((since - 1.6f) / 0.6f);        // name, light and pill appear once it floats
                 SoftShapes.glow(ctx, sxC, cy, sw * 0.7f, sh * 0.6f, Theme.withAlpha(0xFF6FD2DC, Math.round(30 * skinA)));

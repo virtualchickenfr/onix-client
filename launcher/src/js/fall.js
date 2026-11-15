@@ -315,6 +315,13 @@ void main() {
     let centre = null;
     let frameNo = 0;
     let nextBubble = 0;
+    // the limbs hang on springs: water drag and the body's turning pull them, they lag and swing out softly
+    // (arms loose, legs firmer, the head firmest, so nothing moves in lockstep)
+    const LIMBS = {
+      ra: { k: 16, d: 2.6 }, la: { k: 13, d: 2.2 }, rl: { k: 24, d: 4.2 }, ll: { k: 21, d: 3.8 }, head: { k: 38, d: 6.5 },
+    };
+    for (const l of Object.values(LIMBS)) Object.assign(l, { x: 0, vx: 0, z: 0, vz: 0 });
+    let prevF = -1, prevCy = 0, prevRoll = 0, prevSize = 1;
     let water = null;
     try {
       water = waterGL();
@@ -367,7 +374,37 @@ void main() {
         // leaning back in the water, slowly tumbling a little (two waves, so it never repeats exactly)
         const roll = (68 + Math.sin(f * 0.33) * 8 + Math.sin(f * 0.71) * 3) * Math.PI / 180;
 
-        Skin3D.draw(figure, who.px, who.slim, 'sunken', f, { view: [10 + Math.sin(f * 0.5) * 3, 46 + Math.sin(f * 0.23) * 14, Math.sin(f * 0.41) * 4] });
+        // water drag and turning: how fast the body sinks (body lengths per second) and turns (degrees per second)
+        const add = {};
+        if (prevF < 0 || f < prevF || dt <= 0) {
+          for (const l of Object.values(LIMBS)) Object.assign(l, { x: 0, vx: 0, z: 0, vz: 0 });
+        } else {
+          const step = Math.min(dt, 1 / 30);
+          const vy = Math.max(-1, Math.min(4, (cy - prevCy) / Math.max(1, prevSize) / dt));
+          const w = Math.max(-60, Math.min(60, (roll - prevRoll) * 180 / Math.PI / dt));
+          const clampDeg = (v, a, b) => Math.max(a, Math.min(b, v));
+          const targets = {
+            // falling fast pushes arms and legs up towards the surface and a little outward; turning makes them trail
+            ra: [clampDeg(vy * 30 + w * 0.9 + Math.sin(f * 1.7) * 4, -40, 60), clampDeg(vy * 14 + Math.sin(f * 1.3) * 3, -10, 40)],
+            la: [clampDeg(vy * 26 + w * 0.8 + Math.sin(f * 1.5 + 2) * 4, -40, 60), clampDeg(vy * 16 + Math.sin(f * 1.1 + 1) * 3, -10, 40)],
+            rl: [clampDeg(-vy * 30 - w * 0.6 + Math.sin(f * 1.2 + 1) * 3, -50, 25), clampDeg(vy * 8, -5, 20)],
+            ll: [clampDeg(-vy * 26 - w * 0.5 + Math.sin(f * 1.4 + 3) * 3, -50, 25), clampDeg(vy * 10, -5, 20)],
+            head: [clampDeg(-vy * 14 + w * 0.3, -30, 15), 0],
+          };
+          for (const [key, l] of Object.entries(LIMBS)) {
+            const [tx, tz] = targets[key];
+            l.vx += ((tx - l.x) * l.k - l.vx * l.d) * step;
+            l.x += l.vx * step;
+            l.vz += ((tz - l.z) * l.k - l.vz * l.d) * step;
+            l.z += l.vz * step;
+          }
+        }
+        prevF = f;
+        prevCy = cy;
+        prevRoll = roll;
+        prevSize = size;
+        for (const [key, l] of Object.entries(LIMBS)) add[key] = [l.x, 0, l.z];
+        Skin3D.draw(figure, who.px, who.slim, 'sunken', f, { add, view: [10 + Math.sin(f * 0.5) * 3, 46 + Math.sin(f * 0.23) * 14, Math.sin(f * 0.41) * 4] });
         if (!centre || frameNo++ % 12 === 0) centre = bounds(figure);
         // light from the surface: a bright top edge, a cool shadow below, the colour of the water over everything
         lg.globalCompositeOperation = 'source-over';
