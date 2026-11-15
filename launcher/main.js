@@ -242,6 +242,18 @@ function smokeTest(dir) {
       await wait(Math.max(0, at - (Date.now() - t0)));
       await shot(`boot-${String(at).padStart(4, '0')}`);
     }
+    // the welcome steps on a fresh install, then Profile → Bundles (js/welcome.js)
+    const js = (code) => win.webContents.executeJavaScript(code).catch((err) => fs.appendFileSync(path.join(dir, 'console.txt'), `js ${err}\n`));
+    await wait(1800);
+    await shot('welcome-1');
+    for (const n of [2, 3, 4]) {
+      await js("document.querySelector('.welcome-nav .btn.primary').click()");
+      await wait(n === 4 ? 4000 : 900);
+      await shot(`welcome-${n}`);
+    }
+    await js("document.querySelector('.welcome').remove(); openProfile(activeProfile().id, 'bundles')");
+    await wait(4000);
+    await shot('bundles');
     app.exit(0);
   });
 }
@@ -431,6 +443,13 @@ app.whenReady().then(() => {
     notWhileRunning(profileId);
     if (typeof projectId !== 'string' || !PROJECT_ID.test(projectId)) throw new Error('Unknown project');
     return modrinth.install(projectId, modsDirOf(profileId), progress, mcOf(profileId), loaderOf(profileId));
+  }));
+  // Mod bundles: hand-picked sets of mods with one click (lib/bundles.js)
+  ipcMain.handle('bundles:list', safe((_e, profileId) => require('./lib/bundles').list(modsDirOf(profileId))));
+  ipcMain.handle('bundles:install', safe(async (_e, profileId, ids) => {
+    notWhileRunning(profileId);
+    const list = (Array.isArray(ids) ? ids : []).filter((i) => typeof i === 'string' && PROJECT_ID.test(i));
+    return require('./lib/bundles').install(list, modsDirOf(profileId), progress, mcOf(profileId), loaderOf(profileId));
   }));
   // Resource packs and shaders from Modrinth (shaders bring Iris along)
   const ASSET_KINDS = { resourcepack: 'resourcepacks', shader: 'shaderpacks' };

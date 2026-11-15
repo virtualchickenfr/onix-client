@@ -44,6 +44,8 @@
     document.body.classList.add('boot-enter');
     setTimeout(() => document.body.classList.remove('boot-enter'), 900);
     boot.addEventListener('transitionend', () => boot.remove(), { once: true });
+    // the first start: the welcome steps (js/welcome.js)
+    setTimeout(() => maybeWelcome().catch(() => {}), 700);
   }
 })();
 

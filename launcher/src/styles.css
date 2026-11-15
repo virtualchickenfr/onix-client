@@ -1340,3 +1340,40 @@ body.boot-enter .shell { animation: boot-in .8s var(--ease) both; }
 .shader-quick .sq-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .shader-quick .sq-text { font-size: 12px; color: var(--text-2); flex: 1; }
 .shader-quick .btn { align-self: flex-start; border-radius: 999px; }
+
+/* ---------------------------------------------------------------- mod bundles and the welcome steps (js/welcome.js) */
+.bundle-intro { color: var(--text-2); font-size: 13px; margin: 0 0 12px; max-width: 70ch; }
+.bundles { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.bundles.compact { grid-template-columns: repeat(2, minmax(0, 1fr)); max-height: 46vh; overflow-y: auto; padding-right: 4px; }
+.bundle { position: relative; display: flex; flex-direction: column; gap: 10px; padding: 14px 14px 12px; border-radius: var(--r-lg); background: var(--s2); border: 1px solid var(--line-2); overflow: hidden; transition: border-color .15s, background .15s; }
+.bundle::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--bundle); opacity: .85; }
+.bundle.on { border-color: color-mix(in srgb, var(--bundle) 60%, transparent); background: color-mix(in srgb, var(--bundle) 7%, var(--s2)); }
+.bundle-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.bundle-top b { display: block; font-size: 14.5px; margin-bottom: 3px; }
+.bundle-top span { display: block; color: var(--text-2); font-size: 12.5px; line-height: 1.45; }
+.bundle-top .tag, .bundle-top .btn, .bundle-top .switch { flex: none; }
+.bundle-mods { display: flex; gap: 6px; flex-wrap: wrap; }
+.bundle-mod { width: 30px; height: 30px; border-radius: 8px; overflow: hidden; background: var(--s3); display: grid; place-items: center; border: 1px solid var(--line); }
+.bundle-mod img { width: 100%; height: 100%; object-fit: cover; }
+.bundle-mod i { font-style: normal; font-weight: 700; color: var(--text-2); font-size: 13px; }
+.bundle-mod.have { box-shadow: 0 0 0 2px color-mix(in srgb, var(--green) 70%, transparent); }
+.bundle-names { margin: 0; color: var(--text-3); font-size: 11.5px; line-height: 1.4; }
+
+.welcome { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 24px; background: rgba(0, 0, 0, .62); backdrop-filter: blur(10px); opacity: 0; transition: opacity .3s; }
+.welcome.open { opacity: 1; }
+.welcome-card { width: min(720px, 100%); max-height: calc(100vh - 48px); overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding: 30px 32px 22px; border-radius: 22px; background: var(--s1); border: 1px solid var(--line-2); box-shadow: 0 40px 100px rgba(0, 0, 0, .65); transform: translateY(10px) scale(.98); transition: transform .35s var(--ease); }
+.welcome.open .welcome-card { transform: none; }
+.welcome-card h2 { margin: 0; font-size: 26px; }
+.welcome-card > p { margin: 0; color: var(--text-2); line-height: 1.5; }
+.welcome-logo { width: 64px; height: 64px; }
+.welcome-account { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: var(--r); background: var(--s2); border: 1px solid var(--line-2); }
+.welcome-account svg { width: 18px; height: 18px; color: var(--green); }
+.welcome-card > .btn { align-self: flex-start; }
+.welcome-themes { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+.welcome-theme { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: var(--r); background: var(--p); border: 1px solid var(--line-2); color: var(--text); cursor: pointer; font: inherit; }
+.welcome-theme i { width: 22px; height: 22px; border-radius: 50%; background: var(--t); box-shadow: 0 0 14px color-mix(in srgb, var(--t) 60%, transparent); }
+.welcome-theme.on { border-color: var(--t); box-shadow: 0 0 0 1px var(--t); }
+.welcome-nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 6px; padding-top: 14px; border-top: 1px solid var(--line); }
+.welcome-dots { display: flex; gap: 6px; }
+.welcome-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--line-3); transition: width .2s, background .2s; }
+.welcome-dots i.on { width: 20px; border-radius: 4px; background: var(--accent); }

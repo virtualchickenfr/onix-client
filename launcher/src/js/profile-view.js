@@ -198,6 +198,7 @@ function renderTab() {
   body.className = `pv-body pv-${pv.tab}`;
   const run = {
     mods: renderPvMods,
+    bundles: renderPvBundles,
     resourcepacks: () => renderPvPacks('resourcepacks'),
     shaderpacks: () => renderPvPacks('shaderpacks'),
     worlds: renderPvWorlds,

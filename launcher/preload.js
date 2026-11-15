@@ -69,6 +69,8 @@ contextBridge.exposeInMainWorld('onix', {
   searchModrinth: (opts) => invoke('modrinth:search', opts),
   installedModrinth: (profileId) => invoke('modrinth:installed', profileId),
   installModrinth: (profileId, projectId) => invoke('modrinth:install', profileId, projectId),
+  bundles: (profileId) => invoke('bundles:list', profileId),
+  installBundles: (profileId, ids) => invoke('bundles:install', profileId, ids),
   modUpdates: (profileId) => invoke('modrinth:updates', profileId),
   updateMods: (profileId, projectIds) => invoke('modrinth:update', profileId, projectIds),
   installModpack: (projectId) => invoke('modrinth:installPack', projectId),
