@@ -1377,3 +1377,23 @@ body.boot-enter .shell { animation: boot-in .8s var(--ease) both; }
 .welcome-dots { display: flex; gap: 6px; }
 .welcome-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--line-3); transition: width .2s, background .2s; }
 .welcome-dots i.on { width: 20px; border-radius: 4px; background: var(--accent); }
+
+/* ---------------------------------------------------------------- Profile → Other Version (js/port.js) */
+.port-intro { margin: 0; color: var(--text-2); font-size: 13px; line-height: 1.5; }
+.port-intro b { color: var(--text); }
+#port-mc { appearance: auto; }
+.port-plan { display: flex; flex-direction: column; gap: 10px; min-height: 120px; }
+.port-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.port-tile { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: var(--r); background: var(--s3); border: 1px solid var(--line); }
+.port-tile b { font-size: 20px; }
+.port-tile span { font-size: 12.5px; }
+.port-tile small { color: var(--text-3); font-size: 11px; }
+.port-tile.warn b { color: #f0b04f; }
+.port-rows { max-height: 220px; overflow-y: auto; border-radius: var(--r); border: 1px solid var(--line); }
+.port-row { display: flex; justify-content: space-between; gap: 12px; padding: 7px 12px; font-size: 12.5px; border-bottom: 1px solid var(--line); }
+.port-row:last-child { border-bottom: 0; }
+.port-row span { color: var(--text-3); text-align: right; }
+.port-row.update span { color: var(--green); }
+.port-row.missing span { color: #f0b04f; }
+.port-note { margin: 0; color: var(--text-3); font-size: 12px; }
+.port-note.warn { color: #f0b04f; }

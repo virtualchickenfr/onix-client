@@ -254,6 +254,20 @@ function smokeTest(dir) {
     await js("document.querySelector('.welcome').remove(); openProfile(activeProfile().id, 'bundles')");
     await wait(4000);
     await shot('bundles');
+    // a bundle really installed, then the profile taken to another version (js/port.js)
+    await js("api.installBundles(activeProfile().id, ['qol']).then((r) => console.log('bundle install ' + JSON.stringify(r)))");
+    for (let i = 0; i < 60 && !fs.readFileSync(path.join(dir, 'console.txt'), 'utf8').includes('bundle install'); i++) await wait(1000);
+    await js("renderTab(); refreshCounts()");
+    await wait(1500);
+    await shot('bundles-installed');
+    await js("openPort(pvProfile()); setTimeout(() => { document.querySelector('#port-mc').value = '1.21.11'; loadPortPlan(); }, 300)");
+    await wait(9000);
+    await shot('port-plan');
+    await js("document.querySelector('#port-run').click()");
+    for (let i = 0; i < 60 && !(await win.webContents.executeJavaScript("!document.querySelector('#port-modal').classList.contains('open')").catch(() => false)); i++) await wait(1000);
+    await js("pv.tab = 'mods'; renderProfileView(); renderTab()");
+    await wait(2500);
+    await shot('port-done');
     app.exit(0);
   });
 }
@@ -538,6 +552,30 @@ app.whenReady().then(() => {
   ipcMain.handle('content:sizes', safe((_e, profileId) => {
     const dir = dirOf(profileId);
     return { total: content.sizeOf(dir), saves: content.sizeOf(path.join(dir, 'saves')), mods: content.sizeOf(path.join(dir, 'mods')) };
+  }));
+  // the whole profile on another Minecraft version: a copy with every mod swapped for its version there (lib/port.js)
+  const portPlans = new Map();
+  ipcMain.handle('profile:portPlan', safe(async (_e, id, mc) => {
+    if (!versions.isSupported(mc)) throw new Error('This Minecraft version is not supported.');
+    const p = profileById(id);
+    const result = await require('./lib/port').plan(profiles.dir(p), String(mc), p.loader || 'fabric');
+    portPlans.set(`${p.id}|${mc}`, result);
+    return { ...result, mods: result.mods.map(({ version, ...m }) => m) };
+  }));
+  ipcMain.handle('profile:port', safe(async (_e, id, mc, name) => {
+    if (!versions.isSupported(mc)) throw new Error('This Minecraft version is not supported.');
+    if (running && id === runningProfileId) throw new Error('Close Minecraft before copying the profile it is running from.');
+    const base = profileById(id);
+    const thePlan = portPlans.get(`${base.id}|${mc}`) || await require('./lib/port').plan(profiles.dir(base), String(mc), base.loader || 'fabric');
+    progress({ label: 'Copying the profile', progress: 0 });
+    const copy = profiles.duplicate(base.id);
+    const saved = profiles.save({ ...copy, mcVersion: String(mc), name: (typeof name === 'string' && name.trim() ? name.trim() : `${base.name} ${mc}`).slice(0, 24) });
+    const result = await require('./lib/port').apply(profiles.dir(saved), thePlan, progress);
+    portPlans.delete(`${base.id}|${mc}`);
+    profiles.select(saved.id);
+    prepareProfile(saved);
+    send('profiles:changed', profileState());
+    return { ...result, id: saved.id, state: profileState() };
   }));
   ipcMain.handle('profiles:duplicate', safe((_e, id) => {
     if (running && id === runningProfileId) throw new Error('Close Minecraft before copying the profile it is running from.');

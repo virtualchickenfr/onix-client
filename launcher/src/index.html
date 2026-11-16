@@ -148,6 +148,7 @@
           <div class="pv-title"><h2 id="pv-name">Profile</h2><p id="pv-meta"></p></div>
           <div class="btn-row">
             <button class="btn" id="pv-folder" title="Open the profile folder"><svg><use href="#i-folder"/></svg>Folder</button>
+            <button class="btn" id="pv-port" title="Take this profile with everything in it to another Minecraft version"><svg><use href="#i-globe"/></svg>Other Version</button>
             <button class="btn" id="pv-duplicate" title="Copy this profile with its worlds and mods"><svg><use href="#i-copy"/></svg>Duplicate</button>
             <button class="btn" id="pv-shortcut" title="A desktop shortcut that starts this profile"><svg><use href="#i-plus"/></svg>Shortcut</button>
             <button class="btn" id="pv-export"><svg><use href="#i-send"/></svg>Export</button>
@@ -479,6 +480,24 @@
     </div>
   </div>
 
+  <div class="modal-backdrop" id="port-modal">
+    <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="port-title">
+      <div class="modal-head"><h3 id="port-title">Take to Another Version</h3><button class="icon-btn" data-close><svg><use href="#i-x"/></svg></button></div>
+      <p class="port-intro">Makes a copy of <b id="port-from"></b> for another Minecraft version – with your worlds, Onix modules and HUD, key binds, video settings, servers, mod settings, resource and shader packs. Every mod is swapped for its version there. Your profile stays as it is.</p>
+      <div class="ex-row">
+        <label class="field"><span>Minecraft version</span><select class="input" id="port-mc"></select></label>
+        <label class="field"><span>Name of the copy</span><input class="input" id="port-name" maxlength="24" spellcheck="false"></label>
+      </div>
+      <div class="port-plan" id="port-plan"></div>
+      <div class="modal-actions">
+        <span class="ex-status" id="port-status"></span>
+        <div class="spacer"></div>
+        <button class="btn" data-close>Cancel</button>
+        <button class="btn primary" id="port-run" disabled>Create Copy</button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-backdrop" id="export-modal">
     <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="ex-title">
       <div class="modal-head"><h3 id="ex-title">Export Profile</h3><button class="icon-btn" data-close><svg><use href="#i-x"/></svg></button></div>
@@ -592,6 +611,7 @@
   <script src="js/packs.js"></script>
   <script src="js/profile-view.js"></script>
   <script src="js/welcome.js"></script>
+  <script src="js/port.js"></script>
   <script src="assets/cosmetics/catalog.js"></script>
   <script src="js/cosrender.js"></script>
   <script src="js/cosmetics.js"></script>

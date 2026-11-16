@@ -30,6 +30,8 @@ contextBridge.exposeInMainWorld('onix', {
   createProfile: (name, copyFrom, mcVersion) => invoke('profiles:create', name, copyFrom, mcVersion),
   deleteProfile: (id) => invoke('profiles:delete', id),
   duplicateProfile: (id) => invoke('profiles:duplicate', id),
+  portPlan: (id, mc) => invoke('profile:portPlan', id, mc),
+  portProfile: (id, mc, name) => invoke('profile:port', id, mc, name),
   onProfilesChanged: (cb) => ipcRenderer.on('profiles:changed', (_e, v) => cb(v)),
   pickJava: () => invoke('java:pick'),
 
