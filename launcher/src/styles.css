@@ -1397,3 +1397,7 @@ body.boot-enter .shell { animation: boot-in .8s var(--ease) both; }
 .port-row.missing span { color: #f0b04f; }
 .port-note { margin: 0; color: var(--text-3); font-size: 12px; }
 .port-note.warn { color: #f0b04f; }
+/* the profile name keeps its room: buttons wrap below it on narrow windows */
+.pv-head { flex-wrap: wrap; }
+.pv-title { min-width: 220px; }
+.pv-head .btn-row { flex: 1 1 auto; }
