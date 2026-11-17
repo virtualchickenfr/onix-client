@@ -20,6 +20,7 @@ const skins = require('./lib/skins');
 const shortcuts = require('./lib/shortcuts');
 const packFolders = require('./lib/packfolders');
 const crashDoctor = require('./lib/crashdoctor');
+const shaders = require('./lib/shaders');
 
 const GAME_DIR = path.join(app.getPath('appData'), '.onix');
 const TOTAL_MB = Math.floor(os.totalmem() / 1024 / 1024);
@@ -53,6 +54,10 @@ const DEFAULT_SETTINGS = {
   background: 'carbon',
   onixServer: '',
   autoUpdate: true,
+  // starts silently with the computer, installs a new version and quits (lib/startupupdate.js)
+  updateAtStartup: true,
+  // the look of the start page, the start screen and the main menu in game: water, runner or meadow (js/design.js)
+  design: 'water',
 };
 
 /** Writes design choices into config/onix/client.json of every profile, so game and launcher match. */
@@ -235,19 +240,76 @@ function smokeTest(dir) {
   win.webContents.on('console-message', (_e, level, message) => fs.appendFileSync(path.join(dir, 'console.txt'), `${level} ${message}\n`));
   win.webContents.once('did-finish-load', async () => {
     const t0 = Date.now();
-    for (const at of [120, 400, 800, 1200, 1700, 2400, 4000]) {
+    for (const at of [300, 1000, 1800, 2600, 3400, 4600]) {
       await wait(Math.max(0, at - (Date.now() - t0)));
       await shot(`boot-${String(at).padStart(4, '0')}`);
     }
-    await win.webContents.executeJavaScript(`(() => {
-      edexTerm.open(); state = 'preparing';
-      for (const l of ['Starting profile "Default"', 'Sign-in and Java ready after 0.2 s', 'Fabric and mods ready after 0.1 s']) edexTerm.log(l);
-      edexTerm.label('Starting Minecraft');
-      edexTerm.log('[16:01:02] [main/INFO] (FabricLoader/GameProvider) Loading Minecraft 1.21.11 with Fabric Loader 0.19.3');
-      return true;
-    })()`).catch((err) => fs.writeFileSync(path.join(dir, 'term-error.txt'), String(err)));
+    // the welcome steps on a fresh install, then Profile → Bundles (js/welcome.js)
+    const js = (code) => win.webContents.executeJavaScript(code).catch((err) => fs.appendFileSync(path.join(dir, 'console.txt'), `js ${err}\n`));
+    await wait(1800);
+    await shot('welcome-1');
+    for (const n of [2, 3, 4]) {
+      await js("document.querySelector('.welcome-nav .btn.primary').click()");
+      await wait(n === 4 ? 4000 : 900);
+      await shot(`welcome-${n}`);
+    }
+    await js("document.querySelector('.welcome').remove(); openProfile(activeProfile().id, 'bundles')");
+    await wait(4000);
+    await shot('bundles');
+    // the three designs on the start page, and the meadow's petals flying up on Play (js/scenes.js)
+    for (const d of ['water', 'runner', 'meadow']) {
+      await js(`selectDesign('${d}'); showView('home')`);
+      await wait(d === 'runner' ? 4200 : 3500);
+      await shot(`design-${d}`);
+    }
+    await js("Scenes.burst()");
     await wait(700);
-    await shot('launch-terminal');
+    await shot('meadow-burst-1');
+    await wait(900);
+    await shot('meadow-burst-2');
+    await wait(1000);
+    await shot('meadow-burst-3');
+    await js("selectDesign('runner'); showView('settings')");
+    await wait(1500);
+    await shot('settings');
+    // a bundle really installed, then the profile taken to another version (js/port.js)
+    await js("api.installBundles(activeProfile().id, ['qol']).then((r) => console.log('bundle install ' + JSON.stringify(r)))");
+    for (let i = 0; i < 60 && !fs.readFileSync(path.join(dir, 'console.txt'), 'utf8').includes('bundle install'); i++) await wait(1000);
+    await js("renderTab(); refreshCounts()");
+    await wait(1500);
+    await shot('bundles-installed');
+    await js("openPort(pvProfile()); setTimeout(() => { document.querySelector('#port-mc').value = '1.21.11'; loadPortPlan(); }, 300)");
+    await wait(9000);
+    await shot('port-plan');
+    await js("document.querySelector('#port-run').click()");
+    for (let i = 0; i < 60 && !(await win.webContents.executeJavaScript("!document.querySelector('#port-modal').classList.contains('open')").catch(() => false)); i++) await wait(1000);
+    await js("pv.tab = 'mods'; renderProfileView(); renderTab()");
+    await wait(2500);
+    await shot('port-done');
+    // the launcher in German: every page once, then the texts that are not translated yet (js/i18n.js)
+    await js("api.setSettings({ language: 'de' }).then(() => api.reload())");
+    await wait(1600);
+    await shot('de-boot-runner');
+    await wait(7400);
+    await shot('de-welcome');
+    await js("document.querySelector('.welcome') && document.querySelector('.welcome').remove()");
+    for (const view of ['home', 'profiles', 'settings', 'discover', 'skins', 'cosmetics', 'import', 'install', 'console']) {
+      await js(`showView('${view}')`);
+      await wait(view === 'discover' || view === 'import' ? 4000 : 1500);
+      await shot(`de-${view}`);
+    }
+    await js("openProfile(activeProfile().id, 'mods')");
+    await wait(2000);
+    await shot('de-profile');
+    for (const tab of ['bundles', 'worlds', 'settings']) {
+      await js(`pv.tab = '${tab}'; renderProfileView(); renderTab()`);
+      await wait(2500);
+    }
+    await js("openPort(pvProfile())");
+    await wait(6000);
+    await shot('de-port');
+    await js("console.log('i18n missing ' + JSON.stringify([...I18N.missing]))");
+    await wait(500);
     app.exit(0);
   });
 }
@@ -274,11 +336,21 @@ function safe(fn) {
   };
 }
 
+// started with the computer (lib/startupupdate.js): silent, no window, quits by itself
+const BACKGROUND = require('./lib/startupupdate').isBackgroundStart(process.argv);
+
 // one launcher: a second start (for example from a desktop shortcut) hands its arguments to the open window
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
   app.on('second-instance', (_e, argv) => {
+    if (argv.includes(require('./lib/startupupdate').ARG)) return;   // the silent start finds the launcher already open
+    if (BACKGROUND && !win) {
+      // the user opened Onix while the silent update was running: become the normal launcher
+      app.relaunch({ args: process.argv.slice(1).filter((a) => a !== require('./lib/startupupdate').ARG) });
+      app.exit(0);
+      return;
+    }
     const req = shortcuts.launchArgs(argv);
     if (win) {
       if (win.isMinimized()) win.restore();
@@ -292,6 +364,8 @@ if (!app.requestSingleInstanceLock()) {
 }
 
 app.whenReady().then(() => {
+  // the graphics card decides whether new profiles get shaders (lib/shaders.js)
+  app.getGPUInfo('complete').then((i) => shaders.setGpu(i)).catch(() => {});
   fs.mkdirSync(GAME_DIR, { recursive: true });
   store = new Store(path.join(app.getPath('userData'), 'onix-launcher.json'), {});
   // all Minecraft versions Fabric supports (cached, refreshed in the background)
@@ -334,6 +408,8 @@ app.whenReady().then(() => {
   auth.prefetch(store);
 
   // Global settings
+  // a fresh page, for example after the language changed (location.reload() is held back by will-navigate)
+  ipcMain.handle('app:reload', () => { if (win && !win.isDestroyed()) win.webContents.reload(); });
   ipcMain.handle('settings:get', () => settings());
   ipcMain.handle('settings:set', (_e, value) => {
     store.set('settings', { ...settings(), ...value });
@@ -341,6 +417,10 @@ app.whenReady().then(() => {
     if (value && typeof value.theme === 'string') sync.theme = value.theme;
     if (value && typeof value.background === 'string') sync.titleBackground = value.background;
     if (value && typeof value.onixServer === 'string') sync.onixServer = value.onixServer.trim();
+    if (value && typeof value.design === 'string') sync.menuDesign = ({ water: 'Water', runner: 'Runner', meadow: 'Meadow' })[value.design] || 'Water';
+    // the launcher's language also for the Onix menus in game (Automatic: the computer's language)
+    if (value && typeof value.language === 'string') sync.language = (value.language === 'de' || (value.language === 'auto' && app.getLocale().toLowerCase().startsWith('de'))) ? 'Deutsch' : 'English';
+    if (value && typeof value.updateAtStartup === 'boolean') require('./lib/startupupdate').register(value.updateAtStartup);
     if (Object.keys(sync).length) {
       try {
         syncClientSettings(sync);
@@ -425,6 +505,13 @@ app.whenReady().then(() => {
     if (typeof projectId !== 'string' || !PROJECT_ID.test(projectId)) throw new Error('Unknown project');
     return modrinth.install(projectId, modsDirOf(profileId), progress, mcOf(profileId), loaderOf(profileId));
   }));
+  // Mod bundles: hand-picked sets of mods with one click (lib/bundles.js)
+  ipcMain.handle('bundles:list', safe((_e, profileId) => require('./lib/bundles').list(modsDirOf(profileId))));
+  ipcMain.handle('bundles:install', safe(async (_e, profileId, ids) => {
+    notWhileRunning(profileId);
+    const list = (Array.isArray(ids) ? ids : []).filter((i) => typeof i === 'string' && PROJECT_ID.test(i));
+    return require('./lib/bundles').install(list, modsDirOf(profileId), progress, mcOf(profileId), loaderOf(profileId));
+  }));
   // Resource packs and shaders from Modrinth (shaders bring Iris along)
   const ASSET_KINDS = { resourcepack: 'resourcepacks', shader: 'shaderpacks' };
   const assetDir = (profileId, kind) => {
@@ -437,6 +524,25 @@ app.whenReady().then(() => {
     notWhileRunning(profileId);
     if (typeof projectId !== 'string' || !PROJECT_ID.test(projectId)) throw new Error('Unknown project');
     return modrinth.installAsset(projectId, kind, assetDir(profileId, kind), modsDirOf(profileId), progress, mcOf(profileId), loaderOf(profileId));
+  }));
+  // One click shaders: Iris + a shader pack from Modrinth, switched on in Iris straight away
+  ipcMain.handle('shaders:quickList', () => shaders.QUICK);
+  ipcMain.handle('shaders:quickSetup', safe(async (_e, profileId, slug) => {
+    notWhileRunning(profileId);
+    if (!shaders.isQuick(slug)) throw new Error('Unknown shader');
+    const profile = profileById(profileId);
+    if ((profile.loader || 'fabric') !== 'fabric') throw new Error('Shaders need a Fabric profile.');
+    // Iris runs on Sodium, which comes with the performance pack
+    if (profile.performanceMods === false) {
+      profiles.save({ ...profile, performanceMods: true });
+      send('profiles:changed', profileState());
+    }
+    const dir = assetDir(profileId, 'shader');
+    const result = await modrinth.installAsset(slug, 'shader', dir, modsDirOf(profileId), progress, mcOf(profileId), loaderOf(profileId));
+    const entry = modrinth.readManifest(dir)[slug];
+    if (!entry) throw new Error('The shader pack could not be installed.');
+    shaders.enableInIris(profiles.dir(profileById(profileId)), entry.file);
+    return { ...result, pack: entry.title };
   }));
 
   // What else is in a profile: packs, worlds, screenshots, logs
@@ -493,6 +599,30 @@ app.whenReady().then(() => {
   ipcMain.handle('content:sizes', safe((_e, profileId) => {
     const dir = dirOf(profileId);
     return { total: content.sizeOf(dir), saves: content.sizeOf(path.join(dir, 'saves')), mods: content.sizeOf(path.join(dir, 'mods')) };
+  }));
+  // the whole profile on another Minecraft version: a copy with every mod swapped for its version there (lib/port.js)
+  const portPlans = new Map();
+  ipcMain.handle('profile:portPlan', safe(async (_e, id, mc) => {
+    if (!versions.isSupported(mc)) throw new Error('This Minecraft version is not supported.');
+    const p = profileById(id);
+    const result = await require('./lib/port').plan(profiles.dir(p), String(mc), p.loader || 'fabric');
+    portPlans.set(`${p.id}|${mc}`, result);
+    return { ...result, mods: result.mods.map(({ version, ...m }) => m) };
+  }));
+  ipcMain.handle('profile:port', safe(async (_e, id, mc, name) => {
+    if (!versions.isSupported(mc)) throw new Error('This Minecraft version is not supported.');
+    if (running && id === runningProfileId) throw new Error('Close Minecraft before copying the profile it is running from.');
+    const base = profileById(id);
+    const thePlan = portPlans.get(`${base.id}|${mc}`) || await require('./lib/port').plan(profiles.dir(base), String(mc), base.loader || 'fabric');
+    progress({ label: 'Copying the profile', progress: 0 });
+    const copy = profiles.duplicate(base.id);
+    const saved = profiles.save({ ...copy, mcVersion: String(mc), name: (typeof name === 'string' && name.trim() ? name.trim() : `${base.name} ${mc}`).slice(0, 24) });
+    const result = await require('./lib/port').apply(profiles.dir(saved), thePlan, progress);
+    portPlans.delete(`${base.id}|${mc}`);
+    profiles.select(saved.id);
+    prepareProfile(saved);
+    send('profiles:changed', profileState());
+    return { ...result, id: saved.id, state: profileState() };
   }));
   ipcMain.handle('profiles:duplicate', safe((_e, id) => {
     if (running && id === runningProfileId) throw new Error('Close Minecraft before copying the profile it is running from.');
@@ -1005,6 +1135,33 @@ app.whenReady().then(() => {
   ipcMain.handle('update:install', safe(() => updater.install(running)));
   ipcMain.handle('update:installNow', safe(() => updater.installNow()));
   ipcMain.handle('update:download', safe(() => updater.openDownload()));
+
+  const startup = require('./lib/startupupdate');
+  if (BACKGROUND) {
+    // started with the computer: no window, update quietly, then quit
+    if (process.platform === 'darwin' && app.dock) app.dock.hide();
+    updater.init(() => {}, () => false, () => false);
+    const page = updater.releasesUrl();
+    const slug = page ? page.replace(/^https:\/\/github\.com\//, '').replace(/\/releases\/latest$/, '') : null;
+    const mods = require('./lib/modupdate');
+    if (app.isPackaged && slug) mods.init(app.getPath('userData'), slug, app.getVersion(), versions.DEFAULT, () => {});
+    startup.run({ updater, modCheck: () => mods.check(true), log: (m) => console.log('[background update]', m) });
+    return;
+  }
+  // keep the start with the system in step with the setting (the installed path can change with an update)
+  startup.register(settings().updateAtStartup !== false);
+  // once: the Onix menus in game in the computer's language (later the language setting keeps them in step)
+  // once (and once more for the designs of 1.1.28): language and design of the Onix menus in game
+  if (!settings().designSynced) {
+    try {
+      const de = settings().language === 'de' || (settings().language !== 'en' && app.getLocale().toLowerCase().startsWith('de'));
+      const design = ({ water: 'Water', runner: 'Runner', meadow: 'Meadow' })[settings().design] || 'Water';
+      syncClientSettings(settings().languageSynced ? { menuDesign: design } : { language: de ? 'Deutsch' : 'English', menuDesign: design });
+      store.set('settings', { ...settings(), languageSynced: true, designSynced: true });
+    } catch (err) {
+      console.warn('Could not set the in-game language:', err);
+    }
+  }
 
   createWindow();
   updater.init((v) => send('update:status', v), () => settings().autoUpdate !== false, () => running);

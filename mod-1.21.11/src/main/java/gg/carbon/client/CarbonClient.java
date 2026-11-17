@@ -26,15 +26,13 @@ public final class CarbonClient {
 		String style = OnixClient.CONFIG == null ? "Rounded" : OnixClient.CONFIG.buttonStyle.get();
 		return switch (style) {
 			case "Pill" -> height / 2f;
-			case "Square" -> 1.5f;
-			case "Block" -> 4f;
-			default -> Math.min(height / 2f, Math.max(5f, height * 0.4f));
+			default -> Math.min(height / 2f, Math.max(6f, height * 0.45f));
 		};
 	}
 
 	/** Only the Block style has the stone depth band under the face. */
 	public static float buttonDepth() {
-		return OnixClient.CONFIG != null && OnixClient.CONFIG.buttonStyle.is("Block") ? 3f : 0f;
+		return 0f;
 	}
 
 	/** Vanilla buttons and sliders drawn as Carbon blocks (Design → Carbon Buttons). */

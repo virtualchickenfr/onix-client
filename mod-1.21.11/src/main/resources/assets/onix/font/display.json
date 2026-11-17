@@ -1,6 +1,18 @@
 {
   "providers": [
-    { "type": "ttf", "file": "onix:geist_bold.ttf", "size": 10, "oversample": 4.0, "shift": [0, 0.5] },
-    { "type": "reference", "id": "minecraft:default" }
+    {
+      "type": "ttf",
+      "file": "onix:poppins_bold.ttf",
+      "size": 9.5,
+      "oversample": 4.0,
+      "shift": [
+        0,
+        0.6
+      ]
+    },
+    {
+      "type": "reference",
+      "id": "minecraft:default"
+    }
   ]
 }

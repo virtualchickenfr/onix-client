@@ -50,8 +50,9 @@ public class OnixConfig {
 
 
     // Design
-    public final BoolSetting lightMode = new BoolSetting("lightMode", "Light Mode", false)
-            .describe("Light surfaces and dark text in every Onix menu.");
+    public final BoolSetting lightMode = new BoolSetting("lightMode", "Light Mode", false).hidden();
+    /** 1.1.28: one fixed look, no themes and backgrounds to pick (set once). */
+    public final BoolSetting designSet = new BoolSetting("designSet", "Design Set", false).hidden();
     public final ModeSetting buttonStyle = new ModeSetting("buttonStyle", "Button Style", "Rounded", "Square", "Pill");
     public final ModeSetting titleDesign = new ModeSetting("titleDesign", "Title Screen Design", "Onix", "Centered", "Split", "Minimal", "Cards")
             .describe("Also switch on the title screen with the arrow keys, by dragging or with the dots at the bottom.");
@@ -102,7 +103,7 @@ public class OnixConfig {
     }
 
     public List<Setting<?, ?>> designSettings() {
-        return List.of(menuStyle, lightMode, buttonStyle, menuScale, titleDesign, menuAnimations, menuParticles, backgroundDim);
+        return List.of(menuStyle, buttonStyle, menuScale, titleDesign, menuAnimations, menuParticles, backgroundDim);
     }
 
     public List<Setting<?, ?>> loadingSettings() {

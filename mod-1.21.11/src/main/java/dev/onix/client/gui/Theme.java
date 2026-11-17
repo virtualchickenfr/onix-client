@@ -40,9 +40,9 @@ public final class Theme {
     public static final int GREEN = 0xFF34D399;
     public static final int ORANGE = 0xFFFBBF24;
 
-    private static ThemeDef current = ThemeDef.BUILT_IN[0];
+    private static ThemeDef current = ThemeDef.ONIX;
     private static boolean light;
-    private static int uiAccent = ThemeDef.BUILT_IN[0].accent();
+    private static int uiAccent = ThemeDef.ONIX.accent();
 
     private Theme() {}
 
@@ -52,12 +52,10 @@ public final class Theme {
 
     /** Recomputes the palette; cheap enough to call every frame. */
     public static void refresh() {
-        OnixConfig c = OnixClient.CONFIG;
-        ThemeDef def = c == null ? ThemeDef.BUILT_IN[0] : ThemeStore.byId(c.theme.get());
-        ThemeDef editing = ThemeEditor.livePreview(def.id());
-        if (editing != null) def = editing;
+        // one fixed look since 1.1.28 (themes and light mode are gone): the same deep navy and blue as the launcher
+        ThemeDef def = ThemeDef.ONIX;
         current = def;
-        light = c != null && c.lightMode.isOn();
+        light = false;
         int a = def.accent();
         if (light) {
             // very light accents (Onyx) would vanish on white, so they turn dark instead
@@ -78,9 +76,9 @@ public final class Theme {
             return;
         }
         uiAccent = a;
-        TEXT = 0xFFF4F4F6;
-        TEXT_2 = 0xFFA1A1AA;
-        TEXT_3 = 0xFF6B6B76;
+        TEXT = 0xFFE6E9FF;
+        TEXT_2 = 0xFFA3A8BD;
+        TEXT_3 = 0xFF6F7486;
         int p = def.panel();
         // Restrained: surfaces stay neutral, the accent only tints them slightly.
         SURFACE = withAlpha(p, 0xF4);
@@ -136,10 +134,8 @@ public final class Theme {
         OnixConfig c = OnixClient.CONFIG;
         if (c == null) return radius;
         return switch (c.buttonStyle.get()) {
-            case "Square" -> Math.min(radius, 2);
             case "Pill" -> radius * 4;
-            case "Rounded" -> Math.round(radius * 1.6f);
-            default -> radius;
+            default -> radius * 2;
         };
     }
 
@@ -373,7 +369,7 @@ public final class Theme {
 
     /** Raised bevel on a box (light top/left edge, dark bottom/right edge). */
     public static void bevel(GuiGraphics ctx, int x1, int y1, int x2, int y2, float strength) {
-        if (glass) return; // straight bevel lines would stick out of the round glass corners
+        if (!pixel) return; // straight bevel lines would stick out of round corners
         ctx.fill(x1 + 1, y1 + 1, x2 - 1, y1 + 2, withAlpha(0xFFFFFFFF, Math.round((isLight() ? 120 : 26) * strength)));
         ctx.fill(x1 + 1, y2 - 2, x2 - 1, y2 - 1, withAlpha(0xFF000000, Math.round(90 * strength)));
     }
@@ -404,10 +400,8 @@ public final class Theme {
         if (x + w + 12 > screenW) x = Math.max(2, mx - w - 16);
         if (y + h + 12 > screenH) y = Math.max(2, screenH - h - 12);
         ctx.nextStratum();
-        ctx.fill(x + 2, y + h + 10, x + w + 12, y + h + 12, 0x55000000);
-        ctx.fill(x, y, x + w + 10, y + h + 10, 0xFF000000);
-        ctx.fill(x + 1, y + 1, x + w + 9, y + h + 9, isLight() ? 0xFFF4F4F6 : 0xFF141419);
-        ctx.fill(x + 1, y + 1, x + w + 9, y + 2, withAlpha(accent(), 200));
+        round(ctx, x + 1, y + 2, x + w + 11, y + h + 12, 7, 0x40000000);
+        card(ctx, x, y, x + w + 10, y + h + 10, 6, isLight() ? 0xFFF4F4F6 : 0xFF141419, withAlpha(accent(), 150));
         for (int i = 0; i < lines.size(); i++) text(ctx, lines.get(i), x + 5, y + 5 + i * 10, i == 0 ? TEXT : TEXT_2);
     }
 

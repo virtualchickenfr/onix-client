@@ -15,6 +15,11 @@ public abstract class ScreenMixin {
     @Inject(method = "renderBackground", at = @At("HEAD"), cancellable = true)
     private void onix$loadingBackground(CallbackInfo ci, @Local(argsOnly = true) GuiGraphics context) {
         Screen self = (Screen) (Object) this;
+        // the sunken scene's water is already in the frame (WaterScene): nothing over it
+        if (dev.onix.client.gui.WaterScene.drawn()) {
+            ci.cancel();
+            return;
+        }
         if (!LoadingScreens.replacesBackground(self)) return;
         LoadingScreens.background(self, context);
         ci.cancel();

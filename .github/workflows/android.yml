@@ -1,0 +1,157 @@
+name: Android app
+
+# Builds the Onix Android app (android/: Zalith Launcher + the Onix changes) and, when the release of the
+# version in launcher/package.json exists, adds the APKs and onix-android.json to it. Installed apps look at
+# releases/latest/download/onix-android.json and offer the update.
+on:
+  push:
+    paths: ['android/**', 'launcher/src/**', 'launcher/package.json', 'launcher/build/icon.png', '.github/workflows/android.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # every build gets a higher versionCode, so installed apps offer it as an update
+  ONIX_BUILD_NUMBER: ${{ github.run_number }}
+
+jobs:
+  apk:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [all, arm64]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Prepare the source tree
+        run: |
+          pip install --quiet pillow
+          python3 android/apply.py
+
+      - name: Signing key
+        env:
+          KEYSTORE_B64: ${{ secrets.ONIX_ANDROID_KEYSTORE }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/onix.jks"
+            echo "ONIX_KEYSTORE=$RUNNER_TEMP/onix.jks" >> "$GITHUB_ENV"
+          else
+            echo "::warning::No ONIX_ANDROID_KEYSTORE secret: the APK is signed with the public debug key."
+          fi
+
+      - name: Build the APK (${{ matrix.arch }})
+        working-directory: android/build/zalith
+        env:
+          ZL_BUILD_TYPE: RELEASE
+          ONIX_KEYSTORE_PASSWORD: ${{ secrets.ONIX_ANDROID_KEYSTORE_PASSWORD }}
+          ONIX_KEY_ALIAS: ${{ secrets.ONIX_ANDROID_KEY_ALIAS }}
+        run: |
+          chmod +x gradlew
+          ./gradlew jre_lwjgl3glfw:build --no-daemon
+          ./gradlew ZalithLauncher:assembleRelease -Darch=${{ matrix.arch }} --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: onix-android-${{ matrix.arch }}
+          path: android/build/zalith/ZalithLauncher/build/outputs/apk/release/*.apk
+
+  # starts the app in an Android emulator and pushes screenshots to the branch android-screens (to check the design)
+  screens:
+    needs: apk
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: onix-android-all
+          path: apk
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+
+      - name: Run the app and take screenshots
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: false
+          script: |
+            mkdir -p shots
+            adb install -r "$(ls apk/*.apk | head -1)"
+            adb shell settings put secure immersive_mode_confirmations confirmed
+            adb shell pm grant dev.onix.android android.permission.POST_NOTIFICATIONS || true
+            sleep 45
+            adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS || true
+            adb shell monkey -p dev.onix.android -c android.intent.category.LAUNCHER 1
+            sleep 30; adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS || true
+            sleep 2; adb exec-out screencap -p > shots/01_start.png
+            adb shell input tap 2035 997
+            for i in 2 3 4 5 6 7; do sleep 40; adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS || true; sleep 2; adb exec-out screencap -p > shots/0${i}_after.png; done
+            adb logcat -d > shots/logcat.txt || true
+
+      - name: Push the screenshots
+        if: always()
+        run: |
+          [ -d shots ] || exit 0
+          cd shots
+          git init -q
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git checkout -q -b android-screens
+          git add -A
+          git commit -q -m "Android screenshots for ${GITHUB_SHA::8}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" android-screens
+
+  # every successful build goes onto the release of the current launcher version: installed apps update themselves
+  publish:
+    needs: apk
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: onix-android-*
+          path: apks
+          merge-multiple: true
+
+      - name: Add the APKs to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          read code name < <(python3 android/apply.py --version)
+          tag="v$(python3 -c "import json; print(json.load(open('launcher/package.json'))['version'])")"
+          ls -la apks
+          if ! gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "No release $tag yet – the APKs are only kept as build artifacts."
+            exit 0
+          fi
+          # fixed names: releases/latest/download/Onix-Android-arm64-v8a.apk always is the newest app
+          all=$(ls apks/*.apk | grep -v -- '-arm64-v8a.apk' | head -1)
+          arm=$(ls apks/*-arm64-v8a.apk | head -1)
+          cp "$all" apks/Onix-Android.apk
+          cp "$arm" apks/Onix-Android-arm64-v8a.apk
+          base="https://github.com/$GITHUB_REPOSITORY/releases/download/$tag"
+          cat > apks/onix-android.json <<EOF
+          {"versionCode": $code, "versionName": "$name",
+           "apk": {"all": "$base/Onix-Android.apk", "arm64-v8a": "$base/Onix-Android-arm64-v8a.apk"}}
+          EOF
+          cat apks/onix-android.json
+          # the APKs first, the version file last: an app never sees a version whose file is not there yet
+          gh release upload "$tag" apks/Onix-Android.apk apks/Onix-Android-arm64-v8a.apk --repo "$GITHUB_REPOSITORY" --clobber
+          gh release upload "$tag" apks/onix-android.json --repo "$GITHUB_REPOSITORY" --clobber

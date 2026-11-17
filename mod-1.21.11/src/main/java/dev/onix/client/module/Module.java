@@ -130,6 +130,9 @@ public abstract class Module {
     public String getId() { return id; }
     public String getName() { return dev.onix.client.util.I18n.t("name." + id, name); }
     public String getDescription() { return dev.onix.client.util.I18n.t("desc." + id, description); }
+    /** The English name and description (whatever the language setting). */
+    public String englishName() { return name; }
+    public String englishDescription() { return description; }
     public Category getCategory() { return category; }
     public boolean isEnabled() { return enabled; }
     public boolean isEnabledByDefault() { return enabledByDefault; }

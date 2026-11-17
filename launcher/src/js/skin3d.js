@@ -15,8 +15,13 @@ const Skin3D = (() => {
     point: { head: [0, -18, 0], ra: [-70, 0, 40], la: [0, 0, 6], rl: [0, 0, 2], ll: [0, 0, 2] },
     relaxed: { head: [6, -8, 3], ra: [14, 0, 4], la: [14, 0, 4], rl: [-6, 0, 2], ll: [8, 0, 3] },
     cool: { head: [-4, 18, 0], ra: [-20, 0, -16], la: [-20, 0, -16], rl: [0, 0, 0], ll: [-8, 0, -6] },
+    // the Play transition: arms up, legs apart, falling (not picked as a home pose)
+    fall: { head: [-22, 0, 0], ra: [-12, 0, 148], la: [-12, 0, 148], rl: [16, 0, 12], ll: [-10, 0, 12], flail: true },
+    // the sunken transition: floating backwards in the water, arms spread softly up towards the light (one higher than
+    // the other), legs loose and a little apart, head tilted back looking up
+    sunken: { head: [-34, 0, 0], ra: [-120, 0, 40], la: [-78, 0, 52], rl: [-50, 0, 12], ll: [-28, 0, 18], drift: true },
   };
-  const POSE_NAMES = Object.keys(POSES);
+  const POSE_NAMES = Object.keys(POSES).filter((p) => p !== 'fall' && p !== 'sunken');
 
   const rad = (d) => (d * Math.PI) / 180;
   function rot([rx, ry, rz]) {
@@ -78,8 +83,11 @@ const Skin3D = (() => {
 
   const LIGHT = (() => { const l = [-0.35, -0.7, -0.62]; const n = Math.hypot(...l); return l.map((x) => x / n); })();
 
-  /** Draws the figure. t in seconds for the idle motion. */
-  function draw(canvas, px, slim, poseName, t) {
+  /**
+   * Draws the figure. t in seconds for the idle motion; opts.view = [rx, ry, rz] turns the whole figure;
+   * opts.add = { ra: [x, y, z], … } adds rotations (degrees) to single parts.
+   */
+  function draw(canvas, px, slim, poseName, t, opts = {}) {
     const ctx = canvas.getContext('2d');
     const W = canvas.width;
     const H = canvas.height;
@@ -88,18 +96,36 @@ const Skin3D = (() => {
     const pose = POSES[poseName] || POSES.idle;
     const breathe = Math.sin(t * 1.6);
     const sway = Math.sin(t * 0.5);
-    const view = rot([-10, 24 + sway * 6, 0]);
+    const view = rot(opts.view || [-10, 24 + sway * 6, 0]);
     const quads = [];
     const P = parts(slim);
     for (const [key, part] of Object.entries(P)) {
       let r = key === 'body' ? [0, 0, 0] : pose[key].slice();
+      // extra rotation from outside (the water scene's limb springs, js/fall.js); z is outward for both sides
+      const add = opts.add && opts.add[key];
+      if (add) r = [r[0] + add[0], r[1] + add[1], r[2] + add[2]];
       if (key === 'ra' || key === 'la') {
         r[2] += breathe * 2.5;
         if (pose.wave && key === 'ra') r[2] -= Math.sin(t * 7) * 14;
+        if (pose.flail) r[2] += Math.sin(t * 5 + (key === 'la' ? 1.4 : 0)) * 10;
+        if (pose.drift) {
+          // floating: two slow, unrelated waves per arm, so it never looks like a loop
+          const ph = key === 'la' ? 2.3 : 0;
+          r[0] += Math.sin(t * 0.9 + ph) * 8 + Math.sin(t * 2.1 + ph * 1.7) * 3;
+          r[2] += Math.sin(t * 0.7 + ph) * 6;
+        }
         if (key === 'la') r[2] = -r[2]; // the left arm lifts to the other side
+      }
+      if (pose.flail && (key === 'rl' || key === 'll')) r[0] += Math.sin(t * 4.2 + (key === 'll' ? 2 : 0)) * 14;
+      if (pose.drift && (key === 'rl' || key === 'll')) {
+        // a slow, lazy kick: the legs move against each other, a little apart and together
+        const ph = key === 'll' ? Math.PI : 0;
+        r[0] += Math.sin(t * 0.8 + ph) * 7 + Math.sin(t * 1.9 + ph) * 2;
+        r[2] += Math.sin(t * 0.6 + ph * 0.5) * 3;
       }
       if (key === 'll') r[2] = -r[2];
       if (key === 'head') r = [r[0] + breathe * 1.2, r[1], r[2]];
+      if (pose.drift && key === 'head') r = [r[0] + Math.sin(t * 0.5) * 4, r[1] + Math.sin(t * 0.37) * 7, r[2] + Math.sin(t * 0.43) * 3];
       const R = rot(r);
       for (const layer of [0, 1]) {
         const g = layer ? part.grow : 0;

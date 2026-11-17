@@ -198,6 +198,7 @@ function renderTab() {
   body.className = `pv-body pv-${pv.tab}`;
   const run = {
     mods: renderPvMods,
+    bundles: renderPvBundles,
     resourcepacks: () => renderPvPacks('resourcepacks'),
     shaderpacks: () => renderPvPacks('shaderpacks'),
     worlds: renderPvWorlds,
@@ -294,19 +295,20 @@ async function renderPvPacks(kind, seq = pv.seq) {
     el('button', { class: 'btn sm primary', onclick: () => openAssets(id, shader ? 'shader' : 'resourcepack') }, [icon('search'), 'Browse Modrinth']),
   );
   const res = await api.packs(id, kind);
+  const quick = shader ? await shaderQuickCard(id) : null;
   if (stale(seq)) return;
   const body = $('#pv-body');
   if (!res.ok) return body.replaceChildren(emptyBlock('Could not read the folder', res.error));
   const list = res.value;
   if (!list.length) {
-    body.replaceChildren(emptyBlock(
+    body.replaceChildren(...[quick].filter(Boolean), emptyBlock(
       shader ? 'No shaders yet' : 'No resource packs yet',
       shader ? 'Install one from Modrinth – Iris comes with it. Pick the shader in Options › Video › Shader Packs.' : 'Install one from Modrinth or drop a .zip here. Switch packs on in Options › Resource Packs.',
       el('button', { class: 'btn sm primary', text: 'Browse Modrinth', onclick: () => openAssets(id, shader ? 'shader' : 'resourcepack') }),
     ));
     return;
   }
-  body.replaceChildren(el('div', { class: 'table' }, list.map((pack) => {
+  body.replaceChildren(...[quick].filter(Boolean), el('div', { class: 'table' }, list.map((pack) => {
     const m = pack.modrinth;
     const toggle = el('input', { type: 'checkbox' });
     toggle.checked = pack.enabled;
@@ -331,6 +333,47 @@ async function renderPvPacks(kind, seq = pv.seq) {
       el('label', { class: 'switch' }, [toggle, el('i')]),
     ]);
   })));
+}
+
+/** One click shaders: pick a look, the launcher installs Iris and the pack from Modrinth and switches it on. */
+async function shaderQuickCard(id) {
+  const presets = await api.quickShaders().catch(() => []);
+  if (!Array.isArray(presets) || !presets.length) return null;
+  let busy = false;
+  const buttons = [];
+  const cards = presets.map((s) => {
+    const button = el('button', { class: `btn sm${s.tag ? ' primary' : ''}`, text: 'Install & turn on' });
+    buttons.push(button);
+    button.addEventListener('click', async () => {
+      if (busy) return;
+      busy = true;
+      buttons.forEach((b) => { b.disabled = true; });
+      button.textContent = 'Installing…';
+      const r = await api.quickShaderSetup(id, s.slug);
+      busy = false;
+      if (!r.ok) {
+        buttons.forEach((b) => { b.disabled = false; });
+        button.textContent = 'Install & turn on';
+        return toast(r.error, true);
+      }
+      (r.value.warnings || []).forEach((w) => toast(w, true));
+      toast(`${r.value.pack} is on – start the game to see it`);
+      renderTab();
+      refreshCounts();
+    });
+    return el('div', { class: 'sq-item' }, [
+      el('div', { class: 'sq-head' }, [el('b', { text: s.name }), s.tag ? el('span', { class: 'badge', text: s.tag }) : null].filter(Boolean)),
+      el('span', { class: 'sq-text', text: s.text }),
+      button,
+    ]);
+  });
+  return el('div', { class: 'shader-quick' }, [
+    el('div', { class: 'sq-title' }, [
+      el('b', { text: 'Real graphics in one click' }),
+      el('span', { text: 'Installs Iris and the shader pack from Modrinth and switches it on. Rain puddles, reflections and light like in the clips. Turn it off in Options › Video › Shader Packs (or press K in game).' }),
+    ]),
+    el('div', { class: 'sq-grid' }, cards),
+  ]);
 }
 
 // ----- worlds
@@ -467,6 +510,8 @@ function renderPvSettings() {
   const server = el('input', { class: 'input', placeholder: 'Server address (optional)', spellcheck: 'false', value: p.quickJoin || '' });
   const perf = el('input', { type: 'checkbox' });
   perf.checked = p.performanceMods;
+  const shade = el('input', { type: 'checkbox' });
+  shade.checked = p.shaders === true;
 
   const save = el('button', {
     class: 'btn primary',
@@ -481,6 +526,8 @@ function renderPvSettings() {
         fullscreen: full.checked,
         quickJoin: server.value.trim(),
         performanceMods: perf.checked,
+        shaders: shade.checked,
+        shadersChosen: true,
       });
       if (res && res.ok === false) return toast(res.error, true);
       profileState = res && res.ok ? res.value : res;
@@ -495,7 +542,8 @@ function renderPvSettings() {
       el('h4', { text: 'Game' }),
       el('label', { class: 'field' }, [el('span', {}, ['Memory ', ramOut]), ram]),
       field('Join on launch', server),
-      el('div', { class: 'field inline' }, [el('span', { text: 'Performance pack (Sodium, Lithium, FerriteCore, ImmediatelyFast, EntityCulling)' }), el('label', { class: 'switch' }, [perf, el('i')])]),
+      el('div', { class: 'field inline' }, [el('span', { text: 'Performance pack (Sodium, Lithium, FerriteCore, ImmediatelyFast, EntityCulling, BadOptimizations, ScalableLux)' }), el('label', { class: 'switch' }, [perf, el('i')])]),
+      el('div', { class: 'field inline' }, [el('span', { text: 'Shaders on strong PCs (Iris + Complementary Reimagined; the Onix module Shaders switches them)' }), el('label', { class: 'switch' }, [shade, el('i')])]),
     ]),
     el('section', { class: 'pv-card' }, [
       el('h4', { text: 'Window' }),

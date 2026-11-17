@@ -40,7 +40,18 @@
     "TotemPopMixin",
     "FontSetMixin",
     "FramerateLimitMixin",
-    "PlayerSkinWidgetAccessor"
+    "PlayerSkinWidgetAccessor",
+    "ScreenTitleAccessor",
+    "HotbarSlideMixin",
+    "FogDistanceMixin",
+    "ItemEntityRendererMixin",
+    "ItemEntityRenderStateMixin",
+    "MotionBlurMixin",
+    "ChatComponentAccessor",
+    "ChatCopyMixin",
+    "OverlayTextureAccessor",
+    "WaterSceneMixin",
+    "WaterSceneHudMixin"
   ],
   "injectors": {
     "defaultRequire": 0

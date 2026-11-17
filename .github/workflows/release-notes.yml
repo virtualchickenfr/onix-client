@@ -1,0 +1,24 @@
+name: Release notes
+# Writes the release notes (tools/release_notes.py: what's new in English and German, downloads) into existing
+# releases. New releases get them from build.yml. Run by hand, or by touching .github/release-notes-trigger.
+on:
+  workflow_dispatch:
+  push:
+    paths: ['.github/release-notes-trigger']
+permissions:
+  contents: write
+jobs:
+  notes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update the notes of every release in the changelog
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          for v in $(grep -oP '<h2>\K[0-9.]+(?=</h2>)' website/src/en/news.html); do
+            if gh release view "v$v" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+              python3 tools/release_notes.py "$v" > notes.md
+              gh release edit "v$v" --repo "$GITHUB_REPOSITORY" --notes-file notes.md && echo "v$v updated"
+            fi
+          done

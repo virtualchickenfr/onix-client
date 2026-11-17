@@ -12,7 +12,7 @@ public class AutoPerspectiveModule extends Module {
     private CameraType previous;
 
     public AutoPerspectiveModule() {
-        super("autoperspective", "Auto Perspective", "Third person while flying or riding (from Carbon).", Category.CAMERA, false);
+        super("autoperspective", "Auto Perspective", "Third person while flying or riding.", Category.CAMERA, false);
         tags("elytra", "third person", "carbon");
     }
 

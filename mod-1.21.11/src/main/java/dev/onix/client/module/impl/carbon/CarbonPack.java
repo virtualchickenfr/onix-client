@@ -44,7 +44,6 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
@@ -64,7 +63,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.alchemy.PotionContents;
@@ -131,11 +129,9 @@ public final class CarbonPack {
 
     static final class Track {
         static double distance, topSpeed;
-        static int sprintTicks, airTicks;
-        static float damageTaken, healed;
-        static int foodEaten, xpGained;
+        static int airTicks;
+        static float damageTaken;
         static float lastHp = -1;
-        static int lastFood = -1, lastXp = -1;
         static long lastMove = System.currentTimeMillis();
         static Vec3 lastPos;
         static float lastYaw, lastPitch;
@@ -202,8 +198,6 @@ public final class CarbonPack {
             if (pl == null || mc().level == null) {
                 lastPos = null;
                 lastHp = -1;
-                lastFood = -1;
-                lastXp = -1;
                 return;
             }
             Vec3 pos = pl.position();
@@ -216,20 +210,10 @@ public final class CarbonPack {
             lastPos = pos;
             lastYaw = pl.getYRot();
             lastPitch = pl.getXRot();
-            if (pl.isSprinting()) sprintTicks++;
             if (!pl.onGround() && !pl.isInWater()) airTicks++;
             float hp = pl.getHealth();
-            if (lastHp >= 0) {
-                if (hp < lastHp) damageTaken += lastHp - hp;
-                else if (hp > lastHp) healed += hp - lastHp;
-            }
+            if (lastHp >= 0 && hp < lastHp) damageTaken += lastHp - hp;
             lastHp = hp;
-            int food = pl.getFoodData().getFoodLevel();
-            if (lastFood >= 0 && food > lastFood) foodEaten += food - lastFood;
-            lastFood = food;
-            int xp = pl.totalExperience;
-            if (lastXp >= 0 && xp > lastXp) xpGained += xp - lastXp;
-            lastXp = xp;
             // swings with a sword (hit or miss)
             boolean swinging = pl.swinging;
             if (swinging && !wasSwinging && pl.getMainHandItem().is(ItemTags.SWORDS)) swings++;
@@ -379,8 +363,6 @@ public final class CarbonPack {
         m.add(alert("phantom", "Phantom Warning", "Warns when phantoms are around.", u, () -> nearType(EntityType.PHANTOM, 24), "Phantoms are around", "phantom"));
         m.add(alert("warden", "Warden Warning", "Warns when a warden is nearby.", u, () -> nearType(EntityType.WARDEN, 32), "A warden is nearby!", "warden"));
         m.add(alert("tnt", "TNT Warning", "Warns about lit TNT close to you.", u, () -> nearType(EntityType.TNT, 8), "Lit TNT nearby!", "tnt"));
-        m.add(alert("daybreak", "Daybreak Alert", "Tells you when the sun rises.", u,
-                () -> dim(Level.OVERWORLD) && mc().level.getDayTime() % 24000L < 200, "The sun is rising", "day", "time"));
         String[] lastDim = {null};
         m.add(alert("dimension", "Dimension Change", "Tells you which dimension you just entered.", u, () -> {
             String d = mc().level.dimension() == Level.NETHER ? "the Nether" : mc().level.dimension() == Level.END ? "the End" : "the Overworld";
@@ -439,7 +421,6 @@ public final class CarbonPack {
         }, () -> close[0] + " is close to you", "players"));
         m.add(alert("offhandtotem", "Offhand Totem Missing", "Warns when your offhand holds no totem but you still carry one.", c,
                 () -> !p().getOffhandItem().is(Items.TOTEM_OF_UNDYING) && InventoryUtil.count(Items.TOTEM_OF_UNDYING) > 0, "No totem in your offhand!", "totem", "crystal pvp"));
-        m.add(alert("rain", "Rain Alert", "Tells you when it starts raining.", u, () -> mc().level.isRaining(), "It started raining", "weather"));
         m.add(alert("void", "Void Warning", "Warns when you fall towards the void.", u,
                 () -> p().getY() < mc().level.getMinY() + 8 && p().getDeltaMovement().y < 0, "You are falling into the void!", "void", "end"));
         m.add(alert("armorwarn", "Armor Warning", "Warns you when a piece of armor is about to break.", c, () -> {
@@ -455,43 +436,18 @@ public final class CarbonPack {
 
     private static void infos(List<Module> m) {
         Category h = Category.HUD;
-        m.add(info("blocklight", "Block Light", "Block light level at your feet.", h, "Light", () -> String.valueOf(mc().level.getBrightness(LightLayer.BLOCK, p().blockPosition())), "light"));
-        m.add(info("skylight", "Sky Light", "Sky light level at your feet.", h, "Sky", () -> String.valueOf(mc().level.getBrightness(LightLayer.SKY, p().blockPosition())), "light"));
         m.add(info("spawn", "Spawn Indicator", "Whether hostile mobs can spawn where you stand (block light 0).", h, "Spawns",
                 () -> mc().level.getBrightness(LightLayer.BLOCK, p().blockPosition()) == 0 ? "Mobs can spawn" : "Safe", "mobs", "light"));
-        m.add(info("entities", "Entity Count", "Entities loaded around you.", h, "Entities", () -> String.valueOf(mc().level.getEntityCount()), "entities"));
-        m.add(info("fovinfo", "FOV Display", "Your field of view setting.", h, "FOV", () -> String.valueOf(mc().options.fov().get()), "fov"));
-        m.add(info("frametime", "Frame Time", "Milliseconds per frame.", Category.PERFORMANCE, "Frame",
-                () -> mc().getFps() == 0 ? "-" : f1(1000.0 / mc().getFps()) + " ms", "fps", "frame"));
-        m.add(info("inchunk", "Chunk Position", "Your position inside the current chunk.", h, "In chunk",
-                () -> (p().getBlockX() & 15) + ", " + (p().getBlockZ() & 15), "chunk"));
-        m.add(info("java", "Java Version", "The Java runtime the game runs on.", Category.PERFORMANCE, "Java", () -> System.getProperty("java.version"), "java"));
-        m.add(info("kmh", "Speed km/h", "Horizontal speed in km/h.", h, "Speed", () -> {
-            Vec3 v = p().getDeltaMovement();
-            return Math.round(Math.hypot(v.x, v.z) * 20 * 3.6) + " km/h";
-        }, "speed"));
         m.add(info("nearby", "Nearby Players", "Players within render distance.", h, "Nearby", () -> String.valueOf(Math.max(0, mc().level.players().size() - 1)), "players"));
-        m.add(info("renderdist", "Render Distance", "Current render distance in chunks.", Category.PERFORMANCE, "Render", () -> mc().options.getEffectiveRenderDistance() + " chunks", "render distance"));
-        m.add(info("resolution", "Resolution", "Window size in pixels.", Category.PERFORMANCE, "Window",
-                () -> mc().getWindow().getWidth() + "x" + mc().getWindow().getHeight(), "window"));
         m.add(info("targetblock", "Target Block", "The block under your crosshair.", h, "Block", () -> mc().hitResult instanceof BlockHitResult b && mc().hitResult.getType() == HitResult.Type.BLOCK
                 ? mc().level.getBlockState(b.getBlockPos()).getBlock().getName().getString() : null, "block"));
         m.add(info("targetdistance", "Target Distance", "Distance to what you are looking at.", h, "Distance", () -> mc().hitResult == null || mc().hitResult.getType() == HitResult.Type.MISS
                 ? null : f1(mc().hitResult.getLocation().distanceTo(p().getEyePosition())) + " m", "distance"));
         m.add(info("targetentity", "Target Entity", "The entity under your crosshair.", h, "Looking at",
                 () -> mc().hitResult instanceof EntityHitResult e ? e.getEntity().getName().getString() : null, "entity"));
-        m.add(info("username", "Username", "The account you are playing on.", h, "Name", () -> mc().getUser().getName(), "name"));
-        m.add(info("weatherinfo", "Weather Info", "Current weather.", h, "Weather",
-                () -> mc().level.isThundering() ? "Thunder" : mc().level.isRaining() ? "Rain" : "Clear", "weather"));
         m.add(info("border", "Border Distance", "Distance to the world border.", h, "Border",
                 () -> Math.round(mc().level.getWorldBorder().getDistanceToBorder(p())) + " blocks", "border"));
-        m.add(info("worldtime", "World Time", "The in-game time of day.", h, "Time", () -> {
-            long t = (mc().level.getDayTime() + 6000) % 24000;
-            return String.format(Locale.ROOT, "%02d:%02d", t / 1000, t % 1000 * 60 / 1000);
-        }, "time", "clock"));
-        m.add(info("xpprogress", "XP Progress", "Progress to the next level.", h, "XP", () -> Math.round(p().experienceProgress * 100) + "%", "xp"));
         m.add(info("food", "Food Items", "How much food you carry.", h, "Food", () -> String.valueOf(InventoryUtil.count(s -> s.has(DataComponents.FOOD))), "food"));
-        m.add(info("blocks", "Placeable Blocks", "How many blocks you carry.", h, "Blocks", () -> String.valueOf(InventoryUtil.count(s -> s.getItem() instanceof BlockItem)), "blocks", "bridge"));
         m.add(info("jumpreset", "Jump Reset", "How many ticks after a hit you jumped (0-2 is a good reset).", Category.COMBAT, "Reset",
                 () -> Track.jumpReset < 0 ? "-" : Track.jumpReset + " ticks", "jump reset", "sword pvp"));
     }
@@ -502,11 +458,7 @@ public final class CarbonPack {
         Category h = Category.HUD;
         m.add(info("distance", "Distance Travelled", "Distance you moved this session.", h, "Travelled", () -> Math.round(Track.distance) + " m", "stats"));
         m.add(info("topspeed", "Top Speed", "The fastest you moved this session.", h, "Top speed", () -> f1(Track.topSpeed) + " b/s", "stats", "speed"));
-        m.add(info("sprinttime", "Sprint Time", "Time spent sprinting.", h, "Sprinting", () -> clock(Track.sprintTicks * 50L), "stats"));
         m.add(info("damagetaken", "Damage Taken", "Health points lost this session.", h, "Damage taken", () -> f1(Track.damageTaken / 2) + " ❤", "stats"));
-        m.add(info("healed", "Health Healed", "Health points regenerated this session.", h, "Healed", () -> f1(Track.healed / 2) + " ❤", "stats"));
-        m.add(info("foodeaten", "Hunger Restored", "Food points eaten this session.", h, "Eaten", () -> String.valueOf(Track.foodEaten), "stats", "food"));
-        m.add(info("xpgained", "XP Gained", "Experience points collected this session.", h, "XP gained", () -> String.valueOf(Track.xpGained), "stats", "xp"));
     }
 
     // ================================================================== chat
@@ -670,28 +622,6 @@ public final class CarbonPack {
         }), "log"));
 
         // what you send
-        m.add(new SendMod("chatprefix", "Chat Prefix", "Adds a text in front of every chat message you send.", self -> {
-            TextSetting t = self.with(new TextSetting("text", "Prefix", "", 32));
-            return s -> t.get().isEmpty() ? s : t.get() + " " + s;
-        }, 50, "prefix"));
-        m.add(new SendMod("chatsuffix", "Chat Suffix", "Adds a text after every chat message you send.", self -> {
-            TextSetting t = self.with(new TextSetting("text", "Suffix", "", 32));
-            return s -> t.get().isEmpty() ? s : s + " " + t.get();
-        }, 50, "suffix"));
-        m.add(new SendMod("greentext", "Green Text", "Starts your messages with \"> \".", self -> s -> s.startsWith(">") ? s : "> " + s, 40, "greentext"));
-        m.add(new SendMod("grammar", "Proper Grammar", "Capitalises the first letter and ends your sentences with a full stop.", self -> s -> {
-            if (s.isEmpty()) return s;
-            String out = Character.toUpperCase(s.charAt(0)) + s.substring(1);
-            char last = out.charAt(out.length() - 1);
-            return Character.isLetterOrDigit(last) ? out + "." : out;
-        }, 30, "grammar"));
-        Map<String, String> emo = Map.of(":shrug:", "¯\\_(ツ)_/¯", ":heart:", "❤", ":star:", "★", ":tableflip:", "(╯°□°)╯︵ ┻━┻",
-                ":check:", "✔", ":x:", "✖", ":sun:", "☀", ":skull:", "☠", ":sword:", "⚔", ":music:", "♫");
-        m.add(new SendMod("emoticons", "Emoticons", "Turns :shrug:, :heart:, :star: and friends into symbols.", self -> s -> {
-            String out = s;
-            for (var e : emo.entrySet()) out = out.replace(e.getKey(), e.getValue());
-            return out;
-        }, 20, "emoji", "symbols"));
         m.add(new SendMod("calculator", "Chat Calculator", "Type =5*64 in chat: only you see the result, nothing is sent.", self -> s -> {
             if (!s.startsWith("=")) return s;
             try {
@@ -803,33 +733,22 @@ public final class CarbonPack {
             Notifications.show("Chat", next.name().charAt(0) + next.name().substring(1).toLowerCase(Locale.ROOT).replace('_', ' '));
         }, "chat"));
         m.add(new KeyAction("clearchat", "Clear Chat", "Clears all chat messages.", () -> mc().gui.getChat().clearMessages(false), "chat"));
-        m.add(new KeyAction("copybiome", "Copy Biome", "Copies the biome you are standing in.", () -> copy("Biome", mc().level.getBiome(p().blockPosition()).getRegisteredName()), "biome"));
         m.add(new KeyAction("copyblockpos", "Copy Block Position", "Copies the coordinates of the block you are looking at.", () -> {
             if (mc().hitResult instanceof BlockHitResult b && b.getType() == HitResult.Type.BLOCK) {
                 BlockPos q = b.getBlockPos();
                 copy("Block position", q.getX() + " " + q.getY() + " " + q.getZ());
             }
         }, "coords"));
-        m.add(new KeyAction("copyplayers", "Copy Player List", "Copies the names of everyone on the tab list.", () -> {
-            var c = mc().getConnection();
-            if (c == null) return;
-            List<String> names = new ArrayList<>();
-            for (var info : c.getOnlinePlayers()) names.add(info.getProfile().name());
-            copy(names.size() + " players", String.join(", ", names));
-        }, "players"));
-        m.add(new KeyAction("copyrotation", "Copy Rotation", "Copies your yaw and pitch.", () -> copy("Rotation", f1(Mth.wrapDegrees(p().getYRot())) + " " + f1(p().getXRot())), "rotation"));
         m.add(new KeyAction("copyip", "Copy Server IP", "Copies the address of the server you are on.", () -> {
             var data = mc().getCurrentServer();
             if (data != null) copy("Server IP", data.ip);
         }, "server", "ip"));
         m.add(new KeyAction("copytp", "Copy Teleport Command", "Copies a /tp command for your exact position and rotation.", () -> copy("Teleport command",
                 String.format(Locale.ROOT, "/tp @s %.2f %.2f %.2f %.1f %.1f", p().getX(), p().getY(), p().getZ(), Mth.wrapDegrees(p().getYRot()), p().getXRot())), "tp", "coords"));
-        m.add(new KeyAction("lookstraight", "Look Straight", "Levels your view to the horizon.", () -> p().setXRot(0), "camera", "building"));
         m.add(new KeyAction("snapaxis", "Snap To Axis", "Snaps your view to the nearest direction (great for building straight).", () -> {
             p().setYRot(Math.round(p().getYRot() / 90f) * 90f);
             p().setXRot(0);
         }, "building", "camera"));
-        m.add(new KeyAction("turnaround", "Turn Around", "Turns you 180 degrees.", () -> p().setYRot(p().getYRot() + 180), "camera"));
         double[] volume = {-1};
         m.add(new KeyAction("mute", "Mute Key", "Mutes and unmutes all game sound.", () -> {
             var opt = mc().options.getSoundSourceOptionInstance(SoundSource.MASTER);
@@ -933,7 +852,6 @@ public final class CarbonPack {
         m.add(fixed("subtitles", "Subtitles", "Always shows sound subtitles.", v, Options::showSubtitles, true, "subtitles", "sound"));
         m.add(fixed("noshadows", "No Entity Shadows", "Removes the round shadows under mobs and players.", pf, Options::entityShadows, false, "shadows"));
         m.add(fixed("hidelightning", "Hide Lightning Flash", "Stops lightning from flashing the sky.", v, Options::hideLightningFlash, true, "lightning"));
-        m.add(fixed("hidesplash", "Hide Splash Texts", "Hides the yellow splash text on the title screen.", v, Options::hideSplashTexts, true, "splash"));
         m.add(fixed("darkloading", "Dark Loading Screen", "Uses a black instead of a red loading screen.", v, Options::darkMojangStudiosBackground, true, "loading"));
         m.add(fixed("nochatcolors", "No Chat Colors", "Shows chat messages without color codes.", ch, Options::chatColors, false, "colors"));
         m.add(fixed("contrastoutline", "High Contrast Outline", "Makes the block selection outline easier to see.", v, Options::highContrastBlockOutline, true, "outline"));

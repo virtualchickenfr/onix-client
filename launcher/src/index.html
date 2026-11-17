@@ -6,8 +6,9 @@
         content="default-src 'self'; img-src 'self' data: https://mc-heads.net https://cdn.modrinth.com; style-src 'self' 'unsafe-inline'; font-src 'self'; script-src 'self'">
   <title>Onix</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="one.css">
 </head>
-<body>
+<body class="clean one">
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <defs>
       <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></symbol>
@@ -46,19 +47,13 @@
   </svg>
 
   <!-- start-up animation, removed once the launcher is ready -->
-  <div class="boot edex" id="boot" role="status" aria-live="polite">
-    <div class="boot-frame" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-    <div class="boot-log" id="boot-log" aria-hidden="true"></div>
+  <div class="boot sunken" id="boot" role="status" aria-live="polite">
+    <canvas class="boot-scene" id="boot-scene" aria-hidden="true"></canvas>
     <div class="boot-title">
-      <div class="boot-word" data-text="ONIX">ONIX</div>
-      <div class="boot-sub">CLIENT · LAUNCHER</div>
+      <div class="boot-word">ONIX</div>
       <div class="boot-bar"><i></i></div>
       <div class="boot-status" id="boot-status">Starting</div>
     </div>
-  </div>
-  <div class="edex-term" id="edex-term" hidden aria-hidden="true">
-    <div class="edex-term-head"><span>LAUNCH SEQUENCE</span><span id="edex-term-clock">00:00.0</span></div>
-    <div class="edex-term-body" id="edex-term-body"></div>
   </div>
   <template id="gem-template"><span class="gem"><svg viewBox="0 0 100 100" aria-hidden="true"><polygon style="--i:0" points="50,4 89.84,27 66.45,40.5 50,31"/><polygon style="--i:1" points="89.84,27 89.84,73 66.45,59.5 66.45,40.5"/><polygon style="--i:2" points="89.84,73 50,96 50,69 66.45,59.5"/><polygon style="--i:3" points="50,96 10.16,73 33.55,59.5 50,69"/><polygon style="--i:4" points="10.16,73 10.16,27 33.55,40.5 33.55,59.5"/><polygon style="--i:5" points="10.16,27 50,4 50,31 33.55,40.5"/></svg></span></template>
 
@@ -70,6 +65,21 @@
           <span class="tb-logo" aria-hidden="true"></span>
           <b>Onix</b><span>Launcher</span>
         </div>
+        <nav class="topnav" aria-label="Pages">
+          <div class="hotbar" id="hotbar">
+            <button class="nav-item active" data-view="home" data-name="Home" data-icon="hex"><span class="nl">Home</span></button>
+            <button class="nav-item" data-view="profiles" data-name="Profiles" data-icon="chest"><span class="nl">Profiles</span></button>
+            <button class="nav-item" data-view="discover" data-name="Discover" data-icon="compass"><span class="nl">Discover</span></button>
+            <button class="nav-item" data-view="skins" data-name="Skins" data-icon="person"><span class="nl">Skins</span></button>
+            <button class="nav-item" data-view="cosmetics" data-name="Cosmetics" data-icon="sparkle"><span class="nl">Cosmetics</span></button>
+            <button class="nav-item sec" data-view="import" data-name="Import" data-icon="arrowdown" title="Import" aria-label="Import"></button>
+            <button class="nav-item sec" data-view="install" data-name="Install" data-icon="shulker" title="Install" aria-label="Install"></button>
+            <button class="nav-item sec" data-view="console" data-name="Console" data-icon="console" title="Console" aria-label="Console"></button>
+            <button class="nav-item sec" data-view="settings" data-name="Settings" data-icon="gear" title="Settings" aria-label="Settings"></button>
+            <i class="hot-sel" id="hot-sel" hidden></i>
+          </div>
+          <div class="hotbar-name" id="hot-name" hidden></div>
+        </nav>
         <div class="crumb" id="crumb" hidden></div>
         <button class="palette-trigger no-drag" id="btn-palette" title="Search commands"><svg><use href="#i-search"/></svg><span>Search</span><kbd>Ctrl K</kbd></button>
         <div class="tb-right no-drag">
@@ -88,6 +98,7 @@
       <!-- HOME -->
       <section class="view active" id="view-home">
         <div class="hero">
+          <canvas class="design-scene" id="design-scene" aria-hidden="true"></canvas>
           <div class="hero-bg"></div>
           <div class="hero-grain"></div>
           <div class="hero-fade"></div>
@@ -104,6 +115,7 @@
             <p class="eyebrow" id="eyebrow">Minecraft 1.21.1</p>
             <h1 class="logo" aria-label="Onix"><span class="ch" style="--i:0">O</span><span class="ch" style="--i:1">N</span><span class="ch" style="--i:2">I</span><span class="ch" style="--i:3">X</span></h1>
             <div class="logo-sub">CLIENT</div>
+            <h1 class="home-title">Onix <span>Client</span></h1>
             <div class="play-row">
               <button class="play" id="btn-play"><svg><use href="#i-play"/></svg><span>Play</span></button>
               <div class="picker">
@@ -154,6 +166,7 @@
           <div class="pv-title"><h2 id="pv-name">Profile</h2><p id="pv-meta"></p></div>
           <div class="btn-row">
             <button class="btn" id="pv-folder" title="Open the profile folder"><svg><use href="#i-folder"/></svg>Folder</button>
+            <button class="btn" id="pv-port" title="Take this profile with everything in it to another Minecraft version"><svg><use href="#i-globe"/></svg>Other Version</button>
             <button class="btn" id="pv-duplicate" title="Copy this profile with its worlds and mods"><svg><use href="#i-copy"/></svg>Duplicate</button>
             <button class="btn" id="pv-shortcut" title="A desktop shortcut that starts this profile"><svg><use href="#i-plus"/></svg>Shortcut</button>
             <button class="btn" id="pv-export"><svg><use href="#i-send"/></svg>Export</button>
@@ -165,6 +178,7 @@
         <div class="pv-bar">
           <div class="segmented pv-tabs" id="pv-tabs">
             <button data-tab="mods">Mods <b id="pv-n-mods"></b></button>
+            <button data-tab="bundles">Bundles</button>
             <button data-tab="resourcepacks">Resource Packs <b id="pv-n-resourcepacks"></b></button>
             <button data-tab="shaderpacks">Shaders <b id="pv-n-shaderpacks"></b></button>
             <button data-tab="worlds">Worlds <b id="pv-n-worlds"></b></button>
@@ -278,34 +292,14 @@
         <div class="page-head">
           <div><h2>Settings</h2><p>For every profile.</p></div>
         </div>
-        <div class="group-label">Theme</div>
-        <div class="themes" id="themes"></div>
-        <p class="hint">Themes are shared with the game: a theme you make here shows up in the Onix menu and the other way round.</p>
-        <div class="group-label">Background</div>
-        <div class="backgrounds" id="backgrounds"></div>
-        <p class="hint">Used here and on the in-game title screen. Your own images: put PNG files into
-          <span class="mono">config/onix/backgrounds</span> of a profile.</p>
-        <div class="group-label">In-game sky</div>
-        <div class="group">
-          <div class="row">
-            <div class="row-text"><b>Custom sky</b><span>Replaces the overworld sky. Day and night skies fade into each other with the time of day.</span></div>
-            <label class="switch"><input type="checkbox" id="sky-on"><i></i></label>
-          </div>
-        </div>
-        <div class="sky-head">
-          <div class="segmented" id="sky-mode">
-            <button data-mode="day" class="active">Day sky <b id="sky-day-name"></b></button>
-            <button data-mode="night">Night sky <b id="sky-night-name"></b></button>
-          </div>
-        </div>
-        <div class="backgrounds skies" id="skies"></div>
-        <p class="hint">Applies to every profile. If Minecraft is running with Onix, the new sky shows up right away.
-          More options (brightness, rotation, fog) are in the Custom Sky module in game.</p>
+        <div class="group-label">Design</div>
+        <div class="designs" id="designs"></div>
+        <p class="hint">The look of the start page, the start screen and the main menu in game.</p>
         <div class="group-label">Launcher</div>
         <div class="group">
           <div class="row">
-            <div class="row-text"><b>Clean layout</b><span>Rounded, quiet look with the pages on a slim bar at the side and your skin on the home page. Off: the blocky Minecraft look with the hotbar.</span></div>
-            <label class="switch"><input type="checkbox" id="set-clean"><i></i></label>
+            <div class="row-text"><b>Language</b><span>Launcher, welcome steps and the Onix menus in game.</span></div>
+            <select class="input" id="set-language" data-no-i18n><option value="auto">Automatic · Automatisch</option><option value="en">English</option><option value="de">Deutsch</option></select>
           </div>
           <div class="row">
             <div class="row-text"><b>Hide while playing</b><span>Comes back as soon as Minecraft closes.</span></div>
@@ -319,6 +313,10 @@
             <div class="row-text"><b>Launcher updates</b><span id="update-text">The launcher looks for a new version every time it starts.</span></div>
             <div class="btn-row" style="align-items:center"><label class="switch" title="Check for updates when the launcher starts"><input type="checkbox" id="set-autoupdate"><i></i></label>
             <button class="btn" id="update-check"><svg><use href="#i-refresh"/></svg>Check now</button></div>
+          </div>
+          <div class="row">
+            <div class="row-text"><b>Update when the PC starts</b><span>Onix updates itself quietly in the background when you start your computer and closes again – no window opens.</span></div>
+            <label class="switch"><input type="checkbox" id="set-startup-update"><i></i></label>
           </div>
           <div class="row">
             <div class="row-text"><b>Onix server</b><span>Badges, coins, the cosmetics shop and gifts. Leave empty for the built-in server.</span></div>
@@ -384,22 +382,6 @@
     </main>
   </div>
 
-  <!-- navigation: a Minecraft hotbar (keys 1–9) -->
-  <nav class="hotbar-wrap" aria-label="Pages">
-    <div class="hotbar-name" id="hot-name"></div>
-    <div class="hotbar" id="hotbar">
-      <button class="nav-item active" data-view="home" data-name="Home" data-icon="hex"><span class="num">1</span></button>
-      <button class="nav-item" data-view="profiles" data-name="Profiles" data-icon="chest"><span class="num">2</span></button>
-      <button class="nav-item" data-view="discover" data-name="Discover" data-icon="compass"><span class="num">3</span></button>
-      <button class="nav-item" data-view="cosmetics" data-name="Cosmetics" data-icon="sparkle"><span class="num">4</span></button>
-      <button class="nav-item" data-view="skins" data-name="Skins" data-icon="person"><span class="num">5</span></button>
-      <button class="nav-item" data-view="import" data-name="Import" data-icon="arrowdown"><span class="num">6</span></button>
-      <button class="nav-item" data-view="install" data-name="Install" data-icon="shulker"><span class="num">7</span></button>
-      <button class="nav-item" data-view="settings" data-name="Settings" data-icon="gear"><span class="num">8</span></button>
-      <button class="nav-item" data-view="console" data-name="Console" data-icon="console"><span class="num">9</span></button>
-      <i class="hot-sel" id="hot-sel"></i>
-    </div>
-  </nav>
 
   <!-- Dialog: profile -->
   <div class="modal-backdrop" id="profile-modal">
@@ -411,7 +393,7 @@
       <div class="field"><span>Minecraft version</span><div class="seg" id="pf-version"></div></div>
       <label class="field"><span>Memory <output id="pf-ram-out"></output></span><input type="range" id="pf-ram" min="1024" max="8192" step="512"></label>
       <label class="field"><span>Join on launch</span><input class="input" id="pf-server" placeholder="Server address (optional)" spellcheck="false"></label>
-      <div class="field inline"><span>Performance pack (Sodium, Lithium, FerriteCore, ImmediatelyFast, EntityCulling)</span><label class="switch"><input type="checkbox" id="pf-perf"><i></i></label></div>
+      <div class="field inline"><span>Performance pack (Sodium, Lithium, FerriteCore, ImmediatelyFast, EntityCulling, BadOptimizations, ScalableLux)</span><label class="switch"><input type="checkbox" id="pf-perf"><i></i></label></div>
       <div class="field inline" id="pf-copy-row"><span>Copy settings from the active profile</span><label class="switch"><input type="checkbox" id="pf-copy" checked><i></i></label></div>
       <div class="modal-actions">
         <button class="btn danger" id="pf-delete">Delete</button>
@@ -480,6 +462,24 @@
     </div>
   </div>
 
+  <div class="modal-backdrop" id="port-modal">
+    <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="port-title">
+      <div class="modal-head"><h3 id="port-title">Take to Another Version</h3><button class="icon-btn" data-close><svg><use href="#i-x"/></svg></button></div>
+      <p class="port-intro">Makes a copy of <b id="port-from"></b> for another Minecraft version – with your worlds, Onix modules and HUD, key binds, video settings, servers, mod settings, resource and shader packs. Every mod is swapped for its version there. Your profile stays as it is.</p>
+      <div class="ex-row">
+        <label class="field"><span>Minecraft version</span><select class="input" id="port-mc"></select></label>
+        <label class="field"><span>Name of the copy</span><input class="input" id="port-name" maxlength="24" spellcheck="false"></label>
+      </div>
+      <div class="port-plan" id="port-plan"></div>
+      <div class="modal-actions">
+        <span class="ex-status" id="port-status"></span>
+        <div class="spacer"></div>
+        <button class="btn" data-close>Cancel</button>
+        <button class="btn primary" id="port-run" disabled>Create Copy</button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-backdrop" id="export-modal">
     <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="ex-title">
       <div class="modal-head"><h3 id="ex-title">Export Profile</h3><button class="icon-btn" data-close><svg><use href="#i-x"/></svg></button></div>
@@ -513,31 +513,6 @@
   </div>
 
   <!-- Dialog: theme editor -->
-  <div class="modal-backdrop" id="theme-modal">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="th-title">
-      <div class="modal-head"><h3 id="th-title">Theme</h3><button class="icon-btn" data-close><svg><use href="#i-x"/></svg></button></div>
-      <div class="theme-preview" id="th-preview">
-        <div class="tp-side"><i></i><i></i><i></i></div>
-        <div class="tp-body"><b>Onix</b><span>Preview</span><div class="tp-row"><em></em><u></u></div><div class="tp-row"><em></em><u class="on"></u></div></div>
-      </div>
-      <label class="field"><span>Name</span><input class="input" id="th-name" maxlength="24" spellcheck="false"></label>
-      <div class="color-grid">
-        <label class="color-field"><input type="color" id="th-accent"><span><b>Accent</b><small>Buttons, switches, highlights</small></span></label>
-        <label class="color-field"><input type="color" id="th-panel"><span><b>Background</b><small>Menus and windows</small></span></label>
-        <label class="color-field"><input type="color" id="th-sky"><span><b>Sky tint</b><small>Title screen and sky</small></span></label>
-        <label class="color-field"><input type="color" id="th-particle"><span><b>Particle color</b><small>Menu particles</small></span></label>
-      </div>
-      <label class="field"><span>Particle style</span>
-        <select class="input" id="th-ambient"><option>Sparks</option><option>Petals</option><option>Snow</option><option>Embers</option></select></label>
-      <div class="modal-actions">
-        <button class="btn danger" id="th-delete">Delete</button>
-        <div class="spacer"></div>
-        <button class="btn" data-close>Cancel</button>
-        <button class="btn primary" id="th-save">Save Theme</button>
-      </div>
-    </div>
-  </div>
-
   <!-- Dialog: import -->
   <div class="modal-backdrop" id="import-modal">
     <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="im-title">
@@ -582,15 +557,20 @@
   <script src="js/carbon/skinview.js"></script>
   <script src="js/data.js"></script>
   <script src="js/helpers.js"></script>
+  <script src="js/i18n.js"></script>
   <script src="js/navigation.js"></script>
   <script src="js/design.js"></script>
   <script src="js/account.js"></script>
   <script src="js/skin3d.js"></script>
+  <script src="js/fall.js"></script>
+  <script src="js/scenes.js"></script>
   <script src="js/home.js"></script>
   <script src="js/profiles.js"></script>
   <script src="js/mods.js"></script>
   <script src="js/packs.js"></script>
   <script src="js/profile-view.js"></script>
+  <script src="js/welcome.js"></script>
+  <script src="js/port.js"></script>
   <script src="assets/cosmetics/catalog.js"></script>
   <script src="js/cosrender.js"></script>
   <script src="js/cosmetics.js"></script>

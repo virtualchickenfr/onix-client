@@ -15,6 +15,7 @@ contextBridge.exposeInMainWorld('onix', {
   removeAccount: (uuid) => invoke('auth:remove', uuid),
 
   getSettings: () => invoke('settings:get'),
+  reload: () => invoke('app:reload'),
   setSettings: (value) => invoke('settings:set', value),
 
   getSky: () => invoke('sky:get'),
@@ -30,6 +31,8 @@ contextBridge.exposeInMainWorld('onix', {
   createProfile: (name, copyFrom, mcVersion) => invoke('profiles:create', name, copyFrom, mcVersion),
   deleteProfile: (id) => invoke('profiles:delete', id),
   duplicateProfile: (id) => invoke('profiles:duplicate', id),
+  portPlan: (id, mc) => invoke('profile:portPlan', id, mc),
+  portProfile: (id, mc, name) => invoke('profile:port', id, mc, name),
   onProfilesChanged: (cb) => ipcRenderer.on('profiles:changed', (_e, v) => cb(v)),
   pickJava: () => invoke('java:pick'),
 
@@ -50,6 +53,8 @@ contextBridge.exposeInMainWorld('onix', {
   profileSizes: (profileId) => invoke('content:sizes', profileId),
   installedAssets: (profileId, kind) => invoke('modrinth:installedAssets', profileId, kind),
   installAsset: (profileId, kind, projectId) => invoke('modrinth:installAsset', profileId, kind, projectId),
+  quickShaders: () => invoke('shaders:quickList'),
+  quickShaderSetup: (profileId, slug) => invoke('shaders:quickSetup', profileId, slug),
 
   getCosmetics: () => invoke('cosmetics:get'),
   setCosmetic: (slot, id) => invoke('cosmetics:set', slot, id),
@@ -67,6 +72,8 @@ contextBridge.exposeInMainWorld('onix', {
   searchModrinth: (opts) => invoke('modrinth:search', opts),
   installedModrinth: (profileId) => invoke('modrinth:installed', profileId),
   installModrinth: (profileId, projectId) => invoke('modrinth:install', profileId, projectId),
+  bundles: (profileId) => invoke('bundles:list', profileId),
+  installBundles: (profileId, ids) => invoke('bundles:install', profileId, ids),
   modUpdates: (profileId) => invoke('modrinth:updates', profileId),
   updateMods: (profileId, projectIds) => invoke('modrinth:update', profileId, projectIds),
   installModpack: (projectId) => invoke('modrinth:installPack', projectId),

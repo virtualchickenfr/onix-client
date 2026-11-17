@@ -12,7 +12,7 @@ public class TitleTweakerModule extends Module {
             .visibleIf(() -> !hide.isOn()));
 
     public TitleTweakerModule() {
-        super("titletweaker", "Title Tweaker", "Scale or hide on-screen titles (from Carbon).", Category.VISUAL, false);
+        super("titletweaker", "Title Tweaker", "Scale or hide on-screen titles.", Category.VISUAL, false);
         tags("title", "subtitle", "carbon");
     }
 }

@@ -29,18 +29,9 @@ function paletteCommands() {
   }
   add('Accounts', 'Add another account', () => login(), { icon: 'plus' });
 
-  for (const t of allThemes()) {
-    add('Design', `Theme: ${t.name}`, () => { selectTheme(t.id); renderThemes(); }, { swatch: t.accent, current: t.id === currentThemeId });
+  for (const d of DESIGNS) {
+    add('Design', `Design: ${d.name}`, () => selectDesign(d.id), { icon: 'image', sub: d.about, current: d.id === currentDesign });
   }
-  for (const [id, name] of BACKGROUNDS) {
-    add('Design', `Background: ${name}`, async () => { applyBackground(id); await api.setSettings({ background: id }); },
-      { image: `assets/backgrounds/${id}.jpg`, current: id === currentBackground });
-  }
-  for (const [id, name] of SKIES) {
-    add('In-game sky', `Day sky: ${name}`, () => saveSky({ daySky: name, enabled: true }), { image: `assets/skies/${id}.jpg`, current: sky.enabled && sky.daySky === name });
-    add('In-game sky', `Night sky: ${name}`, () => saveSky({ nightSky: name, enabled: true }), { image: `assets/skies/${id}.jpg`, current: sky.enabled && sky.nightSky === name });
-  }
-  add('In-game sky', sky.enabled ? 'Turn custom sky off' : 'Turn custom sky on', () => saveSky({ enabled: !sky.enabled }), { icon: 'refresh' });
 
   const toggle = (title, id) => add('Settings', title, () => { const box = $(id); box.checked = !box.checked; box.dispatchEvent(new Event('change')); },
     { icon: 'settings', sub: $(id) && $(id).checked ? 'On – run to turn off' : 'Off – run to turn on' });

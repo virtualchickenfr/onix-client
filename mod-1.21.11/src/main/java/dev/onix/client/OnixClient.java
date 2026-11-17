@@ -55,6 +55,15 @@ public class OnixClient implements ClientModInitializer {
 
     public static final KeyMapping.Category KEY_CATEGORY = KeyMapping.Category.register(net.minecraft.resources.Identifier.fromNamespaceAndPath(MOD_ID, "main"));
     public static KeyMapping MENU_KEY;
+
+    /** Effects that cost the most frames; switched off once on phones (they can be turned on again). */
+    private static final String[] MOBILE_HEAVY = {"atmosphere", "customsky", "impactfx", "halo", "rainripples", "colorgrading",
+            "trail", "jumpcircles", "handaura", "totemspirit", "framegraph", "shaders"};
+
+    /** True when the game runs on Android through a PojavLauncher based launcher (it sets POJAV_* variables). */
+    public static boolean isMobile() {
+        return System.getenv("POJAV_RENDERER") != null || System.getenv("POJAV_NATIVEDIR") != null;
+    }
     public static KeyMapping CWT_KEY;
 
     @Override
@@ -71,18 +80,22 @@ public class OnixClient implements ClientModInitializer {
             CONFIG.cinematicSet2.set(true);
             CONFIG.cinematicSet.set(true);
             CONFIG.customMainMenu.set(true);
-            CONFIG.menuDesign.set("Onix");
             CONFIG.titleDesign.set("Cinematic");
             CONFIG.save();
         }
-        // 1.1.16: right shift opens the clean Carbon style mod menu once (Classic and Bloom stay under Design)
-        // 1.1.18: the eDEX style loading screen replaces the red Mojang screen once (other styles stay under Design)
-        if (!CONFIG.edexSet.isOn()) {
-            CONFIG.edexSet.set(true);
-            CONFIG.loadingStyle.set("eDEX");
-            CONFIG.loadingScreens.set(true);
+        // 1.1.28: themes, backgrounds and the Carbon menus made way for three designs (Water, Runner, Meadow) and one
+        // fixed look; everyone starts on Water once (the launcher's Design setting picks another)
+        if (!CONFIG.designSet.isOn()) {
+            CONFIG.designSet.set(true);
+            if (!CONFIG.menuDesign.is("Vanilla") && !CONFIG.menuDesign.is("Runner") && !CONFIG.menuDesign.is("Meadow")) CONFIG.menuDesign.set("Water");
+            CONFIG.customMainMenu.set(true);
+            CONFIG.titleDesign.set("Cinematic");
+            CONFIG.lightMode.set(false);
+            CONFIG.menuGlass.set(false);
             CONFIG.save();
         }
+        // 1.1.16: right shift opens the clean Carbon style mod menu once (Classic and Bloom stay under Design)
+        // (1.1.18 set the eDEX loading screen once; it is gone – a saved "eDEX" is not a mode any more and reads as Minimal)
         if (!CONFIG.cleanSet.isOn()) {
             CONFIG.cleanSet.set(true);
             CONFIG.menuStyle.set("Clean");
@@ -96,6 +109,27 @@ public class OnixClient implements ClientModInitializer {
         if (!CONFIG.fontSet.isOn()) {
             CONFIG.fontSet.set(true);
             for (var m : MODULES.all()) if (m instanceof dev.onix.client.module.HudModule hud) hud.useOnixFont();
+            save();
+        }
+        // 1.1.21: everything round – no more square or block buttons, rounder HUD elements (once)
+        if (!CONFIG.roundSet2.isOn()) {
+            CONFIG.roundSet2.set(true);
+            if (!CONFIG.buttonStyle.is("Pill")) CONFIG.buttonStyle.set("Rounded");
+            for (var m : MODULES.all()) if (m instanceof dev.onix.client.module.HudModule hud) hud.useRoundCorners();
+            save();
+        }
+        // on a phone (PojavLauncher / Zalith / the Onix Android app) everything goes to FPS once
+        if (isMobile() && !CONFIG.mobileSet.isOn()) {
+            CONFIG.mobileSet.set(true);
+            var preset = MODULES.get(dev.onix.client.module.impl.performance.PerformancePresetModule.class);
+            if (preset != null) {
+                preset.useFastGraphics();
+                preset.setEnabled(true);
+            }
+            for (String id : MOBILE_HEAVY) {
+                var m = MODULES.get(id);
+                if (m != null) m.setEnabled(false);
+            }
             save();
         }
         var lyrics = MODULES.get(dev.onix.client.module.impl.hud.SongLyricsModule.class);
@@ -114,6 +148,15 @@ public class OnixClient implements ClientModInitializer {
                         ? new gg.carbon.client.screen.ClickGui(null) : new OnixMenuScreen(null));
             }
             while (CWT_KEY.consumeClick()) CwtMode.toggle();
+            // remember the server you play on for "Rejoin" on the title screen
+            var server = client.getCurrentServer();
+            if (client.level != null && server != null && !client.isLocalServer() && server.ip != null && !server.ip.isBlank()) {
+                if (!server.ip.equals(CONFIG.lastServer.get()) || !server.name.equals(CONFIG.lastServerName.get())) {
+                    CONFIG.lastServer.set(server.ip);
+                    CONFIG.lastServerName.set(server.name == null ? "" : server.name);
+                    CONFIG.save();
+                }
+            }
             LauncherInbox.tick();
             OnixBadgeModule badge = MODULES.get(OnixBadgeModule.class);
             boolean badgeOn = badge != null && badge.isEnabled();

@@ -19,6 +19,8 @@ public abstract class EntityRendererMixin {
         NametagsModule tags = OnixClient.MODULES.get(NametagsModule.class);
         Text result = tags == null ? text : tags.decorate(entity, text);
         OnixBadgeModule badge = OnixClient.MODULES.get(OnixBadgeModule.class);
-        return badge == null ? result : badge.decorateNametag(entity, result);
+        if (badge != null) result = badge.decorateNametag(entity, result);
+        dev.onix.client.module.impl.combat.TierTaggerModule tiers = OnixClient.MODULES.get(dev.onix.client.module.impl.combat.TierTaggerModule.class);
+        return tiers == null ? result : tiers.decorateNametag(entity, result);
     }
 }

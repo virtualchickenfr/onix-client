@@ -33,6 +33,22 @@ public class OnixTitleScreen extends Screen {
     private static final int GREY = 0xFFA1A1AA;
     private static final int DIM = 0xFF6B6B76;
 
+    /** "Rejoin <server>": straight back onto the last multiplayer server you played on. */
+    private Item rejoinItem() {
+        String ip = OnixClient.CONFIG.lastServer.get().trim();
+        String name = OnixClient.CONFIG.lastServerName.get().trim();
+        if (ip.isEmpty()) return null;
+        String label = "Rejoin " + (name.isEmpty() || name.length() > 22 ? ip : name);
+        if (label.length() > 30) label = label.substring(0, 29) + "…";
+        return new Item(label, "server", () -> {
+            var data = new net.minecraft.client.multiplayer.ServerData(name.isEmpty() ? ip : name, ip, net.minecraft.client.multiplayer.ServerData.Type.OTHER);
+            net.minecraft.client.gui.screens.ConnectScreen.startConnecting(this, minecraft,
+                    net.minecraft.client.multiplayer.resolver.ServerAddress.parseString(ip), data, false, null);
+        }, true);
+    }
+
+    private float fallPrevCy, fallPrevT = -1;
+
     private record Item(String label, String icon, Runnable action, boolean primary) {
         Item {
             label = dev.onix.client.util.I18n.ui(label);
@@ -78,6 +94,8 @@ public class OnixTitleScreen extends Screen {
         items.clear();
         items.add(new Item("Singleplayer", "world", () -> minecraft.setScreen(new SelectWorldScreen(this)), true));
         items.add(new Item("Multiplayer", "server", () -> minecraft.setScreen(new JoinMultiplayerScreen(this)), true));
+        Item rejoinItem = rejoinItem();
+        if (rejoinItem != null) items.add(rejoinItem);
         items.add(new Item("Modules", "all", () -> minecraft.setScreen(OnixClient.CONFIG.menuStyle.is("Clean") ? new gg.carbon.client.screen.ClickGui(this) : new OnixMenuScreen(this)), false));
         items.add(new Item("Cosmetics", "cosmetics", () -> minecraft.setScreen(new OnixMenuScreen(this, OnixMenuScreen.View.COSMETICS)), false));
         items.add(new Item("Profiles", "profile", () -> minecraft.setScreen(new OnixMenuScreen(this, OnixMenuScreen.View.PROFILES)), false));
@@ -86,6 +104,8 @@ public class OnixTitleScreen extends Screen {
         cineItems.clear();
         cineItems.add(new Item("Singleplayer", "world", () -> minecraft.setScreen(new SelectWorldScreen(this)), true));
         cineItems.add(new Item("Multiplayer", "server", () -> minecraft.setScreen(new JoinMultiplayerScreen(this)), true));
+        Item rejoin = rejoinItem();
+        if (rejoin != null) cineItems.add(rejoin);
         cineItems.add(new Item("Minecraft Settings", "settings", () -> minecraft.setScreen(new OptionsScreen(this, minecraft.options)), false));
         cineItems.add(new Item("Client", "all", () -> minecraft.setScreen(OnixClient.CONFIG.menuStyle.is("Clean") ? new gg.carbon.client.screen.ClickGui(this) : new OnixMenuScreen(this)), false));
         cineItems.add(new Item("Quit Game", "power", () -> minecraft.stop(), false));
@@ -104,10 +124,18 @@ public class OnixTitleScreen extends Screen {
         addRenderableWidget(skinWidget);
         shownAt = System.currentTimeMillis();
         pending = null;
+        runLeave = -1;
+        petalBurst = 0;
+        petals.clear();
     }
 
     private boolean cinematic() {
-        return "Cinematic".equals(design());
+        return true;
+    }
+
+    /** The main menu design: Water, Runner or Meadow (Design → Main Menu, or the launcher's Design). */
+    private static String scene() {
+        return OnixClient.CONFIG == null ? "Water" : OnixClient.CONFIG.menuDesign.get();
     }
 
     /** Fades to black, then runs the action (cinematic cut). */
@@ -119,6 +147,14 @@ public class OnixTitleScreen extends Screen {
         }
         pending = action;
         pendingAt = System.currentTimeMillis();
+        if (scene().equals("Meadow")) {
+            petalBurst = pendingAt;
+            buildPetals();
+            pendingAt += 1700;                     // the gust runs through the meadow and the petals fly up first, then the fade
+        } else if (scene().equals("Runner") && runLeave < 0) {
+            runLeave = pendingAt;
+            pendingAt += 650;                      // the character runs off first
+        }
     }
 
     private void enter() {
@@ -190,8 +226,8 @@ public class OnixTitleScreen extends Screen {
 
     @Override
     public void render(GuiGraphics ctx, int mouseX, int mouseY, float delta) {
-        if (!OnixClient.CONFIG.menuDesign.is("Onix")) {
-            // another main menu was picked (Carbon designs or vanilla): MinecraftClientMixin opens it
+        if (OnixClient.CONFIG.menuDesign.is("Vanilla")) {
+            // Minecraft's own main menu was picked: MinecraftClientMixin opens it
             minecraft.setScreen(new net.minecraft.client.gui.screens.TitleScreen());
             return;
         }
@@ -509,16 +545,19 @@ public class OnixTitleScreen extends Screen {
         return t * t * (3 - 2 * t);
     }
 
-    private static final Identifier CINE_BG = Identifier.fromNamespaceAndPath("onix", "textures/gui/cinematic_bg.png");
-    private static final Identifier CINE_LIGHT = Identifier.fromNamespaceAndPath("onix", "textures/gui/cinematic_light.png");
+    private static final Identifier STUDIO = Identifier.fromNamespaceAndPath("onix", "textures/gui/design/studio.png");
+    private static final Identifier STUDIO_LIGHT = Identifier.fromNamespaceAndPath("onix", "textures/gui/design/studio_light.png");
+    private static final Identifier MEADOW = Identifier.fromNamespaceAndPath("onix", "textures/gui/design/meadow.png");
+    private static final Identifier PETALS = Identifier.fromNamespaceAndPath("onix", "textures/gui/design/petals.png");
     private static final int BG_W = 1600;
     private static final int BG_H = 900;
     private float parX;
     private float parY;
 
     /**
-     * A clean studio picture (tools/cinematic_bg.py) with light falling in from the top right. Interactive: the picture
-     * and the light beams follow the mouse at different depths and drift slowly on their own.
+     * The scene of the main menu design (the same as the launcher's start page):
+     * Water – the sunken scene; Runner – a dark studio with light falling in from the top right;
+     * Meadow – thousands of flowers on a grey meadow (tools/meadow.py), petals drifting up.
      */
     private void renderCinematicBackground(GuiGraphics ctx, int mouseX, int mouseY, float time) {
         // the mouse offset eases in, so the picture glides instead of jumping
@@ -526,15 +565,42 @@ public class OnixTitleScreen extends Screen {
         float ty = (mouseY - height / 2f) / Math.max(1, height / 2f);
         parX += (tx - parX) * 0.06f;
         parY += (ty - parY) * 0.06f;
+        switch (scene()) {
+            case "Runner" -> {
+                float cover = Math.max(width / (float) BG_W, height / (float) BG_H);
+                float zoom = cover * (1.07f + 0.012f * (float) Math.sin(time * 0.08f));
+                int w = Math.round(BG_W * zoom);
+                int h = Math.round(BG_H * zoom);
+                int x = Math.round((width - w) / 2f - parX * width * 0.012f);
+                int y = Math.round((height - h) / 2f - parY * height * 0.012f);
+                ctx.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, STUDIO, x, y, 0f, 0f, w, h, BG_W, BG_H, BG_W, BG_H, 0xFFFFFFFF);
+                renderStudioLight(ctx, time);
+            }
+            case "Meadow" -> {
+                // the camera drifts slowly; it holds still once the gust comes, so the petals leave from the right places
+                if (petalBurst <= 0) {
+                    float cover = Math.max(width / (float) BG_W, height / (float) BG_H);
+                    float zoom = cover * (1.06f + 0.015f * (float) Math.sin(time * 0.05f));
+                    meadowW = Math.round(BG_W * zoom);
+                    meadowH = Math.round(BG_H * zoom);
+                    meadowX = Math.round((width - meadowW) / 2f - parX * width * 0.01f + (float) Math.sin(time * 0.04f) * width * 0.01f);
+                    meadowY = Math.round((height - meadowH) / 2f - parY * height * 0.008f);
+                }
+                ctx.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, MEADOW, meadowX, meadowY, 0f, 0f, meadowW, meadowH, BG_W, BG_H, BG_W, BG_H, 0xFFFFFFFF);
+                if (petalBurst > 0) renderBareMeadow(ctx);
+                // a soft shade behind the menu, so it reads well on the light meadow (smooth, no bands)
+                ctx.fill(0, 0, width, height, 0x22000000);
+                SoftShapes.glow(ctx, width * (width >= 420 ? 0.42f : 0.5f), height * 0.5f, width * 0.3f, height * 0.62f, 0xB80C1216);
+                SoftShapes.glow(ctx, width * (width >= 420 ? 0.42f : 0.5f), height * 0.7f, width * 0.26f, height * 0.4f, 0x900C1216);
+            }
+            default -> FallTransition.drawVoid(ctx, width, height, time);
+        }
+        if (!entered) ctx.fill(0, 0, width, height, 0x99000000);
+    }
+
+    /** The studio light (Runner): closer to the camera than the picture, so it moves more with the mouse. */
+    private void renderStudioLight(GuiGraphics ctx, float time) {
         float cover = Math.max(width / (float) BG_W, height / (float) BG_H);
-        // base picture: slow breathing zoom, small parallax
-        float zoom = cover * (1.07f + 0.012f * (float) Math.sin(time * 0.08f));
-        int w = Math.round(BG_W * zoom);
-        int h = Math.round(BG_H * zoom);
-        int x = Math.round((width - w) / 2f - parX * width * 0.012f);
-        int y = Math.round((height - h) / 2f - parY * height * 0.012f);
-        ctx.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, CINE_BG, x, y, 0f, 0f, w, h, BG_W, BG_H, BG_W, BG_H, 0xFFFFFFFF);
-        // light beams: closer to the camera, so they move more; they sway and breathe a little
         float lz = cover * 1.12f;
         int lw = Math.round(BG_W * lz);
         int lh = Math.round(BG_H * lz);
@@ -542,19 +608,204 @@ public class OnixTitleScreen extends Screen {
         int ly = Math.round((height - lh) / 2f - parY * height * 0.03f);
         float breathe = 0.82f + 0.18f * (float) Math.sin(time * 0.5f);
         int la = Math.round(255 * breathe * (entered ? 1f : 0.45f));
-        ctx.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, CINE_LIGHT, lx, ly, 0f, 0f, lw, lh, BG_W, BG_H, BG_W, BG_H, (la << 24) | 0xFFFFFF);
-        if (!entered) ctx.fill(0, 0, width, height, 0x99000000);
-        // dust drifting through the light
-        if (OnixClient.CONFIG == null || OnixClient.CONFIG.menuParticles.isOn()) particles.render(ctx, width, height, 0.3f * (entered ? 1f : 0.4f));
+        ctx.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, STUDIO_LIGHT, lx, ly, 0f, 0f, lw, lh, BG_W, BG_H, BG_W, BG_H, (la << 24) | 0xFFFFFF);
     }
 
-    private void light(GuiGraphics ctx, float cx, float cy, float radius, int color, float strength) {
-        SoftShapes.glow(ctx, cx, cy, radius, radius, Theme.withAlpha(color, Math.min(255, Math.round(strength * 18))));
+    // ---- Meadow: on Singleplayer or Multiplayer a gust runs through the meadow from the front; where it passes, every
+    // flower lets go of its own petals (tools/meadow.py lists the visible flowers: place, size, kind, how the head is
+    // turned), they lift, flutter and are carried up, and the bare meadow (the same flowers, hearts only) shows underneath.
+    private static final Identifier MEADOW_BARE = Identifier.fromNamespaceAndPath("onix", "textures/gui/design/meadow_bare.png");
+    private static float[][] flowers;
+    private final List<float[]> petals = new ArrayList<>();   // x, y, L, start, kind, ang, squash, vx, vy, lift, drift, spin, flip, flipSpeed, wob
+    private long petalBurst;
+    private float petalNext = 1.5f;
+    private int meadowX, meadowY, meadowW = 1, meadowH = 1;
+    private static final float GUST_X = 0.5f, GUST_Y = 1.08f, GUST_SPEED = 1.05f, GUST_SOFT = 0.14f, GUST_DELAY = 0.05f;
+
+    private static float[][] flowers() {
+        if (flowers != null) return flowers;
+        try (var in = OnixTitleScreen.class.getResourceAsStream("/assets/onix/textures/gui/design/meadow_flowers.json")) {
+            var arr = com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8)).getAsJsonArray();
+            float[][] out = new float[arr.size()][];
+            for (int i = 0; i < out.length; i++) {
+                var f = arr.get(i).getAsJsonArray();
+                out[i] = new float[f.size()];
+                for (int j = 0; j < f.size(); j++) out[i][j] = f.get(j).getAsFloat();
+            }
+            flowers = out;
+        } catch (Exception e) {
+            OnixClient.LOGGER.warn("Could not read the meadow's flowers", e);
+            flowers = new float[0][];
+        }
+        return flowers;
     }
 
-    private void vignette(GuiGraphics ctx) {
-        // a bit bigger than the screen so the middle stays clear and the corners go dark
-        SoftShapes.vignette(ctx, -width / 8, -height / 8, width + width / 4, height + height / 4, 0xD0000000);
+    /** How far the gust has to travel to a point (0 at its start below the bottom centre … about 1.1 at the far corners). */
+    private float gustAt(float nx, float ny) {
+        float ax = (nx - GUST_X) * width / Math.max(1f, height);
+        float ay = ny - GUST_Y;
+        return (float) Math.sqrt(ax * ax + ay * ay) / 1.25f;
+    }
+
+    private float burstAge() {
+        return petalBurst > 0 ? (System.currentTimeMillis() - petalBurst) / 1000f : -1;
+    }
+
+    /** One petal of a flower (index i of n), leaving `start` seconds after the gust began. */
+    private void addPetal(float[] f, int i, float start) {
+        float s = meadowW / (float) BG_W;
+        float L = f[2] * BG_W * s * f[7];
+        double a = f[5] + 2 * Math.PI * i / f[6];
+        float x = meadowX + f[0] * BG_W * s + (float) Math.cos(a) * L * 0.5f;
+        float y = meadowY + f[1] * BG_H * s + (float) Math.sin(a) * L * 0.5f * f[4];
+        float out = (float) Math.cos(a);
+        petals.add(new float[]{x, y, L, start, f[3],
+                (float) Math.atan2(Math.sin(a) * f[4], Math.cos(a)), Math.max(0.35f, f[4]),
+                out * L * (1.5f + random.nextFloat()) + (random.nextFloat() - 0.5f) * L * 2, -L * (1.4f + random.nextFloat() * 1.6f) - height * 0.04f,
+                -(0.38f + random.nextFloat() * 0.42f) * height, (random.nextFloat() - 0.5f) * width * 0.08f + width * 0.02f,
+                (random.nextFloat() - 0.5f) * 7f, random.nextFloat() * 6.28f, 2.5f + random.nextFloat() * 4f, random.nextFloat() * 6.28f});
+    }
+
+    /** Every visible flower's petals, timed by when the gust reaches it, and a haze of tiny ones from the far meadow. */
+    private void buildPetals() {
+        petals.clear();
+        float s = meadowW / (float) BG_W;
+        // every visible flower loses petals: the close ones all of them, the farther ones fewer – shared out so that every
+        // flower the gust passes sends some up, never more than the budget
+        int budget = 1500;
+        List<float[]> visible = new ArrayList<>();   // flower index, screen x, screen y, wanted
+        int wanted = 0;
+        float[][] all = flowers();
+        for (int fi = 0; fi < all.length; fi++) {
+            float[] f = all[fi];
+            float sx = meadowX + f[0] * BG_W * s;
+            float sy = meadowY + f[1] * BG_H * s;
+            if (sx < -20 || sx > width + 20 || sy < -20 || sy > height + 20) continue;
+            float sizeGui = f[2] * BG_W * s;
+            int n = (int) f[6];
+            int want = sizeGui > 11 ? n : sizeGui > 7 ? Math.min(n, 5) : 2;
+            visible.add(new float[]{fi, sx, sy, want});
+            wanted += want;
+        }
+        float share = Math.min(1f, budget / (float) Math.max(1, wanted));
+        for (float[] v : visible) {
+            float[] f = all[(int) v[0]];
+            int n = (int) f[6];
+            int count = Math.max(1, Math.round(v[3] * share));
+            float when = GUST_DELAY + gustAt(v[1] / width, v[2] / height) / GUST_SPEED + random.nextFloat() * 0.12f;
+            for (int i = 0; i < count; i++) {
+                int k = count >= n ? i : (int) ((i + random.nextFloat()) * n / count);
+                addPetal(f, k, when + i * 0.02f + random.nextFloat() * 0.06f);
+            }
+        }
+        // the many small flowers too far away to list: their petals rise as a fine haze where the gust passes
+        for (int i = 0; i < 500; i++) {
+            float nx = random.nextFloat();
+            float ny = 0.36f + random.nextFloat() * 0.5f;
+            float depth = Math.max(0, (ny - 0.34f) / 0.66f);
+            float[] fake = {((nx * width - meadowX) / s) / BG_W, ((ny * height - meadowY) / s) / BG_H, (1.2f + 6f * depth * depth) / (BG_W * s),
+                    random.nextInt(5), 0.7f, random.nextFloat() * 6.28f, 8, 1, 0.35f};
+            addPetal(fake, random.nextInt(8), GUST_DELAY + gustAt(nx, ny) / GUST_SPEED + random.nextFloat() * 0.2f);
+        }
+    }
+
+    /** The bare meadow where the gust has passed: tiles of the second picture, faded in by their distance to the gust. */
+    private void renderBareMeadow(GuiGraphics ctx) {
+        float b = burstAge();
+        float reach = Math.max(0, (b - GUST_DELAY - 0.15f) * GUST_SPEED);
+        float s = meadowW / (float) BG_W;
+        int tile = Math.max(8, width / 40);
+        for (int ty = 0; ty < height; ty += tile) {
+            for (int tx = 0; tx < width; tx += tile) {
+                float d = gustAt((tx + tile / 2f) / width, (ty + tile / 2f) / height);
+                float a = smooth((reach - d) / GUST_SOFT + 0.5f);
+                if (a <= 0.01f) continue;
+                int tw = Math.min(tile, width - tx);
+                int th = Math.min(tile, height - ty);
+                float u = (tx - meadowX) / s;
+                float v = (ty - meadowY) / s;
+                ctx.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, MEADOW_BARE, tx, ty, u, v, tw, th,
+                        Math.max(1, Math.round(tw / s)), Math.max(1, Math.round(th / s)), BG_W, BG_H, net.minecraft.util.ARGB.colorFromFloat(a, 1f, 1f, 1f));
+            }
+        }
+    }
+
+    /** Dev test: the gust as if you had pressed Singleplayer (without leaving the screen). */
+    public void devBurst() {
+        petalBurst = System.currentTimeMillis();
+        buildPetals();
+    }
+
+    private void renderPetals(GuiGraphics ctx, float time, float dt) {
+        float b = burstAge();
+        // now and then a single petal lets go of a flower in the breeze
+        if (b < 0 && time > petalNext && petals.size() < 40 && flowers().length > 0) {
+            float[] f = flowers()[random.nextInt(Math.min(500, flowers().length))];
+            addPetal(f, random.nextInt((int) f[6]), 0);
+            float[] p = petals.get(petals.size() - 1);
+            p[3] = -time;                      // ambient petals count their age from now (negative start = own clock)
+            p[9] *= 0.25f;
+            petalNext = time + 0.6f + random.nextFloat() * 1.4f;
+        }
+        for (int i = petals.size() - 1; i >= 0; i--) {
+            float[] p = petals.get(i);
+            float age = p[3] < 0 ? time + p[3] : b - p[3];
+            if (age < 0) continue;
+            float go = Math.min(1f, age / 0.35f);
+            p[8] += p[9] * dt * go;
+            p[7] += (p[10] - p[7] * 0.6f) * dt;
+            p[0] += (p[7] + (float) Math.sin(age * 2.2f + p[14]) * p[2] * 2.2f * go) * dt;
+            p[1] += p[8] * dt;
+            p[5] += p[11] * dt * go;
+            p[12] += p[13] * dt * go;
+            if (p[1] < -p[2] * 2 || age > 7) {
+                petals.remove(i);
+                continue;
+            }
+            float len = p[2] * 1.05f;
+            float sy = (p[6] + (1 - p[6]) * go) * Math.max(0.12f, Math.abs((float) Math.cos(p[12] * go)));
+            float alpha = Math.min(1f, age * 6f) * (age > 5 ? Math.max(0, 1 - (age - 5) / 2f) : 1f);
+            int size = Math.max(1, Math.round(len));
+            ctx.pose().pushMatrix();
+            ctx.pose().translate(p[0], p[1]);
+            ctx.pose().rotate(p[5]);
+            ctx.pose().scale(1f, sy);
+            ctx.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, PETALS, -size / 2, -size / 2, (int) p[4] % 8 * 64f, 0f, size, size, 64, 64, 512, 64,
+                    net.minecraft.util.ARGB.colorFromFloat(alpha, 1f, 1f, 1f));
+            ctx.pose().popMatrix();
+        }
+    }
+
+    // ---- Runner: the character runs in from the right, turns to you; runs off to the left when you pick something
+    private long runLeave = -1;
+    private float runCycle;
+
+    /** Walk/run cycle (side view) while moving, a smooth turn to the front and a calm idle when it stands. */
+    private void poseRunner(float speed, float face, float time) {
+        var acc = (dev.onix.client.mixin.PlayerSkinWidgetAccessor) skinWidget;
+        float swing = (float) Math.sin(runCycle) * speed;
+        float armIdle = speed > 0.02f ? 0f : (float) Math.sin(time * 1.2f) * 0.04f;
+        for (var model : new net.minecraft.client.model.player.PlayerModel[]{acc.onix$wide(), acc.onix$slim()}) {
+            var root = model.root();
+            root.xRot = speed * 0.12f;
+            root.zRot = 0f;
+            root.xScale = root.yScale = root.zScale = 1f;
+            root.y = 0f;
+            model.rightLeg.xRot = swing * 1.0f;
+            model.leftLeg.xRot = -swing * 1.0f;
+            model.rightLeg.zRot = 0f;
+            model.leftLeg.zRot = 0f;
+            model.rightArm.xRot = -swing * 0.9f;
+            model.leftArm.xRot = swing * 0.9f;
+            model.rightArm.yRot = 0f;
+            model.leftArm.yRot = 0f;
+            model.rightArm.zRot = 0.05f + armIdle;
+            model.leftArm.zRot = -0.05f - armIdle;
+            model.head.xRot = speed * 0.1f;
+            model.head.yRot = 0f;
+        }
+        acc.onix$setRotationY(face);
+        acc.onix$setRotationX(-5f);
     }
 
     private void logo(GuiGraphics ctx, float cx, float cy, float size, float alpha, float spin) {
@@ -633,12 +884,12 @@ public class OnixTitleScreen extends Screen {
         int top = Math.round(height / 2f - 40);
         int hovered = -1;
         for (int i = 0; i < cineItems.size(); i++) {
-            int y = top + i * step + (i >= 2 ? 6 : 0);
+            int y = top + i * step + (cineItems.get(i).primary() ? 0 : 6);
             int w = Math.max(110, Theme.boldWidth(cineItems.get(i).label()) + 30);
             if (Theme.inside(mouseX, mouseY, Math.round(menuX - w / 2f), y - 4, Math.round(menuX + w / 2f), y + 12)) hovered = i;
         }
         if (hovered >= 0) {
-            int y = top + hovered * step + (hovered >= 2 ? 6 : 0);
+            int y = top + hovered * step + (cineItems.get(hovered).primary() ? 0 : 6);
             float w = Math.max(110, Theme.boldWidth(cineItems.get(hovered).label()) + 30);
             if (Float.isNaN(hoverY)) {
                 hoverY = y;
@@ -659,7 +910,7 @@ public class OnixTitleScreen extends Screen {
             Item item = cineItems.get(i);
             float ia = smooth((since - 0.55f - i * 0.07f) / 0.4f);
             if (ia <= 0.01f) continue;
-            int y = top + i * step + (i >= 2 ? 6 : 0) + Math.round((1 - ia) * 8);
+            int y = top + i * step + (item.primary() ? 0 : 6) + Math.round((1 - ia) * 8);
             boolean hov = i == hovered;
             float h = hoverAnim("cine:" + item.label(), hov);
             int color = Theme.lerpColor(0xFFB4B4BC, WHITE, h);
@@ -670,47 +921,14 @@ public class OnixTitleScreen extends Screen {
             areas.add(new Area(Math.round(menuX - w / 2f), y - 4, Math.round(menuX + w / 2f), y + 12, () -> go(action)));
         }
 
-        // ---- the player walks in from the right, turns to you; the wardrobe pill under it
-        float walkT = (since - 0.7f) / 1.7f;                 // 0..1 while walking in
-        float walk = Math.max(0f, Math.min(1f, walkT));
-        float arrive = 1 - (1 - walk) * (1 - walk);           // slows down at the end
-        float skinA = smooth((since - 0.7f) / 0.35f);
-        if (skinWidget != null) {
-            int sh = Math.max(110, Math.min(240, Math.round(height * 0.52f)));
-            int sw = Math.round(sh * 0.55f);
-            float sxC = width * 0.76f;
-            float startX = width + sw;                          // just outside the right edge
-            float walkingX = startX + (sxC - startX) * arrive;
-            boolean walking = walkT < 1f;
-            float stride = walking ? 1f - smooth((walkT - 0.8f) / 0.2f) : 0f;   // legs settle as they arrive
-            float phase = since * 9f;
-            float bob = walking ? Math.abs((float) Math.sin(phase)) * -3f * stride : (float) Math.sin(time * 1.4f) * 2.5f;
-            int sx = Math.round(walkingX - sw / 2f);
-            int sy = Math.round(height / 2f - sh / 2f - 6 + bob);
-            skinWidget.setRectangle(sw, sh, sx, sy);
-            skinWidget.visible = skinOn && skinA > 0.02f;
-            poseSkin(walking, walkT, stride, phase, time);
-            if (skinWidget.visible) {
-                float here = smooth((walkT - 0.6f) / 0.4f);      // name, light and pill appear as they arrive
-                SoftShapes.glow(ctx, sxC, height / 2f, sw * 1.6f, sh * 0.75f, Theme.withAlpha(Theme.themeAccent(), Math.round(35 * here)));
-                // soft shadow on the "floor" under the feet, moving with them
-                SoftShapes.glow(ctx, walkingX, sy + sh - 1, sw * 0.45f, 5, Theme.withAlpha(0xFF000000, Math.round(160 * skinA)));
-                skinA = here;
-                String name = minecraft.getUser().getName();
-                centered(ctx, Theme.bold(name), sxC, sy - 14, 1f, a(WHITE, skinA));
-                // wardrobe pill
-                String label = "Wardrobe";
-                int pw = Theme.boldWidth(label) + 30;
-                int px = Math.round(sxC - pw / 2f);
-                int py = sy + sh + 10;
-                boolean hov = Theme.inside(mouseX, mouseY, px, py, px + pw, py + 18);
-                float h = hoverAnim("cine:wardrobe", hov);
-                glassPill(ctx, px, py, px + pw, py + 18, skinA, h);
-                drawIcon(ctx, "cosmetics", px + 8, py + 5, 8, a(WHITE, skinA));
-                ctx.drawString(font, Theme.bold(label), px + 20, py + 5, a(Theme.lerpColor(0xFFDADAE0, WHITE, h), skinA), false);
-                areas.add(new Area(px, py, px + pw, py + 18,
-                        () -> go(() -> minecraft.setScreen(new OnixMenuScreen(this, OnixMenuScreen.View.COSMETICS)))));
-            }
+        String scene = scene();
+        if (scene.equals("Meadow")) {
+            if (skinWidget != null) skinWidget.visible = false;
+            renderPetals(ctx, time, dt);
+        } else if (scene.equals("Runner")) {
+            renderRunner(ctx, mouseX, mouseY, since, time, dt, skinOn);
+        } else {
+            renderSunkenPlayer(ctx, mouseX, mouseY, since, time, skinOn);
         }
         super.render(ctx, mouseX, mouseY, delta); // the skin widget (Screen.render draws the background first)
 
@@ -721,6 +939,94 @@ public class OnixTitleScreen extends Screen {
         String version = OnixClient.NAME + " " + OnixClient.VERSION;
         Theme.small(ctx, version, width - 8 - Theme.smallWidth(version), height - 12, a(0xFF55555E, fa));
         renderFade(ctx, now);
+    }
+
+    /** Water: the player falls in from above, backwards and upside down, and floats there in the deep; wardrobe pill under it. */
+    private void renderSunkenPlayer(GuiGraphics ctx, int mouseX, int mouseY, float since, float time, boolean skinOn) {
+        float fall = smooth((since - 0.5f) / 1.8f);
+        float skinA = smooth((since - 0.5f) / 0.35f);
+        if (skinWidget != null) {
+            int sh = Math.max(110, Math.min(240, Math.round(height * 0.52f)));
+            int sw = Math.round(sh * 1.3f);
+            float sxC = width * 0.74f + (float) Math.sin(time * 0.5f) * 4f;
+            float restY = height / 2f - 6 + (float) Math.sin(time * 0.8f) * 4f;
+            float cy = -sh + (restY + sh) * fall;
+            int sx = Math.round(sxC - sw / 2f);
+            int sy = Math.round(cy - sh / 2f);
+            skinWidget.setRectangle(sw, sh, sx, sy);
+            skinWidget.visible = skinOn && skinA > 0.02f;
+            float vy = fallPrevT >= 0 && since > fallPrevT && since - fallPrevT < 0.5f ? (cy - fallPrevCy) / Math.max(1, sh) / (since - fallPrevT) : 0;
+            fallPrevCy = cy;
+            fallPrevT = since;
+            FallTransition.pose(skinWidget, since, vy);
+            if (skinWidget.visible) {
+                float here = smooth((since - 1.6f) / 0.6f);        // name, light and pill appear once it floats
+                SoftShapes.glow(ctx, sxC, cy, sw * 0.7f, sh * 0.6f, Theme.withAlpha(0xFF6FD2DC, Math.round(30 * skinA)));
+                skinA = here;
+                String name = minecraft.getUser().getName();
+                centered(ctx, Theme.bold(name), sxC, Math.round(restY - sh / 2f) - 14, 1f, a(WHITE, skinA));
+                // wardrobe pill
+                String label = "Wardrobe";
+                int pw = Theme.boldWidth(label) + 30;
+                int px = Math.round(sxC - pw / 2f);
+                int py = Math.round(restY + sh / 2f) + 10;
+                boolean hov = Theme.inside(mouseX, mouseY, px, py, px + pw, py + 18);
+                float h = hoverAnim("cine:wardrobe", hov);
+                glassPill(ctx, px, py, px + pw, py + 18, skinA, h);
+                drawIcon(ctx, "cosmetics", px + 8, py + 5, 8, a(WHITE, skinA));
+                ctx.drawString(font, Theme.bold(label), px + 20, py + 5, a(Theme.lerpColor(0xFFDADAE0, WHITE, h), skinA), false);
+                areas.add(new Area(px, py, px + pw, py + 18,
+                        () -> go(() -> minecraft.setScreen(new OnixMenuScreen(this, OnixMenuScreen.View.COSMETICS)))));
+            }
+        }
+    }
+
+    /** Runner: the player runs in from the right, slows down, turns to you; the name and the wardrobe pill appear. */
+    private void renderRunner(GuiGraphics ctx, int mouseX, int mouseY, float since, float time, float dt, boolean skinOn) {
+        if (skinWidget == null) return;
+        int sh = Math.max(110, Math.min(240, Math.round(height * 0.52f)));
+        int sw = Math.round(sh * 0.55f);
+        float sxC = width * 0.76f;
+        float arrive = clamp01((since - 0.6f) / 1.9f);
+        float x;
+        float speed;
+        float face;
+        if (runLeave > 0) {
+            float l = (System.currentTimeMillis() - runLeave) / 1000f;
+            float e = clamp01(l / 1.1f);
+            x = sxC - e * e * (sxC + sw);
+            speed = Math.min(1f, 0.4f + l * 2f);
+            face = -90f + (1 - smooth(l / 0.2f)) * 120f;
+        } else {
+            float ease = 1 - (1 - arrive) * (1 - arrive) * (1 - arrive);
+            x = width + sw + (sxC - width - sw) * ease;
+            speed = 1 - smooth((arrive - 0.75f) / 0.3f);
+            face = -90f + smooth((arrive - 0.85f) / 0.35f) * 120f;
+        }
+        runCycle += dt * (5 + 7 * speed) * (speed > 0.02f ? 1 : 0);
+        float bob = Math.abs((float) Math.cos(runCycle)) * -3f * speed + (speed > 0.02f ? 0 : (float) Math.sin(time * 1.4f) * 1.5f);
+        int sx = Math.round(x - sw / 2f);
+        int sy = Math.round(height / 2f - sh / 2f - 6 + bob);
+        skinWidget.setRectangle(sw, sh, sx, sy);
+        skinWidget.visible = skinOn && since > 0.6f;
+        poseRunner(speed, face, time);
+        if (!skinWidget.visible) return;
+        // soft shadow on the floor under the feet, moving with them
+        SoftShapes.glow(ctx, x, sy + sh - 1, sw * 0.45f, 5, Theme.withAlpha(0xFF000000, 160));
+        float here = runLeave > 0 ? 0 : smooth((arrive - 0.9f) / 0.1f);
+        if (here <= 0.01f) return;
+        String name = minecraft.getUser().getName();
+        centered(ctx, Theme.bold(name), sxC, sy - 14, 1f, a(WHITE, here));
+        String label = "Wardrobe";
+        int pw = Theme.boldWidth(label) + 30;
+        int px = Math.round(sxC - pw / 2f);
+        int py = sy + sh + 10;
+        boolean hov = Theme.inside(mouseX, mouseY, px, py, px + pw, py + 18);
+        float h = hoverAnim("cine:wardrobe", hov);
+        glassPill(ctx, px, py, px + pw, py + 18, here, h);
+        drawIcon(ctx, "cosmetics", px + 8, py + 5, 8, a(WHITE, here));
+        ctx.drawString(font, Theme.bold(label), px + 20, py + 5, a(Theme.lerpColor(0xFFDADAE0, WHITE, h), here), false);
+        areas.add(new Area(px, py, px + pw, py + 18, () -> go(() -> minecraft.setScreen(new OnixMenuScreen(this, OnixMenuScreen.View.COSMETICS)))));
     }
 
     private record Tool(String icon, String label, Runnable action) {}
@@ -771,42 +1077,45 @@ public class OnixTitleScreen extends Screen {
                 tipX = bx + size / 2;
             }
         }
+        // Essential installed: its friends, wardrobe and pictures in a second pill (Essential only adds them to vanilla's menu)
+        int tipY = y0 + size + 12;
+        if (EssentialLink.present()) {
+            List<Tool> essential = List.of(
+                    new Tool("profile", "Essential Friends", EssentialLink::friends),
+                    new Tool("cosmetics", "Essential Wardrobe", EssentialLink::wardrobe),
+                    new Tool("visual", "Essential Pictures", EssentialLink::pictures));
+            String label = "Essential";
+            int lw = Theme.width(label);
+            int ew = lw + 10 + essential.size() * size + (essential.size() - 1) * gap + 8;
+            int ex = x0 + w - ew;
+            int ey = y0 + size + 12;
+            glassPill(ctx, ex, ey, ex + ew, ey + size + 8, alpha, 0);
+            Theme.text(ctx, label, ex + 8, ey + 8, a(0xFFB4B4BC, alpha));
+            for (int i = 0; i < essential.size(); i++) {
+                Tool t = essential.get(i);
+                int bx = ex + lw + 14 + i * (size + gap);
+                int by = ey + 4;
+                boolean hov = Theme.inside(mouseX, mouseY, bx, by, bx + size, by + size);
+                float h = hoverAnim("essential:" + t.icon(), hov);
+                if (h > 0.01f) gg.carbon.client.ui.R2D.rrect(ctx, bx, by, size, size, size / 2f, a(0x26FFFFFF, h * alpha));
+                drawIcon(ctx, t.icon(), bx + 4, by + 4, 7, a(Theme.lerpColor(0xFFB4B4BC, WHITE, h), alpha));
+                areas.add(new Area(bx, by, bx + size, by + size, t.action()));
+                if (hov) {
+                    tip = t.label();
+                    tipX = bx + size / 2;
+                }
+            }
+            tipY = ey + size + 12;
+        }
         if (tip != null) {
             int tw = Theme.width(tip) + 12;
             int tx = Math.min(width - 6 - tw, tipX - tw / 2);
-            int ty = y0 + size + 12;
+            int ty = tipY;
             Theme.round(ctx, tx, ty, tx + tw, ty + 14, 7, a(0xE00B0B0E, alpha));
             Theme.text(ctx, tip, tx + 6, ty + 3, a(WHITE, alpha));
         }
     }
 
-    private boolean skinTurned;
-
-    /** Walk cycle while walking in (side view), then a smooth turn to the front and a calm idle. */
-    private void poseSkin(boolean walking, float walkT, float stride, float phase, float time) {
-        var acc = (dev.onix.client.mixin.PlayerSkinWidgetAccessor) skinWidget;
-        float swing = (float) Math.cos(phase) * 0.9f * stride;
-        float armIdle = walking ? 0f : (float) Math.sin(time * 1.2f) * 0.04f;
-        for (var model : new net.minecraft.client.model.player.PlayerModel[]{acc.onix$wide(), acc.onix$slim()}) {
-            model.rightLeg.xRot = swing;
-            model.leftLeg.xRot = -swing;
-            model.rightArm.xRot = -swing * 0.8f;
-            model.leftArm.xRot = swing * 0.8f;
-            model.rightArm.zRot = 0.05f + armIdle;
-            model.leftArm.zRot = -0.05f - armIdle;
-            model.head.xRot = 0f;
-        }
-        if (walking) {
-            // facing the way they walk (to the left), turning towards you over the last steps
-            float turn = smooth((walkT - 0.7f) / 0.3f);
-            acc.onix$setRotationY(-90f + (30f + 90f) * turn);
-            acc.onix$setRotationX(-5f);
-            skinTurned = false;
-        } else if (!skinTurned) {
-            acc.onix$setRotationY(30f);
-            skinTurned = true;
-        }
-    }
 
     /** Dark liquid glass: see-through black, light top edge, a little shine when hovered. */
     private void glassPill(GuiGraphics ctx, int x1, int y1, int x2, int y2, float alpha, float hover) {

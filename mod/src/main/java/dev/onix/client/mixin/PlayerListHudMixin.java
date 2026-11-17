@@ -45,5 +45,7 @@ public abstract class PlayerListHudMixin {
         if (OnixClient.MODULES == null) return;
         OnixBadgeModule badge = OnixClient.MODULES.get(OnixBadgeModule.class);
         if (badge != null && badge.isEnabled()) cir.setReturnValue(badge.decorateTabName(entry, cir.getReturnValue()));
+        dev.onix.client.module.impl.combat.TierTaggerModule tiers = OnixClient.MODULES.get(dev.onix.client.module.impl.combat.TierTaggerModule.class);
+        if (tiers != null && tiers.isEnabled()) cir.setReturnValue(tiers.decorateTabName(entry, cir.getReturnValue()));
     }
 }

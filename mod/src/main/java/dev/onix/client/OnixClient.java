@@ -58,6 +58,14 @@ public class OnixClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         CONFIG = OnixConfig.load();
+        // 1.1.28: themes, light mode, background picks and the slideshow are gone; everyone gets the one Onix look once
+        if (!CONFIG.designSet.isOn()) {
+            CONFIG.designSet.set(true);
+            CONFIG.lightMode.set(false);
+            CONFIG.titleBackground.set("carbon");
+            CONFIG.backgroundSlideshow.set(false);
+            CONFIG.save();
+        }
         MODULES = new ModuleManager();
         MODULES.registerDefaults();
         PROFILES = new ProfileManager(MODULES, CONFIG);

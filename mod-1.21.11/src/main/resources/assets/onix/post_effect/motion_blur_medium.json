@@ -1,0 +1,55 @@
+{
+  "targets": {
+    "swap": {},
+    "previous": {
+      "persistent": true
+    }
+  },
+  "passes": [
+    {
+      "vertex_shader": "onix:post/fullscreen",
+      "fragment_shader": "onix:post/motion_blur",
+      "inputs": [
+        {
+          "sampler_name": "In",
+          "target": "minecraft:main"
+        },
+        {
+          "sampler_name": "Prev",
+          "target": "previous"
+        }
+      ],
+      "output": "swap",
+      "uniforms": {
+        "MotionBlurConfig": [
+          {
+            "type": "float",
+            "value": 0.6
+          }
+        ]
+      }
+    },
+    {
+      "vertex_shader": "onix:post/fullscreen",
+      "fragment_shader": "onix:post/copy",
+      "inputs": [
+        {
+          "sampler_name": "In",
+          "target": "swap"
+        }
+      ],
+      "output": "previous"
+    },
+    {
+      "vertex_shader": "onix:post/fullscreen",
+      "fragment_shader": "onix:post/copy",
+      "inputs": [
+        {
+          "sampler_name": "In",
+          "target": "swap"
+        }
+      ],
+      "output": "minecraft:main"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+/* Onix for Android: the PC launcher's interface on a phone (loaded after styles.css). */
+
+/* no window to move, minimise or close; no keyboard shortcuts on a phone */
+html.android .window-controls,
+html.android .palette-trigger kbd,
+html.android .drag { -webkit-app-region: none; }
+html.android .window-controls,
+html.android .palette-trigger kbd { display: none !important; }
+
+/* importing from other launchers and installing into them are PC features */
+html.android .nav-item[data-view="import"],
+html.android .nav-item[data-view="install"] { display: none !important; }
+
+/* touch: bigger hit areas, no hover-only details, no text selection */
+html.android button, html.android .btn, html.android .nav-item { min-height: 36px; touch-action: manipulation; }
+html.android * { -webkit-tap-highlight-color: transparent; }
+html.android ::-webkit-scrollbar { width: 0; height: 0; }

@@ -26,7 +26,7 @@ public abstract class MinecraftClientMixin {
             String design = OnixClient.CONFIG.menuDesign.get();
             if (design.equals("Vanilla")) return;
             ci.cancel();
-            ((Minecraft) (Object) this).setScreen(design.equals("Onix") ? new OnixTitleScreen() : new gg.carbon.client.screen.CarbonMainMenu());
+            ((Minecraft) (Object) this).setScreen(new OnixTitleScreen());
         }
     }
 

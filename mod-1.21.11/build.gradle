@@ -60,3 +60,19 @@ java {
 	sourceCompatibility = JavaVersion.VERSION_21
 	targetCompatibility = JavaVersion.VERSION_21
 }
+
+// Dev test with the performance mods the launcher installs (devtest.yml, -PperfMods): Onix must work together with them.
+// (Sodium is left out: its own mixins do not apply in a development environment; it runs with Onix in the real game.)
+if (project.hasProperty('perfMods')) {
+	repositories {
+		exclusiveContent {
+			forRepository { maven { name = 'Modrinth'; url = 'https://api.modrinth.com/maven' } }
+			filter { includeGroup 'maven.modrinth' }
+		}
+	}
+	dependencies {
+		modLocalRuntime 'maven.modrinth:lithium:Ow7wA0kG'
+		modLocalRuntime 'maven.modrinth:badoptimizations:Q3Dusz2j'
+		modLocalRuntime 'maven.modrinth:scalablelux:PV9KcrYQ'
+	}
+}

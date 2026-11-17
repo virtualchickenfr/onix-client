@@ -24,18 +24,14 @@ public class OnixConfig {
 
     // Title screen background, see TitleBackgrounds
     public final TextSetting titleBackground = new TextSetting("titleBackground", "Background", "carbon", 128).hidden();
-    public final BoolSetting backgroundSlideshow = new BoolSetting("backgroundSlideshow", "Slideshow", false)
-            .describe("Cycles through every background with a soft crossfade.");
-    public final NumberSetting slideshowSeconds = new NumberSetting("slideshowSeconds", "Show Each For", 12, 4, 60, 1).unit("s")
-            .visibleIf(backgroundSlideshow::isOn);
-    public final BoolSetting backgroundMotion = new BoolSetting("backgroundMotion", "Background Motion", true)
-            .describe("Slow drift and a little parallax when you move the mouse.");
+    public final BoolSetting backgroundSlideshow = new BoolSetting("backgroundSlideshow", "Slideshow", false).hidden();
+    public final NumberSetting slideshowSeconds = new NumberSetting("slideshowSeconds", "Show Each For", 12, 4, 60, 1).unit("s").hidden();
+    public final BoolSetting backgroundMotion = new BoolSetting("backgroundMotion", "Background Motion", true).hidden();
 
     // Interface
-    public final BoolSetting menuGlass = new BoolSetting("menuGlass", "Liquid Glass", true)
-            .describe("In-game menus as dark frosted glass: the world blurs behind see-through panels with light edges.");
+    public final BoolSetting menuGlass = new BoolSetting("menuGlass", "Liquid Glass", false).hidden();
     public final ModeSetting menuStyle = new ModeSetting("menuStyle", "Menu Style", "Clean", "Classic", "Bloom")
-            .describe("Clean opens the Carbon style mod menu with module cards. Classic opens the Onix module list, Bloom starts with a flower of categories.");
+            .describe("Clean opens the module menu with module cards. Classic opens the module list, Bloom starts with a flower of categories.");
     public final ModeSetting menuScale = new ModeSetting("menuScale", "Menu Size", "Normal", "Small", "Large");
     public final BoolSetting menuAnimations = new BoolSetting("menuAnimations", "Animations", true);
     public final BoolSetting clickSounds = new BoolSetting("clickSounds", "Click Sounds", true);
@@ -57,6 +53,8 @@ public class OnixConfig {
     /** 1.1.10: rounder buttons for everyone once (Button Style → Rounded). */
     /** 1.1.13: the HUD uses the smooth Onix font (Geist) once for everyone. */
     public final BoolSetting fontSet = new BoolSetting("fontSet", "Font Set", false).hidden();
+    public final BoolSetting roundSet2 = new BoolSetting("roundSet2", "Round Set 2", false).hidden();
+    public final BoolSetting mobileSet = new BoolSetting("mobileSet", "Mobile Set", false).hidden();
     public final BoolSetting roundSet = new BoolSetting("roundSet", "Round Set", false).hidden();
     public final ModeSetting language = new ModeSetting("language", "Language", "English", "Deutsch")
             .describe("Language of the Onix menus, categories and modules (Minecraft keeps its own language).");
@@ -71,30 +69,39 @@ public class OnixConfig {
                     + "Empty = the server built into this Onix version.");
 
 
+    /** The last multiplayer server you played on, for the Rejoin button on the title screen. */
+    public final TextSetting lastServer = new TextSetting("lastServer", "Last Server", "", 300).hidden();
+    /** 1.1.22: shaders were switched off once (they are no longer on automatically). */
+    public final BoolSetting shadersOffSet = new BoolSetting("shadersOffSet", "Shaders Off Set", false).hidden();
+    public final TextSetting lastServerName = new TextSetting("lastServerName", "Last Server Name", "", 100).hidden();
+
     // Design
-    public final BoolSetting lightMode = new BoolSetting("lightMode", "Light Mode", false)
-            .describe("Light surfaces and dark text in every Onix menu.");
-    public final ModeSetting buttonStyle = new ModeSetting("buttonShape", "Button Style", "Rounded", "Pill", "Block", "Square")
-            .describe("Block: Carbon's stone buttons with depth, a lift on hover and a light sweep.");
-    public final BoolSetting carbonButtons = new BoolSetting("carbonButtons", "Carbon Buttons Everywhere", true)
-            .describe("Minecraft's own buttons and sliders (options, singleplayer, multiplayer …) as Carbon blocks.");
-    public final BoolSetting menuSkin = new BoolSetting("menuSkin", "Carbon Menu Skin", true)
-            .describe("Minecraft's menus outside a world get Carbon's backdrop, lists, text fields and tooltips.");
-    public final ModeSetting menuDesign = new ModeSetting("menuDesign", "Main Menu", "Onix", "Carbon", "Voxel", "Portal", "Classic", "Vanilla")
-            .describe("Onix's title screen or one of the Carbon designs (Carbon, Voxel, Portal, Classic).");
-    public final BoolSetting menuCharacter = new BoolSetting("menuCharacter", "Character Art", false)
-            .describe("Carbon design: show the character artwork next to the menu.")
-            .visibleIf(() -> menuDesign.is("Carbon"));
-    public final ModeSetting titleDesign = new ModeSetting("titleDesign", "Title Screen Design", "Cinematic", "Onix", "Centered", "Split", "Minimal", "Cards")
-            .describe("Also switch on the title screen with the arrow keys, by dragging or with the dots at the bottom.");
+    public final BoolSetting lightMode = new BoolSetting("lightMode", "Light Mode", false).hidden();
+    public final ModeSetting buttonStyle = new ModeSetting("buttonShape", "Button Style", "Rounded", "Pill")
+            .describe("Rounded corners or fully round pill buttons.");
+    public final BoolSetting carbonButtons = new BoolSetting("carbonButtons", "Onix Buttons Everywhere", true)
+            .describe("Minecraft's own buttons and sliders (options, singleplayer, multiplayer …) in the Onix look.");
+    public final BoolSetting menuSkin = new BoolSetting("menuSkin", "Onix Look for Minecraft Menus", true)
+            .describe("Minecraft's menus outside a world get the Onix backdrop, lists, text fields and tooltips.");
+    public final ModeSetting menuDesign = new ModeSetting("menuDesign", "Main Menu", "Water", "Runner", "Meadow", "Vanilla")
+            .describe("Water: you sink through deep water. Runner: a dark studio, your character runs in. Meadow: thousands of flowers, "
+                    + "the petals fly up when you start. The launcher's Design setting picks the same.");
+    /** 1.1.28: the three designs replaced themes, backgrounds and the Carbon menus (set once). */
+    public final BoolSetting designSet = new BoolSetting("designSet", "Design Set", false).hidden();
+    public final BoolSetting menuCharacter = new BoolSetting("menuCharacter", "Character Art", false).hidden();
+    public final ModeSetting titleDesign = new ModeSetting("titleDesign", "Title Screen Design", "Cinematic", "Onix", "Centered", "Split", "Minimal", "Cards").hidden();
 
     // Loading screens
     public final BoolSetting loadingScreens = new BoolSetting("loadingScreens", "Onix Loading Screens", true)
             .describe("Replaces resource loading, world loading, connecting and saving screens.");
-    public final ModeSetting loadingStyle = new ModeSetting("loadingStyle", "Animation", "eDEX", "Gem", "Orbit", "Minimal");
+    public final ModeSetting loadingStyle = new ModeSetting("loadingStyle", "Animation", "Minimal", "Gem", "Orbit");
     public final BoolSetting loadingTips = new BoolSetting("loadingTips", "Show Tips", true);
+    public final BoolSetting fallTransition = new BoolSetting("fallTransition", "Fall Transition", true)
+            .describe("Joining a world: your character falls and sinks into the deep while it loads.");
 
     // HUD
+    public final ModeSetting hudStyle = new ModeSetting("hudStyle", "HUD Style", "Glass", "Solid", "Minimal")
+            .describe("Glass: dark see-through panels with a light rim. Solid: plain boxes. Minimal: only the text.");
     public final BoolSetting hideHudInDebug = new BoolSetting("hideHudInDebug", "Hide HUD on F3 Screen", true);
     public final BoolSetting snapping = new BoolSetting("snapping", "Snap in HUD Editor", true)
             .describe("Elements snap to screen edges, the center and each other.");
@@ -134,11 +141,11 @@ public class OnixConfig {
     }
 
     public List<Setting<?, ?>> designSettings() {
-        return List.of(menuDesign, menuCharacter, menuStyle, menuGlass, lightMode, buttonStyle, carbonButtons, menuSkin, menuScale, titleDesign, menuAnimations, menuParticles, backgroundDim);
+        return List.of(menuDesign, menuStyle, buttonStyle, carbonButtons, menuSkin, menuScale, menuAnimations, menuParticles, backgroundDim);
     }
 
     public List<Setting<?, ?>> loadingSettings() {
-        return List.of(loadingScreens, loadingStyle, loadingTips);
+        return List.of(loadingScreens, loadingStyle, loadingTips, fallTransition);
     }
 
     public List<Setting<?, ?>> interfaceSettings() {
@@ -146,7 +153,7 @@ public class OnixConfig {
     }
 
     public List<Setting<?, ?>> hudSettings() {
-        return List.of(hideHudInDebug, snapping, snapDistance, editorGrid);
+        return List.of(hudStyle, hideHudInDebug, snapping, snapDistance, editorGrid);
     }
 
     public List<Setting<?, ?>> notificationSettings() {
@@ -168,10 +175,10 @@ public class OnixConfig {
     private List<Setting<?, ?>> all() {
         return List.of(theme, titleBackground, backgroundSlideshow, slideshowSeconds, backgroundMotion,
                 menuStyle, menuScale, menuAnimations, language, clickSounds, menuParticles, backgroundDim, tooltips, customMainMenu,
-                onixServer, socialOn, shareServer, nameTagLooks, lightMode, buttonStyle, carbonButtons, menuSkin, menuDesign, menuCharacter, titleDesign, loadingScreens, loadingStyle, loadingTips,
-                hideHudInDebug, snapping, snapDistance, editorGrid,
+                onixServer, socialOn, shareServer, nameTagLooks, lightMode, buttonStyle, carbonButtons, menuSkin, menuDesign, menuCharacter, titleDesign, loadingScreens, loadingStyle, loadingTips, fallTransition,
+                hudStyle, hideHudInDebug, snapping, snapDistance, editorGrid,
                 notifications, notificationSound, notificationTime, notificationPosition,
-                ruleNotes, rulesOnJoin, rulesSkip, autoSwitchProfiles, introDone, cinematicSet, cinematicSet2, cleanSet, edexSet, roundSet, fontSet, menuGlass);
+                ruleNotes, rulesOnJoin, rulesSkip, autoSwitchProfiles, introDone, cinematicSet, cinematicSet2, cleanSet, edexSet, roundSet, roundSet2, mobileSet, fontSet, menuGlass, lastServer, lastServerName, shadersOffSet);
     }
 
     public float menuScaleFactor() {

@@ -7,7 +7,6 @@ import dev.onix.client.gui.OnixTitleScreen;
 import dev.onix.client.module.HudModule;
 import dev.onix.client.module.Module;
 import gg.carbon.client.screen.CarbonMainMenu;
-import gg.carbon.client.screen.ThemePicker;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -48,6 +47,11 @@ public final class DevTest {
         STEPS.add(new Step(0, condition));
     }
 
+    private static void cmd(Minecraft mc, String command) {
+        var server = mc.getSingleplayerServer();
+        if (server != null) server.execute(() -> server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), command));
+    }
+
     private static void design(String id) {
         OnixClient.CONFIG.menuDesign.set(id);
         Minecraft.getInstance().setScreen(new TitleScreen());
@@ -56,6 +60,14 @@ public final class DevTest {
     private static void build(Minecraft mc) {
         until(() -> mc.getOverlay() == null && (mc.screen instanceof OnixTitleScreen || mc.screen instanceof CarbonMainMenu || mc.screen instanceof TitleScreen
                 || mc.screen instanceof dev.onix.client.gui.WelcomeScreen));
+        then(0, () -> {
+            // every module with its category, names and descriptions (English and German), for the website's module list
+            for (var m : OnixClient.MODULES.all()) {
+                OnixClient.LOGGER.info("[devtest] module\t{}\t{}\t{}\t{}\t{}\t{}", m.getId(), m.getCategory().name(),
+                        m.englishName(), dev.onix.client.util.I18n.german("name." + m.getId(), m.englishName()),
+                        m.englishDescription(), dev.onix.client.util.I18n.german("desc." + m.getId(), m.englishDescription()));
+            }
+        });
         then(20, () -> {
             mc.options.pauseOnLostFocus = false;
             // the lyrics lookup over the real internet (LRCLIB), checked again further down
@@ -65,38 +77,55 @@ public final class DevTest {
         // first start: the setup tour
         then(40, () -> snap(mc, "00a_intro_welcome"));
         then(2, () -> { if (mc.screen != null) mc.screen.keyPressed(new KeyEvent(com.mojang.blaze3d.platform.InputConstants.KEY_RIGHT, 0, 0)); });
-        then(30, () -> snap(mc, "00b_intro_theme"));
-        then(2, () -> { if (mc.screen != null) mc.screen.keyPressed(new KeyEvent(com.mojang.blaze3d.platform.InputConstants.KEY_RIGHT, 0, 0)); });
         then(30, () -> snap(mc, "00c_intro_menu"));
         then(2, () -> { if (mc.screen != null) mc.screen.keyPressed(new KeyEvent(com.mojang.blaze3d.platform.InputConstants.KEY_RIGHT, 0, 0)); });
         then(30, () -> snap(mc, "00d_intro_basics"));
         then(2, () -> { if (mc.screen != null) mc.screen.keyPressed(new KeyEvent(com.mojang.blaze3d.platform.InputConstants.KEY_RIGHT, 0, 0)); });
         then(30, () -> snap(mc, "00e_intro_done"));
         then(2, () -> { if (mc.screen != null) mc.screen.keyPressed(new KeyEvent(com.mojang.blaze3d.platform.InputConstants.KEY_RIGHT, 0, 0)); });
-        then(2, () -> design("Onix"));
-        // eDEX style resource loading screen (F3 + T)
+        then(0, () -> {
+            OnixClient.CONFIG.lastServer.set("mc.hypixel.net");
+            OnixClient.CONFIG.lastServerName.set("Hypixel");
+        });
+        then(2, () -> design("Water"));
+        // resource loading screen (F3 + T)
         then(2, () -> mc.reloadResourcePacks());
-        then(6, () -> snap(mc, "00z1_edex_loading"));
-        then(14, () -> snap(mc, "00z2_edex_loading"));
+        then(6, () -> snap(mc, "00z1_loading"));
+        then(14, () -> snap(mc, "00z2_loading"));
         then(80, () -> snap(mc, "01_title_onix"));
-        // cinematic title: the splash, the burst when entering, then the menu with the player
+        // cinematic title: the splash, the burst when entering, then the menu with the player falling into the sunken scene
         then(2, () -> { if (mc.screen != null) mc.screen.keyPressed(new KeyEvent(com.mojang.blaze3d.platform.InputConstants.KEY_SPACE, 0, 0)); });
         then(12, () -> snap(mc, "01a_cinematic_enter"));
-        then(18, () -> snap(mc, "01a2_cinematic_walk"));
+        then(18, () -> snap(mc, "01a2_cinematic_fall"));
         then(60, () -> snap(mc, "01b_cinematic_menu"));
-        for (String id : List.of("Carbon", "Voxel", "Portal", "Classic")) {
-            then(2, () -> design(id));
-            then(90, () -> snap(mc, "02_title_" + id.toLowerCase(Locale.ROOT)));
+        // with Essential installed (devtest.yml, -Pessential): its buttons on the Onix title screen open its screens
+        then(0, () -> OnixClient.LOGGER.info("[devtest] essential present = {}", dev.onix.client.gui.EssentialLink.present()));
+        for (String what : new String[]{"friends", "wardrobe", "pictures"}) {
+            then(2, () -> {
+                if (!dev.onix.client.gui.EssentialLink.present()) return;
+                switch (what) {
+                    case "friends" -> dev.onix.client.gui.EssentialLink.friends();
+                    case "wardrobe" -> dev.onix.client.gui.EssentialLink.wardrobe();
+                    default -> dev.onix.client.gui.EssentialLink.pictures();
+                }
+            });
+            then(60, () -> {
+                if (!dev.onix.client.gui.EssentialLink.present()) return;
+                OnixClient.LOGGER.info("[devtest] essential {} opened: {}", what, mc.screen == null ? "nothing" : mc.screen.getClass().getName());
+                snap(mc, "01e_essential_" + what);
+                design("Water");
+            });
         }
-        then(2, () -> OnixClient.CONFIG.lightMode.set(true));
-        then(60, () -> snap(mc, "02_title_classic_light"));
-        then(2, () -> OnixClient.CONFIG.lightMode.set(false));
-        then(2, () -> design("Onix"));
-        then(20, () -> mc.setScreen(new ThemePicker(mc.screen)));
-        then(50, () -> snap(mc, "03_picker"));
-        then(2, () -> mc.screen.keyPressed(new KeyEvent(com.mojang.blaze3d.platform.InputConstants.KEY_RIGHT, 0, 0)));
-        then(40, () -> snap(mc, "03_picker_next"));
-        then(2, () -> design("Onix"));
+        // the other two designs: the runner running in and standing, the meadow with its petals flying up
+        then(2, () -> design("Runner"));
+        then(30, () -> snap(mc, "02_title_runner_in"));
+        then(80, () -> snap(mc, "02_title_runner"));
+        then(2, () -> design("Meadow"));
+        then(60, () -> snap(mc, "02_title_meadow"));
+        then(2, () -> { if (mc.screen instanceof OnixTitleScreen t) t.devBurst(); });
+        then(12, () -> snap(mc, "02_title_meadow_burst1"));
+        then(16, () -> snap(mc, "02_title_meadow_burst2"));
+        then(2, () -> design("Water"));
         then(20, () -> mc.setScreen(new OnixMenuScreen(mc.screen)));
         then(60, () -> snap(mc, "04_menu_hub"));
         for (OnixMenuScreen.View view : List.of(OnixMenuScreen.View.MODULES, OnixMenuScreen.View.COSMETICS, OnixMenuScreen.View.DESIGN, OnixMenuScreen.View.SETTINGS,
@@ -118,10 +147,7 @@ public final class DevTest {
         then(40, () -> snap(mc, "06d_vanilla_video_sliders"));
         then(2, () -> mc.setScreen(new net.minecraft.client.gui.screens.worldselection.SelectWorldScreen(new TitleScreen())));
         then(60, () -> snap(mc, "06e_vanilla_singleplayer"));
-        then(2, () -> OnixClient.CONFIG.lightMode.set(true));
-        then(30, () -> snap(mc, "06f_vanilla_singleplayer_light"));
-        then(2, () -> OnixClient.CONFIG.lightMode.set(false));
-        then(2, () -> design("Onix"));
+        then(2, () -> design("Water"));
         then(2, () -> mc.setScreen(new TitleScreen()));
         then(20, () -> {
             if (java.nio.file.Files.isDirectory(mc.gameDirectory.toPath().resolve("saves").resolve("New World"))) {
@@ -141,10 +167,22 @@ public final class DevTest {
         then(0, () -> {
             for (Module m : OnixClient.MODULES.all()) {
                 String id = m.getId();
-                if (m instanceof HudModule && List.of("fps", "coords", "keystrokes", "mousestrokes", "cps", "armor").contains(id)) m.setEnabled(true);
+                if (m instanceof HudModule && List.of("fps", "coords", "keystrokes", "mousestrokes", "cps", "armor", "minimap").contains(id)) m.setEnabled(true);
+            }
+        });
+        then(0, () -> {
+            // a waypoint ahead: its light beam in the world and its marker on the minimap
+            var wp = OnixClient.MODULES.get(dev.onix.client.module.impl.hud.WaypointsModule.class);
+            wp.setEnabled(true);
+            if (mc.player != null) {
+                var p = mc.player.blockPosition();
+                var look = mc.player.getLookAngle();
+                wp.add("Test", p.getX() + (int) Math.round(look.x * 14), p.getY(), p.getZ() + (int) Math.round(look.z * 14));
             }
         });
         then(200, () -> snap(mc, "07_hud"));
+        then(0, () -> { mc.gui.getChat().clearMessages(false); mc.getToastManager().clear(); });
+        then(4, () -> snap(mc, "07a_hud_clean"));
         then(2, () -> OnixClient.MODULES.get(dev.onix.client.module.impl.visual.SmallCapsModule.class).setEnabled(true));
         then(20, () -> snap(mc, "07b_small_caps"));
         then(2, () -> OnixClient.MODULES.get(dev.onix.client.module.impl.visual.SmallCapsModule.class).setEnabled(false));
@@ -167,51 +205,6 @@ public final class DevTest {
             OnixClient.LOGGER.info("[devtest] modules with carbon pack: {}", OnixClient.MODULES.all().size());
             mc.setScreen(null);
         });
-        // pack 1: a few of the new game-mode modules on the HUD
-        then(2, () -> {
-            mc.setScreen(null);
-            for (var m : OnixClient.MODULES.all()) {
-                if (java.util.Set.of("gm_attackcooldown", "gm_portalcoords", "gm_orelevel", "gm_movement", "gm_freeslots", "gm_dimension", "gm_nightin")
-                        .contains(m.getId())) m.setEnabled(true);
-            }
-            OnixClient.LOGGER.info("[devtest] modules: {}", OnixClient.MODULES.all().size());
-        });
-        then(20, () -> snap(mc, "09f_pack_hud"));
-        // visual pack: fire a kill and a crit by hand and look at the effects
-        then(2, () -> {
-            for (var m : OnixClient.MODULES.all()) {
-                if (java.util.Set.of("gm2_fx_killconfetti", "gm2_fx_killshake", "gm2_fx_critflash", "gm2_sword_hitmarker").contains(m.getId())) m.setEnabled(true);
-            }
-            dev.onix.client.module.impl.pack.Events.fire(dev.onix.client.module.impl.pack.Events.Event.KILL, mc.player);
-            dev.onix.client.module.impl.pack.Events.fire(dev.onix.client.module.impl.pack.Events.Event.HIT, mc.player);
-        });
-        then(5, () -> snap(mc, "09g_pack_kill_effects"));
-        // viral pack: a double kill with streak announcer, kill cam, kill feed, aura, lightning, firework, shockwave
-        then(2, () -> {
-            for (var m : OnixClient.MODULES.all()) if (m.getId().startsWith("gm2_")) m.setEnabled(false);
-            for (var m : OnixClient.MODULES.all()) {
-                if (java.util.Set.of("vx_streak", "vx_killcam", "vx_killfeed", "vx_aura", "vx_lightning", "vx_firework", "vx_shockwave", "vx_killzoom", "vx_shake")
-                        .contains(m.getId())) m.setEnabled(true);
-            }
-            dev.onix.client.module.impl.pack.Events.fire(dev.onix.client.module.impl.pack.Events.Event.KILL, mc.player);
-            dev.onix.client.module.impl.pack.Events.fire(dev.onix.client.module.impl.pack.Events.Event.KILL, mc.player);
-            OnixClient.LOGGER.info("[devtest] modules with viral pack: {}", OnixClient.MODULES.all().size());
-        });
-        then(6, () -> snap(mc, "09i_viral_double_kill"));
-        then(40, () -> {
-            for (var m : OnixClient.MODULES.all()) if (m.getId().startsWith("vx_")) m.setEnabled(false);
-            for (var m : OnixClient.MODULES.all()) if (java.util.Set.of("vx_phonk", "vx_popfeed").contains(m.getId())) m.setEnabled(true);
-            dev.onix.client.module.impl.pack.Events.fire(dev.onix.client.module.impl.pack.Events.Event.ENEMY_POP, mc.player);
-            dev.onix.client.module.impl.pack.Events.fire(dev.onix.client.module.impl.pack.Events.Event.KILL, mc.player);
-        });
-        then(6, () -> snap(mc, "09j_viral_phonk"));
-        then(40, () -> {
-            for (var m : OnixClient.MODULES.all()) if (m.getId().startsWith("vx_")) m.setEnabled(false);
-            for (var m : OnixClient.MODULES.all()) if (m.getId().equals("vx_wasted")) m.setEnabled(true);
-            dev.onix.client.module.impl.pack.Events.fire(dev.onix.client.module.impl.pack.Events.Event.DEATH, mc.player);
-        });
-        then(10, () -> snap(mc, "09k_viral_wasted"));
-        then(2, () -> { for (var m : OnixClient.MODULES.all()) if (m.getId().startsWith("vx_")) m.setEnabled(false); });
         // carbon world visuals: reach circle, light levels, trajectories with a pearl, logout list
         then(2, () -> {
             for (String id : new String[]{"cb_reachcircle", "cb_lightlevels", "cb_trajectories", "cb_logoutlist"}) {
@@ -241,6 +234,16 @@ public final class DevTest {
         });
         then(40, () -> snap(mc, "09m2_menu_german"));
         then(2, () -> OnixClient.CONFIG.language.set("English"));
+        // the fall transition of world loading (with your skin)
+        then(2, () -> mc.setScreen(new net.minecraft.client.gui.screens.Screen(net.minecraft.network.chat.Component.literal("Fall")) {
+            @Override
+            public void render(net.minecraft.client.gui.GuiGraphics ctx, int mx, int my, float d) {
+                dev.onix.client.gui.FallTransition.render(this, ctx, "Loading world", "Preparing spawn area · 42%", 0.42f);
+            }
+        }));
+        then(20, () -> snap(mc, "09g0_sunken_enter"));
+        then(40, () -> snap(mc, "09g0_sunken_mid"));
+        then(60, () -> snap(mc, "09g0_sunken_deep"));
         then(2, () -> mc.setScreen(null));
         // performance: frames per second with no modules vs. every HUD, combat and visual module
         java.util.List<dev.onix.client.module.Module> before = new java.util.ArrayList<>();
@@ -256,7 +259,7 @@ public final class DevTest {
                 boolean safe = m instanceof dev.onix.client.module.HudModule || m.getCategory() == dev.onix.client.module.Category.COMBAT
                         || m.getCategory() == dev.onix.client.module.Category.VISUAL;
                 String id = m.getId();
-                if (safe && !id.startsWith("cb_no") && !id.equals("fullbright") && !id.equals("darkmode") && !id.startsWith("vx_impact") && !id.startsWith("vx_wasted")) m.setEnabled(true);
+                if (safe && !id.startsWith("cb_no") && !id.equals("fullbright") && !id.equals("darkmode")) m.setEnabled(true);
             }
         });
         then(40, () -> {
@@ -277,10 +280,33 @@ public final class DevTest {
             for (var m : OnixClient.MODULES.all()) m.setEnabled(false);
             for (var m : before) m.setEnabled(true);
         });
+        // FPS benchmark without the frame cap: the same scene three times, the middle value counts
+        // (compared between the normal dev test and the one with the performance mods, devtest.yml)
+        int[] bench = new int[3];
+        then(2, () -> {
+            mc.options.framerateLimit().set(260);
+            mc.options.enableVsync().set(false);
+            if (mc.player != null) {
+                mc.player.setYRot(30f);
+                mc.player.setXRot(10f);
+            }
+        });
+        for (int i = 0; i < 3; i++) {
+            final int k = i;
+            then(40, () -> PerfProbe.start());
+            then(100, () -> bench[k] = PerfProbe.stop());
+        }
+        then(2, () -> {
+            int[] sorted = bench.clone();
+            java.util.Arrays.sort(sorted);
+            OnixClient.LOGGER.info("[devtest] bench: {} fps uncapped (runs {}, {}, {}; mods: {})", sorted[1], bench[0], bench[1], bench[2],
+                    net.fabricmc.loader.api.FabricLoader.getInstance().getAllMods().stream().map(c -> c.getMetadata().getId())
+                            .filter(id -> List.of("sodium", "lithium", "badoptimizations", "scalablelux", "essential").contains(id)).toList());
+            mc.options.framerateLimit().set(30);
+        });
         then(2, () -> mc.setScreen(new OnixMenuScreen(null, OnixMenuScreen.View.MODULES)));
         then(30, () -> snap(mc, "09h_pack_menu_count"));
         then(2, () -> mc.setScreen(null));
-        then(2, () -> { for (var m : OnixClient.MODULES.all()) if (m.getId().startsWith("gm_")) m.setEnabled(false); });
         // name styles: the menu tab and your own name tag in third person
         then(2, () -> {
             dev.onix.client.cosmetics.Cosmetics.testOwnAll = true;
@@ -305,6 +331,46 @@ public final class DevTest {
         then(10, () -> mc.options.keyJump.setDown(true));
         then(2, () -> mc.options.keyJump.setDown(false));
         then(4, () -> snap(mc, "09e_jump_circle"));
+        // impact fx + halo: fire a hit, a crit and a kill on yourself (third person from behind) and look
+        then(2, () -> {
+            OnixClient.MODULES.get(dev.onix.client.module.impl.visual.JumpCirclesModule.class).setEnabled(false);
+            OnixClient.MODULES.get(dev.onix.client.module.impl.visual.ImpactFxModule.class).setEnabled(true);
+            OnixClient.MODULES.get(dev.onix.client.module.impl.visual.HaloModule.class).setEnabled(true);
+            OnixClient.MODULES.get(dev.onix.client.module.impl.combat.HitColorModule.class).setEnabled(true);
+            if (mc.player != null) mc.player.setXRot(20f);
+            dev.onix.client.module.impl.pack.Events.fire(dev.onix.client.module.impl.pack.Events.Event.HIT, mc.player);
+        });
+        then(3, () -> snap(mc, "09e2_impact_hit"));
+        then(2, () -> dev.onix.client.module.impl.pack.Events.fire(dev.onix.client.module.impl.pack.Events.Event.CRIT, mc.player));
+        then(3, () -> snap(mc, "09e3_impact_crit"));
+        then(2, () -> dev.onix.client.module.impl.pack.Events.fire(dev.onix.client.module.impl.pack.Events.Event.KILL, mc.player));
+        then(6, () -> snap(mc, "09e4_impact_kill_halo"));
+        // motion blur: turn quickly for a few ticks with the blur on
+        then(2, () -> OnixClient.MODULES.get(dev.onix.client.module.impl.visual.MotionBlurModule.class).setEnabled(true));
+        for (int i = 0; i < 6; i++) then(1, () -> { if (mc.player != null) mc.player.setYRot(mc.player.getYRot() + 14f); });
+        then(0, () -> snap(mc, "09e5_motion_blur"));
+        then(2, () -> OnixClient.MODULES.get(dev.onix.client.module.impl.visual.MotionBlurModule.class).setEnabled(false));
+        // combat text: damage numbers and the streak announcer
+        then(2, () -> {
+            var ct = OnixClient.MODULES.get(dev.onix.client.module.impl.combat.CombatTextModule.class);
+            ct.setEnabled(true);
+            ct.demo(mc.player);
+        });
+        then(4, () -> snap(mc, "09e5_combat_text"));
+        // death screens: every style in its preview
+        for (String style : dev.onix.client.module.impl.visual.DeathScreensModule.STYLES) {
+            then(2, () -> {
+                var ds = OnixClient.MODULES.get(dev.onix.client.module.impl.visual.DeathScreensModule.class);
+                ds.setStyle(style);
+                ds.openPreview();
+            });
+            then(40, () -> snap(mc, "09f_death_" + style.toLowerCase(java.util.Locale.ROOT)));
+        }
+        then(2, () -> mc.setScreen(null));
+        then(30, () -> {
+            OnixClient.MODULES.get(dev.onix.client.module.impl.visual.ImpactFxModule.class).setEnabled(false);
+            OnixClient.MODULES.get(dev.onix.client.module.impl.visual.HaloModule.class).setEnabled(false);
+        });
         // song lyrics in the world (a sample line, no music needed)
         then(2, () -> {
             mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
@@ -344,6 +410,125 @@ public final class DevTest {
                     "execute as @p at @s run summon minecraft:tnt ~ ~ ~5 {fuse:120}"));
         });
         then(30, () -> snap(mc, "09h_tnt_timer"));
+        // ---- minimap on real terrain: grass, a water pool, a stone hill and a sand patch around you
+        then(2, () -> {
+            OnixClient.MODULES.get(dev.onix.client.module.impl.visual.TntTimerModule.class).setEnabled(false);
+            OnixClient.MODULES.get(dev.onix.client.module.impl.hud.MinimapModule.class).setEnabled(true);
+            cmd(mc, "kill @e[type=minecraft:tnt]");
+            cmd(mc, "execute as @p at @s run fill ~-24 ~-1 ~-24 ~24 ~-1 ~24 minecraft:grass_block");
+            cmd(mc, "execute as @p at @s run fill ~6 ~-4 ~-14 ~16 ~-1 ~-4 minecraft:water");
+            cmd(mc, "execute as @p at @s run fill ~-16 ~ ~4 ~-6 ~2 ~14 minecraft:stone");
+            cmd(mc, "execute as @p at @s run fill ~-13 ~3 ~7 ~-9 ~4 ~11 minecraft:stone");
+            cmd(mc, "execute as @p at @s run fill ~4 ~-1 ~6 ~12 ~-1 ~14 minecraft:sand");
+            cmd(mc, "execute as @p at @s run fill ~-4 ~ ~-12 ~-2 ~4 ~-10 minecraft:oak_log");
+        });
+        then(60, () -> mc.getToastManager().clear());
+        then(0, () -> { mc.gui.getChat().clearMessages(false); mc.getToastManager().clear(); });
+        then(4, () -> snap(mc, "09i1_minimap_terrain"));
+        then(2, () -> OnixClient.MODULES.get(dev.onix.client.module.impl.hud.MinimapModule.class).setEnabled(false));
+        then(2, () -> cmd(mc, "execute as @p at @s run fill ~-20 ~-1 ~16 ~-12 ~-1 ~22 minecraft:red_wool"));
+        then(60, () -> OnixClient.LOGGER.info("[devtest] world map while the minimap is off: red wool = {}",
+                Integer.toHexString(OnixClient.MODULES.get(dev.onix.client.module.impl.hud.MinimapModule.class).colorAt(
+                        mc.player.getBlockX() - 16, mc.player.getBlockZ() + 19))));
+        then(2, () -> OnixClient.MODULES.get(dev.onix.client.module.impl.hud.MinimapModule.class).setEnabled(true));
+        then(2, () -> mc.setScreen(new dev.onix.client.gui.WorldMapScreen(OnixClient.MODULES.get(dev.onix.client.module.impl.hud.MinimapModule.class))));
+        then(20, () -> snap(mc, "09i1b_world_map"));
+        then(2, () -> mc.screen.mouseScrolled(mc.getWindow().getGuiScaledWidth() / 2.0, mc.getWindow().getGuiScaledHeight() / 2.0, 0, 1));
+        then(2, () -> mc.screen.mouseScrolled(mc.getWindow().getGuiScaledWidth() / 2.0, mc.getWindow().getGuiScaledHeight() / 2.0, 0, 1));
+        then(2, () -> mc.screen.mouseScrolled(mc.getWindow().getGuiScaledWidth() / 2.0, mc.getWindow().getGuiScaledHeight() / 2.0, 0, 1));
+        then(20, () -> snap(mc, "09i1c_world_map_zoomed"));
+        then(2, () -> mc.setScreen(null));
+        // ---- item physics: drop some items in front of you and look down at them
+        then(2, () -> {
+            OnixClient.MODULES.get(dev.onix.client.module.impl.visual.ItemPhysicsModule.class).setEnabled(true);
+            if (mc.player != null) {
+                mc.player.setYRot(0f);
+                mc.player.setXRot(55f);
+            }
+            for (String item : new String[]{"diamond_sword", "golden_apple", "ender_pearl", "oak_planks", "bow"}) {
+                cmd(mc, "execute as @p at @s run summon minecraft:item ~" + (item.length() % 3 - 1) + " ~1 ~" + (2 + item.length() % 2)
+                        + " {Item:{id:\"minecraft:" + item + "\",count:1},PickupDelay:32767}");
+            }
+        });
+        then(60, () -> mc.getToastManager().clear());
+        then(0, () -> { mc.gui.getChat().clearMessages(false); mc.getToastManager().clear(); });
+        then(4, () -> snap(mc, "09i2_item_physics"));
+        // ---- hit colour: a zombie in front of you gets hit
+        then(2, () -> {
+            OnixClient.MODULES.get(dev.onix.client.module.impl.visual.ItemPhysicsModule.class).setEnabled(false);
+            OnixClient.MODULES.get(dev.onix.client.module.impl.combat.HitColorModule.class).setEnabled(true);
+            cmd(mc, "kill @e[type=minecraft:item]");
+            if (mc.player != null) mc.player.setXRot(10f);
+            cmd(mc, "execute as @p at @s run summon minecraft:husk ~ ~ ~4 {NoAI:1b,Silent:1b,PersistenceRequired:1b}");
+        });
+        then(10, () -> cmd(mc, "damage @e[type=minecraft:husk,limit=1] 1 minecraft:generic"));
+        then(2, () -> {
+            var overlay = ((dev.onix.client.mixin.OverlayTextureAccessor) mc.gameRenderer.overlayTexture()).onix$texture().getPixels();
+            OnixClient.LOGGER.info("[devtest] hit colour overlay pixel: {}", overlay == null ? "none" : Integer.toHexString(overlay.getPixel(0, 0)));
+            snap(mc, "09i3_hit_color");
+        });
+        then(3, () -> snap(mc, "09i3b_hit_color"));
+        then(2, () -> cmd(mc, "kill @e[type=minecraft:husk]"));
+        // ---- chat copy: copy the newest chat line (as if it was Ctrl + clicked) and show it
+        then(2, () -> {
+            mc.gui.getChat().addMessage(net.minecraft.network.chat.Component.literal("Onix Chat Copy test: GG everyone"));
+            try {
+                // ChatScreen(String) before 1.21.9, ChatScreen(String, boolean) after
+                var ctor = net.minecraft.client.gui.screens.ChatScreen.class.getConstructors()[0];
+                Object[] args = ctor.getParameterCount() == 1 ? new Object[]{""} : new Object[]{"", false};
+                mc.setScreen((net.minecraft.client.gui.screens.Screen) ctor.newInstance(args));
+            } catch (ReflectiveOperationException e) {
+                OnixClient.LOGGER.warn("[devtest] chat screen", e);
+            }
+        });
+        then(10, () -> {
+            // a real Ctrl + left click on the newest chat line, through the chat screen like a mouse click
+            double scale = mc.options.chatScale().get();
+            int bottom = (int) Math.floor((mc.getWindow().getGuiScaledHeight() - 40) / scale);
+            int lh = (int) (9 * (mc.options.chatLineSpacing().get() + 1.0));
+            double x = 20, y = (bottom - lh / 2.0) * scale;
+            mc.keyboardHandler.setClipboard("");
+            try {
+                boolean used = false;
+                for (var method : mc.screen.getClass().getMethods()) {
+                    if (!method.getName().equals("mouseClicked")) continue;
+                    var types = method.getParameterTypes();
+                    if (types.length == 2 && !types[0].isPrimitive()) {
+                        // 1.21.9+: mouseClicked(MouseButtonEvent(x, y, MouseButtonInfo(button 0, Ctrl)), false)
+                        Class<?> info = Class.forName("net.minecraft.client.input.MouseButtonInfo");
+                        Object buttonInfo = info.getConstructor(int.class, int.class).newInstance(0, org.lwjgl.glfw.GLFW.GLFW_MOD_CONTROL);
+                        Object event = types[0].getConstructor(double.class, double.class, info).newInstance(x, y, buttonInfo);
+                        used = (boolean) method.invoke(mc.screen, event, false);
+                    } else if (types.length == 3 && types[0] == double.class) {
+                        // older: the copy reads Ctrl from the keyboard, which a test cannot press
+                        used = dev.onix.client.module.impl.chat.ChatCopyModule.onClick(x, y, 0, org.lwjgl.glfw.GLFW.GLFW_MOD_CONTROL);
+                    } else continue;
+                    break;
+                }
+                OnixClient.LOGGER.info("[devtest] chat copy click used = {}, clipboard = {}", used, mc.keyboardHandler.getClipboard());
+            } catch (ReflectiveOperationException e) {
+                OnixClient.LOGGER.warn("[devtest] chat copy click", e);
+            }
+        });
+        then(10, () -> snap(mc, "09i4_chat_copy"));
+        then(1, () -> {
+            // Tier Tagger: a tag from given rankings, and a real lookup on the tier list (Notch is not ranked: 404)
+            var tiers = OnixClient.MODULES.get(dev.onix.client.module.impl.combat.TierTaggerModule.class);
+            tiers.setEnabled(true);
+            java.util.UUID fake = java.util.UUID.fromString("11111111-2222-4333-8444-555555555555");
+            tiers.debugPut(fake, "{\"sword\":{\"tier\":3,\"pos\":0,\"peak_tier\":2,\"peak_pos\":1,\"attained\":0,\"retired\":false},"
+                    + "\"uhc\":{\"tier\":2,\"pos\":1,\"peak_tier\":null,\"peak_pos\":null,\"attained\":0,\"retired\":false},"
+                    + "\"axe\":{\"tier\":1,\"pos\":0,\"peak_tier\":1,\"peak_pos\":0,\"attained\":0,\"retired\":true}}");
+            var tag = tiers.tag(fake);
+            OnixClient.LOGGER.info("[devtest] tiertagger best = {}", tag == null ? "none" : tag.getString());
+            tiers.tag(java.util.UUID.fromString("069a79f4-44e9-4726-a5be-fca90e38aaf5"));
+        });
+        then(80, () -> {
+            var tiers = OnixClient.MODULES.get(dev.onix.client.module.impl.combat.TierTaggerModule.class);
+            OnixClient.LOGGER.info("[devtest] tiertagger lookup Notch = {}", tiers.debugState(java.util.UUID.fromString("069a79f4-44e9-4726-a5be-fca90e38aaf5")));
+            tiers.setEnabled(false);
+        });
+        then(2, () -> mc.setScreen(null));
         then(2, () -> {
             OnixClient.MODULES.get(dev.onix.client.module.impl.visual.TntTimerModule.class).setEnabled(false);
             var server = mc.getSingleplayerServer();
@@ -384,11 +569,6 @@ public final class DevTest {
         then(2, () -> mc.setScreen(new net.minecraft.client.gui.screens.PauseScreen(true)));
         then(40, () -> snap(mc, "10b_pause_carbon_buttons"));
         then(2, () -> mc.setScreen(null));
-        then(2, () -> {
-            OnixClient.MODULES.get(dev.onix.client.module.impl.visual.CustomSkyModule.class).setEnabled(true);
-            mc.player.setXRot(-30);
-        });
-        then(60, () -> snap(mc, "11_custom_sky"));
         then(20, () -> {
             OnixClient.LOGGER.info("[devtest] finished");
             mc.stop();

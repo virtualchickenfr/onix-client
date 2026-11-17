@@ -20,4 +20,10 @@ public abstract class LevelLoadingScreenMixin {
         LoadingScreens.levelLoading((Screen) (Object) this, context);
         ci.cancel();
     }
+
+    /** The sunken scene's water is already in the frame (WaterScene): no portal or panorama background over it. */
+    @Inject(method = "renderBackground", at = @At("HEAD"), cancellable = true, require = 0)
+    private void onix$water(CallbackInfo ci) {
+        if (dev.onix.client.gui.WaterScene.drawn()) ci.cancel();
+    }
 }

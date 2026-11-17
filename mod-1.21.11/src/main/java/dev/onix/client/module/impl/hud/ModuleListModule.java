@@ -125,10 +125,11 @@ public class ModuleListModule extends HudModule {
                 case "Fade" -> Theme.lerpColor(textColor.color(), fadeTo.color(), list.size() <= 1 ? 0 : i / (float) (list.size() - 1));
                 default -> textColor.color(i * 0.06f);
             };
-            if (background.isOn()) ctx.fill(x, y, x + tw, y + rowH, backgroundColor.color());
+            // rows are rounded pills with a hairline gap, so the list reads clean instead of one blocky column
+            if (background.isOn()) Theme.round(ctx, x, y, x + tw, y + rowH - 1, Math.min(cornerRadius.getInt(), (rowH - 1) / 2), backgroundColor.color());
             if (sideBar.isOn()) {
                 int bx = right ? w - 2 : 0;
-                ctx.fill(bx, y, bx + 2, y + rowH, color);
+                Theme.round(ctx, bx, y + 1, bx + 2, y + rowH - 2, 1, color);
             }
             drawText(ctx, s, x + pad(), y + pad() / 2 + 1, color);
         }

@@ -43,6 +43,11 @@ public final class I18n {
         return table().getOrDefault(key, english);
     }
 
+    /** The German translation for a key, or the English text (whatever the language setting; for the website list). */
+    public static String german(String key, String english) {
+        return table().getOrDefault(key, english);
+    }
+
     /** UI text: the English text is the key. */
     public static String ui(String english) {
         return t("ui." + english, english);

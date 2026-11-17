@@ -364,6 +364,12 @@
         "private void onix\\$extraKeys\\(long window, int action, (?:dev\\.onix\\.compat\\.)?KeyEvent event, CallbackInfo ci\\) \\{\\n(\\s*)ExtraKeys\\.onInput\\(event\\.key\\(\\), action\\);",
         "private void onix$extraKeys(long window, int key, int scancode, int action, int mods, CallbackInfo ci) {\n\\1ExtraKeys.onInput(key, action);"
       ]
+    ],
+    "src/main/java/dev/onix/client/mixin/ChatCopyMixin.java": [
+      [
+        "private void onix\\$copy\\([^)]*MouseButtonEvent click, boolean doubleClick, CallbackInfoReturnable<Boolean> cir\\) \\{",
+        "private void onix$copy(double x, double y, int button, CallbackInfoReturnable<Boolean> cir) { dev.onix.compat.MouseButtonEvent click = new dev.onix.compat.MouseButtonEvent(x, y, button);"
+      ]
     ]
   },
   "drop": [

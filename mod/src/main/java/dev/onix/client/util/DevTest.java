@@ -78,11 +78,6 @@ public final class DevTest {
         then(2, () -> mc.setScreen(new net.minecraft.client.gui.screen.GameMenuScreen(true)));
         then(40, () -> snap(mc, "10b_pause"));
         then(2, () -> mc.setScreen(null));
-        then(2, () -> {
-            OnixClient.MODULES.get(dev.onix.client.module.impl.visual.CustomSkyModule.class).setEnabled(true);
-            mc.player.setPitch(-30);
-        });
-        then(60, () -> snap(mc, "11_custom_sky"));
         then(20, () -> {
             OnixClient.LOGGER.info("[devtest] finished");
             mc.scheduleStop();
