@@ -586,6 +586,7 @@ public class OnixTitleScreen extends Screen {
                 // a soft shade behind the menu, so it reads well on the light meadow (smooth, no bands)
                 ctx.fill(0, 0, width, height, 0x22000000);
                 SoftShapes.glow(ctx, width * (width >= 420 ? 0.42f : 0.5f), height * 0.5f, width * 0.3f, height * 0.62f, 0xB80C1216);
+                SoftShapes.glow(ctx, width * (width >= 420 ? 0.42f : 0.5f), height * 0.7f, width * 0.26f, height * 0.4f, 0x900C1216);
             }
             default -> FallTransition.drawVoid(ctx, width, height, time);
         }

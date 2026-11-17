@@ -170,8 +170,7 @@ body.one .play-row .xl-sq { width: 52px; height: 52px; border-radius: 12px !impo
 body.one .home-title { display: none; }
 body.one #view-home .home-title { display: block; }
 body[data-design="meadow"].one #view-home .hero-fade {
-  background: linear-gradient(0deg, rgba(14, 18, 22, .88) 0%, rgba(14, 18, 22, .45) 30%, rgba(14, 18, 22, 0) 55%),
-    linear-gradient(90deg, rgba(14, 18, 22, .45) 0%, rgba(14, 18, 22, 0) 45%);
+  background: radial-gradient(70% 60% at 0% 100%, rgba(14, 18, 22, .78), rgba(14, 18, 22, 0) 70%);
 }
 
 /* ---------------------------------------------------------------- designs (settings and welcome) */

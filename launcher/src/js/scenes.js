@@ -184,7 +184,7 @@ const Scenes = (() => {
       petals.push({
         x: Math.random() * W,
         y,
-        size: (16 + 46 * depth ** 1.3) * (H / 800) * (0.75 + Math.random() * 0.5) * (near ? 1.25 : 1),
+        size: (20 + 52 * depth ** 1.3) * (H / 800) * (0.75 + Math.random() * 0.5) * (near ? 1.25 : 1),
         vx: (Math.random() - 0.5) * W * 0.04,
         vy: -(0.03 + Math.random() * 0.08) * H * (near ? 1 : 0.4),
         acc: -(0.12 + Math.random() * 0.3) * H * (near ? 1 : 0.04),
@@ -222,7 +222,7 @@ const Scenes = (() => {
         ambientNext = t + 0.5 + Math.random() * 0.9;
       }
       if (b >= 0 && b < 1.6) {
-        const n = Math.max(2, Math.round(dt * 520 * (1 - b / 1.6) + dt * 80));
+        const n = Math.max(3, Math.round(dt * 900 * (1 - b / 1.6) + dt * 120));
         for (let i = 0; i < n; i++) spawn(W, H, true, true);
       }
       if (b >= 0 && b < 2.5) {
