@@ -213,10 +213,10 @@ const Scenes = (() => {
         x, y, L, start, kind,
         ang: Math.atan2(Math.sin(a) * flat, Math.cos(a)),
         squash: Math.max(0.35, flat),
-        vx: out * L * (1.2 + rnd()) + (rnd() - 0.5) * L,
-        vy: -L * (0.6 + rnd() * 0.8),
-        lift: -(0.18 + rnd() * 0.22) * H,                    // the gust carries it up harder and harder
-        drift: (rnd() - 0.5) * W * 0.05 + W * 0.012,          // and a little to the side
+        vx: out * L * (1.5 + rnd()) + (rnd() - 0.5) * L * 2,
+        vy: -L * (1.4 + rnd() * 1.6) - H * 0.04,
+        lift: -(0.38 + rnd() * 0.42) * H,                    // the gust carries it up harder and harder
+        drift: (rnd() - 0.5) * W * 0.08 + W * 0.02,           // and to the side, every petal its own way
         spin: (rnd() - 0.5) * 7,
         flip: rnd() * Math.PI * 2,
         flipSpeed: 2.5 + rnd() * 4,
@@ -231,27 +231,35 @@ const Scenes = (() => {
       built = true;
       if (!flowerList || !ready(bg)) return;
       const iw = bg.naturalWidth;
-      // the biggest (closest) flowers lose every petal, the smaller ones only a few, so it stays smooth
-      let budget = reduced ? 600 : 3600;
+      // every visible flower loses petals: the close ones all of them, the farther ones fewer – shared out so that every
+      // flower the gust passes sends some up, never more than the budget
+      const budget = reduced ? 700 : 3200;
+      const visible = [];
+      let wanted = 0;
       for (const f of flowerList) {
-        if (budget <= 0) break;
         const sx = view.ox + f[0] * iw * view.s;
         const sy = view.oy + f[1] * bg.naturalHeight * view.s;
         if (sx < -40 || sx > W + 40 || sy < -40 || sy > H + 40) continue;
         const sizePx = f[2] * iw * view.s;
-        const count = sizePx > 22 ? f[6] : sizePx > 14 ? Math.min(f[6], 5) : 2;
+        const want = sizePx > 26 ? f[6] : sizePx > 16 ? Math.min(f[6], 6) : 3;
+        visible.push([f, sx, sy, want]);
+        wanted += want;
+      }
+      const share = Math.min(1, budget / Math.max(1, wanted));
+      for (const [f, sx, sy, want] of visible) {
+        const count = Math.max(1, Math.round(want * share));
         const when = t + GUST.delay + gustAt(sx / W, sy / H, W, H) / GUST.speed + rnd() * 0.12;
-        for (let i = 0; i < count && budget > 0; i++, budget--) {
-          const k = count === f[6] ? i : Math.floor((i + rnd()) * f[6] / count);
-          petal(f, k, when + i * 0.018 + rnd() * 0.05, W, H);
+        for (let i = 0; i < count; i++) {
+          const k = count >= f[6] ? i : Math.floor((i + rnd()) * f[6] / count);
+          petal(f, k, when + i * 0.02 + rnd() * 0.06, W, H);
         }
       }
-      // the far meadow: a haze of tiny petals rising from it as the gust passes
-      for (let i = 0; i < (reduced ? 80 : 500); i++) {
+      // the many small flowers too far away to list: their petals rise as a fine haze where the gust passes
+      for (let i = 0; i < (reduced ? 150 : 1100); i++) {
         const nx = rnd();
-        const ny = 0.36 + rnd() * 0.28;
-        const depth = (ny - 0.34) / 0.66;
-        const fake = [((nx * W - view.ox) / view.s) / iw, ((ny * H - view.oy) / view.s) / bg.naturalHeight, (2 + 6 * depth) / (iw * view.s),
+        const ny = 0.36 + rnd() * 0.5;
+        const depth = Math.max(0, (ny - 0.34) / 0.66);
+        const fake = [((nx * W - view.ox) / view.s) / iw, ((ny * H - view.oy) / view.s) / bg.naturalHeight, (3 + 14 * depth * depth) / (iw * view.s),
           Math.floor(rnd() * 5), 0.7, rnd() * 6.28, 8, 1, 0.35];
         petal(fake, Math.floor(rnd() * 8), t + GUST.delay + gustAt(nx, ny, W, H) / GUST.speed + rnd() * 0.2, W, H);
       }
@@ -331,7 +339,6 @@ const Scenes = (() => {
         const sn = Math.sin(p.ang);
         g.setTransform(c * sx, sn * sx, -sn * sy, c * sy, p.x, p.y);
         g.globalAlpha = Math.min(1, age * 6) * (age > 5 ? Math.max(0, 1 - (age - 5) / 2) : 1);
-        g.filter = p.blur && go > 0.5 ? 'blur(1px)' : 'none';
         g.drawImage(sheet, (p.kind % PETAL_FRAMES) * fs, 0, fs, fs, -fs / 2, -fs / 2, fs, fs);
       }
       g.setTransform(1, 0, 0, 1, 0, 0);

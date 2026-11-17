@@ -661,8 +661,8 @@ public class OnixTitleScreen extends Screen {
         float out = (float) Math.cos(a);
         petals.add(new float[]{x, y, L, start, f[3],
                 (float) Math.atan2(Math.sin(a) * f[4], Math.cos(a)), Math.max(0.35f, f[4]),
-                out * L * (1.2f + random.nextFloat()) + (random.nextFloat() - 0.5f) * L, -L * (0.6f + random.nextFloat() * 0.8f),
-                -(0.18f + random.nextFloat() * 0.22f) * height, (random.nextFloat() - 0.5f) * width * 0.05f + width * 0.012f,
+                out * L * (1.5f + random.nextFloat()) + (random.nextFloat() - 0.5f) * L * 2, -L * (1.4f + random.nextFloat() * 1.6f) - height * 0.04f,
+                -(0.38f + random.nextFloat() * 0.42f) * height, (random.nextFloat() - 0.5f) * width * 0.08f + width * 0.02f,
                 (random.nextFloat() - 0.5f) * 7f, random.nextFloat() * 6.28f, 2.5f + random.nextFloat() * 4f, random.nextFloat() * 6.28f});
     }
 
@@ -670,26 +670,40 @@ public class OnixTitleScreen extends Screen {
     private void buildPetals() {
         petals.clear();
         float s = meadowW / (float) BG_W;
-        int budget = 1600;
-        for (float[] f : flowers()) {
-            if (budget <= 0) break;
+        // every visible flower loses petals: the close ones all of them, the farther ones fewer – shared out so that every
+        // flower the gust passes sends some up, never more than the budget
+        int budget = 1500;
+        List<float[]> visible = new ArrayList<>();   // flower index, screen x, screen y, wanted
+        int wanted = 0;
+        float[][] all = flowers();
+        for (int fi = 0; fi < all.length; fi++) {
+            float[] f = all[fi];
             float sx = meadowX + f[0] * BG_W * s;
             float sy = meadowY + f[1] * BG_H * s;
             if (sx < -20 || sx > width + 20 || sy < -20 || sy > height + 20) continue;
             float sizeGui = f[2] * BG_W * s;
             int n = (int) f[6];
-            int count = sizeGui > 9 ? n : sizeGui > 6 ? Math.min(n, 4) : 2;
-            float when = GUST_DELAY + gustAt(sx / width, sy / height) / GUST_SPEED + random.nextFloat() * 0.12f;
-            for (int i = 0; i < count && budget > 0; i++, budget--) {
-                int k = count == n ? i : (int) ((i + random.nextFloat()) * n / count);
-                addPetal(f, k, when + i * 0.018f + random.nextFloat() * 0.05f);
+            int want = sizeGui > 11 ? n : sizeGui > 7 ? Math.min(n, 5) : 2;
+            visible.add(new float[]{fi, sx, sy, want});
+            wanted += want;
+        }
+        float share = Math.min(1f, budget / (float) Math.max(1, wanted));
+        for (float[] v : visible) {
+            float[] f = all[(int) v[0]];
+            int n = (int) f[6];
+            int count = Math.max(1, Math.round(v[3] * share));
+            float when = GUST_DELAY + gustAt(v[1] / width, v[2] / height) / GUST_SPEED + random.nextFloat() * 0.12f;
+            for (int i = 0; i < count; i++) {
+                int k = count >= n ? i : (int) ((i + random.nextFloat()) * n / count);
+                addPetal(f, k, when + i * 0.02f + random.nextFloat() * 0.06f);
             }
         }
-        for (int i = 0; i < 260; i++) {
+        // the many small flowers too far away to list: their petals rise as a fine haze where the gust passes
+        for (int i = 0; i < 500; i++) {
             float nx = random.nextFloat();
-            float ny = 0.36f + random.nextFloat() * 0.28f;
-            float depth = (ny - 0.34f) / 0.66f;
-            float[] fake = {((nx * width - meadowX) / s) / BG_W, ((ny * height - meadowY) / s) / BG_H, (1 + 2.5f * depth) / (BG_W * s),
+            float ny = 0.36f + random.nextFloat() * 0.5f;
+            float depth = Math.max(0, (ny - 0.34f) / 0.66f);
+            float[] fake = {((nx * width - meadowX) / s) / BG_W, ((ny * height - meadowY) / s) / BG_H, (1.2f + 6f * depth * depth) / (BG_W * s),
                     random.nextInt(5), 0.7f, random.nextFloat() * 6.28f, 8, 1, 0.35f};
             addPetal(fake, random.nextInt(8), GUST_DELAY + gustAt(nx, ny) / GUST_SPEED + random.nextFloat() * 0.2f);
         }
