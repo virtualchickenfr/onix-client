@@ -55,7 +55,6 @@ function refreshProfiles() {
   if (currentView === 'profile') renderProfileView();
   if (currentView === 'mods') renderMods();
   if (currentView === 'cosmetics') loadCosmetics();
-  loadSky().catch(() => {});
 }
 
 const playBtn = $('#btn-play');
@@ -91,6 +90,8 @@ function setProgress(v) {
 
 playBtn.addEventListener('click', async () => {
   if (!account) return login();
+  // the design's Play moment: the petals fly up, the runner runs off (js/scenes.js)
+  if (typeof Scenes !== 'undefined') Scenes.burst();
   state = 'preparing';
   updatePlay();
   $('#launch-status').textContent = 'Preparing';
@@ -191,6 +192,7 @@ function homeWorld(on) {
     });
   }
   if (on && state !== 'running' && !document.body.classList.contains('clean')) homeIsland.start(); else homeIsland.stop();
+  if (typeof Scenes !== 'undefined') Scenes.active(on && state !== 'running');
 }
 requestAnimationFrame(() => homeWorld(currentView === 'home'));
 
@@ -224,7 +226,7 @@ const homeSkin = { pose: Skin3D.nextPose(), px: null, slim: false, key: null, ra
 function homeSkinLoop() {
   homeSkin.raf = 0;
   const canvas = $('#home-skin3d');
-  if (!canvas || !homeSkin.px || currentView !== 'home' || !document.body.classList.contains('clean') || document.hidden) return;
+  if (!canvas || !homeSkin.px || currentView !== 'home' || document.body.classList.contains('one') || document.hidden) return;
   const dpr = Math.min(2, window.devicePixelRatio || 1);
   const w = Math.round(canvas.clientWidth * dpr);
   const h = Math.round(canvas.clientHeight * dpr);

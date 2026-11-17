@@ -13,12 +13,14 @@
   boot.addEventListener('click', onSkip);
   window.addEventListener('keydown', onSkip, { once: true });
   const bootStatus = (text) => { $('#boot-status').textContent = text; };
-  const scene = !reduced && typeof Fall !== 'undefined'
-    ? Fall.boot($('#boot-scene'), () => (typeof homeSkin !== 'undefined' && homeSkin.px ? homeSkin : null))
-    : null;
+  const early = await api.getSettings().catch(() => ({}));
+  const design = ['water', 'runner', 'meadow'].includes(early.design) ? early.design : 'water';
+  boot.dataset.design = design;
+  document.body.dataset.design = design;
+  const scene = !reduced && typeof Scenes !== 'undefined' ? Scenes.boot($('#boot-scene'), design) : null;
   try {
     // English or German before anything is shown (js/i18n.js)
-    startI18n((await api.getSettings().catch(() => ({}))).language);
+    startI18n(early.language);
     bootStatus('Starting');
     info = await api.info();
     $('#eyebrow').textContent = `Minecraft ${info.mcVersion}`;

@@ -56,6 +56,8 @@ const DEFAULT_SETTINGS = {
   autoUpdate: true,
   // starts silently with the computer, installs a new version and quits (lib/startupupdate.js)
   updateAtStartup: true,
+  // the look of the start page, the start screen and the main menu in game: water, runner or meadow (js/design.js)
+  design: 'water',
 };
 
 /** Writes design choices into config/onix/client.json of every profile, so game and launcher match. */
@@ -254,6 +256,20 @@ function smokeTest(dir) {
     await js("document.querySelector('.welcome').remove(); openProfile(activeProfile().id, 'bundles')");
     await wait(4000);
     await shot('bundles');
+    // the three designs on the start page, and the meadow's petals flying up on Play (js/scenes.js)
+    for (const d of ['water', 'runner', 'meadow']) {
+      await js(`selectDesign('${d}'); showView('home')`);
+      await wait(d === 'runner' ? 4200 : 3500);
+      await shot(`design-${d}`);
+    }
+    await js("Scenes.burst()");
+    await wait(700);
+    await shot('meadow-burst-1');
+    await wait(900);
+    await shot('meadow-burst-2');
+    await js("selectDesign('runner'); showView('settings')");
+    await wait(1500);
+    await shot('settings');
     // a bundle really installed, then the profile taken to another version (js/port.js)
     await js("api.installBundles(activeProfile().id, ['qol']).then((r) => console.log('bundle install ' + JSON.stringify(r)))");
     for (let i = 0; i < 60 && !fs.readFileSync(path.join(dir, 'console.txt'), 'utf8').includes('bundle install'); i++) await wait(1000);
@@ -270,7 +286,9 @@ function smokeTest(dir) {
     await shot('port-done');
     // the launcher in German: every page once, then the texts that are not translated yet (js/i18n.js)
     await js("api.setSettings({ language: 'de' }).then(() => api.reload())");
-    await wait(9000);
+    await wait(1600);
+    await shot('de-boot-runner');
+    await wait(7400);
     await shot('de-welcome');
     await js("document.querySelector('.welcome') && document.querySelector('.welcome').remove()");
     for (const view of ['home', 'profiles', 'settings', 'discover', 'skins', 'cosmetics', 'import', 'install', 'console']) {
@@ -397,6 +415,7 @@ app.whenReady().then(() => {
     if (value && typeof value.theme === 'string') sync.theme = value.theme;
     if (value && typeof value.background === 'string') sync.titleBackground = value.background;
     if (value && typeof value.onixServer === 'string') sync.onixServer = value.onixServer.trim();
+    if (value && typeof value.design === 'string') sync.menuDesign = ({ water: 'Water', runner: 'Runner', meadow: 'Meadow' })[value.design] || 'Water';
     // the launcher's language also for the Onix menus in game (Automatic: the computer's language)
     if (value && typeof value.language === 'string') sync.language = (value.language === 'de' || (value.language === 'auto' && app.getLocale().toLowerCase().startsWith('de'))) ? 'Deutsch' : 'English';
     if (value && typeof value.updateAtStartup === 'boolean') require('./lib/startupupdate').register(value.updateAtStartup);
@@ -1130,11 +1149,13 @@ app.whenReady().then(() => {
   // keep the start with the system in step with the setting (the installed path can change with an update)
   startup.register(settings().updateAtStartup !== false);
   // once: the Onix menus in game in the computer's language (later the language setting keeps them in step)
-  if (!settings().languageSynced) {
+  // once (and once more for the designs of 1.1.28): language and design of the Onix menus in game
+  if (!settings().designSynced) {
     try {
       const de = settings().language === 'de' || (settings().language !== 'en' && app.getLocale().toLowerCase().startsWith('de'));
-      syncClientSettings({ language: de ? 'Deutsch' : 'English' });
-      store.set('settings', { ...settings(), languageSynced: true });
+      const design = ({ water: 'Water', runner: 'Runner', meadow: 'Meadow' })[settings().design] || 'Water';
+      syncClientSettings(settings().languageSynced ? { menuDesign: design } : { language: de ? 'Deutsch' : 'English', menuDesign: design });
+      store.set('settings', { ...settings(), languageSynced: true, designSynced: true });
     } catch (err) {
       console.warn('Could not set the in-game language:', err);
     }

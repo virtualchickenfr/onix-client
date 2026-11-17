@@ -492,6 +492,11 @@ void main() {
     raf = requestAnimationFrame(frame);
 
     return {
+      /** Stops the scene at once (the start page when another page opens). */
+      stop() {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      },
       /** Lets the figure sink away (at least ~3.5 s of the scene), fades to dark, then resolves. */
       finish(fast) {
         return new Promise((resolve) => {

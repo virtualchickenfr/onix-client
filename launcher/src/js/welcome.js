@@ -130,12 +130,8 @@ async function maybeWelcome() {
     ],
     () => [
       el('h2', { text: 'Choose a look' }),
-      el('p', { text: 'The theme colours the launcher and the menus in game.' }),
-      el('div', { class: 'welcome-themes' }, THEMES.map((t) => el('button', {
-        class: `welcome-theme${t.id === currentThemeId ? ' on' : ''}`,
-        style: `--t:${t.accent};--p:${t.panel}`,
-        onclick: async () => { await selectTheme(t.id); render(); },
-      }, [el('i'), el('span', { text: t.name })]))),
+      el('p', { text: 'The design of your start page and of the main menu in game. You can change it any time in the settings.' }),
+      el('div', { class: 'designs compact' }, DESIGNS.map((d) => designCard(d, async (x) => { await selectDesign(x.id); render(); }))),
       nav('Next', () => { step++; render(); }),
     ],
     () => {

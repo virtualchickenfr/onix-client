@@ -4,7 +4,9 @@
    line for progress, numbered page headings. */
 
 const hotButtons = [...$$('#hotbar .nav-item')];
-hotButtons.forEach((b) => b.prepend(L.picon(b.dataset.icon)));
+// line icons in the top bar (one.css); the pixel icons of the older looks otherwise
+const NAV_ICONS = { home: 'home', profiles: 'layers', discover: 'globe', skins: 'shirt', cosmetics: 'palette', import: 'import', install: 'download', console: 'terminal', settings: 'settings' };
+hotButtons.forEach((b) => b.prepend(document.body.classList.contains('one') && NAV_ICONS[b.dataset.view] ? icon(NAV_ICONS[b.dataset.view]) : L.picon(b.dataset.icon)));
 $('.tb-logo').append(L.picon('hex'));
 
 let hotNameTimer = 0;
