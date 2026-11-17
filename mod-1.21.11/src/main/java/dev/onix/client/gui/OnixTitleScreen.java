@@ -583,12 +583,9 @@ public class OnixTitleScreen extends Screen {
                 int x = Math.round((width - w) / 2f - parX * width * 0.01f + (float) Math.sin(time * 0.04f) * width * 0.01f);
                 int y = Math.round((height - h) / 2f - parY * height * 0.008f + lift);
                 ctx.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, MEADOW, x, y, 0f, 0f, w, h, BG_W, BG_H, BG_W, BG_H, 0xFFFFFFFF);
-                // the left side a little darker, so the menu reads well on the light meadow
-                int fade = Math.max(260, Math.round(width * 0.55f));
-                for (int i = 0; i < 20; i++) {
-                    float t = i / 20f;
-                    ctx.fill(fade * i / 20, 0, fade * (i + 1) / 20, height, Theme.withAlpha(0xFF10161A, Math.round(130 * (1 - t) * (1 - t))));
-                }
+                // a soft shade behind the menu, so it reads well on the light meadow (smooth, no bands)
+                ctx.fill(0, 0, width, height, 0x22000000);
+                SoftShapes.glow(ctx, width * (width >= 420 ? 0.42f : 0.5f), height * 0.5f, width * 0.3f, height * 0.62f, 0xB80C1216);
             }
             default -> FallTransition.drawVoid(ctx, width, height, time);
         }
@@ -616,7 +613,7 @@ public class OnixTitleScreen extends Screen {
     private void spawnPetal(boolean storm) {
         float y = storm ? height * (0.42f + random.nextFloat() * 0.62f) : height * (0.4f + random.nextFloat() * 0.6f);
         float depth = clamp01((y / height - 0.34f) / 0.66f);
-        float size = (7 + 24 * (float) Math.pow(depth, 1.3)) * (0.75f + random.nextFloat() * 0.5f) * (storm ? 1.25f : 1f);
+        float size = (3 + 10 * (float) Math.pow(depth, 1.3)) * (0.75f + random.nextFloat() * 0.5f) * (storm ? 1.2f : 1f);
         petals.add(new float[]{
                 random.nextFloat() * width, y, (random.nextFloat() - 0.5f) * width * 0.04f,
                 -(0.03f + random.nextFloat() * 0.08f) * height * (storm ? 1f : 0.4f),

@@ -520,7 +520,7 @@ public class OnixMenuScreen extends Screen {
     private void renderSidebar(GuiGraphics ctx, int mx, int my, int x0, int y0, int y1) {
         int x = x0 + 12;
         drawTinted(ctx, LOGO, x + 2, y0 + 14, 15, 15, 128, Theme.TEXT, 1f);
-        if (Theme.glass) {
+        if (!Theme.pixel) {   // the smooth Onix wordmark (the pixel one only for the pixel look)
             Component brand = Theme.display("Onix");
             Theme.scaled(ctx, brand, x + 23, y0 + 16, 1.25f, Theme.TEXT);
             Theme.small(ctx, "Client", x + 25 + Math.round(font.width(brand) * 1.25f) + 3, y0 + 19, Theme.TEXT_3);
@@ -621,7 +621,7 @@ public class OnixMenuScreen extends Screen {
         String title = pageTitle();
         float ts = Math.max(1f, Math.min(2f, room / (float) (font.width(title + ".") + 2)));
         if (font.width(title + ".") * ts > room) title = font.plainSubstrByWidth(title, (int) (room / ts) - font.width("….")) + "…";
-        if (Theme.glass) {
+        if (!Theme.pixel) {
             // clean heading in the smooth display face
             String plain = pageTitle();
             Component head = Theme.display(plain);

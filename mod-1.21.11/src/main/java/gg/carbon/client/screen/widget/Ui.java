@@ -172,12 +172,12 @@ public final class Ui {
 		float w = toggleWidth(), h = toggleHeight();
 		R2D.rrect(g, x, y, w, h, 3, Theme.STONE_DARK);
 		R2D.rect(g, x + 2, y + 1, w - 4, 1, 0x70000000);
-		int fill = Theme.lerp(Theme.withAlpha(0x2A2A2F, 255), 0xFFE6E6E9, t);
+		int fill = Theme.lerp(Theme.withAlpha(0x26303A, 255), Theme.ACCENT, t);
 		if (t > 0.01f) R2D.rrect(g, x + 1, y + 1, (w - 2) * Math.max(0.35f, t), h - 2, 2.5f, Theme.alpha(fill, t));
 		R2D.outline(g, x, y, w, h, 3, 0.75f, Theme.alpha(0xFFFFFFFF, 0.12f + 0.12f * hover));
 		float k = h - 3;
 		float kx = Pixel.snap(x + 1.5f + (w - 3 - k) * t);
-		int knob = Theme.lerp(Theme.lerp(0xFF5A5A62, 0xFF6E6E78, hover), 0xFF0B0B0D, t);
+		int knob = Theme.lerp(Theme.lerp(0xFF56606C, 0xFF6C7682, hover), 0xFFFFFFFF, t);
 		R2D.rrect(g, kx, y + 1.5f, k, k, 2, knob);
 		R2D.rect(g, kx + 1.5f, y + 1.5f + k - 1.5f, k - 3, 1, Theme.alpha(0xFF000000, 0.5f));
 	}

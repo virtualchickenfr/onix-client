@@ -1,32 +1,35 @@
 package gg.carbon.client.ui;
 
-/** Carbon "stone" palette — monochrome take on a blocky, layered UI. ARGB. */
+/** The menu palette: the Onix look (deep navy, one blue accent), the same as the launcher. ARGB. */
 public final class Theme {
 	private Theme() {}
 
-	public static final int BG = 0xFF0B0B0D;
-	public static final int BG_2 = 0xFF111114;
-	public static final int STONE = 0xFF18181B;
-	public static final int STONE_2 = 0xFF222226;
-	public static final int STONE_3 = 0xFF2B2B30;
-	public static final int STONE_EDGE = 0xFF34343A;
-	public static final int STONE_DARK = 0xFF060607;
+	public static final int BG = 0xFF0E1418;
+	public static final int BG_2 = 0xFF11171C;
+	public static final int STONE = 0xFF151C22;
+	public static final int STONE_2 = 0xFF1A2229;
+	public static final int STONE_3 = 0xFF212B33;
+	public static final int STONE_EDGE = 0xFF2A3540;
+	public static final int STONE_DARK = 0xFF080C0F;
 	public static final int ICE = 0xFFF4F4F5;
 	public static final int ICE_DEEP = 0xFFA6A6AE;
 
-	public static final int WINDOW = 0xF20E0E10;
-	public static final int SIDEBAR = 0xFF0B0B0D;
+	public static final int WINDOW = 0xF211171C;
+	public static final int SIDEBAR = 0xFF0E1418;
 	public static final int SURFACE = STONE;
 	public static final int SURFACE_2 = STONE_2;
 	public static final int SURFACE_3 = STONE_3;
 	public static final int STROKE = STONE_EDGE;
 	public static final int STROKE_SOFT = 0x1FFFFFFF;
-	public static final int TEXT = 0xFFEDEDF0;
-	public static final int TEXT_DIM = 0xFF9898A2;
-	public static final int TEXT_MUTED = 0xFF5F5F68;
+	public static final int TEXT = 0xFFE6E9FF;
+	public static final int TEXT_DIM = 0xFFA3A8BD;
+	public static final int TEXT_MUTED = 0xFF6F7486;
 	public static final int WHITE = 0xFFFFFFFF;
 	public static final int BLACK = 0xFF000000;
 	public static final int SHADOW = 0x99000000;
+	/** The Onix accent (switches, the selected page). */
+	public static final int ACCENT = 0xFF2B4BFF;
+	public static final int ACCENT_DARK = 0xFF1F37C7;
 
 	public static int alpha(int color, float alpha) {
 		int a = Math.round(((color >>> 24) & 0xFF) * Math.max(0, Math.min(1, alpha)));
