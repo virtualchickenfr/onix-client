@@ -1,18 +1,70 @@
-# Onix Client
+<p align="center"><img src="website/img/icon.png" width="84" alt=""></p>
 
-A PvP client for Minecraft **Java Edition 1.21.1 and 1.21.11** (Fabric), in these parts:
+<h1 align="center">Onix Client</h1>
+
+<p align="center">
+  A free Minecraft Java client with 294 modules, a launcher for Windows, macOS, Linux and Android, and automatic updates.<br>
+  <b>Minecraft 1.21.1 – 1.21.11 · Fabric</b>
+</p>
+
+<p align="center">
+  <a href="https://github.com/virtualchickenfr/onix-client/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/virtualchickenfr/onix-client?label=release&color=5fd0da"></a>
+  <a href="https://github.com/virtualchickenfr/onix-client/releases"><img alt="Downloads" src="https://img.shields.io/github/downloads/virtualchickenfr/onix-client/total?color=5fd0da"></a>
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/github/license/virtualchickenfr/onix-client?color=5fd0da"></a>
+</p>
+
+<p align="center">
+  <a href="https://onix-client.vercel.app/download"><b>Download</b></a> ·
+  <a href="https://onix-client.vercel.app/features">Features</a> ·
+  <a href="https://onix-client.vercel.app/news">What's new</a> ·
+  <a href="https://onix-client.vercel.app/help">Help</a> ·
+  <a href="https://onix-client.vercel.app/de/">Deutsch</a>
+</p>
+
+<p align="center"><img src="website/img/menu.jpg" width="820" alt="The Onix main menu"></p>
+
+## Features
+
+- **294 modules** – HUD, PvP, visuals, camera, chat, utility and performance; every one can be set up and moved anywhere on screen
+- **Minimap and world map** with waypoints, **motion blur**, **item physics**, hit colour, **Tier Tagger** (MCTiers tiers next to names)
+- **More FPS** – the launcher installs and updates Sodium, Lithium, FerriteCore, ImmediatelyFast, EntityCulling and more
+- **Launcher** – Microsoft sign-in, profiles per version, one-click **mod bundles**, Modrinth browser, skins and capes,
+  import from other clients, **take a whole profile to another Minecraft version**, English and German
+- **Always up to date** – the launcher and the mod update themselves, even quietly when your PC starts
+- **Android** – the Onix app starts Minecraft with Onix on your phone
+
+<p align="center">
+  <img src="website/img/modules.jpg" width="404" alt="Module menu">
+  <img src="website/img/minimap.jpg" width="404" alt="Minimap">
+</p>
+
+## Install
+
+1. Download the launcher for your system from the [latest release](https://github.com/virtualchickenfr/onix-client/releases/latest)
+   or [the website](https://onix-client.vercel.app/download).
+2. Sign in with the Microsoft account that owns Minecraft.
+3. Click **Play**. Onix sets up Fabric, the mod and the performance pack by itself.
+
+Only the mod: put `onix-client-<version>+<Minecraft version>.jar` and Fabric API into the `mods` folder of any Fabric installation.
+**Right Shift** opens the Onix menu in game.
+
+## Repository
 
 | Folder | Contents |
-|---|---|d
-| `mod/` | The in-game client for 1.21.1: **116 modules** with about 1,900 settings, the Onix menu, HUD editor, themes, cosmetics, profiles and a custom title screen |
-| `mod-1.21.11/` | The same client for 1.21.11, **combined with Carbon Client**: 124 modules (Mousestrokes, Dark Mode, Shulker Preview, Title Tweaker, Auto Perspective, Drop Prevention, Toast Control and Particle Limiter come from Carbon) and Carbon's main menu designs (Carbon, Voxel, Portal, Classic) next to Onix's own title screen (*Design → Main Menu*, or "More designs" on the title screen) |
-| `launcher/` | Desktop launcher: Microsoft sign-in, profiles, import from other clients, install into other launchers, mod download, cosmetics, mods, themes |
-| `android/` | Onix for Android phones: Zalith Launcher (GPL-3.0) with Onix set up automatically and updates from the releases (see `android/README.md`) |
-| `server/` | Onix server: badge presence, coins, cosmetics shop and gifts (Node, no dependencies) |
+|---|---|
+| `mod-1.21.11/` | The client for 1.21.11; the ports for 1.21.6, 1.21.7, 1.21.8 and 1.21.10 are generated from it (`ports/`, `tools/port.py`) |
+| `mod/` | The client for 1.21.1 (and the 1.21.4 port) |
+| `launcher/` | Desktop launcher (Electron) |
+| `android/` | Onix for Android (based on Zalith Launcher, GPL-3.0) |
+| `website/` | The website, built by `tools/build_website.py` |
+| `server/` | Onix server: badges, coins, cosmetics shop and gifts |
 
-> **About the name:** a well-known "Onix Client" already exists for Minecraft Bedrock Edition. This project is
-> unrelated and uses its own logo and design. Pick your own name before publishing; it lives in
-> `OnixClient.java` (`NAME`), `launcher/package.json` and the interface texts.
+> Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft.
+> Unrelated to the "Onix Client" for Minecraft Bedrock Edition.
+
+---
+
+The rest of this file describes every part in detail.
 
 ## In game
 
