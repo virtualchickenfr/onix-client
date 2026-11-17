@@ -19,7 +19,7 @@ public class DropPreventionModule extends Module {
     private long lastWarn;
 
     public DropPreventionModule() {
-        super("dropprevention", "Drop Prevention", "Stops you from accidentally dropping valuable items (from Carbon).", Category.UTILITY, false);
+        super("dropprevention", "Drop Prevention", "Stops you from accidentally dropping valuable items.", Category.UTILITY, false);
         tags("drop", "protect", "carbon");
     }
 

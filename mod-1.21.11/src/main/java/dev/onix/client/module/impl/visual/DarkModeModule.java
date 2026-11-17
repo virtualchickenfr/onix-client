@@ -17,7 +17,7 @@ public class DarkModeModule extends Module {
     public final BoolSetting creative = add(new BoolSetting("creative", "Creative Inventory", true));
 
     public DarkModeModule() {
-        super("darkmode", "Dark Mode", "A dark coat of paint for every container screen (from Carbon).", Category.VISUAL, false);
+        super("darkmode", "Dark Mode", "A dark coat of paint for every container screen.", Category.VISUAL, false);
         tags("dark", "inventory", "chest", "gui", "carbon");
     }
 

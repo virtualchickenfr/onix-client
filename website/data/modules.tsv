@@ -96,7 +96,6 @@ fog	VISUAL	Fog & Clouds	Nebel & Wolken	Softer or no distance fog, thinner enviro
 discord	UTILITY	Discord Status	Discord-Status	Shows on your Discord profile that you play Onix and where.	Zeigt auf deinem Discord-Profil, dass du Onix spielst und wo.
 nametags	VISUAL	Nametags	Namensschilder	Your own nametag in F5 and health next to names.	Dein eigenes Namensschild in F5 und Leben neben Namen.
 badge	VISUAL	Onix Badge	Onix-Abzeichen	An Onix logo next to every player who uses Onix – including you.	Ein Onix-Logo neben jedem Spieler, der Onix nutzt – auch bei dir.
-customsky	VISUAL	Custom Sky	Eigener Himmel	Pick from many skies, with separate day and night skies.	Wähle aus vielen Himmeln, getrennt für Tag und Nacht.
 lowfire	VISUAL	Low Fire	Wenig Feuer	Less fire covering your screen.	Weniger Feuer auf deinem Bildschirm.
 itemphysics	VISUAL	Item Physics	Item-Physik	Dropped items lie flat on the ground instead of floating and spinning.	Gedroppte Items liegen flach auf dem Boden statt zu schweben und sich zu drehen.
 motionblur	VISUAL	Motion Blur	Motion Blur	Smooth blur when you turn, like in PvP montages.	Weiche Bewegungsunschärfe beim Umschauen, wie in PvP-Montagen.
@@ -140,14 +139,14 @@ performance	PERFORMANCE	Performance Preset	Performance-Preset	One switch for FPS
 entitydistance	PERFORMANCE	Entity Distance	Entity-Distanz	Render entities closer or further away.	Entities näher oder weiter weg rendern.
 renderdistance	PERFORMANCE	Render Distance Switch	Sichtweiten-Wechsel	Toggle between two render distances.	Zwischen zwei Sichtweiten umschalten.
 shaders	PERFORMANCE	Shaders	Shader	Turns the shader pack on and off (needs Iris; the launcher's one-click shaders add it).	Schaltet das Shaderpack an und aus (braucht Iris, das der Launcher auf starken PCs installiert).
-mousestrokes	HUD	Mousestrokes	Mousestrokes	Shows your mouse movement as a dot on a pad (from Carbon).	Zeigt deine Mausbewegung als Punkt auf einem Pad (aus Carbon).
-darkmode	VISUAL	Dark Mode	Dunkelmodus	A dark coat of paint for every container screen (from Carbon).	Ein dunkler Anstrich für alle Container-Bildschirme (aus Carbon).
-titletweaker	VISUAL	Title Tweaker	Titel-Anpassung	Scale or hide on-screen titles (from Carbon).	Titel auf dem Bildschirm skalieren oder ausblenden (aus Carbon).
-autoperspective	CAMERA	Auto Perspective	Auto-Perspektive	Third person while flying or riding (from Carbon).	Dritte Person beim Fliegen oder Reiten (aus Carbon).
-shulkertooltips	UTILITY	Shulker Preview	Shulker-Vorschau	See inside shulker boxes in the tooltip (from Carbon).	Sieh in Shulkerkisten im Tooltip (aus Carbon).
-dropprevention	UTILITY	Drop Prevention	Drop-Schutz	Stops you from accidentally dropping valuable items (from Carbon).	Verhindert, dass du wertvolle Items aus Versehen fallen lässt (aus Carbon).
-toastcontrol	UTILITY	Toast Control	Toast-Kontrolle	Hides notification toasts like new recipes (from Carbon).	Blendet Hinweis-Toasts wie neue Rezepte aus (aus Carbon).
-particlelimiter	PERFORMANCE	Particle Limiter	Partikel-Limit	Reduces the number of particles for more FPS (from Carbon).	Weniger Partikel für mehr FPS (aus Carbon).
+mousestrokes	HUD	Mousestrokes	Mousestrokes	Shows your mouse movement as a dot on a pad.	Zeigt deine Mausbewegung als Punkt auf einem Pad.
+darkmode	VISUAL	Dark Mode	Dunkelmodus	A dark coat of paint for every container screen.	Ein dunkler Anstrich für alle Container-Bildschirme.
+titletweaker	VISUAL	Title Tweaker	Titel-Anpassung	Scale or hide on-screen titles.	Titel auf dem Bildschirm skalieren oder ausblenden.
+autoperspective	CAMERA	Auto Perspective	Auto-Perspektive	Third person while flying or riding.	Dritte Person beim Fliegen oder Reiten.
+shulkertooltips	UTILITY	Shulker Preview	Shulker-Vorschau	See inside shulker boxes in the tooltip.	Sieh in Shulkerkisten im Tooltip.
+dropprevention	UTILITY	Drop Prevention	Drop-Schutz	Stops you from accidentally dropping valuable items.	Verhindert, dass du wertvolle Items aus Versehen fallen lässt.
+toastcontrol	UTILITY	Toast Control	Toast-Kontrolle	Hides notification toasts like new recipes.	Blendet Hinweis-Toasts wie neue Rezepte aus.
+particlelimiter	PERFORMANCE	Particle Limiter	Partikel-Limit	Reduces the number of particles for more FPS.	Weniger Partikel für mehr FPS.
 cb_afk	UTILITY	AFK Reminder	AFK Reminder	Reminds you when you haven't moved for 5 minutes.	Reminds you when you haven't moved for 5 minutes.
 cb_break	UTILITY	Break Reminder	Break Reminder	Reminds you to take a short break every hour.	Reminds you to take a short break every hour.
 cb_blindness	COMBAT	Blindness Alert	Blindness Alert	Warns when you are blinded.	Warns when you are blinded.

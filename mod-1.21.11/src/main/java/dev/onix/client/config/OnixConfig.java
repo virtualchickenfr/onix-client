@@ -24,18 +24,14 @@ public class OnixConfig {
 
     // Title screen background, see TitleBackgrounds
     public final TextSetting titleBackground = new TextSetting("titleBackground", "Background", "carbon", 128).hidden();
-    public final BoolSetting backgroundSlideshow = new BoolSetting("backgroundSlideshow", "Slideshow", false)
-            .describe("Cycles through every background with a soft crossfade.");
-    public final NumberSetting slideshowSeconds = new NumberSetting("slideshowSeconds", "Show Each For", 12, 4, 60, 1).unit("s")
-            .visibleIf(backgroundSlideshow::isOn);
-    public final BoolSetting backgroundMotion = new BoolSetting("backgroundMotion", "Background Motion", true)
-            .describe("Slow drift and a little parallax when you move the mouse.");
+    public final BoolSetting backgroundSlideshow = new BoolSetting("backgroundSlideshow", "Slideshow", false).hidden();
+    public final NumberSetting slideshowSeconds = new NumberSetting("slideshowSeconds", "Show Each For", 12, 4, 60, 1).unit("s").hidden();
+    public final BoolSetting backgroundMotion = new BoolSetting("backgroundMotion", "Background Motion", true).hidden();
 
     // Interface
-    public final BoolSetting menuGlass = new BoolSetting("menuGlass", "Liquid Glass", true)
-            .describe("In-game menus as dark frosted glass: the world blurs behind see-through panels with light edges.");
+    public final BoolSetting menuGlass = new BoolSetting("menuGlass", "Liquid Glass", false).hidden();
     public final ModeSetting menuStyle = new ModeSetting("menuStyle", "Menu Style", "Clean", "Classic", "Bloom")
-            .describe("Clean opens the Carbon style mod menu with module cards. Classic opens the Onix module list, Bloom starts with a flower of categories.");
+            .describe("Clean opens the module menu with module cards. Classic opens the module list, Bloom starts with a flower of categories.");
     public final ModeSetting menuScale = new ModeSetting("menuScale", "Menu Size", "Normal", "Small", "Large");
     public final BoolSetting menuAnimations = new BoolSetting("menuAnimations", "Animations", true);
     public final BoolSetting clickSounds = new BoolSetting("clickSounds", "Click Sounds", true);
@@ -80,21 +76,20 @@ public class OnixConfig {
     public final TextSetting lastServerName = new TextSetting("lastServerName", "Last Server Name", "", 100).hidden();
 
     // Design
-    public final BoolSetting lightMode = new BoolSetting("lightMode", "Light Mode", false)
-            .describe("Light surfaces and dark text in every Onix menu.");
+    public final BoolSetting lightMode = new BoolSetting("lightMode", "Light Mode", false).hidden();
     public final ModeSetting buttonStyle = new ModeSetting("buttonShape", "Button Style", "Rounded", "Pill")
             .describe("Rounded corners or fully round pill buttons.");
-    public final BoolSetting carbonButtons = new BoolSetting("carbonButtons", "Carbon Buttons Everywhere", true)
-            .describe("Minecraft's own buttons and sliders (options, singleplayer, multiplayer …) as Carbon blocks.");
-    public final BoolSetting menuSkin = new BoolSetting("menuSkin", "Carbon Menu Skin", true)
-            .describe("Minecraft's menus outside a world get Carbon's backdrop, lists, text fields and tooltips.");
-    public final ModeSetting menuDesign = new ModeSetting("menuDesign", "Main Menu", "Onix", "Carbon", "Voxel", "Portal", "Classic", "Vanilla")
-            .describe("Onix's title screen or one of the Carbon designs (Carbon, Voxel, Portal, Classic).");
-    public final BoolSetting menuCharacter = new BoolSetting("menuCharacter", "Character Art", false)
-            .describe("Carbon design: show the character artwork next to the menu.")
-            .visibleIf(() -> menuDesign.is("Carbon"));
-    public final ModeSetting titleDesign = new ModeSetting("titleDesign", "Title Screen Design", "Cinematic", "Onix", "Centered", "Split", "Minimal", "Cards")
-            .describe("Also switch on the title screen with the arrow keys, by dragging or with the dots at the bottom.");
+    public final BoolSetting carbonButtons = new BoolSetting("carbonButtons", "Onix Buttons Everywhere", true)
+            .describe("Minecraft's own buttons and sliders (options, singleplayer, multiplayer …) in the Onix look.");
+    public final BoolSetting menuSkin = new BoolSetting("menuSkin", "Onix Look for Minecraft Menus", true)
+            .describe("Minecraft's menus outside a world get the Onix backdrop, lists, text fields and tooltips.");
+    public final ModeSetting menuDesign = new ModeSetting("menuDesign", "Main Menu", "Water", "Runner", "Meadow", "Vanilla")
+            .describe("Water: you sink through deep water. Runner: a dark studio, your character runs in. Meadow: thousands of flowers, "
+                    + "the petals fly up when you start. The launcher's Design setting picks the same.");
+    /** 1.1.28: the three designs replaced themes, backgrounds and the Carbon menus (set once). */
+    public final BoolSetting designSet = new BoolSetting("designSet", "Design Set", false).hidden();
+    public final BoolSetting menuCharacter = new BoolSetting("menuCharacter", "Character Art", false).hidden();
+    public final ModeSetting titleDesign = new ModeSetting("titleDesign", "Title Screen Design", "Cinematic", "Onix", "Centered", "Split", "Minimal", "Cards").hidden();
 
     // Loading screens
     public final BoolSetting loadingScreens = new BoolSetting("loadingScreens", "Onix Loading Screens", true)
@@ -146,7 +141,7 @@ public class OnixConfig {
     }
 
     public List<Setting<?, ?>> designSettings() {
-        return List.of(menuDesign, menuCharacter, menuStyle, menuGlass, lightMode, buttonStyle, carbonButtons, menuSkin, menuScale, titleDesign, menuAnimations, menuParticles, backgroundDim);
+        return List.of(menuDesign, menuStyle, buttonStyle, carbonButtons, menuSkin, menuScale, menuAnimations, menuParticles, backgroundDim);
     }
 
     public List<Setting<?, ?>> loadingSettings() {

@@ -12,7 +12,7 @@ public class ParticleLimiterModule extends Module {
             .describe("Share of particles that are still spawned."));
 
     public ParticleLimiterModule() {
-        super("particlelimiter", "Particle Limiter", "Reduces the number of particles for more FPS (from Carbon).", Category.PERFORMANCE, false);
+        super("particlelimiter", "Particle Limiter", "Reduces the number of particles for more FPS.", Category.PERFORMANCE, false);
         tags("particles", "fps", "carbon");
     }
 

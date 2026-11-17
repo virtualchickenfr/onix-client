@@ -126,7 +126,7 @@ public class ModuleManager {
         register(new NametagsModule());
         register(new OnixBadgeModule());
         register(new dev.onix.client.module.impl.combat.TierTaggerModule());
-        register(new CustomSkyModule());
+        // Custom Sky is gone since 1.1.28 (the designs replaced themes, backgrounds and skies); SkyRenderer finds no module
         register(new LowFireModule());
         register(new ItemPhysicsModule());
         register(new MotionBlurModule());

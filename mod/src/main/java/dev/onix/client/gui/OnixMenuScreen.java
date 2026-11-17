@@ -612,7 +612,7 @@ public class OnixMenuScreen extends Screen {
             }
             case MODULE -> module.getDescription();
             case COSMETICS -> "Earn 1 coin per minute played. Only visible to you.";
-            case DESIGN -> "Themes, backgrounds, light mode, buttons and loading screens.";
+            case DESIGN -> "Buttons, menus and loading screens.";
             case PROFILES -> "Save modules, settings and HUD layout as switchable sets.";
             case SETTINGS -> "Interface, HUD editor, notifications, server rules and profiles.";
             case HUB -> "";
@@ -1756,44 +1756,12 @@ public class OnixMenuScreen extends Screen {
         int y0 = r[1] - (int) Math.round(scroll);
         int y = y0;
 
-        // themes
-        ThemeDef selected = ThemeStore.byId(c.theme.get());
-        Theme.label(ctx, "Themes", r[0] + 2, y, Theme.TEXT_3);
-        y += 10 + renderThemeGrid(ctx, mx, my, r[0], y + 10, w, selected) + 12;
-        themeEditor.edit(selected);
-        if (selected.custom() && themeEditor.theme() != null) {
-            Theme.label(ctx, "Edit " + themeEditor.theme().name(), r[0] + 2, y, Theme.TEXT_3);
-            y += 10 + renderGroup(ctx, mx, my, themeEditor.settings(), r[0], y + 10, w) + 6;
-            int bx = r[0];
-            bx += button(ctx, mx, my, bx, y, 92, 20, "Duplicate", false, () -> selectTheme(ThemeStore.create(themeEditor.theme(), themeEditor.theme().name()))) + 6;
-            boolean confirming = System.currentTimeMillis() < confirmDeleteUntil;
-            button(ctx, mx, my, bx, y, 112, 20, confirming ? "Click to Confirm" : "Delete Theme", false, () -> {
-                if (System.currentTimeMillis() < confirmDeleteUntil) {
-                    ThemeStore.delete(selected.id());
-                    selectTheme(ThemeDef.BUILT_IN[0]);
-                    confirmDeleteUntil = 0;
-                } else {
-                    confirmDeleteUntil = System.currentTimeMillis() + 3000;
-                }
-            });
-            y += 32;
-        } else {
-            y += linkRow(ctx, mx, my, r[0], y, w, "Customize " + selected.name(), "Make an editable copy", "plus", Theme.TEXT,
-                    () -> selectTheme(ThemeStore.create(selected, selected.name() + " Copy"))) + 12;
-        }
-
-        // title screen background
-        Theme.label(ctx, "Title Screen Background", r[0] + 2, y, Theme.TEXT_3);
-        y += 10 + renderBackgroundGrid(ctx, mx, my, r[0], y + 10, w) + 6;
-        y += renderGroup(ctx, mx, my, c.backgroundSettings(), r[0], y, w) + 12;
-
         for (Section section : List.of(new Section("Appearance", c.designSettings()), new Section("Loading Screens", c.loadingSettings()))) {
             y += renderSection(ctx, mx, my, section, r[0], y, w);
         }
         contentHeight = y - y0;
         endClip(ctx);
         scrollbar(ctx, r[2] + 4, r[1], r[3]);
-        themeEditor.tick();
     }
 
     private void selectTheme(ThemeDef def) {

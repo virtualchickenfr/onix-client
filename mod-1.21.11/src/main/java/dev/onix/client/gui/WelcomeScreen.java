@@ -15,17 +15,17 @@ import net.minecraft.sounds.SoundEvents;
 import org.lwjgl.glfw.GLFW;
 
 /**
- * The first start of Onix: a short tour that sets the look (theme, light or dark, main menu, menu size) and the basics
+ * The first start of Onix: a short tour that sets the main menu design (Water, Runner, Meadow) and the basics
  * (animations, sounds, friends) before the title screen. Shown once; config "introDone" remembers it.
  */
 public class WelcomeScreen extends Screen {
     private static final Identifier LOGO = Identifier.fromNamespaceAndPath("onix", "textures/gui/logo.png");
     private static final Identifier CHECK = Identifier.fromNamespaceAndPath("onix", "textures/gui/icon_check.png");
-    private static final String[] TITLES = {"Welcome", "Pick your theme", "Main menu", "A few basics", "All set"};
+    private static final String[] TITLES = {"Welcome", "Main menu", "A few basics", "All set"};
     private static final String[][] MENU_DESIGNS = {
-            {"Onix", "Clean menu with your theme and moving backgrounds"},
-            {"Carbon", "Carbon Client's designs, with a picker for more"},
-            {"Classic", "Familiar Minecraft layout in Onix colours"},
+            {"Water", "You sink through deep, clear water"},
+            {"Runner", "A dark studio – your character runs in"},
+            {"Meadow", "Thousands of flowers, petals fly up"},
             {"Vanilla", "The normal Minecraft title screen"},
     };
 
@@ -113,10 +113,8 @@ public class WelcomeScreen extends Screen {
     public void renderBackground(GuiGraphics ctx, int mouseX, int mouseY, float delta) {
         Theme.refresh();
         float time = (System.nanoTime() - start) / 1_000_000_000f;
-        TitleBackgrounds.draw(ctx, width, height, mouseX, mouseY, time);
+        FallTransition.drawVoid(ctx, width, height, time);
         ctx.fill(0, 0, width, height, 0x8C050507);
-        ctx.fillGradient(0, 0, width, height, Theme.withAlpha(Theme.current().sky(), 40), Theme.withAlpha(Theme.current().sky(), 0));
-        particles.render(ctx, width, height, 0.5f);
     }
 
     @Override
@@ -164,9 +162,8 @@ public class WelcomeScreen extends Screen {
         }
         switch (page) {
             case 0 -> renderWelcome(ctx, x1, y1, w, h);
-            case 1 -> renderThemes(ctx, mouseX, mouseY, cx1, cy, cx2);
-            case 2 -> renderMenus(ctx, mouseX, mouseY, cx1, cy, cx2);
-            case 3 -> renderBasics(ctx, mouseX, mouseY, cx1, cy, cx2);
+            case 1 -> renderMenus(ctx, mouseX, mouseY, cx1, cy, cx2);
+            case 2 -> renderBasics(ctx, mouseX, mouseY, cx1, cy, cx2);
             default -> renderDone(ctx, x1, y1, w, h);
         }
         ctx.pose().popMatrix();
@@ -201,35 +198,6 @@ public class WelcomeScreen extends Screen {
         Theme.smallCentered(ctx, "You can change everything later in the Onix menu (Right Shift).", x1 + w / 2, y1 + 122, Theme.TEXT_3);
     }
 
-    private void renderThemes(GuiGraphics ctx, int mx, int my, int x1, int y, int x2) {
-        ThemeDef[] themes = ThemeDef.BUILT_IN;
-        int cols = 4;
-        int gap = 6;
-        int cw = (x2 - x1 - gap * (cols - 1)) / cols;
-        int ch = 38;
-        for (int i = 0; i < themes.length; i++) {
-            ThemeDef def = themes[i];
-            int cx = x1 + (i % cols) * (cw + gap);
-            int cy = y + (i / cols) * (ch + gap);
-            boolean sel = config().theme.get().equals(def.id());
-            option(ctx, mx, my, "theme:" + def.id(), cx, cy, cw, ch, sel, () -> {
-                config().theme.set(def.id());
-                Theme.refresh();
-            });
-            Theme.round(ctx, cx + 7, cy + 7, cx + cw - 7, cy + 19, 4, def.panel());
-            Theme.round(ctx, cx + 9, cy + 9, cx + 9 + (cw - 18) / 2, cy + 17, 3, def.accent());
-            Theme.small(ctx, def.name(), cx + 7, cy + 25, sel ? Theme.TEXT : Theme.TEXT_2);
-        }
-        int ry = y + ((themes.length + cols - 1) / cols) * (ch + gap) + 4;
-        Theme.small(ctx, "Brightness", x1, ry + 4, Theme.TEXT_2);
-        int bw = 60;
-        boolean light = config().lightMode.isOn();
-        option(ctx, mx, my, "mode:dark", x1 + 60, ry, bw, 16, !light, () -> config().lightMode.set(false));
-        Theme.textCentered(ctx, "Dark", x1 + 60 + bw / 2, ry + 4, Theme.TEXT);
-        option(ctx, mx, my, "mode:light", x1 + 66 + bw, ry, bw, 16, light, () -> config().lightMode.set(true));
-        Theme.textCentered(ctx, "Light", x1 + 66 + bw + bw / 2, ry + 4, Theme.TEXT);
-    }
-
     private void renderMenus(GuiGraphics ctx, int mx, int my, int x1, int y, int x2) {
         int gap = 6;
         int cw = (x2 - x1 - gap) / 2;
@@ -247,7 +215,7 @@ public class WelcomeScreen extends Screen {
             Theme.textBold(ctx, id, cx + 8, cy + 8, Theme.TEXT);
             Theme.small(ctx, Theme.ellipsize(MENU_DESIGNS[i][1], cw - 16), cx + 8, cy + 24, Theme.TEXT_3);
         }
-        Theme.small(ctx, "More designs (Voxel, Portal …) are in the title screen's design picker.", x1, y + 2 * (ch + gap) + 2, Theme.TEXT_3);
+        Theme.small(ctx, "The launcher's Design setting picks the same.", x1, y + 2 * (ch + gap) + 2, Theme.TEXT_3);
     }
 
     private void renderBasics(GuiGraphics ctx, int mx, int my, int x1, int y, int x2) {

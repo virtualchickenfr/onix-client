@@ -219,3 +219,8 @@ body.one .welcome-lang button.on { background: var(--accent); color: #fff; borde
 }
 body.one .topnav .nav-item > svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 body.one .topnav .nav-item.active > svg { color: var(--accent-2); }
+.design-thumb { display: block; width: 100%; height: 132px; aspect-ratio: auto; flex: none; background-color: #10161a; }
+.designs.compact .design-thumb { height: 84px; }
+body.one .pv-icon, body.one .pcard-icon, body.one .ticon, body.one .tile-ico {
+  box-shadow: none !important; border: 1px solid var(--line-2); border-radius: 12px !important; text-shadow: none; font-family: var(--font); font-weight: 600;
+}

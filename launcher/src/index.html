@@ -302,6 +302,19 @@
             <select class="input" id="set-language" data-no-i18n><option value="auto">Automatic · Automatisch</option><option value="en">English</option><option value="de">Deutsch</option></select>
           </div>
           <div class="row">
+            <div class="row-text"><b>Hide while playing</b><span>Comes back as soon as Minecraft closes.</span></div>
+            <label class="switch"><input type="checkbox" id="set-hide"><i></i></label>
+          </div>
+          <div class="row">
+            <div class="row-text"><b>Fast start</b><span>Reuses your sign-in for a few hours, checks mod updates twice a day and caches Java classes between starts.</span></div>
+            <label class="switch"><input type="checkbox" id="set-fast"><i></i></label>
+          </div>
+          <div class="row">
+            <div class="row-text"><b>Launcher updates</b><span id="update-text">The launcher looks for a new version every time it starts.</span></div>
+            <div class="btn-row" style="align-items:center"><label class="switch" title="Check for updates when the launcher starts"><input type="checkbox" id="set-autoupdate"><i></i></label>
+            <button class="btn" id="update-check"><svg><use href="#i-refresh"/></svg>Check now</button></div>
+          </div>
+          <div class="row">
             <div class="row-text"><b>Update when the PC starts</b><span>Onix updates itself quietly in the background when you start your computer and closes again – no window opens.</span></div>
             <label class="switch"><input type="checkbox" id="set-startup-update"><i></i></label>
           </div>

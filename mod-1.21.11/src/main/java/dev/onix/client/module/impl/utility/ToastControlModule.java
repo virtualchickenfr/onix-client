@@ -10,7 +10,7 @@ public class ToastControlModule extends Module {
     private final ModeSetting mode = add(new ModeSetting("hide", "Hide", "All", "Recipes & Tutorials", "Advancements"));
 
     public ToastControlModule() {
-        super("toastcontrol", "Toast Control", "Hides notification toasts like new recipes (from Carbon).", Category.UTILITY, false);
+        super("toastcontrol", "Toast Control", "Hides notification toasts like new recipes.", Category.UTILITY, false);
         tags("toast", "recipe", "advancement", "notification", "carbon");
     }
 

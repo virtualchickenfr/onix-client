@@ -18,7 +18,7 @@ public class MousestrokesModule extends HudModule {
     private long last = System.nanoTime();
 
     public MousestrokesModule() {
-        super("mousestrokes", "Mousestrokes", "Shows your mouse movement as a dot on a pad (from Carbon).", Category.HUD, false, Anchor.BOTTOM_LEFT, 4, -80);
+        super("mousestrokes", "Mousestrokes", "Shows your mouse movement as a dot on a pad.", Category.HUD, false, Anchor.BOTTOM_LEFT, 4, -80);
         tags("mouse", "aim", "carbon");
     }
 

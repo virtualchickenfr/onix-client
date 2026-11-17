@@ -36,7 +36,7 @@ public class ShulkerPreviewModule extends Module {
 	private final NumberSetting scale = add(new NumberSetting("previewScale", "Scale", 1, 0.6, 1.6, 0.05).unit("x"));
 
 	public ShulkerPreviewModule() {
-		super("shulkertooltips", "Shulker Preview", "See inside shulker boxes in the tooltip (from Carbon).", Category.UTILITY, false);
+		super("shulkertooltips", "Shulker Preview", "See inside shulker boxes in the tooltip.", Category.UTILITY, false);
 		tags("shulker", "tooltip", "box", "carbon");
 	}
 

@@ -7,7 +7,6 @@ import dev.onix.client.gui.OnixTitleScreen;
 import dev.onix.client.module.HudModule;
 import dev.onix.client.module.Module;
 import gg.carbon.client.screen.CarbonMainMenu;
-import gg.carbon.client.screen.ThemePicker;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -78,8 +77,6 @@ public final class DevTest {
         // first start: the setup tour
         then(40, () -> snap(mc, "00a_intro_welcome"));
         then(2, () -> { if (mc.screen != null) mc.screen.keyPressed(new KeyEvent(com.mojang.blaze3d.platform.InputConstants.KEY_RIGHT, 0, 0)); });
-        then(30, () -> snap(mc, "00b_intro_theme"));
-        then(2, () -> { if (mc.screen != null) mc.screen.keyPressed(new KeyEvent(com.mojang.blaze3d.platform.InputConstants.KEY_RIGHT, 0, 0)); });
         then(30, () -> snap(mc, "00c_intro_menu"));
         then(2, () -> { if (mc.screen != null) mc.screen.keyPressed(new KeyEvent(com.mojang.blaze3d.platform.InputConstants.KEY_RIGHT, 0, 0)); });
         then(30, () -> snap(mc, "00d_intro_basics"));
@@ -90,7 +87,7 @@ public final class DevTest {
             OnixClient.CONFIG.lastServer.set("mc.hypixel.net");
             OnixClient.CONFIG.lastServerName.set("Hypixel");
         });
-        then(2, () -> design("Onix"));
+        then(2, () -> design("Water"));
         // resource loading screen (F3 + T)
         then(2, () -> mc.reloadResourcePacks());
         then(6, () -> snap(mc, "00z1_loading"));
@@ -116,22 +113,19 @@ public final class DevTest {
                 if (!dev.onix.client.gui.EssentialLink.present()) return;
                 OnixClient.LOGGER.info("[devtest] essential {} opened: {}", what, mc.screen == null ? "nothing" : mc.screen.getClass().getName());
                 snap(mc, "01e_essential_" + what);
-                design("Onix");
+                design("Water");
             });
         }
-        for (String id : List.of("Carbon", "Voxel", "Portal", "Classic")) {
-            then(2, () -> design(id));
-            then(90, () -> snap(mc, "02_title_" + id.toLowerCase(Locale.ROOT)));
-        }
-        then(2, () -> OnixClient.CONFIG.lightMode.set(true));
-        then(60, () -> snap(mc, "02_title_classic_light"));
-        then(2, () -> OnixClient.CONFIG.lightMode.set(false));
-        then(2, () -> design("Onix"));
-        then(20, () -> mc.setScreen(new ThemePicker(mc.screen)));
-        then(50, () -> snap(mc, "03_picker"));
-        then(2, () -> mc.screen.keyPressed(new KeyEvent(com.mojang.blaze3d.platform.InputConstants.KEY_RIGHT, 0, 0)));
-        then(40, () -> snap(mc, "03_picker_next"));
-        then(2, () -> design("Onix"));
+        // the other two designs: the runner running in and standing, the meadow with its petals flying up
+        then(2, () -> design("Runner"));
+        then(30, () -> snap(mc, "02_title_runner_in"));
+        then(80, () -> snap(mc, "02_title_runner"));
+        then(2, () -> design("Meadow"));
+        then(60, () -> snap(mc, "02_title_meadow"));
+        then(2, () -> { if (mc.screen instanceof OnixTitleScreen t) t.devBurst(); });
+        then(12, () -> snap(mc, "02_title_meadow_burst1"));
+        then(16, () -> snap(mc, "02_title_meadow_burst2"));
+        then(2, () -> design("Water"));
         then(20, () -> mc.setScreen(new OnixMenuScreen(mc.screen)));
         then(60, () -> snap(mc, "04_menu_hub"));
         for (OnixMenuScreen.View view : List.of(OnixMenuScreen.View.MODULES, OnixMenuScreen.View.COSMETICS, OnixMenuScreen.View.DESIGN, OnixMenuScreen.View.SETTINGS,
@@ -153,10 +147,7 @@ public final class DevTest {
         then(40, () -> snap(mc, "06d_vanilla_video_sliders"));
         then(2, () -> mc.setScreen(new net.minecraft.client.gui.screens.worldselection.SelectWorldScreen(new TitleScreen())));
         then(60, () -> snap(mc, "06e_vanilla_singleplayer"));
-        then(2, () -> OnixClient.CONFIG.lightMode.set(true));
-        then(30, () -> snap(mc, "06f_vanilla_singleplayer_light"));
-        then(2, () -> OnixClient.CONFIG.lightMode.set(false));
-        then(2, () -> design("Onix"));
+        then(2, () -> design("Water"));
         then(2, () -> mc.setScreen(new TitleScreen()));
         then(20, () -> {
             if (java.nio.file.Files.isDirectory(mc.gameDirectory.toPath().resolve("saves").resolve("New World"))) {
@@ -578,11 +569,6 @@ public final class DevTest {
         then(2, () -> mc.setScreen(new net.minecraft.client.gui.screens.PauseScreen(true)));
         then(40, () -> snap(mc, "10b_pause_carbon_buttons"));
         then(2, () -> mc.setScreen(null));
-        then(2, () -> {
-            OnixClient.MODULES.get(dev.onix.client.module.impl.visual.CustomSkyModule.class).setEnabled(true);
-            mc.player.setXRot(-30);
-        });
-        then(60, () -> snap(mc, "11_custom_sky"));
         then(20, () -> {
             OnixClient.LOGGER.info("[devtest] finished");
             mc.stop();

@@ -80,8 +80,18 @@ public class OnixClient implements ClientModInitializer {
             CONFIG.cinematicSet2.set(true);
             CONFIG.cinematicSet.set(true);
             CONFIG.customMainMenu.set(true);
-            CONFIG.menuDesign.set("Onix");
             CONFIG.titleDesign.set("Cinematic");
+            CONFIG.save();
+        }
+        // 1.1.28: themes, backgrounds and the Carbon menus made way for three designs (Water, Runner, Meadow) and one
+        // fixed look; everyone starts on Water once (the launcher's Design setting picks another)
+        if (!CONFIG.designSet.isOn()) {
+            CONFIG.designSet.set(true);
+            if (!CONFIG.menuDesign.is("Vanilla") && !CONFIG.menuDesign.is("Runner") && !CONFIG.menuDesign.is("Meadow")) CONFIG.menuDesign.set("Water");
+            CONFIG.customMainMenu.set(true);
+            CONFIG.titleDesign.set("Cinematic");
+            CONFIG.lightMode.set(false);
+            CONFIG.menuGlass.set(false);
             CONFIG.save();
         }
         // 1.1.16: right shift opens the clean Carbon style mod menu once (Classic and Bloom stay under Design)

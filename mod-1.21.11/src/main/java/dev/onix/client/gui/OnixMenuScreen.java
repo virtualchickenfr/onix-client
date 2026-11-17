@@ -724,7 +724,7 @@ public class OnixMenuScreen extends Screen {
             }
             case MODULE -> module.getDescription();
             case COSMETICS -> "Earn 1 coin per minute played. Name styles and tags are seen by other Onix players.";
-            case DESIGN -> "Themes, backgrounds, light mode, buttons and loading screens.";
+            case DESIGN -> "Main menu design, buttons and loading screens.";
             case PROFILES -> "Save modules, settings and HUD layout as switchable sets.";
             case SETTINGS -> "Interface, HUD editor, notifications, server rules and profiles.";
             case FRIENDS -> "See who plays, join their server and chat – with everyone who uses Onix.";
@@ -2291,36 +2291,9 @@ public class OnixMenuScreen extends Screen {
         int y0 = r[1] - (int) Math.round(scroll);
         int y = y0;
 
-        // themes
-        ThemeDef selected = ThemeStore.byId(c.theme.get());
-        Theme.label(ctx, "Themes", r[0] + 2, y, Theme.TEXT_3);
-        y += 10 + renderThemeGrid(ctx, mx, my, r[0], y + 10, w, selected) + 12;
-        themeEditor.edit(selected);
-        if (selected.custom() && themeEditor.theme() != null) {
-            Theme.label(ctx, "Edit " + themeEditor.theme().name(), r[0] + 2, y, Theme.TEXT_3);
-            y += 10 + renderGroup(ctx, mx, my, themeEditor.settings(), r[0], y + 10, w) + 6;
-            int bx = r[0];
-            bx += button(ctx, mx, my, bx, y, 92, 20, "Duplicate", false, () -> selectTheme(ThemeStore.create(themeEditor.theme(), themeEditor.theme().name()))) + 6;
-            boolean confirming = System.currentTimeMillis() < confirmDeleteUntil;
-            button(ctx, mx, my, bx, y, 112, 20, confirming ? "Click to Confirm" : "Delete Theme", false, () -> {
-                if (System.currentTimeMillis() < confirmDeleteUntil) {
-                    ThemeStore.delete(selected.id());
-                    selectTheme(ThemeDef.BUILT_IN[0]);
-                    confirmDeleteUntil = 0;
-                } else {
-                    confirmDeleteUntil = System.currentTimeMillis() + 3000;
-                }
-            });
-            y += 32;
-        } else {
-            y += linkRow(ctx, mx, my, r[0], y, w, "Customize " + selected.name(), "Make an editable copy", "plus", Theme.TEXT,
-                    () -> selectTheme(ThemeStore.create(selected, selected.name() + " Copy"))) + 12;
-        }
-
-        // title screen background
-        Theme.label(ctx, "Title Screen Background", r[0] + 2, y, Theme.TEXT_3);
-        y += 10 + renderBackgroundGrid(ctx, mx, my, r[0], y + 10, w) + 6;
-        y += renderGroup(ctx, mx, my, c.backgroundSettings(), r[0], y, w) + 12;
+        // the main menu design (the same three as the launcher's start page), or Minecraft's own
+        Theme.label(ctx, "Main Menu Design", r[0] + 2, y, Theme.TEXT_3);
+        y += 10 + renderDesignCards(ctx, mx, my, r[0], y + 10, w) + 14;
 
         for (Section section : List.of(new Section("Appearance", c.designSettings()), new Section("Loading Screens", c.loadingSettings()))) {
             y += renderSection(ctx, mx, my, section, r[0], y, w);
@@ -2328,7 +2301,69 @@ public class OnixMenuScreen extends Screen {
         contentHeight = y - y0;
         endClip(ctx);
         scrollbar(ctx, r[2] + 4, r[1], r[3]);
-        themeEditor.tick();
+    }
+
+    private static final Identifier DESIGN_RUNNER = Identifier.fromNamespaceAndPath("onix", "textures/gui/design/studio.png");
+    private static final Identifier DESIGN_RUNNER_LIGHT = Identifier.fromNamespaceAndPath("onix", "textures/gui/design/studio_light.png");
+    private static final Identifier DESIGN_MEADOW = Identifier.fromNamespaceAndPath("onix", "textures/gui/design/meadow.png");
+
+    /** Water, Runner, Meadow and Minecraft's own menu as cards with a picture; returns the height. */
+    private int renderDesignCards(GuiGraphics ctx, int mx, int my, int x0, int y0, int w) {
+        String[][] designs = {
+                {"Water", "Sink through deep water"},
+                {"Runner", "Your character runs in"},
+                {"Meadow", "Petals fly up on start"},
+                {"Vanilla", "Minecraft's own menu"},
+        };
+        int cols = 4;
+        int gap = 8;
+        int cw = (w - gap * (cols - 1)) / cols;
+        int th = Math.round(cw * 9f / 16f);
+        int ch = th + 30;
+        var c = OnixClient.CONFIG;
+        for (int i = 0; i < designs.length; i++) {
+            String id = designs[i][0];
+            int x = x0 + i * (cw + gap);
+            boolean selected = id.equals("Vanilla") ? c.menuDesign.is("Vanilla") || !c.customMainMenu.isOn()
+                    : c.menuDesign.is(id) && c.customMainMenu.isOn();
+            boolean hov = hovered(mx, my, x, y0, x + cw, y0 + ch);
+            float ht = anim("design:" + id, hov, 16f);
+            Theme.card(ctx, x, y0, x + cw, y0 + ch, 8, Theme.lerpColor(Theme.SURFACE_2, Theme.SURFACE_3, ht),
+                    selected ? Theme.accent() : Theme.lerpColor(Theme.BORDER, Theme.BORDER_STRONG, ht));
+            // the picture
+            int px = x + 3;
+            int py = y0 + 3;
+            int pw = cw - 6;
+            int ph = th - 3;
+            switch (id) {
+                case "Runner" -> {
+                    ctx.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, DESIGN_RUNNER, px, py, 0f, 0f, pw, ph, 1600, 900, 1600, 900, 0xFFFFFFFF);
+                    ctx.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, DESIGN_RUNNER_LIGHT, px, py, 0f, 0f, pw, ph, 1600, 900, 1600, 900, 0xFFFFFFFF);
+                }
+                case "Meadow" -> ctx.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, DESIGN_MEADOW, px, py, 0f, 0f, pw, ph, 1600, 900, 1600, 900, 0xFFFFFFFF);
+                case "Water" -> {
+                    ctx.fillGradient(px, py, px + pw, py + ph, 0xFF16505A, 0xFF03090B);
+                    SoftShapes.glow(ctx, px + pw / 2f, py, pw * 0.6f, ph * 0.7f, 0x5596E6EB);
+                }
+                default -> {
+                    ctx.fillGradient(px, py, px + pw, py + ph, 0xFF3A3F45, 0xFF1C1F22);
+                    Theme.textCentered(ctx, "Minecraft", px + pw / 2, py + ph / 2 - 4, 0xFFDADDE2);
+                }
+            }
+            if (selected) {
+                Theme.round(ctx, px + pw - 14, py + 4, px + pw - 4, py + 14, 5, Theme.accent());
+                drawIcon(ctx, "check", px + pw - 12, py + 6, 6, 0xFFFFFFFF);
+            }
+            Theme.textBold(ctx, id, x + 8, y0 + th + 5, Theme.TEXT);
+            Theme.small(ctx, Theme.ellipsize(designs[i][1], cw - 16), x + 8, y0 + th + 17, Theme.TEXT_3);
+            hit(x, y0, x + cw, y0 + ch, () -> {
+                c.customMainMenu.set(true);
+                c.menuDesign.set(id);
+                c.save();
+                click();
+            }, null);
+        }
+        return ch;
     }
 
     private void selectTheme(ThemeDef def) {

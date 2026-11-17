@@ -40,9 +40,9 @@ public final class Theme {
     public static final int GREEN = 0xFF34D399;
     public static final int ORANGE = 0xFFFBBF24;
 
-    private static ThemeDef current = ThemeDef.BUILT_IN[0];
+    private static ThemeDef current = ThemeDef.ONIX;
     private static boolean light;
-    private static int uiAccent = ThemeDef.BUILT_IN[0].accent();
+    private static int uiAccent = ThemeDef.ONIX.accent();
 
     private Theme() {}
 
@@ -52,12 +52,10 @@ public final class Theme {
 
     /** Recomputes the palette; cheap enough to call every frame. */
     public static void refresh() {
-        OnixConfig c = OnixClient.CONFIG;
-        ThemeDef def = c == null ? ThemeDef.BUILT_IN[0] : ThemeStore.byId(c.theme.get());
-        ThemeDef editing = ThemeEditor.livePreview(def.id());
-        if (editing != null) def = editing;
+        // one fixed look since 1.1.28 (themes and light mode are gone): the same deep navy and blue as the launcher
+        ThemeDef def = ThemeDef.ONIX;
         current = def;
-        light = c != null && c.lightMode.isOn();
+        light = false;
         int a = def.accent();
         if (light) {
             // very light accents (Onyx) would vanish on white, so they turn dark instead
@@ -78,9 +76,9 @@ public final class Theme {
             return;
         }
         uiAccent = a;
-        TEXT = 0xFFF4F4F6;
-        TEXT_2 = 0xFFA1A1AA;
-        TEXT_3 = 0xFF6B6B76;
+        TEXT = 0xFFE6E9FF;
+        TEXT_2 = 0xFFA3A8BD;
+        TEXT_3 = 0xFF6F7486;
         int p = def.panel();
         // Restrained: surfaces stay neutral, the accent only tints them slightly.
         SURFACE = withAlpha(p, 0xF4);
