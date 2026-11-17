@@ -349,8 +349,8 @@ public class ClickGui extends Screen {
 	}
 
 	private void renderHeader(GuiGraphics g, double mx, double my) {
-		R2D.rrect(g, wx, wy, ww, HEADER, 12, 0xFF0E1418);
-		R2D.rect(g, wx, wy + HEADER - 12, ww, 12, 0xFF0E1418);
+		R2D.rrect(g, wx, wy, ww, HEADER, 12, 0xFF07090C);
+		R2D.rect(g, wx, wy + HEADER - 12, ww, 12, 0xFF07090C);
 
 		// scrolling pixel horizon along the header's bottom edge
 		float t = (System.currentTimeMillis() % 64000L) / 1000f;
@@ -415,10 +415,10 @@ public class ClickGui extends Screen {
 		// profile
 		float py = wy + wh - 42;
 		if (py < navItemY(settingsNav()) + NAV_H + 6) return;
-		R2D.rrect(g, wx + 10, py, SIDEBAR - 20, 32, 5, 0xFF151C22);
+		R2D.rrect(g, wx + 10, py, SIDEBAR - 20, 32, 5, 0xFF0E1216);
 		R2D.outline(g, wx + 10, py, SIDEBAR - 20, 32, 5, 0.75f, 0x14FFFFFF);
 		String name = minecraft.getUser().getName();
-		R2D.rrect(g, wx + 17, py + 7, 18, 18, 3, 0xFF1A2229);
+		R2D.rrect(g, wx + 17, py + 7, 18, 18, 3, 0xFF13181D);
 		Fonts.centered(g, name.substring(0, 1).toUpperCase(Locale.ROOT), wx + 26, py + 11.5f, Theme.WHITE, Fonts.Face.BODY_BOLD, 0.95f);
 		Fonts.draw(g, Fonts.trim(name, SIDEBAR - 64, true), wx + 41, py + 8, Theme.TEXT, true, 0.82f, false);
 		R2D.rect(g, wx + 41, py + 20.5f, 3, 3, 0xFFB8B8BF);
@@ -491,7 +491,7 @@ public class ClickGui extends Screen {
 		}
 		g.disableScissor();
 
-		if (sc > 1) R2D.gradientV(g, wx + SIDEBAR + 1, top - 3, ww - SIDEBAR - 2, 12, 0xFF11171C, 0x0011171C);
+		if (sc > 1) R2D.gradientV(g, wx + SIDEBAR + 1, top - 3, ww - SIDEBAR - 2, 12, 0xFF0A0D11, 0x000A0D11);
 		if (maxScroll > 0) {
 			float trackH = bottom - top;
 			float barH = Math.max(20, trackH * (trackH / (contentH + 6)));
@@ -588,7 +588,7 @@ public class ClickGui extends Screen {
 		boolean rh = interactive && R2D.hover(mx, my, rx - rw, ty + 7, rw, 16);
 		resetHover.target(rh ? 1 : 0);
 		float r = resetHover.get();
-		R2D.rrect(g, rx - rw, ty + 7, rw, 16, 3, Theme.lerp(0xFF151C22, 0xFF1A2229, r));
+		R2D.rrect(g, rx - rw, ty + 7, rw, 16, 3, Theme.lerp(0xFF0E1216, 0xFF13181D, r));
 		R2D.outline(g, rx - rw, ty + 7, rw, 16, 3, 0.75f, Theme.alpha(0xFFFFFFFF, 0.1f + 0.2f * r));
 		Fonts.centered(g, reset, rx - rw / 2f, ty + 11.5f, Theme.lerp(Theme.TEXT_DIM, Theme.WHITE, r), true, 0.78f);
 
@@ -625,7 +625,7 @@ public class ClickGui extends Screen {
 			index++;
 		}
 		g.disableScissor();
-		if (detailScroll.get() > 1) R2D.gradientV(g, wx + SIDEBAR + 1, top - 2, ww - SIDEBAR - 2, 12, 0xFF11171C, 0x0011171C);
+		if (detailScroll.get() > 1) R2D.gradientV(g, wx + SIDEBAR + 1, top - 2, ww - SIDEBAR - 2, 12, 0xFF0A0D11, 0x000A0D11);
 	}
 
 	private long detailOpenedAt;

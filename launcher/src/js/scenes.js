@@ -170,90 +170,177 @@ const Scenes = (() => {
 
   // ------------------------------------------------------------------ meadow
 
+  /*
+   * The meadow (tools/meadow.py) comes as two pictures from the same random numbers – in bloom and bare (the hearts
+   * only) – and a list of the clearly visible flowers: where they are, how big, which kind, how their heads are turned.
+   * On Play a gust runs through the meadow from the front: where it passes, every flower lets go of its own petals
+   * (each petal starts where it sat on the flower, turned the way it grew, in the flower's colour), they lift, flutter
+   * and are carried up, and the bare meadow shows underneath.
+   */
   const PETAL_FRAMES = 8;
+  let flowerList = null;
+  fetch('assets/designs/meadow_flowers.json').then((r) => r.json()).then((list) => { flowerList = list; }).catch(() => { flowerList = []; });
+
+  // the gust: from just below the bottom centre, through the whole meadow in about a second
+  const GUST = { x: 0.5, y: 1.08, speed: 1.05, soft: 0.14, delay: 0.05 };
+  const gustAt = (nx, ny, W, H) => Math.hypot((nx - GUST.x) * W / H, ny - GUST.y) / 1.25;   // 0 … ~1.1
 
   function meadow(canvas) {
     const bg = image('meadow.jpg');
+    const bare = image('meadow_bare.jpg');
     const sheet = image('petals.png');
     const petals = [];
+    const layer = document.createElement('canvas');
     let bursting = -1;
-    let ambientNext = 0;
-    const spawn = (W, H, near, fromMeadow) => {
-      const y = fromMeadow ? H * (0.42 + Math.random() * 0.62) : H * (0.35 + Math.random() * 0.7);
-      const depth = clamp01((y / H - 0.34) / 0.66);       // 0 far … 1 near
+    let built = false;
+    let ambientNext = 1.5;
+    let view = { s: 1, ox: 0, oy: 0 };
+    const rnd = Math.random;
+
+    /** A petal of flower f (index i of n), leaving at `start` seconds. */
+    function petal(f, i, start, W, H) {
+      const [fx, fy, fsize, kind, flat, rot, n, plen, pwid] = f;
+      const iw = bg.naturalWidth || 1920;
+      const ih = bg.naturalHeight || 1080;
+      const sizePx = fsize * iw * view.s;
+      const L = sizePx * plen;
+      const a = rot + (2 * Math.PI * i) / n;
+      // where the petal sits: half a petal out from the heart, the head seen from a little above
+      const x = view.ox + fx * iw * view.s + Math.cos(a) * L * 0.5;
+      const y = view.oy + fy * ih * view.s + Math.sin(a) * L * 0.5 * flat;
+      const out = Math.cos(a);
       petals.push({
-        x: Math.random() * W,
-        y,
-        size: (20 + 52 * depth ** 1.3) * (H / 800) * (0.75 + Math.random() * 0.5) * (near ? 1.25 : 1),
-        vx: (Math.random() - 0.5) * W * 0.04,
-        vy: -(0.03 + Math.random() * 0.08) * H * (near ? 1 : 0.4),
-        acc: -(0.12 + Math.random() * 0.3) * H * (near ? 1 : 0.04),
-        rot: Math.random() * Math.PI * 2,
-        spin: (Math.random() - 0.5) * 6,
-        flip: Math.random() * Math.PI * 2,
-        flipSpeed: 3 + Math.random() * 5,
-        frame: Math.floor(Math.random() * PETAL_FRAMES),
-        wob: Math.random() * Math.PI * 2,
+        x, y, L, start, kind,
+        ang: Math.atan2(Math.sin(a) * flat, Math.cos(a)),
+        squash: Math.max(0.35, flat),
+        vx: out * L * (1.2 + rnd()) + (rnd() - 0.5) * L,
+        vy: -L * (0.6 + rnd() * 0.8),
+        lift: -(0.18 + rnd() * 0.22) * H,                    // the gust carries it up harder and harder
+        drift: (rnd() - 0.5) * W * 0.05 + W * 0.012,          // and a little to the side
+        spin: (rnd() - 0.5) * 7,
+        flip: rnd() * Math.PI * 2,
+        flipSpeed: 2.5 + rnd() * 4,
+        wob: rnd() * Math.PI * 2,
+        blur: fsize * iw > 40 ? 1 : 0,
         life: 0,
-        blur: depth > 0.85 ? 2 : 0,
       });
-    };
+    }
+
+    /** Every visible flower's petals, timed by when the gust reaches it; tiny far petals for the flowers too small to list. */
+    function build(W, H, t) {
+      built = true;
+      if (!flowerList || !ready(bg)) return;
+      const iw = bg.naturalWidth;
+      // the biggest (closest) flowers lose every petal, the smaller ones only a few, so it stays smooth
+      let budget = reduced ? 600 : 3600;
+      for (const f of flowerList) {
+        if (budget <= 0) break;
+        const sx = view.ox + f[0] * iw * view.s;
+        const sy = view.oy + f[1] * bg.naturalHeight * view.s;
+        if (sx < -40 || sx > W + 40 || sy < -40 || sy > H + 40) continue;
+        const sizePx = f[2] * iw * view.s;
+        const count = sizePx > 22 ? f[6] : sizePx > 14 ? Math.min(f[6], 5) : 2;
+        const when = t + GUST.delay + gustAt(sx / W, sy / H, W, H) / GUST.speed + rnd() * 0.12;
+        for (let i = 0; i < count && budget > 0; i++, budget--) {
+          const k = count === f[6] ? i : Math.floor((i + rnd()) * f[6] / count);
+          petal(f, k, when + i * 0.018 + rnd() * 0.05, W, H);
+        }
+      }
+      // the far meadow: a haze of tiny petals rising from it as the gust passes
+      for (let i = 0; i < (reduced ? 80 : 500); i++) {
+        const nx = rnd();
+        const ny = 0.36 + rnd() * 0.28;
+        const depth = (ny - 0.34) / 0.66;
+        const fake = [((nx * W - view.ox) / view.s) / iw, ((ny * H - view.oy) / view.s) / bg.naturalHeight, (2 + 6 * depth) / (iw * view.s),
+          Math.floor(rnd() * 5), 0.7, rnd() * 6.28, 8, 1, 0.35];
+        petal(fake, Math.floor(rnd() * 8), t + GUST.delay + gustAt(nx, ny, W, H) / GUST.speed + rnd() * 0.2, W, H);
+      }
+    }
+
     const scene = loop(canvas, (g, W, H, t, dt) => {
-      g.fillStyle = '#9a9ea2';
+      g.fillStyle = '#5c6064';
       g.fillRect(0, 0, W, H);
       const b = bursting >= 0 ? t - bursting : -1;
-      if (ready(bg)) {
-        // slow drift like a camera on a slider; it lifts a little when the petals fly
-        const lift = b >= 0 ? easeOut(b / 3) * H * 0.02 : 0;
-        cover(g, bg, W, H, 1.06 + Math.sin(t * 0.05) * 0.015, -mouse.ex * W * 0.01 + Math.sin(t * 0.04) * W * 0.01, -mouse.ey * H * 0.008 + lift);
+      // the camera drifts slowly; it holds still once the gust comes, so the petals leave from the right places
+      if (b < 0) {
+        const zoom = 1.06 + Math.sin(t * 0.05) * 0.015;
+        const s = ready(bg) ? Math.max(W / bg.naturalWidth, H / bg.naturalHeight) * zoom : 1;
+        view = {
+          s,
+          ox: (W - (bg.naturalWidth || W) * s) / 2 - mouse.ex * W * 0.01 + Math.sin(t * 0.04) * W * 0.01,
+          oy: (H - (bg.naturalHeight || H) * s) / 2 - mouse.ey * H * 0.008,
+        };
+      }
+      if (ready(bg)) g.drawImage(bg, view.ox, view.oy, bg.naturalWidth * view.s, bg.naturalHeight * view.s);
+      if (b >= 0 && !built) build(W, H, bursting);
+      // the bare meadow shows where the gust has passed (a soft-edged circle growing from the front)
+      if (b >= 0 && ready(bare)) {
+        if (layer.width !== W || layer.height !== H) { layer.width = W; layer.height = H; }
+        const lg = layer.getContext('2d');
+        lg.globalCompositeOperation = 'source-over';
+        lg.clearRect(0, 0, W, H);
+        lg.drawImage(bare, view.ox, view.oy, bare.naturalWidth * view.s, bare.naturalHeight * view.s);
+        const reach = Math.max(0, (b - GUST.delay - 0.15) * GUST.speed) * 1.25 * H;    // a little behind the petals
+        const soft = GUST.soft * 1.25 * H;
+        const cx = GUST.x * W;
+        const cy = GUST.y * H;
+        const mask = lg.createRadialGradient(cx, cy, Math.max(0, reach - soft), cx, cy, reach + soft);
+        mask.addColorStop(0, 'rgba(0,0,0,1)');
+        mask.addColorStop(1, 'rgba(0,0,0,0)');
+        lg.globalCompositeOperation = 'destination-in';
+        lg.fillStyle = mask;
+        lg.fillRect(0, 0, W, H);
+        g.drawImage(layer, 0, 0);
       }
       // soft light moving over the meadow
       g.globalCompositeOperation = 'soft-light';
       const lx = W * (0.5 + Math.sin(t * 0.07) * 0.3);
-      const lg = g.createRadialGradient(lx, H * 0.6, 0, lx, H * 0.6, W * 0.5);
-      lg.addColorStop(0, 'rgba(255,255,255,0.35)');
-      lg.addColorStop(1, 'rgba(255,255,255,0)');
-      g.fillStyle = lg;
+      const light = g.createRadialGradient(lx, H * 0.6, 0, lx, H * 0.6, W * 0.5);
+      light.addColorStop(0, 'rgba(255,255,255,0.28)');
+      light.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = light;
       g.fillRect(0, 0, W, H);
       g.globalCompositeOperation = 'source-over';
-      // a few loose petals all the time, a storm of them on Play
-      if (!reduced && t > ambientNext) {
-        spawn(W, H, false, false);
-        ambientNext = t + 0.5 + Math.random() * 0.9;
+      // now and then a single petal lets go of a flower in the breeze
+      if (!reduced && b < 0 && t > ambientNext && flowerList && flowerList.length && ready(bg)) {
+        const f = flowerList[Math.floor(rnd() * Math.min(600, flowerList.length))];
+        petal(f, Math.floor(rnd() * f[6]), t, W, H);
+        const p = petals[petals.length - 1];
+        p.lift *= 0.25;
+        ambientNext = t + 0.6 + rnd() * 1.4;
       }
-      if (b >= 0 && b < 1.6) {
-        const n = Math.max(3, Math.round(dt * 900 * (1 - b / 1.6) + dt * 120));
-        for (let i = 0; i < n; i++) spawn(W, H, true, true);
-      }
-      if (b >= 0 && b < 2.5) {
-        // the meadow is a little paler once its petals are gone
-        g.fillStyle = `rgba(210,212,214,${0.12 * smooth(b / 1.5)})`;
-        g.fillRect(0, 0, W, H);
-      }
+      if (!ready(sheet)) return;
+      const fs = sheet.naturalHeight;
       for (let i = petals.length - 1; i >= 0; i--) {
         const p = petals[i];
-        p.life += dt;
-        p.vy += p.acc * dt;
-        p.x += (p.vx + Math.sin(p.life * 2 + p.wob) * H * 0.04) * dt;
+        if (t < p.start) continue;
+        const age = t - p.start;
+        p.life = age;
+        // leaving: a moment of loosening, then the gust takes it
+        const go = Math.min(1, age / 0.35);
+        p.vy += p.lift * dt * go;
+        p.vx += (p.drift - p.vx * 0.6) * dt;
+        p.x += (p.vx + Math.sin(age * 2.2 + p.wob) * p.L * 2.2 * go) * dt;
         p.y += p.vy * dt;
-        p.rot += p.spin * dt;
-        p.flip += p.flipSpeed * dt;
-        if (p.y < -60 || p.life > 14) { petals.splice(i, 1); continue; }
-        if (!ready(sheet)) continue;
-        const fs = sheet.naturalHeight;
-        g.save();
-        g.translate(p.x, p.y);
-        g.rotate(p.rot);
-        g.scale(1, Math.max(0.15, Math.abs(Math.cos(p.flip))));
-        g.globalAlpha = Math.min(1, p.life * 4) * (p.blur ? 0.85 : 1);
-        if (p.blur) g.filter = `blur(${p.blur}px)`;
-        g.drawImage(sheet, p.frame * fs, 0, fs, fs, -p.size / 2, -p.size / 2, p.size, p.size);
-        g.restore();
+        p.ang += p.spin * dt * go;
+        p.flip += p.flipSpeed * dt * go;
+        if (p.y < -p.L * 2 || age > 7) { petals.splice(i, 1); continue; }
+        const sx = p.L / fs * 1.05;
+        const sy = sx * (p.squash + (1 - p.squash) * go) * Math.max(0.12, Math.abs(Math.cos(p.flip * go)));
+        const c = Math.cos(p.ang);
+        const sn = Math.sin(p.ang);
+        g.setTransform(c * sx, sn * sx, -sn * sy, c * sy, p.x, p.y);
+        g.globalAlpha = Math.min(1, age * 6) * (age > 5 ? Math.max(0, 1 - (age - 5) / 2) : 1);
+        g.filter = p.blur && go > 0.5 ? 'blur(1px)' : 'none';
+        g.drawImage(sheet, (p.kind % PETAL_FRAMES) * fs, 0, fs, fs, -fs / 2, -fs / 2, fs, fs);
       }
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.globalAlpha = 1;
+      g.filter = 'none';
     });
     return {
       stop: scene.stop,
-      burst() { bursting = (performance.now() - startedAt) / 1000; },
+      burst() { if (bursting < 0) bursting = (performance.now() - startedAt) / 1000; },
     };
   }
 

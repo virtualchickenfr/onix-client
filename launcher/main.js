@@ -267,6 +267,8 @@ function smokeTest(dir) {
     await shot('meadow-burst-1');
     await wait(900);
     await shot('meadow-burst-2');
+    await wait(1000);
+    await shot('meadow-burst-3');
     await js("selectDesign('runner'); showView('settings')");
     await wait(1500);
     await shot('settings');

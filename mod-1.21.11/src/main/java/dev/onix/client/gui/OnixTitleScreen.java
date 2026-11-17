@@ -126,6 +126,7 @@ public class OnixTitleScreen extends Screen {
         pending = null;
         runLeave = -1;
         petalBurst = 0;
+        petals.clear();
     }
 
     private boolean cinematic() {
@@ -148,7 +149,8 @@ public class OnixTitleScreen extends Screen {
         pendingAt = System.currentTimeMillis();
         if (scene().equals("Meadow")) {
             petalBurst = pendingAt;
-            pendingAt += 1150;                     // the petals fly up first, then the fade
+            buildPetals();
+            pendingAt += 1700;                     // the gust runs through the meadow and the petals fly up first, then the fade
         } else if (scene().equals("Runner") && runLeave < 0) {
             runLeave = pendingAt;
             pendingAt += 650;                      // the character runs off first
@@ -575,14 +577,17 @@ public class OnixTitleScreen extends Screen {
                 renderStudioLight(ctx, time);
             }
             case "Meadow" -> {
-                float cover = Math.max(width / (float) BG_W, height / (float) BG_H);
-                float zoom = cover * (1.06f + 0.015f * (float) Math.sin(time * 0.05f));
-                int w = Math.round(BG_W * zoom);
-                int h = Math.round(BG_H * zoom);
-                float lift = petalBurst > 0 ? smooth((System.currentTimeMillis() - petalBurst) / 3000f) * height * 0.02f : 0;
-                int x = Math.round((width - w) / 2f - parX * width * 0.01f + (float) Math.sin(time * 0.04f) * width * 0.01f);
-                int y = Math.round((height - h) / 2f - parY * height * 0.008f + lift);
-                ctx.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, MEADOW, x, y, 0f, 0f, w, h, BG_W, BG_H, BG_W, BG_H, 0xFFFFFFFF);
+                // the camera drifts slowly; it holds still once the gust comes, so the petals leave from the right places
+                if (petalBurst <= 0) {
+                    float cover = Math.max(width / (float) BG_W, height / (float) BG_H);
+                    float zoom = cover * (1.06f + 0.015f * (float) Math.sin(time * 0.05f));
+                    meadowW = Math.round(BG_W * zoom);
+                    meadowH = Math.round(BG_H * zoom);
+                    meadowX = Math.round((width - meadowW) / 2f - parX * width * 0.01f + (float) Math.sin(time * 0.04f) * width * 0.01f);
+                    meadowY = Math.round((height - meadowH) / 2f - parY * height * 0.008f);
+                }
+                ctx.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, MEADOW, meadowX, meadowY, 0f, 0f, meadowW, meadowH, BG_W, BG_H, BG_W, BG_H, 0xFFFFFFFF);
+                if (petalBurst > 0) renderBareMeadow(ctx);
                 // a soft shade behind the menu, so it reads well on the light meadow (smooth, no bands)
                 ctx.fill(0, 0, width, height, 0x22000000);
                 SoftShapes.glow(ctx, width * (width >= 420 ? 0.42f : 0.5f), height * 0.5f, width * 0.3f, height * 0.62f, 0xB80C1216);
@@ -606,60 +611,152 @@ public class OnixTitleScreen extends Screen {
         ctx.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, STUDIO_LIGHT, lx, ly, 0f, 0f, lw, lh, BG_W, BG_H, BG_W, BG_H, (la << 24) | 0xFFFFFF);
     }
 
-    // ---- Meadow: loose petals drifting up, and every petal letting go when you press Singleplayer or Multiplayer
-    private final List<float[]> petals = new ArrayList<>();   // x, y, vx, vy, acc, size, rot, spin, flip, flipSpeed, frame, life, wob
+    // ---- Meadow: on Singleplayer or Multiplayer a gust runs through the meadow from the front; where it passes, every
+    // flower lets go of its own petals (tools/meadow.py lists the visible flowers: place, size, kind, how the head is
+    // turned), they lift, flutter and are carried up, and the bare meadow (the same flowers, hearts only) shows underneath.
+    private static final Identifier MEADOW_BARE = Identifier.fromNamespaceAndPath("onix", "textures/gui/design/meadow_bare.png");
+    private static float[][] flowers;
+    private final List<float[]> petals = new ArrayList<>();   // x, y, L, start, kind, ang, squash, vx, vy, lift, drift, spin, flip, flipSpeed, wob
     private long petalBurst;
-    private float petalNext;
+    private float petalNext = 1.5f;
+    private int meadowX, meadowY, meadowW = 1, meadowH = 1;
+    private static final float GUST_X = 0.5f, GUST_Y = 1.08f, GUST_SPEED = 1.05f, GUST_SOFT = 0.14f, GUST_DELAY = 0.05f;
 
-    private void spawnPetal(boolean storm) {
-        float y = storm ? height * (0.42f + random.nextFloat() * 0.62f) : height * (0.4f + random.nextFloat() * 0.6f);
-        float depth = clamp01((y / height - 0.34f) / 0.66f);
-        float size = (3 + 10 * (float) Math.pow(depth, 1.3)) * (0.75f + random.nextFloat() * 0.5f) * (storm ? 1.2f : 1f);
-        petals.add(new float[]{
-                random.nextFloat() * width, y, (random.nextFloat() - 0.5f) * width * 0.04f,
-                -(0.03f + random.nextFloat() * 0.08f) * height * (storm ? 1f : 0.4f),
-                -(0.12f + random.nextFloat() * 0.3f) * height * (storm ? 1f : 0.04f),
-                size, random.nextFloat() * 6.28f, (random.nextFloat() - 0.5f) * 6f, random.nextFloat() * 6.28f,
-                3 + random.nextFloat() * 5, random.nextInt(8), 0, random.nextFloat() * 6.28f});
+    private static float[][] flowers() {
+        if (flowers != null) return flowers;
+        try (var in = OnixTitleScreen.class.getResourceAsStream("/assets/onix/textures/gui/design/meadow_flowers.json")) {
+            var arr = com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8)).getAsJsonArray();
+            float[][] out = new float[arr.size()][];
+            for (int i = 0; i < out.length; i++) {
+                var f = arr.get(i).getAsJsonArray();
+                out[i] = new float[f.size()];
+                for (int j = 0; j < f.size(); j++) out[i][j] = f.get(j).getAsFloat();
+            }
+            flowers = out;
+        } catch (Exception e) {
+            OnixClient.LOGGER.warn("Could not read the meadow's flowers", e);
+            flowers = new float[0][];
+        }
+        return flowers;
     }
 
-    /** Dev test: the petals fly up as if you had pressed Singleplayer (without leaving the screen). */
+    /** How far the gust has to travel to a point (0 at its start below the bottom centre … about 1.1 at the far corners). */
+    private float gustAt(float nx, float ny) {
+        float ax = (nx - GUST_X) * width / Math.max(1f, height);
+        float ay = ny - GUST_Y;
+        return (float) Math.sqrt(ax * ax + ay * ay) / 1.25f;
+    }
+
+    private float burstAge() {
+        return petalBurst > 0 ? (System.currentTimeMillis() - petalBurst) / 1000f : -1;
+    }
+
+    /** One petal of a flower (index i of n), leaving `start` seconds after the gust began. */
+    private void addPetal(float[] f, int i, float start) {
+        float s = meadowW / (float) BG_W;
+        float L = f[2] * BG_W * s * f[7];
+        double a = f[5] + 2 * Math.PI * i / f[6];
+        float x = meadowX + f[0] * BG_W * s + (float) Math.cos(a) * L * 0.5f;
+        float y = meadowY + f[1] * BG_H * s + (float) Math.sin(a) * L * 0.5f * f[4];
+        float out = (float) Math.cos(a);
+        petals.add(new float[]{x, y, L, start, f[3],
+                (float) Math.atan2(Math.sin(a) * f[4], Math.cos(a)), Math.max(0.35f, f[4]),
+                out * L * (1.2f + random.nextFloat()) + (random.nextFloat() - 0.5f) * L, -L * (0.6f + random.nextFloat() * 0.8f),
+                -(0.18f + random.nextFloat() * 0.22f) * height, (random.nextFloat() - 0.5f) * width * 0.05f + width * 0.012f,
+                (random.nextFloat() - 0.5f) * 7f, random.nextFloat() * 6.28f, 2.5f + random.nextFloat() * 4f, random.nextFloat() * 6.28f});
+    }
+
+    /** Every visible flower's petals, timed by when the gust reaches it, and a haze of tiny ones from the far meadow. */
+    private void buildPetals() {
+        petals.clear();
+        float s = meadowW / (float) BG_W;
+        int budget = 1600;
+        for (float[] f : flowers()) {
+            if (budget <= 0) break;
+            float sx = meadowX + f[0] * BG_W * s;
+            float sy = meadowY + f[1] * BG_H * s;
+            if (sx < -20 || sx > width + 20 || sy < -20 || sy > height + 20) continue;
+            float sizeGui = f[2] * BG_W * s;
+            int n = (int) f[6];
+            int count = sizeGui > 9 ? n : sizeGui > 6 ? Math.min(n, 4) : 2;
+            float when = GUST_DELAY + gustAt(sx / width, sy / height) / GUST_SPEED + random.nextFloat() * 0.12f;
+            for (int i = 0; i < count && budget > 0; i++, budget--) {
+                int k = count == n ? i : (int) ((i + random.nextFloat()) * n / count);
+                addPetal(f, k, when + i * 0.018f + random.nextFloat() * 0.05f);
+            }
+        }
+        for (int i = 0; i < 260; i++) {
+            float nx = random.nextFloat();
+            float ny = 0.36f + random.nextFloat() * 0.28f;
+            float depth = (ny - 0.34f) / 0.66f;
+            float[] fake = {((nx * width - meadowX) / s) / BG_W, ((ny * height - meadowY) / s) / BG_H, (1 + 2.5f * depth) / (BG_W * s),
+                    random.nextInt(5), 0.7f, random.nextFloat() * 6.28f, 8, 1, 0.35f};
+            addPetal(fake, random.nextInt(8), GUST_DELAY + gustAt(nx, ny) / GUST_SPEED + random.nextFloat() * 0.2f);
+        }
+    }
+
+    /** The bare meadow where the gust has passed: tiles of the second picture, faded in by their distance to the gust. */
+    private void renderBareMeadow(GuiGraphics ctx) {
+        float b = burstAge();
+        float reach = Math.max(0, (b - GUST_DELAY - 0.15f) * GUST_SPEED);
+        float s = meadowW / (float) BG_W;
+        int tile = Math.max(8, width / 40);
+        for (int ty = 0; ty < height; ty += tile) {
+            for (int tx = 0; tx < width; tx += tile) {
+                float d = gustAt((tx + tile / 2f) / width, (ty + tile / 2f) / height);
+                float a = smooth((reach - d) / GUST_SOFT + 0.5f);
+                if (a <= 0.01f) continue;
+                int tw = Math.min(tile, width - tx);
+                int th = Math.min(tile, height - ty);
+                float u = (tx - meadowX) / s;
+                float v = (ty - meadowY) / s;
+                ctx.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, MEADOW_BARE, tx, ty, u, v, tw, th,
+                        Math.max(1, Math.round(tw / s)), Math.max(1, Math.round(th / s)), BG_W, BG_H, net.minecraft.util.ARGB.colorFromFloat(a, 1f, 1f, 1f));
+            }
+        }
+    }
+
+    /** Dev test: the gust as if you had pressed Singleplayer (without leaving the screen). */
     public void devBurst() {
         petalBurst = System.currentTimeMillis();
+        buildPetals();
     }
 
     private void renderPetals(GuiGraphics ctx, float time, float dt) {
-        if (time > petalNext && petals.size() < 60) {
-            spawnPetal(false);
-            petalNext = time + 0.5f + random.nextFloat() * 0.9f;
-        }
-        if (petalBurst > 0) {
-            float b = (System.currentTimeMillis() - petalBurst) / 1000f;
-            if (b < 1.6f) {
-                int n = Math.max(2, Math.round(dt * 520 * (1 - b / 1.6f) + dt * 80));
-                for (int i = 0; i < n && petals.size() < 900; i++) spawnPetal(true);
-            }
-            if (b < 2.5f) ctx.fill(0, 0, width, height, Theme.withAlpha(0xFFD2D4D6, Math.round(30 * smooth(b / 1.5f))));
+        float b = burstAge();
+        // now and then a single petal lets go of a flower in the breeze
+        if (b < 0 && time > petalNext && petals.size() < 40 && flowers().length > 0) {
+            float[] f = flowers()[random.nextInt(Math.min(500, flowers().length))];
+            addPetal(f, random.nextInt((int) f[6]), 0);
+            float[] p = petals.get(petals.size() - 1);
+            p[3] = -time;                      // ambient petals count their age from now (negative start = own clock)
+            p[9] *= 0.25f;
+            petalNext = time + 0.6f + random.nextFloat() * 1.4f;
         }
         for (int i = petals.size() - 1; i >= 0; i--) {
             float[] p = petals.get(i);
-            p[11] += dt;
-            p[3] += p[4] * dt;
-            p[0] += (p[2] + (float) Math.sin(p[11] * 2 + p[12]) * height * 0.04f) * dt;
-            p[1] += p[3] * dt;
-            p[6] += p[7] * dt;
-            p[8] += p[9] * dt;
-            if (p[1] < -30 || p[11] > 14) {
+            float age = p[3] < 0 ? time + p[3] : b - p[3];
+            if (age < 0) continue;
+            float go = Math.min(1f, age / 0.35f);
+            p[8] += p[9] * dt * go;
+            p[7] += (p[10] - p[7] * 0.6f) * dt;
+            p[0] += (p[7] + (float) Math.sin(age * 2.2f + p[14]) * p[2] * 2.2f * go) * dt;
+            p[1] += p[8] * dt;
+            p[5] += p[11] * dt * go;
+            p[12] += p[13] * dt * go;
+            if (p[1] < -p[2] * 2 || age > 7) {
                 petals.remove(i);
                 continue;
             }
-            int s = Math.max(2, Math.round(p[5]));
-            float alpha = Math.min(1f, p[11] * 3f) * 0.95f;
+            float len = p[2] * 1.05f;
+            float sy = (p[6] + (1 - p[6]) * go) * Math.max(0.12f, Math.abs((float) Math.cos(p[12] * go)));
+            float alpha = Math.min(1f, age * 6f) * (age > 5 ? Math.max(0, 1 - (age - 5) / 2f) : 1f);
+            int size = Math.max(1, Math.round(len));
             ctx.pose().pushMatrix();
             ctx.pose().translate(p[0], p[1]);
-            ctx.pose().rotate(p[6]);
-            ctx.pose().scale(1f, Math.max(0.15f, Math.abs((float) Math.cos(p[8]))));
-            ctx.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, PETALS, -s / 2, -s / 2, (int) p[10] * 64f, 0f, s, s, 64, 64, 512, 64,
+            ctx.pose().rotate(p[5]);
+            ctx.pose().scale(1f, sy);
+            ctx.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, PETALS, -size / 2, -size / 2, (int) p[4] % 8 * 64f, 0f, size, size, 64, 64, 512, 64,
                     net.minecraft.util.ARGB.colorFromFloat(alpha, 1f, 1f, 1f));
             ctx.pose().popMatrix();
         }

@@ -4,18 +4,18 @@ package gg.carbon.client.ui;
 public final class Theme {
 	private Theme() {}
 
-	public static final int BG = 0xFF0E1418;
-	public static final int BG_2 = 0xFF11171C;
-	public static final int STONE = 0xFF151C22;
-	public static final int STONE_2 = 0xFF1A2229;
-	public static final int STONE_3 = 0xFF212B33;
-	public static final int STONE_EDGE = 0xFF2A3540;
-	public static final int STONE_DARK = 0xFF080C0F;
+	public static final int BG = 0xFF07090C;
+	public static final int BG_2 = 0xFF0A0D11;
+	public static final int STONE = 0xFF0E1216;
+	public static final int STONE_2 = 0xFF13181D;
+	public static final int STONE_3 = 0xFF192026;
+	public static final int STONE_EDGE = 0xFF222A33;
+	public static final int STONE_DARK = 0xFF040506;
 	public static final int ICE = 0xFFF4F4F5;
 	public static final int ICE_DEEP = 0xFFA6A6AE;
 
-	public static final int WINDOW = 0xF211171C;
-	public static final int SIDEBAR = 0xFF0E1418;
+	public static final int WINDOW = 0xF20A0D11;
+	public static final int SIDEBAR = 0xFF07090C;
 	public static final int SURFACE = STONE;
 	public static final int SURFACE_2 = STONE_2;
 	public static final int SURFACE_3 = STONE_3;

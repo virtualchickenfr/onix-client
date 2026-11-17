@@ -11,10 +11,10 @@
 
 :root {
   /* the Onix look (the same as the launcher and the game): deep navy, one blue accent */
-  --bg: #0b1014;
-  --deep: #11171c;
-  --card: #151c22;
-  --card-hover: #1a2229;
+  --bg: #06080a;
+  --deep: #0a0d11;
+  --card: #0e1216;
+  --card-hover: #13181d;
   --line: rgba(255, 255, 255, 0.08);
   --line-strong: rgba(109, 134, 255, 0.35);
   --text: #e6e9ff;

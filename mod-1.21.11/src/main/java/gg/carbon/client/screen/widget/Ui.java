@@ -172,7 +172,7 @@ public final class Ui {
 		float w = toggleWidth(), h = toggleHeight();
 		R2D.rrect(g, x, y, w, h, 3, Theme.STONE_DARK);
 		R2D.rect(g, x + 2, y + 1, w - 4, 1, 0x70000000);
-		int fill = Theme.lerp(Theme.withAlpha(0x26303A, 255), Theme.ACCENT, t);
+		int fill = Theme.lerp(Theme.withAlpha(0x1E252D, 255), Theme.ACCENT, t);
 		if (t > 0.01f) R2D.rrect(g, x + 1, y + 1, (w - 2) * Math.max(0.35f, t), h - 2, 2.5f, Theme.alpha(fill, t));
 		R2D.outline(g, x, y, w, h, 3, 0.75f, Theme.alpha(0xFFFFFFFF, 0.12f + 0.12f * hover));
 		float k = h - 3;

@@ -9,11 +9,11 @@
 @font-face { font-family: 'Poppins'; font-weight: 700; src: url(fonts/poppins-bold.ttf) format('truetype'); }
 
 body.one {
-  --bg: #0e1418;
-  --s1: #11171c;
-  --s2: #151c22;
-  --s3: #1a2229;
-  --s4: #212b33;
+  --bg: #07090c;
+  --s1: #0a0d11;
+  --s2: #0e1216;
+  --s3: #13181d;
+  --s4: #192026;
   --line: rgba(255, 255, 255, .06);
   --line-2: rgba(255, 255, 255, .1);
   --line-3: rgba(255, 255, 255, .16);
@@ -24,8 +24,8 @@ body.one {
   --accent-2: #4d69ff;
   --on-accent: #ffffff;
   --accent-soft: rgba(43, 75, 255, .16);
-  --glass: #151c22;
-  --glass-2: #1a2229;
+  --glass: #0e1216;
+  --glass-2: #13181d;
   --glass-line: rgba(255, 255, 255, .08);
   --green: #3ccf91;
   --red: #ff5d6c;
@@ -48,7 +48,7 @@ body.one button, body.one input, body.one select, body.one textarea { font-famil
 /* ---------------------------------------------------------------- top bar: brand, tabs, account, window buttons */
 body.one .topbar.titlebar {
   height: var(--title-h); padding: 0 0 0 20px; gap: 18px;
-  background: linear-gradient(180deg, rgba(14, 20, 24, .92), rgba(14, 20, 24, .78));
+  background: linear-gradient(180deg, rgba(7, 9, 12, .94), rgba(7, 9, 12, .82));
   backdrop-filter: blur(18px); border-bottom: 1px solid var(--line);
 }
 body.one .tb-brand { gap: 10px; }
@@ -138,7 +138,7 @@ body.one .modal-head h3 { font: 600 17px var(--display); }
 body.one .modal-backdrop { background: rgba(5, 8, 10, .62); backdrop-filter: blur(6px); }
 body.one .popover { border-radius: 14px; background: var(--s2); border: 1px solid var(--line-2); box-shadow: 0 20px 50px rgba(0, 0, 0, .5); }
 body.one #toast { border-radius: 12px; background: var(--s3); box-shadow: 0 0 0 1px var(--line-2), 0 14px 34px rgba(0, 0, 0, .5); font: 500 13px var(--font); }
-body.one .taskline { border-radius: 12px; background: rgba(21, 28, 34, .92); box-shadow: 0 0 0 1px var(--line-2); top: calc(var(--title-h) + 8px); }
+body.one .taskline { border-radius: 12px; background: rgba(14, 18, 22, .94); box-shadow: 0 0 0 1px var(--line-2); top: calc(var(--title-h) + 8px); }
 body.one .taskline .lvl { background: var(--accent); color: #fff; border-radius: 6px; font: 600 11px var(--font); text-shadow: none; }
 body.one .xp { top: var(--title-h); height: 2px; }
 body.one .xp i { background: var(--accent-2); }
@@ -151,8 +151,8 @@ body.one .logo, body.one .logo-sub, body.one .recent { display: none !important;
 body.one .design-scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 body.one #view-home .hero-fade {
   display: block; position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(0deg, rgba(10, 14, 18, .92) 0%, rgba(10, 14, 18, .55) 26%, rgba(10, 14, 18, 0) 52%),
-    linear-gradient(90deg, rgba(10, 14, 18, .55) 0%, rgba(10, 14, 18, 0) 48%);
+  background: linear-gradient(0deg, rgba(5, 7, 9, .92) 0%, rgba(5, 7, 9, .55) 26%, rgba(5, 7, 9, 0) 52%),
+    linear-gradient(90deg, rgba(5, 7, 9, .55) 0%, rgba(5, 7, 9, 0) 48%);
 }
 body.one #view-home .home-inner {
   position: absolute; left: 0; right: auto; bottom: 0; top: auto; width: min(640px, 100%); max-width: none;
@@ -165,12 +165,12 @@ body.one #view-home .play-row { order: 2; justify-content: flex-start; gap: 10px
 body.one #view-home .launch { order: 3; width: min(460px, 100%); margin-top: 14px; }
 body.one #view-home .launch-row { justify-content: flex-start; }
 body.one .play-row .play { min-width: 190px; height: 52px; border-radius: 12px; font: 600 16px var(--font); letter-spacing: .01em; }
-body.one .play-row .picker-btn { height: 52px; border-radius: 12px; background: rgba(21, 28, 34, .82) !important; backdrop-filter: blur(12px); }
-body.one .play-row .xl-sq { width: 52px; height: 52px; border-radius: 12px !important; background: rgba(21, 28, 34, .82) !important; backdrop-filter: blur(12px); border: 1px solid var(--line-2) !important; }
+body.one .play-row .picker-btn { height: 52px; border-radius: 12px; background: rgba(14, 18, 22, .84) !important; backdrop-filter: blur(12px); }
+body.one .play-row .xl-sq { width: 52px; height: 52px; border-radius: 12px !important; background: rgba(14, 18, 22, .84) !important; backdrop-filter: blur(12px); border: 1px solid var(--line-2) !important; }
 body.one .home-title { display: none; }
 body.one #view-home .home-title { display: block; }
 body[data-design="meadow"].one #view-home .hero-fade {
-  background: radial-gradient(70% 60% at 0% 100%, rgba(14, 18, 22, .78), rgba(14, 18, 22, 0) 70%);
+  background: radial-gradient(70% 60% at 0% 100%, rgba(5, 7, 9, .8), rgba(5, 7, 9, 0) 70%);
 }
 
 /* ---------------------------------------------------------------- designs (settings and welcome) */

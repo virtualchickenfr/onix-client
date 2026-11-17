@@ -38,7 +38,7 @@ public record ThemeDef(String id, String name, int accent, int panel, int sky, A
     }
 
     /** The one Onix look since 1.1.28 (the same colours as the launcher): deep navy, one blue accent. */
-    public static final ThemeDef ONIX = new ThemeDef("onix", "Onix", 0xFF2B4BFF, 0xFF11171C, 0xFF4D69FF, Ambient.SPARKS, 0xFFD5DBFF, false);
+    public static final ThemeDef ONIX = new ThemeDef("onix", "Onix", 0xFF2B4BFF, 0xFF0A0D11, 0xFF4D69FF, Ambient.SPARKS, 0xFFD5DBFF, false);
 
     public static final ThemeDef[] BUILT_IN = {
             builtIn("Onyx", 0xFFECECF1, 0xFF0D0D11, 0xFFA4A4B0, Ambient.SPARKS, 0xFFFFFFFF),
