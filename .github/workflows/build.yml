@@ -170,16 +170,20 @@ jobs:
     if: needs.plan.outputs.release == 'true'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - name: Create draft release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: v${{ needs.plan.outputs.version }}
         run: |
+          # what's new (English and German) from the website's changelog, downloads and install steps
+          python3 tools/release_notes.py "${{ needs.plan.outputs.version }}" > release-notes.md
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft -q .isDraft 2>/dev/null | grep -q false; then
             echo "::error::Release $TAG already exists – raise the version"; exit 1
           fi
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
-            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --draft --target "$GITHUB_SHA" --title "Onix Client $TAG" --generate-notes
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --draft --target "$GITHUB_SHA" --title "Onix Client $TAG" --notes-file release-notes.md
+          gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --notes-file release-notes.md
 
   launcher:
     needs: [plan, mod, mod-1-21-11, mod-ports, prepare-release]
