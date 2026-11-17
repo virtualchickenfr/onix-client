@@ -1,3 +1,8 @@
+/* Poppins (SIL OFL, fonts/POPPINS_LICENSE.txt) – the same type as the launcher */
+@font-face { font-family: 'Poppins'; font-weight: 400; font-display: swap; src: url(fonts/poppins-regular.ttf) format('truetype'); }
+@font-face { font-family: 'Poppins'; font-weight: 500; font-display: swap; src: url(fonts/poppins-medium.ttf) format('truetype'); }
+@font-face { font-family: 'Poppins'; font-weight: 600; font-display: swap; src: url(fonts/poppins-semibold.ttf) format('truetype'); }
+@font-face { font-family: 'Poppins'; font-weight: 700; font-display: swap; src: url(fonts/poppins-bold.ttf) format('truetype'); }
 /* Geist (SIL OFL, fonts/GEIST_LICENSE.txt) */
 @font-face { font-family: 'Geist'; font-weight: 400; font-display: swap; src: url(fonts/geist-400.ttf) format('truetype'); }
 @font-face { font-family: 'Geist'; font-weight: 500; font-display: swap; src: url(fonts/geist-500.ttf) format('truetype'); }
@@ -5,17 +10,18 @@
 @font-face { font-family: 'Geist'; font-weight: 700; font-display: swap; src: url(fonts/geist-700.ttf) format('truetype'); }
 
 :root {
-  --bg: #04090b;
-  --deep: #071d23;
-  --card: rgba(255, 255, 255, 0.035);
-  --card-hover: rgba(255, 255, 255, 0.06);
+  /* the Onix look (the same as the launcher and the game): deep navy, one blue accent */
+  --bg: #0b1014;
+  --deep: #11171c;
+  --card: #151c22;
+  --card-hover: #1a2229;
   --line: rgba(255, 255, 255, 0.08);
-  --line-strong: rgba(170, 240, 245, 0.22);
-  --text: #eef6f7;
-  --text-2: #a9c3c7;
-  --text-3: #6f8a8f;
-  --teal: #8fe3ea;
-  --teal-strong: #5fd0da;
+  --line-strong: rgba(109, 134, 255, 0.35);
+  --text: #e6e9ff;
+  --text-2: #a3a8bd;
+  --text-3: #6f7486;
+  --teal: #7d93ff;
+  --teal-strong: #2b4bff;
   --radius: 18px;
   --ease: cubic-bezier(.2, .7, .2, 1);
   color-scheme: dark;
@@ -29,7 +35,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font: 400 16px/1.6 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font: 400 16px/1.6 'Poppins', 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
@@ -54,8 +60,8 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 .menu-btn:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
 .nav nav a { text-decoration: none; color: var(--text-2); font-size: 15px; font-weight: 500; transition: color .2s; }
 .nav nav a:hover { color: var(--text); }
-.nav .nav-cta { color: var(--text); padding: 7px 16px; border-radius: 999px; border: 1px solid var(--line-strong); background: rgba(143, 227, 234, 0.08); }
-.nav .nav-cta:hover { background: rgba(143, 227, 234, 0.16); }
+.nav .nav-cta { color: var(--text); padding: 7px 16px; border-radius: 999px; border: 1px solid var(--line-strong); background: rgba(43, 75, 255, 0.08); }
+.nav .nav-cta:hover { background: rgba(43, 75, 255, 0.16); }
 .nav nav a[aria-current="page"] { color: var(--text); }
 .nav nav a.lang { font-size: 13px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--text-3); }
 .nav nav a.lang:hover { color: var(--text); border-color: var(--line-strong); }
@@ -78,7 +84,7 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 .eyebrow { margin: 0 0 10px; color: var(--teal); font-size: 14px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; }
 h1 {
   margin: 0; font-size: clamp(48px, 10vw, 104px); line-height: 0.95; font-weight: 700; letter-spacing: -0.04em;
-  text-shadow: 0 0 60px rgba(143, 227, 234, 0.25);
+  text-shadow: 0 0 60px rgba(43, 75, 255, 0.25);
 }
 .lead { margin: 18px auto 0; color: var(--text-2); font-size: clamp(17px, 2.2vw, 20px); max-width: 560px; }
 .hero-buttons { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 30px; }
@@ -87,8 +93,8 @@ h1 {
   font-weight: 600; font-size: 16px; text-decoration: none; transition: transform .2s var(--ease), background .2s, box-shadow .2s;
 }
 .btn:hover { transform: translateY(-2px); }
-.btn.primary { background: var(--text); color: #051418; box-shadow: 0 10px 40px rgba(143, 227, 234, 0.25); }
-.btn.primary:hover { box-shadow: 0 14px 50px rgba(143, 227, 234, 0.4); }
+.btn.primary { background: #2b4bff; color: #fff; box-shadow: 0 10px 40px rgba(43, 75, 255, 0.25); }
+.btn.primary:hover { box-shadow: 0 14px 50px rgba(43, 75, 255, 0.4); }
 .btn.ghost { border: 1px solid var(--line-strong); background: rgba(255, 255, 255, 0.04); backdrop-filter: blur(8px); }
 .btn.ghost:hover { background: rgba(255, 255, 255, 0.09); }
 .version { margin: 14px 0 0; color: var(--text-3); font-size: 13px; min-height: 1.4em; }
@@ -136,7 +142,7 @@ main { position: relative; z-index: 1; }
   text-decoration: none; background: var(--card); border: 1px solid var(--line); transition: background .25s, border-color .25s, transform .25s var(--ease);
 }
 .dl:hover { background: var(--card-hover); border-color: var(--line-strong); transform: translateY(-3px); }
-.dl.current { border-color: var(--teal-strong); background: rgba(95, 208, 218, 0.08); }
+.dl.current { border-color: var(--teal-strong); background: rgba(43, 75, 255, 0.08); }
 .dl svg { width: 28px; height: 28px; margin-bottom: 10px; color: var(--teal); }
 .dl b { font-size: 18px; font-weight: 600; }
 .dl-file { color: var(--text-3); font-size: 14px; }
@@ -163,7 +169,7 @@ footer a { color: var(--text-2); }
 .page-head {
   position: relative; text-align: center; padding-block: calc(64px + clamp(56px, 10vh, 96px)) clamp(28px, 5vh, 44px);
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
-  background: radial-gradient(70% 120% at 50% -20%, rgba(95, 208, 218, 0.22), transparent 70%), linear-gradient(to bottom, #0c3039, var(--bg));
+  background: radial-gradient(70% 120% at 50% -20%, rgba(43, 75, 255, 0.22), transparent 70%), linear-gradient(to bottom, #0c3039, var(--bg));
 }
 .page-head h1 { font-size: clamp(40px, 7vw, 72px); }
 .page-head .lead { margin-inline: auto; }
@@ -181,7 +187,7 @@ code { font-family: ui-monospace, 'SF Mono', Consolas, monospace; font-size: 0.9
 .search svg { color: var(--text-3); }
 .search input { flex: 1; min-width: 0; background: none; border: 0; outline: 0; color: var(--text); font: inherit; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.chip { height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--text-2); font: 500 14px 'Geist', system-ui, sans-serif; cursor: pointer; transition: background .2s, color .2s, border-color .2s; }
+.chip { height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--text-2); font: 500 14px 'Poppins', system-ui, sans-serif; cursor: pointer; transition: background .2s, color .2s, border-color .2s; }
 .chip span { color: var(--text-3); margin-left: 4px; font-variant-numeric: tabular-nums; }
 .chip:hover { color: var(--text); border-color: var(--line-strong); }
 .chip.active { background: var(--text); color: #051418; border-color: var(--text); }
@@ -200,7 +206,7 @@ code { font-family: ui-monospace, 'SF Mono', Consolas, monospace; font-size: 0.9
 /* download */
 .steps { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
 .steps article { min-width: 0; padding: 22px; border-radius: var(--radius); background: var(--card); border: 1px solid var(--line); }
-.steps article.current { border-color: var(--teal-strong); background: rgba(95, 208, 218, 0.06); }
+.steps article.current { border-color: var(--teal-strong); background: rgba(43, 75, 255, 0.06); }
 .steps h3 { margin: 0 0 8px; font-size: 18px; }
 .steps ol { margin: 0; padding-left: 20px; color: var(--text-2); display: flex; flex-direction: column; gap: 8px; }
 .steps b { color: var(--text); font-weight: 600; }
@@ -228,7 +234,7 @@ code { font-family: ui-monospace, 'SF Mono', Consolas, monospace; font-size: 0.9
 .keys { display: grid; gap: 8px; }
 .keys div { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line); }
 .keys span { color: var(--text-2); margin-left: auto; text-align: right; }
-kbd { display: inline-block; min-width: 28px; padding: 3px 9px; border-radius: 7px; background: rgba(255, 255, 255, 0.08); border: 1px solid var(--line-strong); border-bottom-width: 2px; font: 600 13px 'Geist', system-ui, sans-serif; text-align: center; }
+kbd { display: inline-block; min-width: 28px; padding: 3px 9px; border-radius: 7px; background: rgba(255, 255, 255, 0.08); border: 1px solid var(--line-strong); border-bottom-width: 2px; font: 600 13px 'Poppins', system-ui, sans-serif; text-align: center; }
 .hint { color: var(--text-3); font-size: 15px; margin: 14px 0 0; }
 .page-hilfe .faq { margin: 0; max-width: none; }
 .foot-links { margin-bottom: 4px; }

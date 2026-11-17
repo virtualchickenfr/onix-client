@@ -102,7 +102,7 @@ def frame(lang, file, body, count):
   <meta property="og:title" content="{html.escape(title)}">
   <meta property="og:description" content="{html.escape(description)}">
   <meta property="og:image" content="{root}img/menu.jpg">
-  <meta name="theme-color" content="#071d23">
+  <meta name="theme-color" content="#11171c">
   <link rel="alternate" hreflang="{other_lang}" href="{other_prefix}{file}">
   <link rel="icon" href="{root}img/favicon.png">
   <link rel="stylesheet" href="{root}style.css">
