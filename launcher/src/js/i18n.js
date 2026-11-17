@@ -210,7 +210,19 @@ const DE = {
   'Select': 'Auswählen', 'Done': 'Fertig', 'Size': 'Größe', 'Files': 'Dateien', 'Player': 'Spieler', 'Reload': 'Neu laden', 'Turn off': 'Ausschalten',
   'Off – run to turn on': 'Aus – ausführen zum Einschalten', 'On – run to turn off': 'An – ausführen zum Ausschalten', 'Nothing to add': 'Nichts hinzuzufügen',
   'Onix and Fabric API': 'Onix und Fabric API', 'Onix + mods': 'Onix + Mods', 'Other versions': 'Andere Versionen', 'No Fabric': 'Kein Fabric',
-  'Open mods folder': 'Mods-Ordner öffnen', 'Open profile folder': 'Profilordner öffnen', 'Overlays': 'Overlays',
+  'Open mods folder': 'Mods-Ordner öffnen',
+  'Every mod in exactly your version (also Sodium, Iris and Fabric API), all resource and shader packs, settings, key binds, servers, worlds and mod settings – just like in Dawn.': 'Jeder Mod in genau deiner Version (auch Sodium, Iris und Fabric API), alle Ressourcen- und Shaderpakete, Einstellungen, Tastenbelegung, Server, Welten und Mod-Einstellungen – genau wie in Dawn.',
+  'move': 'bewegen', 'run': 'ausführen', 'close': 'schließen', 'anywhere': 'überall', 'Drop to add mods': 'Ablegen, um Mods hinzuzufügen',
+  'done': 'fertig', 'with Onix': 'mit Onix', 'installed': 'installiert', 'Downloading Minecraft (assets)': 'Minecraft wird geladen (Assets)',
+  'Only with a Microsoft account': 'Nur mit einem Microsoft-Konto', 'Skins and capes belong to your Minecraft account. Sign in first.': 'Skins und Umhänge gehören zu deinem Minecraft-Konto. Melde dich zuerst an.',
+  'Sign in with Microsoft first.': 'Melde dich zuerst mit Microsoft an.', 'No other launchers found': 'Keine anderen Launcher gefunden',
+  'Download the mod below and put it into the mods folder yourself.': 'Lade den Mod unten herunter und leg ihn selbst in den mods-Ordner.',
+  'No Minecraft running': 'Kein Minecraft läuft', 'Start Minecraft from any launcher – it shows up here within a few seconds.': 'Starte Minecraft aus einem beliebigen Launcher – es erscheint hier nach ein paar Sekunden.',
+  'Add your own mod files (.jar)': 'Eigene Mod-Dateien hinzufügen (.jar)',
+  'Shaders on strong PCs (Iris + Complementary Reimagined; the Onix module Shaders switches them)': 'Shader auf starken PCs (Iris + Complementary Reimagined; das Onix-Modul „Shaders“ schaltet sie)',
+  'Auto': 'Auto', 'pixels – empty for the default': 'Pixel – leer für den Standard', 'Automatic (Java is downloaded for this version)': 'Automatisch (Java wird für diese Version geladen)',
+  'Applies to every profile. If Minecraft is running with Onix, the new sky shows up right away. More options (brightness, rotation, fog) are in the Custom Sky module in game.': 'Gilt für jedes Profil. Läuft Minecraft mit Onix, erscheint der neue Himmel sofort. Mehr Optionen (Helligkeit, Drehung, Nebel) im Modul „Custom Sky“ im Spiel.',
+ 'Open profile folder': 'Profilordner öffnen', 'Overlays': 'Overlays',
 };
 
 /** Texts with numbers or names in them. */
@@ -219,6 +231,11 @@ const DE_PATTERNS = [
   [/^(\d+) (mod|mods)$/, (m, n) => `${n} ${n === '1' ? 'Mod' : 'Mods'}`],
   [/^(\d+) updated$/, '$1 aktualisiert'], [/^(\d+) unchanged$/, '$1 unverändert'], [/^(\d+) switched off$/, '$1 ausgeschaltet'],
   [/^(\d+) updated · (\d+) unchanged$/, '$1 aktualisiert · $2 unverändert'],
+  [/^Getting "(.+)" ready$/, '„$1“ wird vorbereitet'], [/^Downloading (.+)$/, '$1 wird geladen'],
+  [/^v([\d.]+) · Updates are only checked in the installed launcher\.$/, 'v$1 · Updates werden nur im installierten Launcher geprüft.'],
+  [/^Open (.+)$/, '$1 öffnen'], [/^by (.+)$/, 'von $1'], [/^Load more \(([\d.,]+) left\)$/, 'Mehr laden ($1 übrig)'],
+  [/^([\d.,]+) items$/, '$1 Artikel'], [/^(\d+) of (\d+) sources$/, '$1 von $2 Quellen'], [/^e\.g\. (.+)$/, 'z. B. $1'],
+  [/^Name styles are visible to other Onix players · profile "(.+)"$/, 'Namensstile sehen auch andere Onix-Spieler · Profil „$1“'],
   [/^Create Copy for (.+)$/, 'Kopie für $1 erstellen'], [/^Ready for (.+?) · (.*)$/, (m, v, rest) => `Bereit für ${v} · ${tr(rest.split(' · ').map(tr).join(' · '))}`],
   [/^not out for (.+) yet – switched off$/, 'für $1 noch nicht erschienen – ausgeschaltet'],
   [/^(.+) is older than (.+): worlds that were opened in a newer version may not load\. They stay safe in your original profile\.$/, '$1 ist älter als $2: Welten, die schon in einer neueren Version geöffnet wurden, laden eventuell nicht. Im Originalprofil bleiben sie sicher.'],
@@ -261,14 +278,32 @@ function tr(text) {
   if (I18N.lang !== 'de' || !text) return text;
   const lead = text.match(/^\s*/)[0];
   const tail = text.match(/\s*$/)[0];
-  const core = text.trim();
-  if (!core) return text;
+  const core = text.trim().replace(/\s+/g, ' ');
+  if (!core || OUT.has(core)) return text;
   if (Object.prototype.hasOwnProperty.call(DE, core)) return lead + DE[core] + tail;
+  if (/^[\d\s.,:%+→·/-]*$/.test(core)) return text;
   for (const [re, rep] of DE_PATTERNS) {
-    if (re.test(core)) return lead + core.replace(re, rep) + tail;
+    if (re.test(core)) return remember(lead + core.replace(re, rep) + tail);
+  }
+  // "1.21.11 · 4 GB · Performance pack": every part on its own
+  if (core.includes(' · ')) {
+    const parts = core.split(' · ');
+    const done = parts.map((x) => (x ? tr(x) : x));
+    if (done.some((x, i) => x !== parts[i])) return remember(lead + done.join(' · ') + tail);
+  }
+  if (core.startsWith('· ')) {
+    const rest = tr(core.slice(2));
+    if (rest !== core.slice(2)) return remember(lead + '· ' + rest + tail);
   }
   if (/[a-z]{3}/.test(core)) I18N.missing.add(core);
   return text;
+}
+
+/** Texts that are already German: never looked up again. */
+const OUT = new Set(Object.values(DE));
+function remember(t) {
+  OUT.add(t.trim().replace(/\s+/g, ' '));
+  return t;
 }
 
 const SKIP = 'script, style, textarea, input, pre, code, .console, #view-console .term, [data-no-i18n], .tmain b, .pcard-name, .theme-name, .bundle-names, .port-row b';
