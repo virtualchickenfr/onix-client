@@ -15,6 +15,7 @@ contextBridge.exposeInMainWorld('onix', {
   removeAccount: (uuid) => invoke('auth:remove', uuid),
 
   getSettings: () => invoke('settings:get'),
+  reload: () => invoke('app:reload'),
   setSettings: (value) => invoke('settings:set', value),
 
   getSky: () => invoke('sky:get'),

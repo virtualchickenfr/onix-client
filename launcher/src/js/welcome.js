@@ -114,7 +114,7 @@ async function maybeWelcome() {
         onclick: async () => {
           if (I18N.lang === id) return;
           await api.setSettings({ language: id });
-          location.reload();
+          api.reload();
         },
       }))),
       el('p', { text: 'Let’s get you set up in a few clicks: sign in, choose a look and pick the mods you want. You can change all of it later.' }),

@@ -35,7 +35,7 @@ async function initSettings() {
     language.value = ['en', 'de'].includes(s.language) ? s.language : 'auto';
     language.addEventListener('change', async () => {
       await api.setSettings({ language: language.value });
-      location.reload();   // every text on the page in the new language
+      api.reload();   // every text on the page in the new language
     });
   }
   const startupUpdate = $('#set-startup-update');

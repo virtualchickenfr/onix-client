@@ -269,7 +269,7 @@ function smokeTest(dir) {
     await wait(2500);
     await shot('port-done');
     // the launcher in German: every page once, then the texts that are not translated yet (js/i18n.js)
-    await js("api.setSettings({ language: 'de' }).then(() => location.reload())");
+    await js("api.setSettings({ language: 'de' }).then(() => api.reload())");
     await wait(9000);
     await shot('de-welcome');
     await js("document.querySelector('.welcome') && document.querySelector('.welcome').remove()");
@@ -388,6 +388,8 @@ app.whenReady().then(() => {
   auth.prefetch(store);
 
   // Global settings
+  // a fresh page, for example after the language changed (location.reload() is held back by will-navigate)
+  ipcMain.handle('app:reload', () => { if (win && !win.isDestroyed()) win.webContents.reload(); });
   ipcMain.handle('settings:get', () => settings());
   ipcMain.handle('settings:set', (_e, value) => {
     store.set('settings', { ...settings(), ...value });
