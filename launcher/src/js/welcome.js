@@ -108,6 +108,15 @@ async function maybeWelcome() {
     () => [
       el('img', { class: 'welcome-logo', src: 'assets/logo.png', alt: '' }),
       el('h2', { text: 'Welcome to Onix' }),
+      el('div', { class: 'welcome-lang', 'data-no-i18n': true }, [['en', 'English'], ['de', 'Deutsch']].map(([id, label]) => el('button', {
+        class: I18N.lang === id ? 'on' : '',
+        text: label,
+        onclick: async () => {
+          if (I18N.lang === id) return;
+          await api.setSettings({ language: id });
+          location.reload();
+        },
+      }))),
       el('p', { text: 'Let’s get you set up in a few clicks: sign in, choose a look and pick the mods you want. You can change all of it later.' }),
       nav('Let’s go', () => { step++; render(); }),
     ],

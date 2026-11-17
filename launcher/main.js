@@ -268,6 +268,28 @@ function smokeTest(dir) {
     await js("pv.tab = 'mods'; renderProfileView(); renderTab()");
     await wait(2500);
     await shot('port-done');
+    // the launcher in German: every page once, then the texts that are not translated yet (js/i18n.js)
+    await js("api.setSettings({ language: 'de' }).then(() => location.reload())");
+    await wait(9000);
+    await shot('de-welcome');
+    await js("document.querySelector('.welcome') && document.querySelector('.welcome').remove()");
+    for (const view of ['home', 'profiles', 'settings', 'discover', 'skins', 'cosmetics', 'import', 'install', 'console']) {
+      await js(`showView('${view}')`);
+      await wait(view === 'discover' || view === 'import' ? 4000 : 1500);
+      await shot(`de-${view}`);
+    }
+    await js("openProfile(activeProfile().id, 'mods')");
+    await wait(2000);
+    await shot('de-profile');
+    for (const tab of ['bundles', 'worlds', 'settings']) {
+      await js(`pv.tab = '${tab}'; renderProfileView(); renderTab()`);
+      await wait(2500);
+    }
+    await js("openPort(pvProfile())");
+    await wait(6000);
+    await shot('de-port');
+    await js("console.log('i18n missing ' + JSON.stringify([...I18N.missing]))");
+    await wait(500);
     app.exit(0);
   });
 }
@@ -373,6 +395,8 @@ app.whenReady().then(() => {
     if (value && typeof value.theme === 'string') sync.theme = value.theme;
     if (value && typeof value.background === 'string') sync.titleBackground = value.background;
     if (value && typeof value.onixServer === 'string') sync.onixServer = value.onixServer.trim();
+    // the launcher's language also for the Onix menus in game (Automatic: the computer's language)
+    if (value && typeof value.language === 'string') sync.language = (value.language === 'de' || (value.language === 'auto' && app.getLocale().toLowerCase().startsWith('de'))) ? 'Deutsch' : 'English';
     if (value && typeof value.updateAtStartup === 'boolean') require('./lib/startupupdate').register(value.updateAtStartup);
     if (Object.keys(sync).length) {
       try {
@@ -1103,6 +1127,16 @@ app.whenReady().then(() => {
   }
   // keep the start with the system in step with the setting (the installed path can change with an update)
   startup.register(settings().updateAtStartup !== false);
+  // once: the Onix menus in game in the computer's language (later the language setting keeps them in step)
+  if (!settings().languageSynced) {
+    try {
+      const de = settings().language === 'de' || (settings().language !== 'en' && app.getLocale().toLowerCase().startsWith('de'));
+      syncClientSettings({ language: de ? 'Deutsch' : 'English' });
+      store.set('settings', { ...settings(), languageSynced: true });
+    } catch (err) {
+      console.warn('Could not set the in-game language:', err);
+    }
+  }
 
   createWindow();
   updater.init((v) => send('update:status', v), () => settings().autoUpdate !== false, () => running);

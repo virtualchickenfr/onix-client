@@ -17,6 +17,8 @@
     ? Fall.boot($('#boot-scene'), () => (typeof homeSkin !== 'undefined' && homeSkin.px ? homeSkin : null))
     : null;
   try {
+    // English or German before anything is shown (js/i18n.js)
+    startI18n((await api.getSettings().catch(() => ({}))).language);
     bootStatus('Starting');
     info = await api.info();
     $('#eyebrow').textContent = `Minecraft ${info.mcVersion}`;

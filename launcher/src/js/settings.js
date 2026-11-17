@@ -30,6 +30,14 @@ async function initSettings() {
     api.setSettings({ autoUpdate: auto.checked });
     toast(auto.checked ? 'The launcher checks for updates when it starts' : 'Automatic update checks are off – use Check now');
   });
+  const language = $('#set-language');
+  if (language) {
+    language.value = ['en', 'de'].includes(s.language) ? s.language : 'auto';
+    language.addEventListener('change', async () => {
+      await api.setSettings({ language: language.value });
+      location.reload();   // every text on the page in the new language
+    });
+  }
   const startupUpdate = $('#set-startup-update');
   if (startupUpdate) {
     startupUpdate.checked = s.updateAtStartup !== false;
