@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-Renders the "Meadow" design: thousands of flowers on a grey meadow under an overcast sky, with depth of field like a
+Renders the "Meadow" design: thousands of flowers on a grey meadow at night – a black sky with a big red moon – with
+depth of field like a
 photo (far meadow soft, the middle sharp, blossoms right in front of the lens blurred), and the loose petals that fly
 up when you press Play.
 
@@ -51,21 +52,48 @@ def lerp(a, b, t):
     return tuple(int(round(a[i] + (b[i] - a[i]) * t)) for i in range(len(a)))
 
 
+MOON = (0.70, 0.19, 0.062)       # centre x, y and radius as fractions of the picture (radius of the height)
+
+
 def sky():
+    """A black night sky, a touch of red near the horizon, faint dark clouds."""
     y = np.linspace(0, 1, H)[:, None]
-    top = np.array([150, 154, 158], float)
-    mid = np.array([196, 199, 201], float)
-    img = np.where(y < HORIZON, top + (mid - top) * (y / HORIZON) ** 0.8, mid)
-    img = np.repeat(img[:, None, :] if img.ndim == 2 else img, 1, axis=1)
+    top = np.array([4, 4, 6], float)
+    low = np.array([26, 15, 17], float)
+    img = np.where(y < HORIZON, top + (low - top) * (y / HORIZON) ** 1.8, low)
     arr = np.broadcast_to(img.reshape(H, 1, 3), (H, W, 3)).copy()
-    # soft cloud banks
     yy, xx = np.mgrid[0:H, 0:W]
     for _ in range(14):
         cx, cy = rng.uniform(-0.1, 1.1) * W, rng.uniform(0.02, HORIZON * 0.9) * H
         rx, ry = rng.uniform(0.15, 0.4) * W, rng.uniform(0.03, 0.08) * H
         d = ((xx - cx) / rx) ** 2 + ((yy - cy) / ry) ** 2
-        arr += (np.exp(-d * 1.6) * rng.uniform(6, 16))[..., None]
+        arr += (np.exp(-d * 1.6) * rng.uniform(2, 6))[..., None] * np.array([1.0, 0.55, 0.55])
     return Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8)).convert('RGBA')
+
+
+def moon(arr):
+    """The red moon with its glow, drawn into the finished picture (float RGB array)."""
+    cx, cy, r = MOON[0] * W, MOON[1] * H, MOON[2] * H
+    yy, xx = np.mgrid[0:H, 0:W]
+    d = np.sqrt((xx - cx) ** 2 + (yy - cy) ** 2)
+    # a wide red glow in the sky, stronger close to the disc; the meadow below catches a little of it
+    glow = np.exp(-((d / (r * 7)) ** 1.3)) * 70 + np.exp(-((d / (r * 2.2)) ** 2)) * 60
+    sky_part = np.clip((HORIZON * H + 30 - yy) / 60, 0.25, 1)
+    arr += (glow * sky_part)[..., None] * np.array([1.0, 0.18, 0.12])
+    # the disc: deep red, brighter in the middle, darker at the rim, soft surface marks
+    inside = d < r
+    t = np.clip(d / r, 0, 1)
+    base = np.array([214, 46, 34], float) * (1 - 0.35 * t ** 2)[..., None]
+    nrng = np.random.default_rng(3)
+    marks = np.zeros((H, W))
+    for _ in range(9):
+        mx, my = cx + nrng.uniform(-0.6, 0.6) * r, cy + nrng.uniform(-0.6, 0.6) * r
+        mr = nrng.uniform(0.12, 0.32) * r
+        marks += np.exp(-(((xx - mx) ** 2 + (yy - my) ** 2) / (mr * mr))) * nrng.uniform(0.15, 0.3)
+    base *= (1 - np.clip(marks, 0, 0.45))[..., None]
+    edge = np.clip((r - d) / 2.0, 0, 1)                    # anti-aliased rim
+    arr[inside] = arr[inside] * (1 - edge[inside, None]) + base[inside] * edge[inside, None]
+    return arr
 
 
 def ground():
@@ -73,8 +101,8 @@ def ground():
     y0 = int(HORIZON * H)
     gh = H - y0
     t = (np.arange(gh) / gh)[:, None]
-    far = np.array([166, 170, 166], float)
-    near = np.array([82, 88, 82], float)
+    far = np.array([34, 26, 28], float)
+    near = np.array([40, 42, 40], float)
     col = np.broadcast_to((far + (near - far) * t ** 0.65)[:, None, :], (gh, W, 3)).copy()
     nrng = np.random.default_rng(11)
     tex = np.zeros((gh, W))
@@ -109,7 +137,7 @@ def treeline(hy):
     yy = np.arange(H)[:, None]
     mask = (yy > hy - hgt[None, :]) & (yy < hy + 8)
     arr = np.zeros((H, W, 4), np.uint8)
-    arr[..., 0], arr[..., 1], arr[..., 2] = 160, 164, 162
+    arr[..., 0], arr[..., 1], arr[..., 2] = 14, 11, 12
     arr[..., 3] = mask * 255
     return Image.fromarray(arr, 'RGBA').filter(ImageFilter.GaussianBlur(5))
 
@@ -134,7 +162,7 @@ def flower(draw, x, y, size, kind, tilt, record=False, keep_petals=False):
     bare = BARE and not keep_petals
     # stem
     stem_h = size * rng.uniform(0.8, 1.6)
-    sc = lerp((150, 154, 148), (70, 78, 70), min(1, size / 40))
+    sc = lerp((58, 54, 54), (38, 44, 38), min(1, size / 40))
     draw.line([(x * SS, y * SS), ((x + tilt * stem_h * 0.2) * SS, (y + stem_h) * SS)], fill=sc + (255,), width=max(1, int(size * 0.06 * SS)))
     # head seen from slightly above: flattened vertically
     flat = rng.uniform(0.55, 0.95)
@@ -188,7 +216,7 @@ def grass_one(draw, y, d):
     w = (0.5 + 3.2 * d ** 1.4) * rng.uniform(0.7, 1.3)
     lean = rng.uniform(-0.45, 0.45)
     shade = rng.uniform(-20, 16)
-    base = lerp((164, 168, 162), (72, 78, 72), d ** 0.8)
+    base = lerp((60, 54, 56), (40, 44, 40), d ** 0.8)
     c = tuple(max(0, min(255, int(v + shade))) for v in base) + (255,)
     pts_l, pts_r = [], []
     for i in range(7):
@@ -227,8 +255,8 @@ def render(bare=False):
     # haze over the far meadow
     arr = np.array(base).astype(float)
     y = np.arange(H)[:, None]
-    haze = np.clip(1 - np.abs(y - hy) / (0.16 * H), 0, 1) ** 1.5 * 0.55
-    arr[..., :3] = arr[..., :3] * (1 - haze[..., None]) + np.array([200, 202, 204]) * haze[..., None]
+    haze = np.clip(1 - np.abs(y - hy) / (0.12 * H), 0, 1) ** 1.3 * 0.8
+    arr[..., :3] = arr[..., :3] * (1 - haze[..., None]) + np.array([40, 20, 22]) * haze[..., None]
     # blossoms right in front of the lens: big, very soft
     front = Image.new('RGBA', (W * SS, H * SS), (0, 0, 0, 0))
     fd = ImageDraw.Draw(front)
@@ -241,13 +269,12 @@ def render(bare=False):
     # grade: cool grey, soft contrast, vignette, fine grain
     arr = np.array(img.convert('RGB')).astype(float)
     yy0, xx0 = np.mgrid[0:H, 0:W]
-    glow = np.exp(-(((xx0 - W * 0.68) / (W * 0.35)) ** 2 + ((yy0 - H * 0.12) / (H * 0.3)) ** 2))
-    arr += glow[..., None] * 18
-    patch = np.exp(-(((xx0 - W * 0.6) / (W * 0.45)) ** 2 + ((yy0 - H * 0.62) / (H * 0.22)) ** 2))
-    arr *= (1 + patch * 0.10)[..., None]
+    # the flowers are lit by the moon: pale, a little reddish, brighter on the side of the moon
     lum = arr.mean(axis=2, keepdims=True)
-    arr = lum + (arr - lum) * 0.72                    # a bit less colour: a grey day
-    arr = (arr - 128) * 1.08 + 112                    # darker and a little moodier than a plain grey day
+    arr = lum + (arr - lum) * 0.6
+    light = np.exp(-(((xx0 - W * MOON[0]) / (W * 0.6)) ** 2 + ((yy0 - H * 0.55) / (H * 0.5)) ** 2))
+    arr = arr * (0.4 + 0.32 * light)[..., None] * np.array([1.0, 0.8, 0.8])
+    arr = moon(arr)
     yy, xx = np.mgrid[0:H, 0:W]
     v = ((xx - W / 2) / (W * 0.62)) ** 2 + ((yy - H * 0.48) / (H * 0.7)) ** 2
     arr *= (1 - np.clip(v - 0.35, 0, 1) * 0.45)[..., None]
@@ -292,6 +319,10 @@ def main():
         with open(os.path.join(d, 'meadow_flowers.json'), 'w') as out:
             out.write(data)
     p = petals()
+    # in the moonlight: as dark and reddish as the flowers they come from, a little brighter where they catch the light
+    pa = np.array(p).astype(float)
+    pa[..., :3] *= np.array([0.78, 0.64, 0.64])
+    p = Image.fromarray(np.clip(pa, 0, 255).astype(np.uint8), 'RGBA')
     p.save(os.path.join(out_l, 'petals.png'), optimize=True)
     p.save(os.path.join(out_m, 'petals.png'), optimize=True)
     print(f'meadow, bare meadow, {len(flowers)} flowers and petals written')

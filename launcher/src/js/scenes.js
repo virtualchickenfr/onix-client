@@ -112,24 +112,25 @@ const Scenes = (() => {
         const l = t - leaving;
         x = target - easeIn(l / 1.4) * (target + fw);
         speed = Math.min(1, 0.4 + l * 2);
-        face = -90 + (1 - smooth(l / 0.25)) * 115;
+        face = 90 - (1 - smooth(l / 0.25)) * 65;       // turns away from you and runs off to the left, facing where it goes
       } else {
         x = W + fw / 2 + (target - W - fw / 2) * easeOut(arrive);
         speed = 1 - smooth((arrive - 0.75) / 0.3);
-        face = -90 + smooth((arrive - 0.85) / 0.35) * 115;
+        face = 90 - smooth((arrive - 0.85) / 0.35) * 65; // runs in facing left (where it goes), then turns to you
       }
       if (lastX !== null) cycle += dt * (5 + 7 * speed) * (speed > 0.02 ? 1 : 0);
       lastX = x;
       const swing = Math.sin(cycle) * speed;
-      const bob = Math.abs(Math.cos(cycle)) * speed * fh * 0.025;
+      const bob = Math.abs(Math.cos(cycle)) * speed * fh * 0.04;
       const idle = t * 1.2;
       const add = {
-        rl: [swing * 55, 0, 0], ll: [-swing * 55, 0, 0],
-        ra: [-swing * 50, 0, speed ? 0 : Math.sin(idle) * 2], la: [swing * 50, 0, speed ? 0 : Math.sin(idle) * 2],
+        rl: [swing * 62, 0, 0], ll: [-swing * 62, 0, 0],
+        ra: [-swing * 58, 0, speed ? 4 : Math.sin(idle) * 2], la: [swing * 58, 0, speed ? 4 : Math.sin(idle) * 2],
         head: [speed * 6, 0, 0],
       };
       const skin = skinNow();
-      Skin3D.draw(fig, skin.px, skin.slim, 'idle', t, { add, view: [-6, face, 0] });
+      // leaning into the run (the top of the body a little ahead, to the left)
+      Skin3D.draw(fig, skin.px, skin.slim, 'idle', t, { add, view: [-6, face, -9 * speed] });
       const floor = H * 0.86;
       const fx = x - fw / 2;
       const fy = floor - fh - bob;
@@ -214,8 +215,8 @@ const Scenes = (() => {
         ang: Math.atan2(Math.sin(a) * flat, Math.cos(a)),
         squash: Math.max(0.35, flat),
         vx: out * L * (1.5 + rnd()) + (rnd() - 0.5) * L * 2,
-        vy: -L * (1.4 + rnd() * 1.6) - H * 0.04,
-        lift: -(0.38 + rnd() * 0.42) * H,                    // the gust carries it up harder and harder
+        vy: -L * (1.4 + rnd() * 1.6) - H * 0.08,
+        lift: -(0.8 + rnd() * 0.6) * H,                    // the gust carries it up harder and harder
         drift: (rnd() - 0.5) * W * 0.08 + W * 0.02,           // and to the side, every petal its own way
         spin: (rnd() - 0.5) * 7,
         flip: rnd() * Math.PI * 2,
@@ -266,7 +267,7 @@ const Scenes = (() => {
     }
 
     const scene = loop(canvas, (g, W, H, t, dt) => {
-      g.fillStyle = '#5c6064';
+      g.fillStyle = '#060506';
       g.fillRect(0, 0, W, H);
       const b = bursting >= 0 ? t - bursting : -1;
       // the camera drifts slowly; it holds still once the gust comes, so the petals leave from the right places
@@ -332,13 +333,13 @@ const Scenes = (() => {
         p.y += p.vy * dt;
         p.ang += p.spin * dt * go;
         p.flip += p.flipSpeed * dt * go;
-        if (p.y < -p.L * 2 || age > 7) { petals.splice(i, 1); continue; }
+        if (p.y < -p.L * 3 || p.x < -W * 0.3 || p.x > W * 1.3 || age > 12) { petals.splice(i, 1); continue; }
         const sx = p.L / fs * 1.05;
         const sy = sx * (p.squash + (1 - p.squash) * go) * Math.max(0.12, Math.abs(Math.cos(p.flip * go)));
         const c = Math.cos(p.ang);
         const sn = Math.sin(p.ang);
         g.setTransform(c * sx, sn * sx, -sn * sy, c * sy, p.x, p.y);
-        g.globalAlpha = Math.min(1, age * 6) * (age > 5 ? Math.max(0, 1 - (age - 5) / 2) : 1);
+        g.globalAlpha = Math.min(1, age * 6);
         g.drawImage(sheet, (p.kind % PETAL_FRAMES) * fs, 0, fs, fs, -fs / 2, -fs / 2, fs, fs);
       }
       g.setTransform(1, 0, 0, 1, 0, 0);
