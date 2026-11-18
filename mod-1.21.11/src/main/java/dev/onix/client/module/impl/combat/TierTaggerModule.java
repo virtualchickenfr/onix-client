@@ -164,8 +164,8 @@ public class TierTaggerModule extends Module implements dev.onix.client.module.O
         float out = Math.min(1f, (cardUntil - now) / 220f);
         float a = Math.min(in, out);
         int w = 168;
-        int x = ctx.guiWidth() - w - 12 + Math.round((1 - in) * 14);
-        int y = ctx.guiHeight() / 2 - 70;
+        // centred above the hotbar: the one spot no other HUD element uses
+        int x = (ctx.guiWidth() - w) / 2;
         java.util.List<String[]> rows = new java.util.ArrayList<>();
         String status = null;
         if (opponent == null) {
@@ -189,6 +189,7 @@ public class TierTaggerModule extends Module implements dev.onix.client.module.O
             }
         }
         int h = 34 + (status != null ? 26 : rows.size() * 14 + 6);
+        int y = ctx.guiHeight() - 66 - h + Math.round((1 - in) * 10);
         int alpha = Math.round(255 * a);
         dev.onix.client.gui.Theme.shadow(ctx, x, y, x + w, y + h, 10);
         dev.onix.client.gui.Theme.card(ctx, x, y, x + w, y + h, 10, dev.onix.client.gui.Theme.withAlpha(dev.onix.client.gui.Theme.SURFACE, Math.round(0xF0 * a)),
