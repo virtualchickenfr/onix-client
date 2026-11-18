@@ -30,8 +30,8 @@ public class OnixConfig {
 
     // Interface
     public final BoolSetting menuGlass = new BoolSetting("menuGlass", "Liquid Glass", false).hidden();
-    public final ModeSetting menuStyle = new ModeSetting("menuStyle", "Menu Style", "Clean", "Classic", "Bloom")
-            .describe("Clean opens the module menu with module cards. Classic opens the module list, Bloom starts with a flower of categories.");
+    /** Since 1.1.30 one mod menu everywhere (the Onix menu); the card menu and the flower of categories are gone. */
+    public final ModeSetting menuStyle = new ModeSetting("menuStyle", "Menu Style", "Classic").hidden();
     public final ModeSetting menuScale = new ModeSetting("menuScale", "Menu Size", "Normal", "Small", "Large");
     public final BoolSetting menuAnimations = new BoolSetting("menuAnimations", "Animations", true);
     public final BoolSetting clickSounds = new BoolSetting("clickSounds", "Click Sounds", true);
@@ -141,7 +141,7 @@ public class OnixConfig {
     }
 
     public List<Setting<?, ?>> designSettings() {
-        return List.of(menuDesign, menuStyle, buttonStyle, carbonButtons, menuSkin, menuScale, menuAnimations, menuParticles, backgroundDim);
+        return List.of(buttonStyle, carbonButtons, menuSkin, menuScale, menuAnimations, menuParticles, backgroundDim);
     }
 
     public List<Setting<?, ?>> loadingSettings() {

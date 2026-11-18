@@ -144,8 +144,7 @@ public class OnixClient implements ClientModInitializer {
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (MENU_KEY.consumeClick()) {
-                if (client.screen == null) client.setScreen(CONFIG.menuStyle.is("Clean")
-                        ? new gg.carbon.client.screen.ClickGui(null) : new OnixMenuScreen(null));
+                if (client.screen == null) client.setScreen(new OnixMenuScreen(null));
             }
             while (CWT_KEY.consumeClick()) CwtMode.toggle();
             // remember the server you play on for "Rejoin" on the title screen

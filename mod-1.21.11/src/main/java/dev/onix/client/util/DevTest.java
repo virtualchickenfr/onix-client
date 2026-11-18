@@ -523,6 +523,10 @@ public final class DevTest {
             OnixClient.LOGGER.info("[devtest] tiertagger best = {}", tag == null ? "none" : tag.getString());
             tiers.tag(java.util.UUID.fromString("069a79f4-44e9-4726-a5be-fca90e38aaf5"));
         });
+        // the tier card (C): every tier of the last opponent
+        then(2, () -> OnixClient.MODULES.get(dev.onix.client.module.impl.combat.TierTaggerModule.class)
+                .debugCard(java.util.UUID.fromString("11111111-2222-4333-8444-555555555555"), "TierTester"));
+        then(12, () -> snap(mc, "09t_tier_card"));
         then(80, () -> {
             var tiers = OnixClient.MODULES.get(dev.onix.client.module.impl.combat.TierTaggerModule.class);
             OnixClient.LOGGER.info("[devtest] tiertagger lookup Notch = {}", tiers.debugState(java.util.UUID.fromString("069a79f4-44e9-4726-a5be-fca90e38aaf5")));

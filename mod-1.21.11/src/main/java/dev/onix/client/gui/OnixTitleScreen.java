@@ -96,7 +96,7 @@ public class OnixTitleScreen extends Screen {
         items.add(new Item("Multiplayer", "server", () -> minecraft.setScreen(new JoinMultiplayerScreen(this)), true));
         Item rejoinItem = rejoinItem();
         if (rejoinItem != null) items.add(rejoinItem);
-        items.add(new Item("Modules", "all", () -> minecraft.setScreen(OnixClient.CONFIG.menuStyle.is("Clean") ? new gg.carbon.client.screen.ClickGui(this) : new OnixMenuScreen(this)), false));
+        items.add(new Item("Modules", "all", () -> minecraft.setScreen(new OnixMenuScreen(this)), false));
         items.add(new Item("Cosmetics", "cosmetics", () -> minecraft.setScreen(new OnixMenuScreen(this, OnixMenuScreen.View.COSMETICS)), false));
         items.add(new Item("Profiles", "profile", () -> minecraft.setScreen(new OnixMenuScreen(this, OnixMenuScreen.View.PROFILES)), false));
         items.add(new Item("Options", "settings", () -> minecraft.setScreen(new OptionsScreen(this, minecraft.options)), false));
@@ -107,7 +107,7 @@ public class OnixTitleScreen extends Screen {
         Item rejoin = rejoinItem();
         if (rejoin != null) cineItems.add(rejoin);
         cineItems.add(new Item("Minecraft Settings", "settings", () -> minecraft.setScreen(new OptionsScreen(this, minecraft.options)), false));
-        cineItems.add(new Item("Client", "all", () -> minecraft.setScreen(OnixClient.CONFIG.menuStyle.is("Clean") ? new gg.carbon.client.screen.ClickGui(this) : new OnixMenuScreen(this)), false));
+        cineItems.add(new Item("Client", "all", () -> minecraft.setScreen(new OnixMenuScreen(this)), false));
         cineItems.add(new Item("Quit Game", "power", () -> minecraft.stop(), false));
 
         // 1.1.6: everyone gets the cinematic title screen and the glass menus once

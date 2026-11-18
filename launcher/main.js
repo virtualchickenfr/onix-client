@@ -581,15 +581,24 @@ app.whenReady().then(() => {
     await shell.trashItem(content.worldPath(dirOf(profileId), folder));
     return true;
   }));
+  const thumbs = new Map();   // screenshot file and time → small picture
   ipcMain.handle('content:screenshots', safe((_e, profileId, limit) => {
     const dir = dirOf(profileId);
     return content.listScreenshots(dir).slice(0, Math.min(200, Number(limit) || 60)).map((s) => {
-      let thumb = null;
-      try {
-        const img = nativeImage.createFromPath(content.screenshotPath(dir, s.file));
-        if (!img.isEmpty()) thumb = img.resize({ width: 360, quality: 'good' }).toDataURL();
-      } catch {
+      // a small picture of every screenshot, made once per file (and again only when the file changed)
+      const file = content.screenshotPath(dir, s.file);
+      const key = `${file}|${s.time}`;
+      let thumb = thumbs.get(key);
+      if (thumb === undefined) {
         thumb = null;
+        try {
+          const img = nativeImage.createFromPath(file);
+          if (!img.isEmpty()) thumb = img.resize({ width: 360, quality: 'good' }).toDataURL();
+        } catch {
+          thumb = null;
+        }
+        thumbs.set(key, thumb);
+        if (thumbs.size > 600) thumbs.delete(thumbs.keys().next().value);
       }
       return { ...s, thumb };
     });
@@ -602,9 +611,10 @@ app.whenReady().then(() => {
   }));
   ipcMain.handle('content:logs', safe((_e, profileId) => content.listLogs(dirOf(profileId))));
   ipcMain.handle('content:readLog', safe((_e, profileId, id) => content.readLog(dirOf(profileId), id)));
-  ipcMain.handle('content:sizes', safe((_e, profileId) => {
+  // walked in the background and remembered (lib/content.js): opening a profile never waits for its worlds to be counted
+  ipcMain.handle('content:sizes', safe(async (_e, profileId) => {
     const dir = dirOf(profileId);
-    return { total: content.sizeOf(dir), saves: content.sizeOf(path.join(dir, 'saves')), mods: content.sizeOf(path.join(dir, 'mods')) };
+    return { total: await content.sizeOfCached(dir) };
   }));
   // the whole profile on another Minecraft version: a copy with every mod swapped for its version there (lib/port.js)
   const portPlans = new Map();

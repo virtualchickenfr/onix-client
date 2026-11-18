@@ -3,6 +3,9 @@
 /* One profile on its own page: mods, resource packs, shaders, worlds, screenshots, logs and settings. */
 
 const pv = { id: null, tab: 'mods', confirm: null, log: null, seq: 0 };
+// what was last seen per profile, shown at once when you come back (and refreshed quietly behind it):
+// the contents of each tab, the counts on the tabs and the size on disk
+const pvSeen = { dom: new Map(), shown: null, counts: new Map(), sizes: new Map() };
 
 const pvProfile = () => profileState.profiles.find((p) => p.id === pv.id);
 
@@ -84,28 +87,37 @@ function renderStats(p) {
     stat('Play time', fmtPlayTime(p.playTimeMs)),
     stat('Last played', fmtAgo(p.lastPlayed)),
     stat('Memory', gb(p.ramMb)),
-    stat('On disk', '…', 'pv-size'),
+    stat('On disk', pvSeen.sizes.has(p.id) ? fmtSize(pvSeen.sizes.get(p.id)) : '…', 'pv-size'),
   );
   const id = p.id;
   api.profileSizes(id).then((res) => {
-    if (pv.id !== id || !res.ok) return;
+    if (!res.ok) return;
+    pvSeen.sizes.set(id, res.value.total);
     const n = $('#pv-size');
-    if (n) n.textContent = fmtSize(res.value.total);
+    if (n && pv.id === id) n.textContent = fmtSize(res.value.total);
   });
+}
+
+const PV_COUNTS = ['mods', 'resourcepacks', 'shaderpacks', 'worlds', 'screenshots'];
+function showCounts(c) {
+  for (const k of PV_COUNTS) $(`#pv-n-${k}`).textContent = c && c[k] ? String(c[k]) : '';
 }
 
 async function refreshCounts() {
   const id = pv.id;
+  showCounts(pvSeen.counts.get(id));
   const [mods, rp, sp, worlds, shots] = await Promise.all([
     api.listMods(id), api.packs(id, 'resourcepacks'), api.packs(id, 'shaderpacks'), api.worlds(id), api.screenshots(id, 1),
   ]);
-  if (pv.id !== id) return;
-  const set = (k, n) => { $(`#pv-n-${k}`).textContent = n ? String(n) : ''; };
-  set('mods', Array.isArray(mods) ? mods.length : 0);
-  set('resourcepacks', rp.ok ? rp.value.length : 0);
-  set('shaderpacks', sp.ok ? sp.value.length : 0);
-  set('worlds', worlds.ok ? worlds.value.length : 0);
-  set('screenshots', shots.ok && shots.value.length ? '•' : '');
+  const counts = {
+    mods: Array.isArray(mods) ? mods.length : 0,
+    resourcepacks: rp.ok ? rp.value.length : 0,
+    shaderpacks: sp.ok ? sp.value.length : 0,
+    worlds: worlds.ok ? worlds.value.length : 0,
+    screenshots: shots.ok && shots.value.length ? '•' : '',
+  };
+  pvSeen.counts.set(id, counts);
+  if (pv.id === id) showCounts(counts);
 }
 
 /** Called when mods or packs of a profile changed elsewhere (Modrinth dialog). */
@@ -206,7 +218,13 @@ function renderTab() {
     logs: renderPvLogs,
     settings: renderPvSettings,
   }[pv.tab] || renderPvMods;
-  if (!body.children.length) body.replaceChildren(loadingBlock('Reading…'));
+  const key = `${pv.id}:${pv.tab}`;
+  if (pvSeen.shown && pvSeen.shown !== key && body.children.length) pvSeen.dom.set(pvSeen.shown, [...body.childNodes]);
+  if (pvSeen.shown !== key) {
+    const seen = pvSeen.dom.get(key);
+    body.replaceChildren(...(seen || [loadingBlock('Reading…')]));
+    pvSeen.shown = key;
+  }
   run(seq);
 }
 
