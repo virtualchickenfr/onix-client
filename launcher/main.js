@@ -259,7 +259,13 @@ function smokeTest(dir) {
     // the three designs on the start page, and the meadow's petals flying up on Play (js/scenes.js)
     for (const d of ['water', 'runner', 'meadow']) {
       await js(`selectDesign('${d}'); showView('home')`);
-      await wait(d === 'runner' ? 4200 : 3500);
+      if (d === 'runner') {
+        await wait(1500);
+        await shot('design-runner-running');
+        await wait(2700);
+      } else {
+        await wait(3500);
+      }
       await shot(`design-${d}`);
     }
     await js("Scenes.burst()");

@@ -125,6 +125,7 @@ public class OnixTitleScreen extends Screen {
         shownAt = System.currentTimeMillis();
         pending = null;
         runLeave = -1;
+        runFrom = System.currentTimeMillis();
         petalBurst = 0;
         petals.clear();
     }
@@ -150,7 +151,7 @@ public class OnixTitleScreen extends Screen {
         if (scene().equals("Meadow")) {
             petalBurst = pendingAt;
             buildPetals();
-            pendingAt += 1700;                     // the gust runs through the meadow and the petals fly up first, then the fade
+            pendingAt += 2400;                     // the gust runs through the meadow and the petals fly up and out of sight first, then the fade
         } else if (scene().equals("Runner") && runLeave < 0) {
             runLeave = pendingAt;
             pendingAt += 650;                      // the character runs off first
@@ -661,8 +662,8 @@ public class OnixTitleScreen extends Screen {
         float out = (float) Math.cos(a);
         petals.add(new float[]{x, y, L, start, f[3],
                 (float) Math.atan2(Math.sin(a) * f[4], Math.cos(a)), Math.max(0.35f, f[4]),
-                out * L * (1.5f + random.nextFloat()) + (random.nextFloat() - 0.5f) * L * 2, -L * (1.4f + random.nextFloat() * 1.6f) - height * 0.04f,
-                -(0.38f + random.nextFloat() * 0.42f) * height, (random.nextFloat() - 0.5f) * width * 0.08f + width * 0.02f,
+                out * L * (1.5f + random.nextFloat()) + (random.nextFloat() - 0.5f) * L * 2, -L * (1.4f + random.nextFloat() * 1.6f) - height * 0.08f,
+                -(0.8f + random.nextFloat() * 0.6f) * height, (random.nextFloat() - 0.5f) * width * 0.08f + width * 0.02f,
                 (random.nextFloat() - 0.5f) * 7f, random.nextFloat() * 6.28f, 2.5f + random.nextFloat() * 4f, random.nextFloat() * 6.28f});
     }
 
@@ -758,13 +759,13 @@ public class OnixTitleScreen extends Screen {
             p[1] += p[8] * dt;
             p[5] += p[11] * dt * go;
             p[12] += p[13] * dt * go;
-            if (p[1] < -p[2] * 2 || age > 7) {
+            if (p[1] < -p[2] * 3 || p[0] < -width * 0.3f || p[0] > width * 1.3f || age > 12) {
                 petals.remove(i);
                 continue;
             }
             float len = p[2] * 1.05f;
             float sy = (p[6] + (1 - p[6]) * go) * Math.max(0.12f, Math.abs((float) Math.cos(p[12] * go)));
-            float alpha = Math.min(1f, age * 6f) * (age > 5 ? Math.max(0, 1 - (age - 5) / 2f) : 1f);
+            float alpha = Math.min(1f, age * 6f);
             int size = Math.max(1, Math.round(len));
             ctx.pose().pushMatrix();
             ctx.pose().translate(p[0], p[1]);
@@ -778,6 +779,7 @@ public class OnixTitleScreen extends Screen {
 
     // ---- Runner: the character runs in from the right, turns to you; runs off to the left when you pick something
     private long runLeave = -1;
+    private long runFrom;
     private float runCycle;
 
     /** Walk/run cycle (side view) while moving, a smooth turn to the front and a calm idle when it stands. */
@@ -787,16 +789,16 @@ public class OnixTitleScreen extends Screen {
         float armIdle = speed > 0.02f ? 0f : (float) Math.sin(time * 1.2f) * 0.04f;
         for (var model : new net.minecraft.client.model.player.PlayerModel[]{acc.onix$wide(), acc.onix$slim()}) {
             var root = model.root();
-            root.xRot = speed * 0.12f;
+            root.xRot = speed * 0.2f;               // leaning into the run
             root.zRot = 0f;
             root.xScale = root.yScale = root.zScale = 1f;
             root.y = 0f;
-            model.rightLeg.xRot = swing * 1.0f;
-            model.leftLeg.xRot = -swing * 1.0f;
+            model.rightLeg.xRot = swing * 1.1f;
+            model.leftLeg.xRot = -swing * 1.1f;
             model.rightLeg.zRot = 0f;
             model.leftLeg.zRot = 0f;
-            model.rightArm.xRot = -swing * 0.9f;
-            model.leftArm.xRot = swing * 0.9f;
+            model.rightArm.xRot = -swing * 1.0f;
+            model.leftArm.xRot = swing * 1.0f;
             model.rightArm.yRot = 0f;
             model.leftArm.yRot = 0f;
             model.rightArm.zRot = 0.05f + armIdle;
@@ -987,7 +989,9 @@ public class OnixTitleScreen extends Screen {
         int sh = Math.max(110, Math.min(240, Math.round(height * 0.52f)));
         int sw = Math.round(sh * 0.55f);
         float sxC = width * 0.76f;
-        float arrive = clamp01((since - 0.6f) / 1.9f);
+        // runs in every time the main menu opens (and only once you have entered it)
+        float runSince = (System.currentTimeMillis() - Math.max(enteredAt, runFrom)) / 1000f;
+        float arrive = clamp01((runSince - 0.6f) / 1.9f);
         float x;
         float speed;
         float face;
@@ -996,19 +1000,19 @@ public class OnixTitleScreen extends Screen {
             float e = clamp01(l / 1.1f);
             x = sxC - e * e * (sxC + sw);
             speed = Math.min(1f, 0.4f + l * 2f);
-            face = -90f + (1 - smooth(l / 0.2f)) * 120f;
+            face = 90f - (1 - smooth(l / 0.2f)) * 60f;     // turns away and runs off to the left, facing where it goes
         } else {
             float ease = 1 - (1 - arrive) * (1 - arrive) * (1 - arrive);
             x = width + sw + (sxC - width - sw) * ease;
             speed = 1 - smooth((arrive - 0.75f) / 0.3f);
-            face = -90f + smooth((arrive - 0.85f) / 0.35f) * 120f;
+            face = 90f - smooth((arrive - 0.85f) / 0.35f) * 60f;   // runs in facing left (where it goes), then turns to you
         }
         runCycle += dt * (5 + 7 * speed) * (speed > 0.02f ? 1 : 0);
         float bob = Math.abs((float) Math.cos(runCycle)) * -3f * speed + (speed > 0.02f ? 0 : (float) Math.sin(time * 1.4f) * 1.5f);
         int sx = Math.round(x - sw / 2f);
         int sy = Math.round(height / 2f - sh / 2f - 6 + bob);
         skinWidget.setRectangle(sw, sh, sx, sy);
-        skinWidget.visible = skinOn && since > 0.6f;
+        skinWidget.visible = skinOn && runSince > 0.6f;
         poseRunner(speed, face, time);
         if (!skinWidget.visible) return;
         // soft shadow on the floor under the feet, moving with them
