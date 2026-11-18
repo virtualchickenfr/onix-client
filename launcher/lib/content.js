@@ -26,6 +26,44 @@ function kindDir(gameDir, kind) {
   return path.join(gameDir, k.dir);
 }
 
+/**
+ * The size of a folder without blocking the launcher: walked with the asynchronous file functions, a few entries at a
+ * time. Remembered per folder; while a walk runs, the last result is given out (stale-while-revalidate).
+ */
+const sizes = new Map();   // folder → { value, at, running }
+async function walkSize(p) {
+  let st;
+  try {
+    st = await fs.promises.lstat(p);
+  } catch {
+    return 0;
+  }
+  if (!st.isDirectory()) return st.size;
+  let names;
+  try {
+    names = await fs.promises.readdir(p);
+  } catch {
+    return 0;
+  }
+  let sum = 0;
+  for (let i = 0; i < names.length; i += 32) {
+    const part = await Promise.all(names.slice(i, i + 32).map((n) => walkSize(path.join(p, n))));
+    for (const v of part) sum += v;
+  }
+  return sum;
+}
+function sizeOfCached(p, maxAgeMs = 5 * 60 * 1000) {
+  const known = sizes.get(p);
+  const fresh = known && Date.now() - known.at < maxAgeMs;
+  if (!fresh && !(known && known.running)) {
+    const entry = known || { value: null, at: 0 };
+    entry.running = walkSize(p).then((v) => { entry.value = v; entry.at = Date.now(); entry.running = null; return v; });
+    sizes.set(p, entry);
+  }
+  const entry = sizes.get(p);
+  return entry.value != null ? Promise.resolve(entry.value) : entry.running;
+}
+
 function sizeOf(p) {
   try {
     const st = fs.statSync(p);
@@ -119,6 +157,8 @@ function levelInfo(file) {
   }
 }
 
+const worldInfo = new Map();   // world folder → { key (folder, level.dat and icon times), value }
+
 function listWorlds(gameDir) {
   const saves = path.join(gameDir, 'saves');
   if (!fs.existsSync(saves)) return [];
@@ -127,21 +167,34 @@ function listWorlds(gameDir) {
     .map((e) => {
       const dir = path.join(saves, e.name);
       const level = path.join(dir, 'level.dat');
+      const iconFile = path.join(dir, 'icon.png');
+      const mtime = fs.statSync(level).mtimeMs;
+      let iconTime = 0;
+      try {
+        iconTime = fs.statSync(iconFile).mtimeMs;
+      } catch {
+        iconTime = 0;
+      }
+      // level.dat and the icon are only read again when they changed
+      const key = `${dir}|${mtime}|${iconTime}`;
+      const known = worldInfo.get(dir);
+      if (known && known.key === key) return known.value;
       const info = levelInfo(level);
       let icon = null;
-      const iconFile = path.join(dir, 'icon.png');
       try {
-        if (fs.existsSync(iconFile) && fs.statSync(iconFile).size < 256 * 1024) icon = `data:image/png;base64,${fs.readFileSync(iconFile).toString('base64')}`;
+        if (iconTime && fs.statSync(iconFile).size < 256 * 1024) icon = `data:image/png;base64,${fs.readFileSync(iconFile).toString('base64')}`;
       } catch {
         icon = null;
       }
-      return {
+      const value = {
         folder: e.name,
         name: info.name || e.name,
         mode: info.hardcore ? 'Hardcore' : info.mode || null,
-        lastPlayed: fs.statSync(level).mtimeMs,
+        lastPlayed: mtime,
         icon,
       };
+      worldInfo.set(dir, { key, value });
+      return value;
     })
     .sort((a, b) => b.lastPlayed - a.lastPlayed);
 }
@@ -198,5 +251,5 @@ function readLog(gameDir, id) {
 }
 
 module.exports = {
-  KINDS, listPacks, togglePack, packPath, addPacks, listWorlds, worldPath, listScreenshots, screenshotPath, listLogs, readLog, sizeOf,
+  KINDS, listPacks, togglePack, packPath, addPacks, listWorlds, worldPath, listScreenshots, screenshotPath, listLogs, readLog, sizeOf, sizeOfCached,
 };

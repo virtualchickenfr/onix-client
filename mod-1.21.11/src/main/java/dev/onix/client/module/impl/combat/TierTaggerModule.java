@@ -31,8 +31,11 @@ import net.minecraft.world.entity.player.Player;
  *
  * Tiers are fetched once per player per session ({api}/v2/profile/{uuid}/rankings; 404 = not on the list), at most
  * four requests at a time, on background threads; failed requests are tried again after a few minutes.
+ *
+ * C (Tier Card Key) shows a card with every tier of your last opponent – the last player you hit or who hit you –
+ * for a few seconds; press again to hide it.
  */
-public class TierTaggerModule extends Module {
+public class TierTaggerModule extends Module implements dev.onix.client.module.OverlayRenderer {
     private static final String[] LISTS = {"MCTiers", "SubTiers"};
     private static final Map<String, String> API = Map.of("MCTiers", "https://mctiers.net/api", "SubTiers", "https://subtiers.net/api");
     /** Mode ids on the tier lists → names in the setting (and short names next to the tier). */
@@ -50,6 +53,14 @@ public class TierTaggerModule extends Module {
             .describe("With Best: the mode the tier is from, for example \"HT3 Sword\"."));
     private final BoolSetting self = add(new BoolSetting("self", "Show on Yourself", true));
     private final ModeSetting position = add(new ModeSetting("position", "Position", "After Name", "Before Name"));
+
+    {
+        group("Tier Card");
+    }
+
+    private final dev.onix.client.setting.KeybindSetting cardKey = add(new dev.onix.client.setting.KeybindSetting("cardKey", "Tier Card Key",
+            org.lwjgl.glfw.GLFW.GLFW_KEY_C).describe("Shows every tier of the last player you hit or who hit you."));
+    private final dev.onix.client.setting.NumberSetting cardSeconds = add(new dev.onix.client.setting.NumberSetting("cardSeconds", "Show Card For", 6, 2, 20, 1).unit("s"));
 
     private record Ranking(int tier, int pos, int peakTier, int peakPos, boolean retired) {
         int shown() { return retired && peakTier > 0 ? peakTier * 2 + peakPos : tier * 2 + pos; }
@@ -82,6 +93,151 @@ public class TierTaggerModule extends Module {
     @Override
     protected void onDisable() {
         cache.clear();
+        cardUntil = 0;
+    }
+
+    // ------------------------------------------------------------------ the last opponent and the tier card
+
+    private UUID opponent;
+    private String opponentName;
+    private long cardUntil;
+    private long cardShown;
+    private int lastHurt;
+
+    @Override
+    public void init() {
+        // you hit a player: they are your opponent
+        dev.onix.client.util.CombatTracker.onHit(entity -> {
+            if (entity instanceof Player p && p != mc().player) remember(p);
+        });
+    }
+
+    private void remember(Player p) {
+        opponent = p.getUUID();
+        opponentName = p.getScoreboardName();
+        entry(opponent);                         // look the tiers up now, so the card is ready when you press the key
+    }
+
+    @Override
+    public void onTick() {
+        var mc = mc();
+        if (mc.player == null) return;
+        // a player hit you: the closest player around you who is swinging (or simply the closest one) hit you
+        int hurt = mc.player.hurtTime;
+        if (hurt > lastHurt && mc.level != null) {
+            Player best = null;
+            double bestScore = Double.MAX_VALUE;
+            for (Player p : mc.level.players()) {
+                if (p == mc.player || p.isSpectator()) continue;
+                double d = p.distanceTo(mc.player);
+                if (d > 7) continue;
+                double score = d - (p.swinging ? 3 : 0);
+                if (score < bestScore) {
+                    bestScore = score;
+                    best = p;
+                }
+            }
+            if (best != null) remember(best);
+        }
+        lastHurt = hurt;
+        if (cardKey.poll()) {
+            long now = System.currentTimeMillis();
+            if (now < cardUntil) cardUntil = 0;      // pressed again: hide
+            else {
+                cardUntil = now + Math.round(cardSeconds.get() * 1000);
+                cardShown = now;
+            }
+        }
+    }
+
+    private static final String[][] CARD_MODES = {
+            {"sword", "Sword"}, {"vanilla", "Vanilla"}, {"uhc", "UHC"}, {"pot", "Pot"}, {"nethop", "NethPot"},
+            {"smp", "SMP"}, {"axe", "Axe"}, {"mace", "Mace"}, {"spear", "Spear"},
+    };
+
+    /** The tier card: the opponent's face and name, then one row per mode they are ranked in. */
+    @Override
+    public void renderOverlay(net.minecraft.client.gui.GuiGraphics ctx) {
+        long now = System.currentTimeMillis();
+        if (now >= cardUntil || mc().options.hideGui) return;
+        float in = Math.min(1f, (now - cardShown) / 180f);
+        float out = Math.min(1f, (cardUntil - now) / 220f);
+        float a = Math.min(in, out);
+        int w = 168;
+        // centred above the hotbar: the one spot no other HUD element uses
+        int x = (ctx.guiWidth() - w) / 2;
+        java.util.List<String[]> rows = new java.util.ArrayList<>();
+        String status = null;
+        if (opponent == null) {
+            status = "Hit a player first – the last one you hit or who hit you shows here.";
+        } else {
+            Entry e = entry(opponent);
+            if (e == null) status = opponent.version() != 4 ? "This player is on no tier list (offline account)." : "Looking up " + list.get() + "…";
+            else if (e.failed) status = list.get() + " could not be reached.";
+            else if (e.rankings.isEmpty()) status = "Not on " + list.get() + ".";
+            else {
+                for (String[] m : CARD_MODES) {
+                    Ranking r = e.rankings.get(m[0]);
+                    if (r == null) continue;
+                    int tier = r.retired && r.peakTier > 0 ? r.peakTier : r.tier;
+                    int pos = r.retired && r.peakTier > 0 ? r.peakPos : r.pos;
+                    String text = (r.retired ? "R" : "") + (pos == 0 ? "H" : "L") + "T" + tier;
+                    String peak = !r.retired && r.peakTier > 0 && r.peakTier * 2 + r.peakPos < r.tier * 2 + r.pos
+                            ? "peak " + (r.peakPos == 0 ? "H" : "L") + "T" + r.peakTier : "";
+                    rows.add(new String[]{m[1], text, String.valueOf(r.retired ? 0xFFA0A0A0 : 0xFF000000 | color(tier, pos)), peak});
+                }
+            }
+        }
+        int h = 34 + (status != null ? 26 : rows.size() * 14 + 6);
+        int y = ctx.guiHeight() - 66 - h + Math.round((1 - in) * 10);
+        int alpha = Math.round(255 * a);
+        dev.onix.client.gui.Theme.shadow(ctx, x, y, x + w, y + h, 10);
+        dev.onix.client.gui.Theme.card(ctx, x, y, x + w, y + h, 10, dev.onix.client.gui.Theme.withAlpha(dev.onix.client.gui.Theme.SURFACE, Math.round(0xF0 * a)),
+                dev.onix.client.gui.Theme.withAlpha(dev.onix.client.gui.Theme.BORDER_STRONG, alpha));
+        // the opponent's face and name
+        if (opponent != null) {
+            try {
+                var info = mc().getConnection() == null ? null : mc().getConnection().getPlayerInfo(opponent);
+                net.minecraft.world.entity.player.PlayerSkin skin = info != null ? info.getSkin() : net.minecraft.client.resources.DefaultPlayerSkin.get(opponent);
+                net.minecraft.client.gui.components.PlayerFaceRenderer.draw(ctx, skin, x + 10, y + 9, 16);
+            } catch (RuntimeException ignored) {
+                // no face: the name still shows
+            }
+        }
+        int tx = x + 32;
+        dev.onix.client.gui.Theme.textBold(ctx, opponent == null ? "Tier Card" : opponentName, tx, y + 9, dev.onix.client.gui.Theme.withAlpha(dev.onix.client.gui.Theme.TEXT, alpha));
+        dev.onix.client.gui.Theme.small(ctx, list.get() + " · last opponent", tx, y + 20, dev.onix.client.gui.Theme.withAlpha(dev.onix.client.gui.Theme.TEXT_3, alpha));
+        int ry = y + 34;
+        ctx.fill(x + 8, ry - 4, x + w - 8, ry - 3, dev.onix.client.gui.Theme.withAlpha(dev.onix.client.gui.Theme.BORDER, alpha));
+        if (status != null) {
+            var lines = mc().font.split(net.minecraft.network.chat.Component.literal(status), w - 20);
+            int ly = ry + 2;
+            for (int i = 0; i < Math.min(2, lines.size()); i++, ly += 10) {
+                ctx.drawString(mc().font, lines.get(i), x + 10, ly, dev.onix.client.gui.Theme.withAlpha(dev.onix.client.gui.Theme.TEXT_2, alpha), false);
+            }
+            return;
+        }
+        for (String[] row : rows) {
+            dev.onix.client.gui.Theme.text(ctx, row[0], x + 10, ry + 2, dev.onix.client.gui.Theme.withAlpha(dev.onix.client.gui.Theme.TEXT_2, alpha));
+            if (!row[3].isEmpty()) {
+                int pw = dev.onix.client.gui.Theme.smallWidth(row[3]);
+                dev.onix.client.gui.Theme.small(ctx, row[3], x + w - 46 - pw, ry + 3, dev.onix.client.gui.Theme.withAlpha(dev.onix.client.gui.Theme.TEXT_3, alpha));
+            }
+            int col = (int) Long.parseLong(row[2]);
+            int bw = dev.onix.client.gui.Theme.boldWidth(row[1]) + 10;
+            int bx = x + w - 10 - bw;
+            dev.onix.client.gui.Theme.round(ctx, bx, ry, bx + bw, ry + 12, 4, dev.onix.client.gui.Theme.withAlpha(col, Math.round(40 * a)));
+            dev.onix.client.gui.Theme.textBold(ctx, row[1], bx + 5, ry + 2, dev.onix.client.gui.Theme.withAlpha(col, alpha));
+            ry += 14;
+        }
+    }
+
+    /** Dev test: show the card for a player with the given rankings. */
+    public void debugCard(UUID id, String name) {
+        opponent = id;
+        opponentName = name;
+        cardShown = System.currentTimeMillis();
+        cardUntil = cardShown + 8000;
     }
 
     @Override
