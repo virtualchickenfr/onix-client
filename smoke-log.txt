@@ -1,0 +1,13 @@
+[2616:1119/110312.359525:ERROR:bus.cc(407)] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[2616:1119/110312.359625:ERROR:bus.cc(407)] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[2616:1119/110312.359635:ERROR:bus.cc(407)] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[2616:1119/110312.359643:ERROR:bus.cc(407)] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[2616:1119/110312.359873:ERROR:bus.cc(407)] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[2616:1119/110312.425986:ERROR:bus.cc(407)] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[2646:1119/110312.905329:ERROR:gles2_cmd_decoder_passthrough.cc(1064)] [GroupMarkerNotSet(crbug.com/242999)!:A0702000B41F0000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader flag to opt in to lower security guarantees for trusted content.
+[2646:1119/110312.941872:ERROR:gl_utils.cc(426)] [.WebGL-0x77c01420000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+[2646:1119/110313.025382:ERROR:gl_utils.cc(426)] [.WebGL-0x77c01420000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+[2646:1119/110313.077696:ERROR:gl_utils.cc(426)] [.WebGL-0x77c01420000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+[2646:1119/110313.126159:ERROR:gles2_cmd_decoder_passthrough.cc(1064)] [GroupMarkerNotSet(crbug.com/242999)!:A0404101B41F0000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader flag to opt in to lower security guarantees for trusted content.
+[2646:1119/110313.130160:ERROR:gl_utils.cc(426)] [.WebGL-0x77c01420000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+[2646:1119/110330.859027:ERROR:gles2_cmd_decoder_passthrough.cc(1064)] [GroupMarkerNotSet(crbug.com/242999)!:A0702000B41F0000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader flag to opt in to lower security guarantees for trusted content.
