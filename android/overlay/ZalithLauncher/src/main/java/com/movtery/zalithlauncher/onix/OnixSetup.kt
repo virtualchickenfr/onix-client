@@ -92,10 +92,15 @@ object OnixSetup {
 
     private const val GL4ES = "8b52d82d-8f6d-4d3a-a767-dc93f8b72fc7"
     private const val VULKAN_ZINK = "0fa435e2-46df-45c9-906c-b29606aaef00"
+    /** The MobileGlues renderer plugin (its own app): the most reliable renderer for Minecraft 1.21 on phones. */
+    private const val MOBILEGLUES = "com.fcl.plugin.mobileglues"
 
     /**
-     * Minecraft 1.17+ needs OpenGL 3.2, which GL4ES (the app's default renderer) cannot give: such a version would not
-     * start. While it still uses GL4ES it is switched to Vulkan Zink when the phone supports it (changeable in its settings).
+     * Minecraft 1.17+ needs OpenGL 3.2, which GL4ES (the app's default renderer) cannot give. While the settings still
+     * say GL4ES, a modern Onix version gets the best renderer the phone has: MobileGlues when its plugin app is
+     * installed, otherwise Vulkan Zink. That choice is remembered as automatic, so it never locks the player in: as soon
+     * as another renderer is picked in the settings, the version follows the settings again. A renderer set by hand
+     * for just this version is left alone.
      */
     @JvmStatic
     fun preferModernRenderer(context: android.content.Context, version: Version) {
@@ -103,14 +108,32 @@ object OnixSetup {
             val info = version.getVersionInfo() ?: return
             val parts = info.minecraftVersion.split(".").mapNotNull { it.toIntOrNull() }
             if (parts.size < 2 || (parts[0] == 1 && parts[1] < 17)) return
+            val prefs = context.getSharedPreferences("onix_ui", 0)
+            val key = "autoRenderer:" + version.getVersionName()
             val config = version.getVersionConfig()
-            val current = config.getRenderer().ifEmpty { AllSettings.renderer.getValue() }
-            if (current != GL4ES && current != "opengles2" && current.isNotEmpty()) return
-            val zink = com.movtery.zalithlauncher.renderer.Renderers.getCompatibleRenderers(context).second
-                .find { it.getUniqueIdentifier() == VULKAN_ZINK } ?: return
-            config.setRenderer(zink.getUniqueIdentifier())
+            val own = config.getRenderer()
+            val auto = prefs.getString(key, null)
+            // older Onix versions set Zink without remembering it: that one counts as automatic too
+            val ours = own.isEmpty() || own == auto || (auto == null && own == VULKAN_ZINK)
+            if (!ours) return
+            val global = AllSettings.renderer.getValue()
+            if (global.isNotEmpty() && global != GL4ES && global != "opengles2") {
+                if (own.isNotEmpty()) {
+                    config.setRenderer("")
+                    config.save()
+                    prefs.edit().remove(key).apply()
+                    Logging.i("Onix Setup", "${version.getVersionName()}: follows the renderer from the settings ($global)")
+                }
+                return
+            }
+            val compatible = com.movtery.zalithlauncher.renderer.Renderers.getCompatibleRenderers(context).second
+            val pick = compatible.find { it.getUniqueIdentifier() == MOBILEGLUES }
+                ?: compatible.find { it.getUniqueIdentifier() == VULKAN_ZINK } ?: return
+            if (own == pick.getUniqueIdentifier() && auto == own) return
+            config.setRenderer(pick.getUniqueIdentifier())
             config.save()
-            Logging.i("Onix Setup", "${version.getVersionName()}: renderer set to ${zink.getRendererName()} (Minecraft ${info.minecraftVersion} needs OpenGL 3.2)")
+            prefs.edit().putString(key, pick.getUniqueIdentifier()).apply()
+            Logging.i("Onix Setup", "${version.getVersionName()}: renderer set to ${pick.getRendererName()} (Minecraft ${info.minecraftVersion} needs OpenGL 3.2)")
         }.onFailure { e -> Logging.e("Onix Setup", "Renderer: " + Tools.printToString(e)) }
     }
 
