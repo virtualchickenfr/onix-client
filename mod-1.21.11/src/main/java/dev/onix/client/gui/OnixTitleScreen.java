@@ -587,8 +587,10 @@ public class OnixTitleScreen extends Screen {
                     meadowX = Math.round((width - meadowW) / 2f - parX * width * 0.01f + (float) Math.sin(time * 0.04f) * width * 0.01f);
                     meadowY = Math.round((height - meadowH) / 2f - parY * height * 0.008f);
                 }
+                leanIn(ctx);
                 ctx.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, MEADOW, meadowX, meadowY, 0f, 0f, meadowW, meadowH, BG_W, BG_H, BG_W, BG_H, 0xFFFFFFFF);
                 if (petalBurst > 0) renderBareMeadow(ctx);
+                ctx.pose().popMatrix();
                 // a soft shade behind the menu, so it reads well on the light meadow (smooth, no bands)
                 ctx.fill(0, 0, width, height, 0x22000000);
                 SoftShapes.glow(ctx, width * (width >= 420 ? 0.42f : 0.5f), height * 0.5f, width * 0.3f, height * 0.62f, 0xB80C1216);
@@ -614,14 +616,24 @@ public class OnixTitleScreen extends Screen {
 
     // ---- Meadow: on Singleplayer or Multiplayer a gust runs through the meadow from the front; where it passes, every
     // flower lets go of its own petals (tools/meadow.py lists the visible flowers: place, size, kind, how the head is
-    // turned), they lift, flutter and are carried up, and the bare meadow (the same flowers, hearts only) shows underneath.
+    // turned) and the bare meadow (the same flowers, hearts only) opens up underneath with a ragged front. The petals ride
+    // the air – an upward gust with slow swirls in it, so they rise in drifting ribbons; near ones move fast, far ones
+    // slowly; turning, they catch the red moonlight on one side and go dark on the other. A few light ones stay low and
+    // float down again, and petals keep drifting down from further back. Same behaviour as the launcher (js/scenes.js).
     private static final Identifier MEADOW_BARE = Identifier.fromNamespaceAndPath("onix", "textures/gui/design/meadow_bare.png");
     private static float[][] flowers;
-    private final List<float[]> petals = new ArrayList<>();   // x, y, L, start, kind, ang, squash, vx, vy, lift, drift, spin, flip, flipSpeed, wob
+    private final List<float[]> petals = new ArrayList<>();
+    // a petal: place, size, start (negative = own clock), kind, angle, squash, speed, how strongly the gust lifts it,
+    // sideways drift, spin, turn (flip) and its speed, depth (0 far … 1 near), how fast it follows the air, life, falling
+    private static final int PX = 0, PY = 1, PL = 2, PSTART = 3, PKIND = 4, PANG = 5, PSQUASH = 6, PVX = 7, PVY = 8, PLIFT = 9,
+            PSIDE = 10, PSPIN = 11, PFLIP = 12, PFLIPSPEED = 13, PD = 14, PDRAG = 15, PMAX = 16, PFALL = 17;
     private long petalBurst;
     private float petalNext = 1.5f;
+    private float fallNext;
     private int meadowX, meadowY, meadowW = 1, meadowH = 1;
-    private static final float GUST_X = 0.5f, GUST_Y = 1.08f, GUST_SPEED = 1.05f, GUST_SOFT = 0.14f, GUST_DELAY = 0.05f;
+    private static final float GUST_X = 0.5f, GUST_Y = 1.08f, GUST_SPEED = 1.05f, GUST_SOFT = 0.2f, GUST_DELAY = 0.05f;
+    private static final float HORIZON = 0.36f, MOON_X = 0.70f, MOON_Y = 0.19f;
+    private float airX, airY;
 
     private static float[][] flowers() {
         if (flowers != null) return flowers;
@@ -652,19 +664,47 @@ public class OnixTitleScreen extends Screen {
         return petalBurst > 0 ? (System.currentTimeMillis() - petalBurst) / 1000f : -1;
     }
 
+    /** The air at a point (GUI px/s): the curl of a few slow moving waves – swirls that never pile petals up. */
+    private void swirl(float x, float y, float t) {
+        float h = Math.max(1, height);
+        double u = x / h;
+        double v = y / h;
+        double a = 2.3, b = 3.1;
+        double s1 = Math.sin(a * u + 0.8 * t), c1 = Math.cos(a * u + 0.8 * t);
+        double s2 = Math.sin(b * v - 0.55 * t), c2 = Math.cos(b * v - 0.55 * t);
+        double c3 = Math.cos(1.7 * (u - 0.6 * v) - 0.7 * t) * 0.6;
+        double c4 = Math.cos(4.3 * u + 3.7 * v + 1.1 * t) * 0.18;
+        airX = (float) ((-b * s1 * s2 - 0.6 * 1.7 * c3 + 3.7 * c4) * h * 0.065);
+        airY = (float) (-(a * c1 * c2 + 1.7 * c3 + 4.3 * c4) * h * 0.065);
+    }
+
     /** One petal of a flower (index i of n), leaving `start` seconds after the gust began. */
-    private void addPetal(float[] f, int i, float start) {
+    private float[] addPetal(float[] f, int i, float start) {
         float s = meadowW / (float) BG_W;
         float L = f[2] * BG_W * s * f[7];
         double a = f[5] + 2 * Math.PI * i / f[6];
         float x = meadowX + f[0] * BG_W * s + (float) Math.cos(a) * L * 0.5f;
         float y = meadowY + f[1] * BG_H * s + (float) Math.sin(a) * L * 0.5f * f[4];
         float out = (float) Math.cos(a);
-        petals.add(new float[]{x, y, L, start, f[3],
+        float d = Math.max(0f, Math.min(1f, (y / Math.max(1, height) - HORIZON) / (1 - HORIZON)));
+        float lift = random.nextFloat() < 0.12f ? 0.18f + random.nextFloat() * 0.22f : 0.75f + random.nextFloat() * 0.55f;
+        float[] p = {x, y, L, start, f[3],
                 (float) Math.atan2(Math.sin(a) * f[4], Math.cos(a)), Math.max(0.35f, f[4]),
-                out * L * (1.5f + random.nextFloat()) + (random.nextFloat() - 0.5f) * L * 2, -L * (1.4f + random.nextFloat() * 1.6f) - height * 0.08f,
-                -(0.8f + random.nextFloat() * 0.6f) * height, (random.nextFloat() - 0.5f) * width * 0.08f + width * 0.02f,
-                (random.nextFloat() - 0.5f) * 7f, random.nextFloat() * 6.28f, 2.5f + random.nextFloat() * 4f, random.nextFloat() * 6.28f});
+                out * L * (1.5f + random.nextFloat() * 1.5f), -L * (1f + random.nextFloat() * 1.5f),
+                lift, (random.nextFloat() - 0.5f) * 2f, (random.nextFloat() - 0.5f) * 6f, 0f,
+                (2f + random.nextFloat() * 4.5f) * (random.nextBoolean() ? -1 : 1), d, 1.8f + random.nextFloat() * 1.8f,
+                9f + random.nextFloat() * 5f, 0f};
+        petals.add(p);
+        return p;
+    }
+
+    /** A petal coming down from above after the gust, as if from the flowers further back. */
+    private void fallingPetal(float time) {
+        float d = random.nextFloat();
+        float L = (5f + 11f * d * d) * height / 1080f * 1.6f;
+        petals.add(new float[]{random.nextFloat() * width * 1.1f - width * 0.05f, -L * 3, L, -time, random.nextInt(8),
+                random.nextFloat() * 6.28f, 0.6f, 0f, height * 0.05f, 0f, 0f, (random.nextFloat() - 0.5f) * 3f, random.nextFloat() * 6f,
+                1.5f + random.nextFloat() * 2.5f, d, 1.2f + random.nextFloat(), 30f, 1f});
     }
 
     /** Every visible flower's petals, timed by when the gust reaches it, and a haze of tiny ones from the far meadow. */
@@ -693,32 +733,48 @@ public class OnixTitleScreen extends Screen {
             float[] f = all[(int) v[0]];
             int n = (int) f[6];
             int count = Math.max(1, Math.round(v[3] * share));
-            float when = GUST_DELAY + gustAt(v[1] / width, v[2] / height) / GUST_SPEED + random.nextFloat() * 0.12f;
+            // the gust's front is ragged: some flowers give way a little early, some hold on
+            float when = GUST_DELAY + gustAt(v[1] / width, v[2] / height) / GUST_SPEED + (random.nextFloat() - 0.3f) * 0.22f;
             for (int i = 0; i < count; i++) {
                 int k = count >= n ? i : (int) ((i + random.nextFloat()) * n / count);
-                addPetal(f, k, when + i * 0.02f + random.nextFloat() * 0.06f);
+                addPetal(f, k, when + i * 0.025f + random.nextFloat() * 0.08f);
             }
         }
         // the many small flowers too far away to list: their petals rise as a fine haze where the gust passes
-        for (int i = 0; i < 500; i++) {
+        for (int i = 0; i < 450; i++) {
             float nx = random.nextFloat();
-            float ny = 0.36f + random.nextFloat() * 0.5f;
-            float depth = Math.max(0, (ny - 0.34f) / 0.66f);
+            float ny = HORIZON + random.nextFloat() * 0.5f;
+            float depth = Math.max(0, (ny - HORIZON + 0.02f) / 0.66f);
             float[] fake = {((nx * width - meadowX) / s) / BG_W, ((ny * height - meadowY) / s) / BG_H, (1.2f + 6f * depth * depth) / (BG_W * s),
                     random.nextInt(5), 0.7f, random.nextFloat() * 6.28f, 8, 1, 0.35f};
-            addPetal(fake, random.nextInt(8), GUST_DELAY + gustAt(nx, ny) / GUST_SPEED + random.nextFloat() * 0.2f);
+            addPetal(fake, random.nextInt(8), GUST_DELAY + gustAt(nx, ny) / GUST_SPEED + random.nextFloat() * 0.25f);
         }
+        // far petals first, so the near ones are drawn over them
+        petals.sort((p, q) -> Float.compare(p[PD], q[PD]));
     }
 
-    /** The bare meadow where the gust has passed: tiles of the second picture, faded in by their distance to the gust. */
+    /** With the gust the camera leans in a little and looks up after the petals (pushes a matrix; pop it after drawing). */
+    private void leanIn(GuiGraphics ctx) {
+        float b = burstAge();
+        float lean = b >= 0 ? smooth(b / 3.5f) : 0f;
+        float k = 1 + 0.035f * lean;
+        ctx.pose().pushMatrix();
+        ctx.pose().translate(width * 0.5f * (1 - k), height * 0.8f * (1 - k) + height * 0.025f * lean);
+        ctx.pose().scale(k, k);
+    }
+
+    /** The bare meadow where the gust has been: tiles of the second picture, each going bare at its own moment. */
     private void renderBareMeadow(GuiGraphics ctx) {
         float b = burstAge();
-        float reach = Math.max(0, (b - GUST_DELAY - 0.15f) * GUST_SPEED);
+        float reach = Math.max(0, (b - GUST_DELAY - 0.45f) * GUST_SPEED);   // a little behind the petals
         float s = meadowW / (float) BG_W;
-        int tile = Math.max(8, width / 40);
+        int tile = Math.max(6, width / 48);
         for (int ty = 0; ty < height; ty += tile) {
             for (int tx = 0; tx < width; tx += tile) {
-                float d = gustAt((tx + tile / 2f) / width, (ty + tile / 2f) / height);
+                // a ragged front: every tile a little early or late, so no ring shows
+                int hash = (tx / tile) * 73856093 ^ (ty / tile) * 19349663;
+                float jitter = ((hash >>> 8) & 1023) / 1023f - 0.5f;
+                float d = gustAt((tx + tile / 2f) / width, (ty + tile / 2f) / height) + jitter * 0.18f;
                 float a = smooth((reach - d) / GUST_SOFT + 0.5f);
                 if (a <= 0.01f) continue;
                 int tw = Math.min(tile, width - tx);
@@ -742,39 +798,77 @@ public class OnixTitleScreen extends Screen {
         // now and then a single petal lets go of a flower in the breeze
         if (b < 0 && time > petalNext && petals.size() < 40 && flowers().length > 0) {
             float[] f = flowers()[random.nextInt(Math.min(500, flowers().length))];
-            addPetal(f, random.nextInt((int) f[6]), 0);
-            float[] p = petals.get(petals.size() - 1);
-            p[3] = -time;                      // ambient petals count their age from now (negative start = own clock)
-            p[9] *= 0.25f;
+            float[] p = addPetal(f, random.nextInt((int) f[6]), 0);
+            p[PSTART] = -time;                 // ambient petals count their age from now (negative start = own clock)
+            p[PLIFT] = 0.18f;
             petalNext = time + 0.6f + random.nextFloat() * 1.4f;
         }
-        for (int i = petals.size() - 1; i >= 0; i--) {
+        // after the gust, petals keep drifting down from the flowers further back
+        if (b > 2.2f && time > fallNext) {
+            fallingPetal(time);
+            fallNext = time + 0.18f + random.nextFloat() * 0.5f;
+        }
+        float moonX = meadowX + MOON_X * meadowW;
+        float moonY = meadowY + MOON_Y * meadowH;
+        leanIn(ctx);
+        int keep = 0;
+        for (int i = 0; i < petals.size(); i++) {
             float[] p = petals.get(i);
-            float age = p[3] < 0 ? time + p[3] : b - p[3];
-            if (age < 0) continue;
-            float go = Math.min(1f, age / 0.35f);
-            p[8] += p[9] * dt * go;
-            p[7] += (p[10] - p[7] * 0.6f) * dt;
-            p[0] += (p[7] + (float) Math.sin(age * 2.2f + p[14]) * p[2] * 2.2f * go) * dt;
-            p[1] += p[8] * dt;
-            p[5] += p[11] * dt * go;
-            p[12] += p[13] * dt * go;
-            if (p[1] < -p[2] * 3 || p[0] < -width * 0.3f || p[0] > width * 1.3f || age > 12) {
-                petals.remove(i);
+            float age = p[PSTART] < 0 ? time + p[PSTART] : b - p[PSTART];
+            if (age < 0) {
+                petals.set(keep++, p);
                 continue;
             }
-            float len = p[2] * 1.05f;
-            float sy = (p[6] + (1 - p[6]) * go) * Math.max(0.12f, Math.abs((float) Math.cos(p[12] * go)));
-            float alpha = Math.min(1f, age * 6f);
-            int size = Math.max(1, Math.round(len));
-            ctx.pose().pushMatrix();
-            ctx.pose().translate(p[0], p[1]);
-            ctx.pose().rotate(p[5]);
-            ctx.pose().scale(1f, sy);
-            ctx.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, PETALS, -size / 2, -size / 2, (int) p[4] % 8 * 64f, 0f, size, size, 64, 64, 512, 64,
-                    net.minecraft.util.ARGB.colorFromFloat(alpha, 1f, 1f, 1f));
-            ctx.pose().popMatrix();
+            // leaving: a moment of loosening, then the gust takes it; later the gust dies down to a breeze
+            float go = smooth(age / 0.45f);
+            float gust = p[PFALL] > 0 ? 0f : go * (age < 2.2f ? 1f : Math.max(0.15f, 1f - (age - 2.2f) / 2.6f));
+            swirl(p[PX], p[PY], time);
+            float sw = 0.4f + gust;
+            float tx = airX * sw + p[PSIDE] * width * 0.03f * gust + width * 0.012f;
+            float ty = airY * sw - height * 0.6f * gust * p[PLIFT] + height * 0.06f * (1 - gust);
+            float pull = Math.min(1f, dt * p[PDRAG] * (0.2f + 0.8f * go));
+            p[PVX] += (tx - p[PVX]) * pull;
+            p[PVY] += (ty - p[PVY]) * pull;
+            float m = 0.3f + 0.7f * p[PD];              // far petals move slower on screen
+            p[PX] += p[PVX] * m * dt;
+            p[PY] += p[PVY] * m * dt;
+            p[PANG] += p[PSPIN] * dt * go;
+            p[PFLIP] += p[PFLIPSPEED] * dt * go;
+            if (p[PY] < -p[PL] * 4 || p[PY] > height + p[PL] * 4 || p[PX] < -width * 0.3f || p[PX] > width * 1.3f || age > p[PMAX]) continue;
+            petals.set(keep++, p);
+
+            float face = (float) Math.cos(p[PFLIP]);
+            float sy = (p[PSQUASH] + (1 - p[PSQUASH]) * go) * Math.max(0.1f, Math.abs(face));
+            float fade = Math.min(1f, age * 6f) * Math.min(1f, (p[PMAX] - age) / 1.5f) * (0.75f + 0.25f * p[PD]);
+            // turned away or edge-on it goes dark, far away it sinks into the night; the side facing the moon catches its
+            // red light, the more the closer the petal comes to it
+            float dark = Math.min(0.85f, (1 - Math.abs(face)) * 0.45f + (face < 0 ? 0.3f : 0f) + (1 - p[PD]) * 0.15f);
+            float q = Math.max(0f, 1f - (float) Math.hypot(p[PX] - moonX, p[PY] - moonY) / (height * 1.1f));
+            float lit = Math.max(0f, face) * (0.12f + 0.88f * q * q) * 0.85f;
+            float bright = 1f - dark * 0.75f;
+            int color = net.minecraft.util.ARGB.colorFromFloat(fade, Math.min(1f, bright * (1 - lit) + lit * 1.1f),
+                    bright * (1 - lit) + lit * 0.45f, bright * (1 - lit) + lit * 0.38f);
+            int size = Math.max(1, Math.round(p[PL] * 1.05f));
+            int u = (int) p[PKIND] % 8 * 64;
+            // fast near petals smear a little
+            float speed = (float) Math.hypot(p[PVX], p[PVY]) * m;
+            if (speed > height * 0.5f && p[PL] > 4) {
+                drawPetal(ctx, p[PX] - p[PVX] * m * 0.028f, p[PY] - p[PVY] * m * 0.028f, p[PANG], sy, size, u,
+                        (Math.round(fade * 0.22f * 255) << 24) | (color & 0xFFFFFF));
+            }
+            drawPetal(ctx, p[PX], p[PY], p[PANG], sy, size, u, color);
         }
+        while (petals.size() > keep) petals.remove(petals.size() - 1);
+        ctx.pose().popMatrix();
+    }
+
+    private void drawPetal(GuiGraphics ctx, float x, float y, float ang, float sy, int size, int u, int color) {
+        ctx.pose().pushMatrix();
+        ctx.pose().translate(x, y);
+        ctx.pose().rotate(ang);
+        ctx.pose().scale(1f, sy);
+        ctx.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, PETALS, -size / 2, -size / 2, u, 0f, size, size, 64, 64, 512, 64, color);
+        ctx.pose().popMatrix();
     }
 
     // ---- Runner: the character runs in from the right, turns to you; runs off to the left when you pick something
