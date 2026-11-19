@@ -62,6 +62,9 @@ public class TierTaggerModule extends Module implements dev.onix.client.module.O
             .describe("Shows the tier card while you look at a ranked player."));
     private final dev.onix.client.setting.NumberSetting lookRange = add(new dev.onix.client.setting.NumberSetting("lookRange", "Look Range", 24, 4, 64, 2)
             .unit("blocks").visibleIf(lookCard::isOn));
+    private final dev.onix.client.setting.NumberSetting lookHitbox = add(new dev.onix.client.setting.NumberSetting("lookHitbox", "Look Hitbox", 0.6, 0, 2, 0.1)
+            .unit("blocks").describe("How far next to a player your crosshair may be and still count as looking at them. Grows a little with distance.")
+            .visibleIf(lookCard::isOn));
 
 
     private record Ranking(int tier, int pos, int peakTier, int peakPos, boolean retired) {
@@ -173,23 +176,31 @@ public class TierTaggerModule extends Module implements dev.onix.client.module.O
         }
     }
 
-    /** The closest player under the crosshair, within Look Range and not behind blocks. */
+    /**
+     * The player you are looking at: their hitbox, made bigger by Look Hitbox (plus a little more the further away they are),
+     * is under the crosshair and nothing blocks the view. Of several, the one closest to the crosshair wins.
+     */
     private net.minecraft.entity.player.PlayerEntity lookedAt() {
         var mc = mc();
         if (mc.world == null || mc.player == null) return null;
+        double range = lookRange.get();
         net.minecraft.util.math.Vec3d eye = mc.player.getEyePos();
-        net.minecraft.util.math.Vec3d end = eye.add(mc.player.getRotationVec(1f).multiply(lookRange.get()));
-        var block = mc.world.raycast(new net.minecraft.world.RaycastContext(eye, end, net.minecraft.world.RaycastContext.ShapeType.COLLIDER,
-                net.minecraft.world.RaycastContext.FluidHandling.NONE, mc.player));
-        double max = block.getType() == net.minecraft.util.hit.HitResult.Type.MISS ? lookRange.get() : block.getPos().distanceTo(eye);
+        net.minecraft.util.math.Vec3d dir = mc.player.getRotationVec(1f);
+        net.minecraft.util.math.Vec3d end = eye.add(dir.multiply(range));
         net.minecraft.entity.player.PlayerEntity best = null;
+        double bestDot = -1;
         for (net.minecraft.entity.player.PlayerEntity p : mc.world.getPlayers()) {
             if (p == mc.player || p.isSpectator() || p.isInvisible()) continue;
-            var hit = p.getBoundingBox().expand(0.1).raycast(eye, end);
-            if (hit.isEmpty()) continue;
-            double d = hit.get().distanceTo(eye);
-            if (d < max) {
-                max = d;
+            var box = p.getBoundingBox();
+            net.minecraft.util.math.Vec3d center = box.getCenter();
+            double dist = center.distanceTo(eye);
+            if (dist > range) continue;
+            var big = box.expand(lookHitbox.get() + dist * 0.02);
+            if (!big.contains(eye) && big.raycast(eye, end).isEmpty()) continue;
+            if (!mc.player.canSee(p)) continue;
+            double dot = dir.dotProduct(center.subtract(eye).normalize());
+            if (dot > bestDot) {
+                bestDot = dot;
                 best = p;
             }
         }

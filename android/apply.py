@@ -253,6 +253,10 @@ def launcher_ui():
     except (OSError, subprocess.CalledProcessError, ValueError):
         versions = [{'id': '1.21.11', 'mc': '1.21.11', 'loader': '', 'note': 'Onix + Carbon', 'onix': True}]
     open(os.path.join(assets, 'android-versions.js'), 'w').write('window.ONIX_VERSIONS = ' + json.dumps(versions) + ';\n')
+    # fetch() does not work on file:// pages: the meadow's flower list goes in as a script
+    flowers = os.path.join(assets, 'assets', 'designs', 'meadow_flowers.json')
+    open(os.path.join(assets, 'assets', 'designs', 'meadow_flowers.js'), 'w').write(
+        'window.MEADOW_FLOWERS = ' + open(flowers, encoding='utf-8').read().strip() + ';\n')
     index = os.path.join(assets, 'index.html')
     html = open(index, encoding='utf-8').read()
     for old, new in (
@@ -262,6 +266,7 @@ def launcher_ui():
         ('<meta charset="utf-8">', '<meta charset="utf-8">\n  <meta name="viewport" content="width=1100, user-scalable=no">'),
         ('<link rel="stylesheet" href="styles.css">', '<link rel="stylesheet" href="styles.css">\n  <link rel="stylesheet" href="android.css">'),
         ('<script src="js/carbon/icons.js"></script>', '<script src="android-versions.js"></script>\n  <script src="android-api.js"></script>\n  <script src="js/carbon/icons.js"></script>'),
+        ('<script src="js/scenes.js"></script>', '<script src="assets/designs/meadow_flowers.js"></script>\n  <script src="js/scenes.js"></script>'),
     ):
         if html.count(old) != 1:
             sys.exit(f'apply.py: launcher/src/index.html changed, cannot place: {old}')

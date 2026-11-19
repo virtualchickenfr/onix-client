@@ -180,7 +180,9 @@ const Scenes = (() => {
    */
   const PETAL_FRAMES = 8;
   let flowerList = null;
-  fetch('assets/designs/meadow_flowers.json').then((r) => r.json()).then((list) => { flowerList = list; }).catch(() => { flowerList = []; });
+  // the Android app loads the page from file://, where fetch does not work: it gets the list as a script (MEADOW_FLOWERS)
+  if (Array.isArray(window.MEADOW_FLOWERS)) flowerList = window.MEADOW_FLOWERS;
+  else fetch('assets/designs/meadow_flowers.json').then((r) => r.json()).then((list) => { flowerList = list; }).catch(() => { flowerList = []; });
 
   // the gust: from just below the bottom centre, through the whole meadow in about a second
   const GUST = { x: 0.5, y: 1.08, speed: 1.05, soft: 0.14, delay: 0.05 };
