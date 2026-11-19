@@ -125,6 +125,8 @@ public final class DevTest {
         then(2, () -> { if (mc.screen instanceof OnixTitleScreen t) t.devBurst(); });
         then(12, () -> snap(mc, "02_title_meadow_burst1"));
         then(16, () -> snap(mc, "02_title_meadow_burst2"));
+        then(20, () -> snap(mc, "02_title_meadow_burst3"));
+        then(50, () -> snap(mc, "02_title_meadow_after"));
         then(2, () -> design("Water"));
         then(20, () -> mc.setScreen(new OnixMenuScreen(mc.screen)));
         then(60, () -> snap(mc, "04_menu_hub"));
