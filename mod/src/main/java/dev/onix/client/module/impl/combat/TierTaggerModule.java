@@ -58,6 +58,10 @@ public class TierTaggerModule extends Module implements dev.onix.client.module.O
     private final dev.onix.client.setting.KeybindSetting cardKey = add(new dev.onix.client.setting.KeybindSetting("cardKey", "Tier Card Key",
             org.lwjgl.glfw.GLFW.GLFW_KEY_C).describe("Shows every tier of the last player you hit or who hit you."));
     private final dev.onix.client.setting.NumberSetting cardSeconds = add(new dev.onix.client.setting.NumberSetting("cardSeconds", "Show Card For", 6, 2, 20, 1).unit("s"));
+    private final BoolSetting lookCard = add(new BoolSetting("lookCard", "Show When Looking", true)
+            .describe("Shows the tier card while you look at a ranked player."));
+    private final dev.onix.client.setting.NumberSetting lookRange = add(new dev.onix.client.setting.NumberSetting("lookRange", "Look Range", 24, 4, 64, 2)
+            .unit("blocks").visibleIf(lookCard::isOn));
 
 
     private record Ranking(int tier, int pos, int peakTier, int peakPos, boolean retired) {
@@ -92,6 +96,7 @@ public class TierTaggerModule extends Module implements dev.onix.client.module.O
     protected void onDisable() {
         cache.clear();
         cardUntil = 0;
+        lookUntil = 0;
     }
 
     // ------------------------------------------------------------------ the last opponent and the tier card
@@ -101,6 +106,11 @@ public class TierTaggerModule extends Module implements dev.onix.client.module.O
     private long cardUntil;
     private long cardShown;
     private int lastHurt;
+    /** The ranked player under the crosshair; their card shows while you look at them. */
+    private UUID lookId;
+    private String lookName;
+    private long lookUntil;
+    private long lookShown;
 
     @Override
     public void init() {
@@ -146,6 +156,44 @@ public class TierTaggerModule extends Module implements dev.onix.client.module.O
                 cardShown = now;
             }
         }
+        // the player you look at: their card shows while the crosshair is on them (only when they are on the tier list)
+        if (lookCard.isOn()) {
+            net.minecraft.entity.player.PlayerEntity p = lookedAt();
+            if (p != null) {
+                UUID id = p.getUuid();
+                Entry e = entry(id);
+                if (e != null && !e.failed && !e.rankings.isEmpty()) {
+                    long now = System.currentTimeMillis();
+                    if (!id.equals(lookId) || now >= lookUntil) lookShown = now;
+                    lookId = id;
+                    lookName = p.getNameForScoreboard();
+                    lookUntil = now + 600;
+                }
+            }
+        }
+    }
+
+    /** The closest player under the crosshair, within Look Range and not behind blocks. */
+    private net.minecraft.entity.player.PlayerEntity lookedAt() {
+        var mc = mc();
+        if (mc.world == null || mc.player == null) return null;
+        net.minecraft.util.math.Vec3d eye = mc.player.getEyePos();
+        net.minecraft.util.math.Vec3d end = eye.add(mc.player.getRotationVec(1f).multiply(lookRange.get()));
+        var block = mc.world.raycast(new net.minecraft.world.RaycastContext(eye, end, net.minecraft.world.RaycastContext.ShapeType.COLLIDER,
+                net.minecraft.world.RaycastContext.FluidHandling.NONE, mc.player));
+        double max = block.getType() == net.minecraft.util.hit.HitResult.Type.MISS ? lookRange.get() : block.getPos().distanceTo(eye);
+        net.minecraft.entity.player.PlayerEntity best = null;
+        for (net.minecraft.entity.player.PlayerEntity p : mc.world.getPlayers()) {
+            if (p == mc.player || p.isSpectator() || p.isInvisible()) continue;
+            var hit = p.getBoundingBox().expand(0.1).raycast(eye, end);
+            if (hit.isEmpty()) continue;
+            double d = hit.get().distanceTo(eye);
+            if (d < max) {
+                max = d;
+                best = p;
+            }
+        }
+        return best;
     }
 
     private static final String[][] CARD_MODES = {
@@ -157,9 +205,26 @@ public class TierTaggerModule extends Module implements dev.onix.client.module.O
     @Override
     public void renderOverlay(net.minecraft.client.gui.DrawContext ctx) {
         long now = System.currentTimeMillis();
-        if (now >= cardUntil || mc().options.hudHidden) return;
-        float in = Math.min(1f, (now - cardShown) / 180f);
-        float out = Math.min(1f, (cardUntil - now) / 220f);
+        if (mc().options.hudHidden) return;
+        // C shows the last opponent; otherwise the ranked player you are looking at
+        UUID opponent;
+        String opponentName, label;
+        long shown, until;
+        if (now < cardUntil) {
+            opponent = this.opponent;
+            opponentName = this.opponentName;
+            label = "last opponent";
+            shown = cardShown;
+            until = cardUntil;
+        } else if (lookCard.isOn() && lookId != null && now < lookUntil) {
+            opponent = lookId;
+            opponentName = lookName;
+            label = "looking at";
+            shown = lookShown;
+            until = lookUntil;
+        } else return;
+        float in = Math.min(1f, (now - shown) / 180f);
+        float out = Math.min(1f, (until - now) / 220f);
         float a = Math.min(in, out);
         int w = 168;
         // centred above the hotbar: the one spot no other HUD element uses
@@ -204,7 +269,7 @@ public class TierTaggerModule extends Module implements dev.onix.client.module.O
         }
         int tx = x + 32;
         dev.onix.client.gui.Theme.textBold(ctx, opponent == null ? "Tier Card" : opponentName, tx, y + 9, dev.onix.client.gui.Theme.withAlpha(dev.onix.client.gui.Theme.TEXT, alpha));
-        dev.onix.client.gui.Theme.small(ctx, list.get() + " · last opponent", tx, y + 20, dev.onix.client.gui.Theme.withAlpha(dev.onix.client.gui.Theme.TEXT_3, alpha));
+        dev.onix.client.gui.Theme.small(ctx, list.get() + " · " + label, tx, y + 20, dev.onix.client.gui.Theme.withAlpha(dev.onix.client.gui.Theme.TEXT_3, alpha));
         int ry = y + 34;
         ctx.fill(x + 8, ry - 4, x + w - 8, ry - 3, dev.onix.client.gui.Theme.withAlpha(dev.onix.client.gui.Theme.BORDER, alpha));
         if (status != null) {
@@ -228,6 +293,15 @@ public class TierTaggerModule extends Module implements dev.onix.client.module.O
             dev.onix.client.gui.Theme.textBold(ctx, row[1], bx + 5, ry + 2, dev.onix.client.gui.Theme.withAlpha(col, alpha));
             ry += 14;
         }
+    }
+
+    /** Dev test: show the card as if you were looking at the given player. */
+    public void debugLook(UUID id, String name) {
+        cardUntil = 0;
+        lookId = id;
+        lookName = name;
+        lookShown = System.currentTimeMillis();
+        lookUntil = lookShown + 8000;
     }
 
     /** Dev test: show the card for a player with the given rankings. */

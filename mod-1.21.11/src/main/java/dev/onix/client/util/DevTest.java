@@ -527,6 +527,9 @@ public final class DevTest {
         then(2, () -> OnixClient.MODULES.get(dev.onix.client.module.impl.combat.TierTaggerModule.class)
                 .debugCard(java.util.UUID.fromString("11111111-2222-4333-8444-555555555555"), "TierTester"));
         then(12, () -> snap(mc, "09t_tier_card"));
+        then(2, () -> OnixClient.MODULES.get(dev.onix.client.module.impl.combat.TierTaggerModule.class)
+                .debugLook(java.util.UUID.fromString("11111111-2222-4333-8444-555555555555"), "TierTester"));
+        then(12, () -> snap(mc, "09t2_tier_look"));
         then(80, () -> {
             var tiers = OnixClient.MODULES.get(dev.onix.client.module.impl.combat.TierTaggerModule.class);
             OnixClient.LOGGER.info("[devtest] tiertagger lookup Notch = {}", tiers.debugState(java.util.UUID.fromString("069a79f4-44e9-4726-a5be-fca90e38aaf5")));
