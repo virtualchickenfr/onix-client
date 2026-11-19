@@ -104,6 +104,7 @@ object OnixSetup {
      */
     @JvmStatic
     fun preferModernRenderer(context: android.content.Context, version: Version) {
+        avoidCrashingTurnip()
         runCatching {
             val info = version.getVersionInfo() ?: return
             val parts = info.minecraftVersion.split(".").mapNotNull { it.toIntOrNull() }
@@ -135,6 +136,24 @@ object OnixSetup {
             prefs.edit().putString(key, pick.getUniqueIdentifier()).apply()
             Logging.i("Onix Setup", "${version.getVersionName()}: renderer set to ${pick.getRendererName()} (Minecraft ${info.minecraftVersion} needs OpenGL 3.2)")
         }.onFailure { e -> Logging.e("Onix Setup", "Renderer: " + Tools.printToString(e)) }
+    }
+
+    /**
+     * Zink on Adreno loads Turnip, a Vulkan driver of its own, which crashes on some newer Adreno GPUs (seen on the
+     * Adreno 710: SIGSEGV in libvulkan_freedreno.so, "fatal signal" in the app). When the last start ended like that,
+     * Zink uses the phone's own Vulkan driver from now on (Settings → Video, "prefer system driver", can be undone).
+     */
+    private fun avoidCrashingTurnip() {
+        runCatching {
+            if (AllSettings.zinkPreferSystemDriver.getValue()) return
+            val log = File(com.movtery.zalithlauncher.utils.path.PathManager.DIR_GAME_HOME, "latestlog.txt")
+            if (!log.isFile || log.length() > 8_000_000) return
+            val text = log.readText()
+            if (text.contains("Loaded Turnip") && text.contains("[libvulkan_freedreno.so") && text.contains("A fatal error has been detected")) {
+                AllSettings.zinkPreferSystemDriver.put(true).save()
+                Logging.i("Onix Setup", "The last start crashed in the Turnip driver: Zink now uses the system Vulkan driver")
+            }
+        }.onFailure { e -> Logging.e("Onix Setup", "Turnip check: " + Tools.printToString(e)) }
     }
 
     /** Before a launch (call it off the UI thread): newest Onix mod and Fabric API for Fabric versions. */
