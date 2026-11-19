@@ -91,7 +91,7 @@
   const MC_DEFAULT = '1.21.11';
   const VERSIONS = (window.ONIX_VERSIONS || [{ id: MC_DEFAULT, mc: MC_DEFAULT, loader: '', note: 'Onix + Carbon', onix: true }]);
   const COLORS = ['#ececf1', '#8b7cff', '#3dd6c6', '#ff8a5b', '#f472b6', '#facc15', '#60a5fa', '#34d399'];
-  const DEFAULT_SETTINGS = { javaPath: '', closeOnLaunch: false, fastStart: true, theme: 'onyx', background: 'carbon', onixServer: '', autoUpdate: true };
+  const DEFAULT_SETTINGS = { javaPath: '', closeOnLaunch: false, fastStart: true, onixServer: '', autoUpdate: true, design: 'water' };
 
   // ---------------------------------------------------------------- profiles = game versions
 
@@ -279,6 +279,85 @@
     return result;
   }
 
+  // ---------------------------------------------------------------- mod bundles (launcher/lib/bundles.js)
+  // The same sets as on PC, without the ones that do not run on phones (Flashback needs ffmpeg, C2ME native threads).
+
+  const BUNDLES = [
+    { id: 'qol', name: 'Quality of Life', about: 'Small things that make everyday play nicer: inventory sorting by mouse, food stats, block info and a mod list.', color: '#5fd0da', mods: ['mouse-tweaks', 'appleskin', 'jade', 'modmenu', 'controlling', 'shulkerboxtooltip'] },
+    { id: 'visuals', name: 'Visuals', about: 'Connected glass and textures, light from torches in your hand and nicer particles. No shaders needed.', color: '#e0a84f', mods: ['continuity', 'lambdynamiclights', 'visuality', 'falling-leaves'] },
+    { id: 'audio', name: 'Sound', about: 'Sound that echoes in caves and footsteps that match the block you walk on.', color: '#9b7cf0', mods: ['sound-physics-remastered', 'presence-footsteps'] },
+    { id: 'fps', name: 'Extra FPS', about: 'On top of the performance pack: lower FPS in the background and fewer hidden blocks drawn.', color: '#6fd08a', mods: ['dynamic-fps', 'moreculling'] },
+  ];
+  let bundleInfo = null;
+  async function bundleMods() {
+    if (bundleInfo) return bundleInfo;
+    const slugs = [...new Set(BUNDLES.flatMap((b) => b.mods))];
+    const out = {};
+    for (const p of (await mr(`/projects?ids=${q(slugs)}`)) || []) out[p.slug] = { id: p.id, title: p.title, icon: p.icon_url || null, description: p.description || '' };
+    bundleInfo = out;
+    return out;
+  }
+  async function listBundles(profileId) {
+    let mods = {};
+    try {
+      mods = await bundleMods();
+    } catch {
+      // offline: listed by slug
+    }
+    let installed = new Set();
+    try {
+      installed = new Set(Object.keys(await modrinthManifest(await activeId(profileId), 'mods')));
+    } catch {
+      // no profile yet
+    }
+    return BUNDLES.map((b) => {
+      const items = b.mods.map((slug) => {
+        const m = mods[slug] || { id: null, title: slug, icon: null, description: '' };
+        return { slug, ...m, installed: !!(m.id && installed.has(m.id)) };
+      });
+      return { id: b.id, name: b.name, about: b.about, color: b.color, mods: items, installed: items.every((i) => i.installed) };
+    });
+  }
+  async function installBundles(profileId, ids) {
+    const id = await activeId(profileId);
+    const mods = await bundleMods();
+    const slugs = [...new Set(ids.map((x) => BUNDLES.find((b) => b.id === x)).filter(Boolean).flatMap((b) => b.mods))];
+    const out = { installed: [], missing: [], failed: [] };
+    for (let i = 0; i < slugs.length; i++) {
+      const m = mods[slugs[i]];
+      if (!m) {
+        out.missing.push(slugs[i]);
+        continue;
+      }
+      emit('mods:progress', { label: `Installing ${m.title} (${i + 1}/${slugs.length})`, progress: i / slugs.length });
+      try {
+        await installInto(id, m.id, 'mods', ['fabric'], { installed: [], skipped: [], warnings: [] });
+        out.installed.push(m.title);
+      } catch (e) {
+        if (/has no version for/.test(String(e.message))) out.missing.push(m.title);
+        else out.failed.push({ title: m.title, error: String(e.message || e) });
+      }
+    }
+    emit('mods:progress', { label: 'Done', progress: 1 });
+    return out;
+  }
+
+  /** Design and language also for the game: config/onix/client.json of every profile (like the PC launcher). */
+  async function syncClient(values) {
+    const state = await profileList();
+    for (const p of state.profiles) {
+      const file = 'config/onix/client.json';
+      let json = {};
+      try {
+        json = JSON.parse((await call('read', p.id, file)) || '{}') || {};
+      } catch {
+        json = {};
+      }
+      json.settings = { ...(json.settings || {}), ...values };
+      await call('write', p.id, file, JSON.stringify(json, null, 2));
+    }
+  }
+
   // ---------------------------------------------------------------- the api
 
   const api = {
@@ -308,6 +387,10 @@
     setSettings: async (value) => {
       const s = { ...DEFAULT_SETTINGS, ...(await prefs.get('settings', {})), ...value };
       await prefs.set('settings', s);
+      const sync = {};
+      if (value && typeof value.design === 'string') sync.menuDesign = ({ water: 'Water', runner: 'Runner', meadow: 'Meadow' })[value.design] || 'Water';
+      if (value && typeof value.language === 'string') sync.language = (value.language === 'de' || (value.language === 'auto' && /^de/i.test(navigator.language || ''))) ? 'Deutsch' : 'English';
+      if (Object.keys(sync).length) syncClient(sync).catch(() => {});    // in the background: never holds up the interface
       return s;
     },
     getSky: async () => prefs.get('sky', { daySky: 'Clear Day', nightSky: 'Starry Night' }),
@@ -325,8 +408,12 @@
       return themes;
     }),
 
+    reload: () => location.reload(),
+
     // profiles
     getProfiles: () => profileList(),
+    portPlan: notHere('Moving a profile to another version'),
+    portProfile: notHere('Moving a profile to another version'),
     selectProfile: async (id) => {
       await call('selectVersion', id);
       return changedProfiles();
@@ -430,6 +517,8 @@
     modUpdates: safe(async () => []),
     updateMods: safe(async () => ({ updated: [], failed: [] })),
     installModpack: notHere('Modpacks'),
+    bundles: safe((id) => listBundles(id)),
+    installBundles: safe((id, ids) => installBundles(id, ids)),
     exportParts: async () => [],
     exportProfile: notHere('Exporting'),
     importProfile: notHere('Importing'),

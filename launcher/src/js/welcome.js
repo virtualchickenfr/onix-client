@@ -87,7 +87,7 @@ async function maybeWelcome() {
     back.classList.remove('open');
     setTimeout(() => back.remove(), 300);
     const p = activeProfile();
-    if (install && p && picked.size) {
+    if (install && p && picked.size && typeof api.installBundles === 'function' && bundles && bundles.length) {
       toast(`Adding ${plural(picked.size, 'bundle', 'bundles')} to ${p.name}…`);
       const r = await api.installBundles(p.id, [...picked]);
       if (!r.ok) toast(r.error, true);
@@ -131,7 +131,8 @@ async function maybeWelcome() {
     () => [
       el('h2', { text: 'Choose a look' }),
       el('p', { text: 'The design of your start page and of the main menu in game. You can change it any time in the settings.' }),
-      el('div', { class: 'designs compact' }, DESIGNS.map((d) => designCard(d, async (x) => { await selectDesign(x.id); render(); }))),
+      // the choice shows at once; saving runs in the background (a slow save never holds the steps up)
+      el('div', { class: 'designs compact' }, DESIGNS.map((d) => designCard(d, (x) => { selectDesign(x.id).catch(() => {}); render(); }))),
       nav('Next', () => { step++; render(); }),
     ],
     () => {
@@ -144,8 +145,8 @@ async function maybeWelcome() {
       else {
         list.append(loadingBlock('Loading bundles…'));
         const p = activeProfile();
-        api.bundles(p && p.id).then((r) => {
-          bundles = r.ok ? r.value : [];
+        Promise.resolve(typeof api.bundles === 'function' ? api.bundles(p && p.id) : { ok: false }).catch(() => ({ ok: false })).then((r) => {
+          bundles = r && r.ok ? r.value : [];
           if (step === 3) (bundles.length ? fill() : list.replaceChildren(el('p', { text: 'Bundles need an internet connection. You find them later in every profile.' })));
         });
       }
@@ -157,6 +158,17 @@ async function maybeWelcome() {
       ];
     },
   ];
-  const render = () => card.replaceChildren(...steps[step]());
+  const render = () => {
+    try {
+      card.replaceChildren(...steps[step]());
+    } catch (e) {
+      // a step that cannot be shown is skipped, so the welcome never gets stuck
+      console.error('welcome step', step, e);
+      if (step < steps.length - 1) {
+        step++;
+        render();
+      } else finish(false);
+    }
+  };
   render();
 }
