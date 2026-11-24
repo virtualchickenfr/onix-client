@@ -28,9 +28,10 @@ const PARTS = {
   servers: { label: 'Server list', paths: ['servers.dat'], default: true },
   resourcepacks: { label: 'Resource packs', paths: ['resourcepacks'], default: false },
   shaderpacks: { label: 'Shader packs', paths: ['shaderpacks'], default: false },
+  saves: { label: 'Worlds', paths: ['saves'], default: false },
 };
 /** Never exported: machine-specific, temporary or private files. */
-const SKIP = [/(^|\/)(backups|\.cache|logs|crash-reports)(\/|$)/i, /\.(part|tmp)$/i, /^config\/onix\/inbox\.json$/];
+const SKIP = [/(^|\/)(backups|\.cache|logs|crash-reports)(\/|$)/i, /\.(part|tmp)$/i, /^config\/onix\/inbox\.json$/, /(^|\/)session\.lock$/];
 
 function walk(root, rel) {
   const full = path.join(root, rel);
