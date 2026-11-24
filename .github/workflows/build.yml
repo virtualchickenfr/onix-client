@@ -81,6 +81,13 @@ jobs:
           set +e
           ./gradlew build --no-daemon --stacktrace -Pmod_version="$VERSION" 2>&1 | tee build.log
           status=${PIPESTATUS[0]}
+          # a download that failed (Maven, Fabric or Mojang servers) is tried once more; real errors fail at once
+          if [ "$status" -ne 0 ] && grep -qE "Could not (resolve|find|GET|download)|DownloadException|Connection reset|Read timed out|Remote host terminated|status code 5[0-9][0-9]" build.log; then
+            echo "::warning::A download failed - trying the build once more in 30 seconds"
+            sleep 30
+            ./gradlew build --no-daemon --stacktrace -Pmod_version="$VERSION" 2>&1 | tee build.log
+            status=${PIPESTATUS[0]}
+          fi
           set -e
           if [ "$status" -ne 0 ]; then
             # show the compiler errors as annotations on the run page (readable without downloading the log)
@@ -112,6 +119,13 @@ jobs:
           set +e
           ./gradlew build --no-daemon --stacktrace -Pmod_version="$VERSION" 2>&1 | tee build.log
           status=${PIPESTATUS[0]}
+          # a download that failed (Maven, Fabric or Mojang servers) is tried once more; real errors fail at once
+          if [ "$status" -ne 0 ] && grep -qE "Could not (resolve|find|GET|download)|DownloadException|Connection reset|Read timed out|Remote host terminated|status code 5[0-9][0-9]" build.log; then
+            echo "::warning::A download failed - trying the build once more in 30 seconds"
+            sleep 30
+            ./gradlew build --no-daemon --stacktrace -Pmod_version="$VERSION" 2>&1 | tee build.log
+            status=${PIPESTATUS[0]}
+          fi
           set -e
           if [ "$status" -ne 0 ]; then
             python3 ../.github/build_errors.py build.log
@@ -153,6 +167,13 @@ jobs:
           set +e
           ./gradlew build --no-daemon --stacktrace -Pmod_version="$VERSION" 2>&1 | tee build.log
           status=${PIPESTATUS[0]}
+          # a download that failed (Maven, Fabric or Mojang servers) is tried once more; real errors fail at once
+          if [ "$status" -ne 0 ] && grep -qE "Could not (resolve|find|GET|download)|DownloadException|Connection reset|Read timed out|Remote host terminated|status code 5[0-9][0-9]" build.log; then
+            echo "::warning::A download failed - trying the build once more in 30 seconds"
+            sleep 30
+            ./gradlew build --no-daemon --stacktrace -Pmod_version="$VERSION" 2>&1 | tee build.log
+            status=${PIPESTATUS[0]}
+          fi
           set -e
           if [ "$status" -ne 0 ]; then
             python3 ../../../.github/build_errors.py build.log

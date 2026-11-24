@@ -7,7 +7,7 @@
   "authors": [
     "Onix"
   ],
-  "license": "LicenseRef-Proprietary",
+  "license": "MIT",
   "icon": "assets/onix/icon.png",
   "environment": "client",
   "entrypoints": {
